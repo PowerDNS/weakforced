@@ -28,6 +28,26 @@ function allow(wfdb, lt)
 end
 ```
 
-Many more metrics are available to base decisions on.
+Many more metrics are available to base decisions on. Some example code is in [wforce.conf].
 
+To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
+```
+$ for a in {1..101}
+  do 
+    curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234'$a'", "success":"false"}' \
+    http://127.0.0.1:8084/?command=report -u wforce:secret
+  done 
+```
+
+This reports 101 failed logins for one user, but with different password hashes.
+
+Now to look up if we're still allowed in:
+
+```
+$ curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234"}' \
+  http://127.0.0.1:8084/?command=allow -u ahu:super
+{"status": -1}
+```
+
+It appears we are not!

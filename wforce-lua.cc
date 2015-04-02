@@ -136,6 +136,11 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("countDiffFailuresAddress", static_cast<int (WForceDB::*)(const ComboAddress&, int) const>(&WForceDB::countDiffFailures));
   g_lua.registerFunction("countDiffFailuresAddressLogin", static_cast<int (WForceDB::*)(const ComboAddress&, string, int) const>(&WForceDB::countDiffFailures));
 
+  g_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
+
+  g_lua.registerFunction("addMask", &NetmaskGroup::addMask);
+  g_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
+
   g_lua.writeFunction("setAllow", [](allow_t func) {
     g_allow=func;  
     });

@@ -131,8 +131,12 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerMember("login", &LoginTuple::login);
   g_lua.registerMember("pwhash", &LoginTuple::pwhash);
   g_lua.registerMember("success", &LoginTuple::success);
-
+  g_lua.writeVariable("wfdb", &g_wfdb);
   g_lua.registerFunction("report", &WForceDB::reportTuple);
+  g_lua.registerFunction("getTuples", &WForceDB::getTuples);
+
+  g_lua.registerFunction("tostring", &ComboAddress::toString);
+  g_lua.writeFunction("newCA", [](string address) { return ComboAddress(address); } );
   g_lua.registerFunction("countDiffFailuresAddress", static_cast<int (WForceDB::*)(const ComboAddress&, int) const>(&WForceDB::countDiffFailures));
   g_lua.registerFunction("countDiffFailuresAddressLogin", static_cast<int (WForceDB::*)(const ComboAddress&, string, int) const>(&WForceDB::countDiffFailures));
 

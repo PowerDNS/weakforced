@@ -400,6 +400,7 @@ struct
   string config;
 } g_cmdLine;
 
+
 /* spawn as many of these as required, they call Accept on a socket on which they will accept queries, and 
    they will hand off to worker threads & spawn more of them if required
 */
@@ -415,6 +416,8 @@ void* tcpAcceptorThread(void* p)
       int fd = SAccept(cs->tcpFD, remote);
 
       vinfolog("Got connection from %s", remote.toStringWithPort());
+      writen2(fd, "220 Unimplemented\r\n");
+      close(fd);
       // now what
     }
     catch(...){}

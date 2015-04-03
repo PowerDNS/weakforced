@@ -207,6 +207,7 @@ public:
   int countFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, string login, int seconds) const;
+  std::vector<LoginTuple> getTuples() const { return d_logins; }
 private:
   std::vector<LoginTuple> d_logins;
 };

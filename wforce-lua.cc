@@ -115,7 +115,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       lt.login=login;
       lt.pwhash=pwhash;
       lt.success=0;
-      return g_allow(g_wfdb, lt); // XXX locking?
+      return g_allow(&g_wfdb, lt); // XXX locking?
     });
 
   
@@ -145,10 +145,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("addMask", &NetmaskGroup::addMask);
   g_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
 
-  g_lua.writeFunction("setAllow", [](allow_t func) {
-    g_allow=func;  
-    });
-
+  g_lua.writeFunction("setAllow", [](allow_t func) { g_allow=func;});
   g_lua.writeFunction("testCrypto", [](string testmsg)
    {
      try {

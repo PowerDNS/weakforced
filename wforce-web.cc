@@ -129,7 +129,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     lt.pwhash=msg["pwhash"].string_value();
     lt.login=msg["login"].string_value();
 
-    msg=Json::object{{"status", g_allow(g_wfdb, lt)}};
+    msg=Json::object{{"status", g_allow(&g_wfdb, lt)}};
 
     resp.status=200;
     resp.postvars.clear();

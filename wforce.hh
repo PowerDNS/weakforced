@@ -202,17 +202,20 @@ extern std::vector<LoginTuple> g_logins;
 class WForceDB
 {
 public:
+  WForceDB() {}
+  WForceDB(const WForceDB&) = delete;
   void reportTuple(const LoginTuple& lp);
 
   int countFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, string login, int seconds) const;
-  std::vector<LoginTuple> getTuples() const { return d_logins; }
+  std::vector<LoginTuple> getTuples() const;
 private:
   std::vector<LoginTuple> d_logins;
+  mutable std::mutex d_mutex;
 };
 
-int allowTupleDefault(const WForceDB& wfd, const LoginTuple& lp);
+int allowTupleDefault(const WForceDB* wfd, const LoginTuple& lp);
 extern WForceDB g_wfdb;
-typedef std::function<int(const WForceDB&, const LoginTuple&)> allow_t;
+typedef std::function<int(const WForceDB*, const LoginTuple&)> allow_t;
 extern allow_t g_allow;

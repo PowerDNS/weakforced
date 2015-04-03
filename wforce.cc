@@ -30,7 +30,7 @@
 #include <readline/history.h>
 #include "base64.hh"
 #include <fstream>
-
+#include "ext/json11/json11.hpp"
 #include <unistd.h>
 #include "sodcrypto.hh"
 
@@ -352,6 +352,75 @@ static void bindAny(int af, int sock)
   if (setsockopt(sock, SOL_SOCKET, SO_BINDANY, &one, sizeof(one)) < 0)
     warnlog("Warning: SO_BINDANY setsockopt failed: %s", strerror(errno));
 #endif
+}
+
+std::string LoginTuple::serialize() const
+{
+  using namespace json11;
+  Json msg=Json::object{
+    {"login", login},
+    {"success", success},
+    {"t", (int)t}, // call me in 2038
+    {"pwhash", pwhash},
+    {"remote", remote.toString()}};
+  return msg.dump();
+}
+
+void LoginTuple::unserialize(const std::string& str) 
+{
+  using namespace json11;
+  string err;
+  Json msg=Json::parse(str, err);
+  login=msg["login"].string_value();
+  pwhash=msg["pwhash"].string_value();
+  t=msg["t"].int_value();
+  success=msg["success"].bool_value();
+  remote=ComboAddress(msg["remote"].string_value());
+}
+
+Sibling::Sibling(const ComboAddress& ca) : sock(ca.sin4.sin_family, SOCK_DGRAM)
+{
+  sock.connect(ca);
+}
+
+void Sibling::send(const std::string& msg)
+{
+  if(::send(sock.getHandle(),msg.c_str(), msg.length(),0) <= 0)
+    ++failures;
+  else
+    ++success;
+}
+
+GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
+
+void spreadReport(const LoginTuple& lt)
+{
+  auto siblings = g_siblings.getLocal();
+  string msg=lt.serialize();
+  for(auto& s : *siblings) {
+    s->send(msg);
+  }
+}
+
+void receiveReports(ComboAddress local)
+{
+  Socket sock(local.sin4.sin_family, SOCK_DGRAM);
+  sock.bind(local);
+  char buf[1500];
+  ComboAddress remote=local;
+  socklen_t remlen=remote.getSocklen();
+  int len;
+  infolog("Launched UDP sibling listener on %s", local.toStringWithPort());
+  for(;;) {
+    len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
+    if(len <= 0 || len >= (int)sizeof(buf))
+      continue;
+
+    LoginTuple lt;
+    lt.unserialize(string(buf, len));
+    vinfolog("Got a report from sibling %s: %s,%s,%s", remote.toString(), lt.login,lt.pwhash,lt.remote.toString());
+    g_wfdb.reportTuple(lt);
+  }
 }
 
 /**** CARGO CULT CODE AHEAD ****/

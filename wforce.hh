@@ -8,6 +8,7 @@
 #include <mutex>
 #include <thread>
 #include "sholder.hh"
+#include "sstuff.hh"
 
 struct DNSDistStats
 {
@@ -140,35 +141,24 @@ struct ClientState
   int tcpFD;
 };
 
-class TCPClientCollection {
-  std::vector<int> d_tcpclientthreads;
-  std::atomic<uint64_t> d_pos;
-public:
-  std::atomic<uint64_t> d_queued, d_numthreads;
-
-  TCPClientCollection()
-  {
-    d_tcpclientthreads.reserve(1024);
-  }
-
-  int getThread() 
-  {
-    int pos = d_pos++;
-    ++d_queued;
-    return d_tcpclientthreads[pos % d_numthreads];
-  }
-  void addTCPClientThread();
-};
-
-extern TCPClientCollection g_tcpclientthreads;
 
 extern std::mutex g_luamutex;
 extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex
-
+void receiveReports(ComboAddress local);
+struct Sibling
+{
+  explicit Sibling(const ComboAddress& rem);
+  Sibling(const Sibling&) = delete;
+  ComboAddress rem;
+  Socket sock;
+  std::atomic<unsigned int> success{0};
+  std::atomic<unsigned int> failures{0};
+  void send(const std::string& msg);
+};
 
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
-
+extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 extern ComboAddress g_serverControl; // not changed during runtime
 
 extern std::vector<ComboAddress> g_locals; // not changed at runtime
@@ -195,6 +185,8 @@ struct LoginTuple
   string login;
   string pwhash;
   bool success;
+  std::string serialize() const;
+  void unserialize(const std::string& src);
 };
 
 extern std::vector<LoginTuple> g_logins;
@@ -214,7 +206,7 @@ private:
   std::vector<LoginTuple> d_logins;
   mutable std::mutex d_mutex;
 };
-
+void spreadReport(const LoginTuple& lt);
 int allowTupleDefault(const WForceDB* wfd, const LoginTuple& lp);
 extern WForceDB g_wfdb;
 typedef std::function<int(const WForceDB*, const LoginTuple&)> allow_t;

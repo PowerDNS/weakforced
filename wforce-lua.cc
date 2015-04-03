@@ -16,6 +16,33 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       g_ACL.modify([domain](NetmaskGroup& nmg) { nmg.addMask(domain); });
     });
 
+  g_lua.writeFunction("addSibling", [](const std::string& address) {
+      ComboAddress ca(address, 4001);
+      g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
+    });
+
+  g_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
+      vector<shared_ptr<Sibling>> v;
+      for(const auto& p : parts) {
+	v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
+      }
+      g_siblings.setState(v);
+  });
+
+
+  g_lua.writeFunction("siblingListener", [](const std::string& address) {
+      ComboAddress ca(address, 4001);
+      
+      auto launch = [ca]() {
+	thread t1(receiveReports, ca);
+	t1.detach();
+      };
+      if(g_launchWork)
+	g_launchWork->push_back(launch);
+      else
+	launch();
+    });
+
   g_lua.writeFunction("addLocal", [client](const std::string& addr) {
       if(client)
 	return;

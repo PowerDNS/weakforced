@@ -1,5 +1,9 @@
 Weakforced
 ----------
+The goal of 'wforced' is to detect brute forcing of passwords across many servers,
+services and instances. In order to support the real world, brute force detection
+policy can be tailored to deal with "bulk, but legitimate" users of your service,
+as well as botnet-wide slowscans of passwords.
 
 Here is how it works:
  * Report successful logins via JSON http-api
@@ -8,7 +12,8 @@ Here is how it works:
 
 Runtime console for querying the status of logins, IP addresses, subnets.
 
-Policy in Lua.
+There is a sensible default policy, and extensive support for crafting your own policies using
+the insanely great Lua scripting language. 
 
 Sample:
 
@@ -28,7 +33,7 @@ function allow(wfdb, lt)
 end
 ```
 
-Many more metrics are available to base decisions on. Some example code is in [wforce.conf].
+Many more metrics are available to base decisions on. Some example code is in [wforce.conf](wforce.conf).
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
@@ -80,4 +85,27 @@ API Calls
 ---------
 We can call 'report', 'allow' and (near future) 'clear', which removes
 entries from a listed 'login' and/or 'remote'. 
+
+Load balancing: siblings
+------------------------
+Messages received are broadcast (lossy) to all siblings. The sibling list is
+parsed such that we don't broadcast messages to ourselves accidentally, and
+can thus be identical across all servers (XXX this is not actually true
+right now).
+
+To define siblings, use:
+
+```
+addSibling("192.168.1.79")
+addSibling("192.168.1.30")
+addSibling("192.168.1.54")
+siblingListener("0.0.0.0")
+```
+
+This last line configures that we also listen to our other siblings (which
+is nice).  The default port is 4001, the protocol is UDP.
+
+With this setup, several wforces are all kept in sync, and can be load
+balanced behind for example haproxy, which incidentally can also offer SSL.
+
 

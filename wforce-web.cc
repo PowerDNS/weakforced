@@ -102,18 +102,24 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       msg=Json::parse(a.first, err);
       // XXX error checking
     }
+      resp.postvars.clear();
+    try {
+      LoginTuple lt;
+      lt.remote=ComboAddress(msg["remote"].string_value());
+      lt.success=msg["success"].bool_value();
+      lt.pwhash=msg["pwhash"].string_value();
+      lt.login=msg["login"].string_value();
+      lt.t=time(0);
+      g_wfdb.reportTuple(lt);
+      
+      resp.status=200;
 
-    LoginTuple lt;
-    lt.remote=ComboAddress(msg["remote"].string_value());
-    lt.success=msg["success"].bool_value();
-    lt.pwhash=msg["pwhash"].string_value();
-    lt.login=msg["login"].string_value();
-    lt.t=time(0);
-    g_wfdb.reportTuple(lt);
-
-    resp.status=200;
-    resp.postvars.clear();
-    resp.body=R"({"status":"ok"})";
+      resp.body=R"({"status":"ok"})";
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
   }
   else if(command=="allow" && req.method=="POST") {
     Json msg;

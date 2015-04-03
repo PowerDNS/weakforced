@@ -188,11 +188,16 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::string& password)
 {
   infolog("Webserver launched on %s", local.toStringWithPort());
+  auto localACL=g_ACL.getLocal();
   for(;;) {
     try {
       ComboAddress remote(local);
       int fd = SAccept(sock, remote);
       vinfolog("Got connection from %s", remote.toStringWithPort());
+      if(!localACL->match(remote)) {
+	close(fd);
+	continue;
+      }
       std::thread t(connectionThread, fd, remote, password);
       t.detach();
     }

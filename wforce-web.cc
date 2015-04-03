@@ -134,9 +134,13 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     lt.success=msg["success"].bool_value();
     lt.pwhash=msg["pwhash"].string_value();
     lt.login=msg["login"].string_value();
-
-    msg=Json::object{{"status", g_allow(&g_wfdb, lt)}};
-
+    int status=0;
+    {
+      std::lock_guard<std::mutex> lock(g_luamutex);
+      status=g_allow(&g_wfdb, lt);
+    }
+    msg=Json::object{{"status", status}};
+      
     resp.status=200;
     resp.postvars.clear();
     resp.body=msg.dump();

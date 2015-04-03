@@ -115,7 +115,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       lt.login=login;
       lt.pwhash=pwhash;
       lt.success=0;
-      return g_allow(&g_wfdb, lt); // XXX locking?
+      return g_allow(&g_wfdb, lt); // no locking needed, we are in Lua here already!
     });
 
   

@@ -91,7 +91,7 @@ Load balancing: siblings
 For high-availability or performance reasons it may be desireable to run
 multiple instances of wforced. To present a unified view of status however,
 these instances then need to share the login tuples. To do so, wforce
-implement a simple knowledge-sharing system.
+implements a simple knowledge-sharing system.
 
 Tuples received are broadcast (best effort, UDP) to all siblings. The
 sibling list is parsed such that we don't broadcast messages to ourselves

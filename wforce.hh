@@ -201,6 +201,8 @@ public:
   int countFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, int seconds) const;
   int countDiffFailures(const ComboAddress& remote, string login, int seconds) const;
+  void timePurge(int second);
+  void numberPurge(int amount);
   std::vector<LoginTuple> getTuples() const;
 private:
   std::vector<LoginTuple> d_logins;

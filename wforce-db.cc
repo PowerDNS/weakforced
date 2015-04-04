@@ -7,16 +7,24 @@ void WForceDB::reportTuple(const LoginTuple& lp)
   d_logins.push_back(lp);
 }
 
-int defaultAllowTuple(const WForceDB* wfd, const LoginTuple& lp)
+void WForceDB::timePurge(int seconds)
 {
-  if(wfd->countDiffFailures(lp.remote, 1800) > 100)
-    return -1;
-  if(wfd->countDiffFailures(lp.remote, lp.login, 1800) > 10)
-    return -1;
-  return 0;
+  std::lock_guard<std::mutex> lock(d_mutex);
+  time_t limit=time(0)-seconds;
+
+  d_logins.erase(remove_if(d_logins.begin(), d_logins.end(), [limit](const LoginTuple& lt) { return lt.t < limit; }), d_logins.end());
 }
 
-std::function<int(const WForceDB*, const LoginTuple&)> g_allow{defaultAllowTuple};
+void WForceDB::numberPurge(int amount)
+{
+  std::lock_guard<std::mutex> lock(d_mutex);
+  auto toRemove = d_logins.size() - amount;
+  if(toRemove <= 0)
+    d_logins.clear();
+  else
+    d_logins.erase(d_logins.begin() + toRemove, d_logins.end());
+}
+
 
 int WForceDB::countFailures(const ComboAddress& remote, int seconds) const
 {

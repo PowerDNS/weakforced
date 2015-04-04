@@ -99,10 +99,11 @@ ComboAddress g_serverControl{"127.0.0.1:5199"};
 
 void* maintThread()
 {
-  int interval = 1;
+  int interval = 60;
 
   for(;;) {
     sleep(interval);
+    g_wfdb.timePurge(3600);
   }
   return 0;
 }
@@ -422,6 +423,18 @@ void receiveReports(ComboAddress local)
     g_wfdb.reportTuple(lt);
   }
 }
+
+int defaultAllowTuple(const WForceDB* wfd, const LoginTuple& lp)
+{
+  if(wfd->countDiffFailures(lp.remote, 1800) > 100)
+    return -1;
+  if(wfd->countDiffFailures(lp.remote, lp.login, 1800) > 10)
+    return -1;
+  return 0;
+}
+
+std::function<int(const WForceDB*, const LoginTuple&)> g_allow{defaultAllowTuple};
+
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {

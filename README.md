@@ -88,10 +88,15 @@ entries from a listed 'login' and/or 'remote'.
 
 Load balancing: siblings
 ------------------------
-Messages received are broadcast (lossy) to all siblings. The sibling list is
-parsed such that we don't broadcast messages to ourselves accidentally, and
-can thus be identical across all servers (XXX this is not actually true
-right now).
+For high-availability or performance reasons it may be desireable to run
+multiple instances of wforced. To present a unified view of status however,
+these instances then need to share the login tuples. To do so, wforce
+implement a simple knowledge-sharing system.
+
+Tuples received are broadcast (best effort, UDP) to all siblings. The
+sibling list is parsed such that we don't broadcast messages to ourselves
+accidentally, and can thus be identical across all servers (XXX this is not
+actually true right now).
 
 To define siblings, use:
 

@@ -12,6 +12,26 @@ Here is how it works:
 
 Runtime console for querying the status of logins, IP addresses, subnets.
 
+wforced is aimed to receive message from services like:
+
+ * IMAP
+ * POP3
+ * Webmail logins
+ * FTP logins
+ * Authenticated SMTP
+ * Self-service logins
+ * Password recovery services
+
+By gathering failed and successful login attempts from as many services as
+possible, brute forcing attacks can be detected and prevented more
+effectively. 
+
+Inspiration:
+http://www.techspot.com/news/58199-developer-reported-icloud-brute-force-password-hack-to-apple-nearly-six-month-ago.html
+
+Policies
+--------
+
 There is a sensible default policy, and extensive support for crafting your own policies using
 the insanely great Lua scripting language. 
 
@@ -80,6 +100,23 @@ However, if we take any kind of hash and truncate it severely, for example
 to 12 bits, the hash tells us very little about the password itself - since
 one in 4096 random strings will match it anyhow. But for detecting multiple
 identical logins, it is good enough.
+
+For additional security, hash the login name together with the password - this
+prevents detecting different logins that might have the same password.
+
+NOTE: wforced does not require any specific kind of hashing scheme, but it
+is important that all services reporting successful/failed logins use the
+same scheme!
+
+When in doubt, try:
+
+```
+TRUNCATE(SHA256(LOGIN + '\x00' + PASSWORD), 12)
+```
+
+Which denotes to take the first 12 bits of the hash of the concatenation of
+the login, a 0 bytes and the password. Prepend 4 0 bits to get something
+that can be expressed as two bytes.
 
 API Calls
 ---------

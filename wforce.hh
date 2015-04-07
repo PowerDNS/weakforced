@@ -177,10 +177,11 @@ void dnsdistWebserverThread(int sock, const ComboAddress& local, const string& p
 bool getMsgLen(int fd, uint16_t* len);
 bool putMsgLen(int fd, uint16_t len);
 void* tcpAcceptorThread(void* p);
+double getDoubleTime();
 
 struct LoginTuple
 {
-  time_t t;
+  double t;
   ComboAddress remote;
   string login;
   string pwhash;

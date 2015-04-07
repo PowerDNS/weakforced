@@ -96,6 +96,12 @@ static void daemonize(void)
 
 ComboAddress g_serverControl{"127.0.0.1:5199"};
 
+double getDoubleTime()
+{						
+  struct timeval now;
+  gettimeofday(&now, 0);
+  return 1.0*now.tv_sec + now.tv_usec/1000000.0;
+}
 
 void* maintThread()
 {
@@ -361,7 +367,7 @@ std::string LoginTuple::serialize() const
   Json msg=Json::object{
     {"login", login},
     {"success", success},
-    {"t", (int)t}, // call me in 2038
+    {"t", (double)t}, 
     {"pwhash", pwhash},
     {"remote", remote.toString()}};
   return msg.dump();

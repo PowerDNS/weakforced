@@ -109,7 +109,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
-      lt.t=time(0);
+      lt.t=getDoubleTime();
       spreadReport(lt);
       g_wfdb.reportTuple(lt);
       

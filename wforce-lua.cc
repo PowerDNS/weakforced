@@ -128,7 +128,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 
   g_lua.writeFunction("report", [](string remote, string login, string pwhash, bool success) {
       LoginTuple lt;
-      lt.t=time(0);
+      lt.t=getDoubleTime();
       lt.remote=ComboAddress(remote);
       lt.login=login;
       lt.pwhash=pwhash;

@@ -1,6 +1,10 @@
 #include "wforce.hh"
 WForceDB g_wfdb;
 
+/* for higher capacity, ponder shifting to __gnu_cxx::__sso_string for storage
+   Assume we'll have to store 10 million tuples. 
+*/
+
 void WForceDB::reportTuple(const LoginTuple& lp)
 {
   std::lock_guard<std::mutex> lock(d_mutex);

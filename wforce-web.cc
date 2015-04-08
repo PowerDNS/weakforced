@@ -112,7 +112,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       lt.t=getDoubleTime();
       spreadReport(lt);
       g_wfdb.reportTuple(lt);
-      
+
       resp.status=200;
 
       resp.body=R"({"status":"ok"})";

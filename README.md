@@ -132,8 +132,7 @@ implements a simple knowledge-sharing system.
 
 Tuples received are broadcast (best effort, UDP) to all siblings. The
 sibling list is parsed such that we don't broadcast messages to ourselves
-accidentally, and can thus be identical across all servers (XXX this is not
-actually true right now).
+accidentally, and can thus be identical across all servers.
 
 To define siblings, use:
 

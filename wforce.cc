@@ -380,18 +380,33 @@ void LoginTuple::unserialize(const std::string& str)
   Json msg=Json::parse(str, err);
   login=msg["login"].string_value();
   pwhash=msg["pwhash"].string_value();
-  t=msg["t"].int_value();
+  t=msg["t"].number_value();
   success=msg["success"].bool_value();
   remote=ComboAddress(msg["remote"].string_value());
 }
 
-Sibling::Sibling(const ComboAddress& ca) : sock(ca.sin4.sin_family, SOCK_DGRAM)
+Sibling::Sibling(const ComboAddress& ca) : sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
 {
   sock.connect(ca);
+  ComboAddress actualLocal;
+  actualLocal.sin4.sin_family = ca.sin4.sin_family;
+  socklen_t socklen = actualLocal.getSocklen();
+
+  if(getsockname(sock.getHandle(), (struct sockaddr*) &actualLocal, &socklen) < 0) {
+    return;
+  }
+
+  actualLocal.sin4.sin_port = ca.sin4.sin_port;
+  if(actualLocal == ca) {
+    d_ignoreself=true;
+  }
+
 }
 
 void Sibling::send(const std::string& msg)
 {
+  if(d_ignoreself)
+    return;
   if(::send(sock.getHandle(),msg.c_str(), msg.length(),0) <= 0)
     ++failures;
   else
@@ -425,7 +440,7 @@ void receiveReports(ComboAddress local)
 
     LoginTuple lt;
     lt.unserialize(string(buf, len));
-    vinfolog("Got a report from sibling %s: %s,%s,%s", remote.toString(), lt.login,lt.pwhash,lt.remote.toString());
+    vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
     g_wfdb.reportTuple(lt);
   }
 }

@@ -9,6 +9,9 @@
 #include <thread>
 #include "sholder.hh"
 #include "sstuff.hh"
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/identity.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
 
 struct DNSDistStats
 {
@@ -155,6 +158,7 @@ struct Sibling
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   void send(const std::string& msg);
+  bool d_ignoreself;
 };
 
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
@@ -188,9 +192,19 @@ struct LoginTuple
   bool success;
   std::string serialize() const;
   void unserialize(const std::string& src);
+  bool operator<(const LoginTuple& r) const
+  {
+    if(std::tie(t, login, pwhash, success) < std::tie(r.t, r.login, r.pwhash, r.success))
+      return true;
+    ComboAddress cal(remote);
+    ComboAddress car(r.remote);
+    cal.sin4.sin_port=0;
+    car.sin4.sin_port=0;
+    return cal < car;
+  }
 };
 
-extern std::vector<LoginTuple> g_logins;
+using namespace boost::multi_index;
 
 class WForceDB
 {
@@ -206,7 +220,34 @@ public:
   void numberPurge(int amount);
   std::vector<LoginTuple> getTuples() const;
 private:
-  std::vector<LoginTuple> d_logins;
+  struct TimeTag{};
+  struct LoginTag{};
+  struct RemoteTag{};
+  struct RemoteLoginTag{};
+  struct SeqTag{};
+  
+  typedef multi_index_container<
+    LoginTuple,
+    indexed_by<
+      ordered_unique<identity<LoginTuple> >,
+      ordered_non_unique<
+        tag<TimeTag>,
+        member<LoginTuple, double, &LoginTuple::t>
+      >,
+      ordered_non_unique<
+        tag<LoginTag>,
+        member<LoginTuple, string, &LoginTuple::login>
+      >,
+      ordered_non_unique<
+        tag<RemoteTag>,
+        member<LoginTuple, ComboAddress, &LoginTuple::remote>, ComboAddress::addressOnlyLessThan
+	>,
+      sequenced<tag<SeqTag>>
+
+    >
+  > storage_t;
+
+  storage_t d_logins;
   mutable std::mutex d_mutex;
 };
 void spreadReport(const LoginTuple& lt);

@@ -19,7 +19,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+#include "config.h"
 #include "wforce.hh"
 #include "sstuff.hh"
 #include "misc.hh"
@@ -415,12 +415,18 @@ void Sibling::send(const std::string& msg)
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 
+SodiumNonce g_sodnonce;
+
 void spreadReport(const LoginTuple& lt)
 {
   auto siblings = g_siblings.getLocal();
   string msg=lt.serialize();
+
+  string packet =g_sodnonce.toString();
+  packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+
   for(auto& s : *siblings) {
-    s->send(msg);
+    s->send(packet);
   }
 }
 
@@ -438,8 +444,14 @@ void receiveReports(ComboAddress local)
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
 
+    SodiumNonce nonce;
+    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    
+    string msg=sodDecryptSym(packet, g_key, nonce);
+
     LoginTuple lt;
-    lt.unserialize(string(buf, len));
+    lt.unserialize(msg);
     vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
     g_wfdb.reportTuple(lt);
   }
@@ -547,6 +559,7 @@ try
     cerr<<"Unable to initialize crypto library"<<endl;
     exit(EXIT_FAILURE);
   }
+  g_sodnonce.init();
 #endif
   g_cmdLine.config="./wforce.conf";
   struct option longopts[]={ 

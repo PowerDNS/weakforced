@@ -173,6 +173,19 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
 
   g_lua.writeFunction("setAllow", [](allow_t func) { g_allow=func;});
+
+    g_lua.writeFunction("makeKey", []() {
+      g_outputBuffer="setKey("+newKey()+")\n";
+    });
+  
+  g_lua.writeFunction("setKey", [](const std::string& key) {
+      if(B64Decode(key, g_key) < 0) {
+	  g_outputBuffer=string("Unable to decode ")+key+" as Base64";
+	  errlog("%s", g_outputBuffer);
+	}
+    });
+
+
   g_lua.writeFunction("testCrypto", [](string testmsg)
    {
      try {

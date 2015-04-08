@@ -137,16 +137,19 @@ accidentally, and can thus be identical across all servers.
 To define siblings, use:
 
 ```
+setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 addSibling("192.168.1.79")
 addSibling("192.168.1.30")
 addSibling("192.168.1.54")
 siblingListener("0.0.0.0")
 ```
 
+The first line sets the authentication and encryption key for our sibling
+communications. To make your own kee (recommended), run `makeKey()` on the
+console and paste the output in all your configuration files.
+
 This last line configures that we also listen to our other siblings (which
 is nice).  The default port is 4001, the protocol is UDP.
 
 With this setup, several wforces are all kept in sync, and can be load
 balanced behind for example haproxy, which incidentally can also offer SSL.
-
-

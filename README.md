@@ -1,9 +1,13 @@
 Weakforced
 ----------
-The goal of 'wforced' is to detect brute forcing of passwords across many servers,
-services and instances. In order to support the real world, brute force detection
-policy can be tailored to deal with "bulk, but legitimate" users of your service,
-as well as botnet-wide slowscans of passwords.
+The goal of 'wforced' is to detect brute forcing of passwords across many
+servers, services and instances.  In order to support the real world, brute
+force detection policy can be tailored to deal with "bulk, but legitimate"
+users of your service, as well as botnet-wide slowscans of passwords.
+
+The aim is to support the largest of installations, providing services to
+hundreds of millions of users.  The current version of weakforced is not
+quit there yet.
 
 Weakforced is a project by PowerDNS and Dovecot. For now, if you have any questions, email
 bert.hubert@powerdns.com.

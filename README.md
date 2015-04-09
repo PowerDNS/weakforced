@@ -82,7 +82,7 @@ Spec
 We report 4 fields in the LoginTuple
 
  * login (string): the user name or number or whatever
- * remote (ip address, no power): the address the user arrived on
+ * remote (ip address): the address the user arrived on
  * pwhash (string): a highly truncated hash of the password used
  * succes (boolean): was the login a success or not?
 
@@ -111,17 +111,28 @@ same scheme!
 When in doubt, try:
 
 ```
-TRUNCATE(SHA256(LOGIN + '\x00' + PASSWORD), 12)
+TRUNCATE(SHA256(SECRET + LOGIN + '\x00' + PASSWORD), 12)
 ```
 
 Which denotes to take the first 12 bits of the hash of the concatenation of
-the login, a 0 bytes and the password. Prepend 4 0 bits to get something
-that can be expressed as two bytes.
+a secret, the login, a 0 bytes and the password.  Prepend 4 0 bits to get
+something that can be expressed as two bytes.
 
 API Calls
 ---------
 We can call 'report', 'allow' and (near future) 'clear', which removes
-entries from a listed 'login' and/or 'remote'. 
+entries from a listed 'login' and/or 'remote'.
+
+To report, POST to /?command=report a JSON object with fields from the
+LoginTuple as described above.
+
+To request if a login should be allowed, POST to /?command=allow, again with
+the LoginTuple. The result is a JSON object with a "status" field. If this is -1, do
+not perform login validation (ie, provide no clue to the client of the password
+was correct or not, or even if the account exists).
+
+If 0, allow login validation to proceed. If a positive number, sleep this
+many seconds until allowing login validation to proceed.
 
 Load balancing: siblings
 ------------------------

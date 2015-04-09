@@ -5,6 +5,9 @@ services and instances. In order to support the real world, brute force detectio
 policy can be tailored to deal with "bulk, but legitimate" users of your service,
 as well as botnet-wide slowscans of passwords.
 
+Weakforced is a project by PowerDNS and Dovecot. For now, if you have any questions, email
+bert.hubert@powerdns.com.
+
 Here is how it works:
  * Report successful logins via JSON http-api
  * Report unsuccessful logins via JSON http-api
@@ -156,7 +159,7 @@ siblingListener("0.0.0.0")
 ```
 
 The first line sets the authentication and encryption key for our sibling
-communications. To make your own kee (recommended), run `makeKey()` on the
+communications. To make your own key (recommended), run `makeKey()` on the
 console and paste the output in all your configuration files.
 
 This last line configures that we also listen to our other siblings (which

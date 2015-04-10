@@ -112,7 +112,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       lt.t=getDoubleTime();
       spreadReport(lt);
       g_wfdb.reportTuple(lt);
-
+      g_stats.reports++;
       resp.status=200;
 
       resp.body=R"({"status":"ok"})";
@@ -140,6 +140,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       std::lock_guard<std::mutex> lock(g_luamutex);
       status=g_allow(&g_wfdb, lt);
     }
+    g_stats.allows++;
     msg=Json::object{{"status", status}};
       
     resp.status=200;
@@ -152,7 +153,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 
     resp.status=200;
     Json my_json = Json::object {
-      { "questions", (int)g_stats.queries },
+      { "allows", (int)g_stats.allows },
       { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
       { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
       { "uptime", uptimeOfProcess()},

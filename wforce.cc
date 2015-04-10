@@ -40,7 +40,7 @@ using std::atomic;
 using std::thread;
 bool g_verbose;
 
-struct DNSDistStats g_stats;
+struct WForceStats g_stats;
 bool g_console;
 
 GlobalStateHolder<NetmaskGroup> g_ACL;
@@ -385,7 +385,7 @@ void LoginTuple::unserialize(const std::string& str)
   remote=ComboAddress(msg["remote"].string_value());
 }
 
-Sibling::Sibling(const ComboAddress& ca) : sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
+ Sibling::Sibling(const ComboAddress& ca) : rem(ca), sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
 {
   sock.connect(ca);
   ComboAddress actualLocal;

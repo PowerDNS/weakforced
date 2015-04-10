@@ -5,6 +5,11 @@ WForceDB g_wfdb;
    Assume we'll have to store 10 million tuples. 
 */
 
+size_t WForceDB::size()
+{
+  std::lock_guard<std::mutex> lock(d_mutex);
+  return d_logins.size();
+}
 
 void WForceDB::reportTuple(const LoginTuple& lp)
 {

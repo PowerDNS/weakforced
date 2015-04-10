@@ -84,6 +84,25 @@ $ curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234"}' 
 
 It appears we are not!
 
+Console
+-------
+Available over TCP/IP, like this:
+```
+setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+controlSocket("0.0.0.0:4004")
+```
+
+Launch wforce as a daemon (`wforce --daemon`), to connect, run `wforce -c`.
+Comes with autocomplete and command history. If you put an actual IP address
+in place of 0.0.0.0, you can use the same config to listen and connect
+remotely.
+
+To get some stats, try:
+```
+> stats()
+40 reports, 8 allow-queries, 40 entries in database
+```
+
 Spec
 ----
 We report 4 fields in the LoginTuple
@@ -168,6 +187,17 @@ console and paste the output in all your configuration files.
 
 This last line configures that we also listen to our other siblings (which
 is nice).  The default port is 4001, the protocol is UDP.
+
+To view sibling stats:
+
+```
+> siblings()
+Address                             Sucesses  Failures     Note
+192.168.1.79:4001                   18        7            
+192.168.1.30:4001                   25        0            
+192.168.1.54:4001                   0         0            Self
+```
+
 
 With this setup, several wforces are all kept in sync, and can be load
 balanced behind for example haproxy, which incidentally can also offer SSL.

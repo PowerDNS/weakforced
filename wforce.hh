@@ -13,24 +13,17 @@
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
-struct DNSDistStats
+struct WForceStats
 {
   using stat_t=std::atomic<uint64_t>;
-  stat_t responses{0};
-  stat_t servfailResponses{0};
-  stat_t queries{0};
-  stat_t aclDrops{0};
-  stat_t blockFilter{0};
-  stat_t ruleDrop{0};
-  stat_t ruleNXDomain{0};
-  stat_t selfAnswered{0};
-  stat_t downstreamTimeouts{0};
-  stat_t downstreamSendErrors{0};
+  stat_t reports{0};
+  stat_t allows{0};
+  
   double latency{0};
   
 };
 
-extern struct DNSDistStats g_stats;
+extern struct WForceStats g_stats;
 
 
 struct StopWatch
@@ -158,7 +151,7 @@ struct Sibling
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   void send(const std::string& msg);
-  bool d_ignoreself;
+  bool d_ignoreself{false};
 };
 
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
@@ -219,6 +212,7 @@ public:
   void timePurge(int second);
   void numberPurge(int amount);
   std::vector<LoginTuple> getTuples() const;
+  size_t size();
 private:
   struct TimeTag{};
   struct LoginTag{};

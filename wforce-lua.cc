@@ -136,6 +136,22 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       g_wfdb.reportTuple(lt);
     });
 
+  g_lua.writeFunction("stats", []() {
+      boost::format fmt("%d reports, %d allow-queries, %d entries in database\n");
+      g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_wfdb.size()).str();
+      
+    });
+
+  g_lua.writeFunction("siblings", []() {
+      auto siblings = g_siblings.getCopy();
+      boost::format fmt("%-35s %-9d %-9d    %s\n");
+      g_outputBuffer= (fmt % "Address" % "Sucesses" % "Failures" % "Note").str();
+      for(const auto& s : siblings)
+	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % (s->d_ignoreself ? "Self" : "") ).str();
+      
+    });
+
+
   g_lua.writeFunction("allow", [](string remote, string login, string pwhash) {
       LoginTuple lt;
       lt.remote=ComboAddress(remote);

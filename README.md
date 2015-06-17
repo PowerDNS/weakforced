@@ -36,6 +36,23 @@ effectively.
 Inspiration:
 http://www.techspot.com/news/58199-developer-reported-icloud-brute-force-password-hack-to-apple-nearly-six-month-ago.html
 
+Installing
+----------
+From GitHub:
+
+```
+$ git clone git@github.com:ahupowerdns/weakforced.git
+$ cd weakforced
+$ autoreconf -i
+$ ./configure
+$ make
+```
+
+This requires recent versions of libtool, automake and autoconf to be
+installed.  Secondly, we require a recent g++ (4.8), Boost 1.40+, and Lua
+5.1 development libraries.
+
+
 Policies
 --------
 

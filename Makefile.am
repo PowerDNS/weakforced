@@ -7,7 +7,7 @@ BUILT_SOURCES=htmlfiles.h
 htmlfiles.h: html/*
 	./incfiles > $@
 
-EXTRA_DIST=dnslabeltext.rl wforceconf.lua README.md html
+EXTRA_DIST= wforce.conf README.md html
 
 bin_PROGRAMS = wforce
 wforce_SOURCES = \

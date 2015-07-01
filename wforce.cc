@@ -474,10 +474,29 @@ extern "C" {
 char* my_generator(const char* text, int state)
 {
   string t(text);
-  vector<string> words{"showRules()", "shutdown()", "rmRule(", "mvRule(", "addACL(", "addLocal(", "setServerPolicy(", "setServerPolicyLua(",
-      "newServer(", "rmServer(", "showServers()", "show(", "newDNSName(", "newSuffixMatchNode(", "controlSocket(", "topClients(", "showResponseLatency()", 
-      "newQPSLimiter(", "makeKey()", "setKey(", "testCrypto()", "addAnyTCRule()", "showServerPolicy()", "setACL(", "showACL()", "addDomainBlock(", 
-      "addPoolRule(", "addQPSLimit(", "topResponses(", "topQueries(", "topRule()", "setDNSSECPool("};
+  vector<string> words {"addACL",
+      "addSibling",
+      "setSiblings",
+      "siblingListener",
+      "addLocal",
+      "setACL",
+      "showACL",
+      "shutdown",
+      "webserver",
+      "controlSocket",
+      "report",
+      "stats",
+      "siblings",
+      "allow",
+      "countFailures",
+      "countDiffFailures",
+      "newCA",
+      "newNetmaskGroup",
+      "setAllow",
+      "makeKey",
+      "setKey",
+      "testCrypto"
+      };
   static int s_counter=0;
   int counter=0;
   if(!state)

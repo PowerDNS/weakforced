@@ -468,24 +468,28 @@ int defaultAllowTuple(const WForceDB* wfd, const LoginTuple& lp)
 
 std::function<int(const WForceDB*, const LoginTuple&)> g_allow{defaultAllowTuple};
 
-
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {
 char* my_generator(const char* text, int state)
 {
   string t(text);
   vector<string> words {"addACL",
-      "addSibling",
-      "setSiblings",
-      "siblingListener",
+      "addSibling(",
+      "clearDB()",
+      "setSiblings(",
+      "showLogin(",
+      "showRemote(",
+      "clearLogin(",
+      "clearRemote(",
+      "siblingListener(",
       "addLocal",
       "setACL",
-      "showACL",
-      "shutdown",
+      "showACL()",
+      "shutdown()",
       "webserver",
       "controlSocket",
       "report",
-      "stats",
+      "stats()",
       "siblings",
       "allow",
       "countFailures",

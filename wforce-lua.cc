@@ -137,9 +137,39 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
     });
 
   g_lua.writeFunction("stats", []() {
-      boost::format fmt("%d reports, %d allow-queries, %d entries in database\n");
-      g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_wfdb.size()).str();
+      boost::format fmt("%d reports, %d allow-queries (%d denies), %d entries in database\n");
+      g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_stats.denieds % g_wfdb.size()).str();
       
+    });
+  g_lua.writeFunction("clearDB", []() { 
+      g_wfdb.clear();
+    });
+  g_lua.writeFunction("clearLogin", [](const std::string& login) { 
+      auto count=g_wfdb.clearLogin(login);
+      g_outputBuffer = "Removed " + std::to_string(count)+" tuples\n";
+    });
+  g_lua.writeFunction("clearHost", [](const std::string& host) { 
+      auto count=g_wfdb.clearRemote(ComboAddress(host));
+      g_outputBuffer = "Removed " + std::to_string(count)+" tuples\n";
+    });
+
+
+  g_lua.writeFunction("showLogin", [](const std::string& login) { 
+      auto tuples=g_wfdb.getTuplesLogin(login);
+      boost::format fmt("%15s %20s %10s %1s\n");
+      for(const auto& t : tuples) {
+	g_outputBuffer += (fmt % humanTime(t.t) % t.remote.toString() % t.pwhash % (t.success ? "success" : "failure")).str();
+      }
+
+    });
+
+  g_lua.writeFunction("showHost", [](const std::string& remote) { 
+      auto tuples=g_wfdb.getTuplesRemote(ComboAddress(remote));
+      boost::format fmt("%15s %20s %10s %1s\n");
+      for(const auto& t : tuples) {
+	g_outputBuffer += (fmt % humanTime(t.t) % t.login % t.pwhash % (t.success ? "success" : "failure")).str();
+      }
+
     });
 
   g_lua.writeFunction("siblings", []() {

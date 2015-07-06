@@ -18,7 +18,7 @@ struct WForceStats
   using stat_t=std::atomic<uint64_t>;
   stat_t reports{0};
   stat_t allows{0};
-  
+  stat_t denieds{0};
   double latency{0};
   
 };
@@ -212,7 +212,12 @@ public:
   void timePurge(int second);
   void numberPurge(int amount);
   std::vector<LoginTuple> getTuples() const;
+  std::vector<LoginTuple> getTuplesLogin(const std::string& login) const;
+  std::vector<LoginTuple> getTuplesRemote(const ComboAddress& remote) const;
   size_t size();
+  void clear();
+  int clearLogin(const std::string& login);
+  int clearRemote(const ComboAddress& remote);
 private:
   struct TimeTag{};
   struct LoginTag{};

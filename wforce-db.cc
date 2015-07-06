@@ -11,6 +11,35 @@ size_t WForceDB::size()
   return d_logins.size();
 }
 
+void WForceDB::clear()
+{
+  std::lock_guard<std::mutex> lock(d_mutex);
+  d_logins.clear();
+}
+
+int WForceDB::clearLogin(const std::string& login) 
+{
+  std::lock_guard<std::mutex> lock(d_mutex);
+  
+  auto& loginindex = boost::multi_index::get<LoginTag>(d_logins);
+  auto count = loginindex.count(login);
+  auto range = loginindex.equal_range(login);
+  loginindex.erase(range.first, range.second);
+  return count;
+}
+
+int WForceDB::clearRemote(const ComboAddress& remote) 
+{
+  std::lock_guard<std::mutex> lock(d_mutex);
+  
+  auto& remoteindex = boost::multi_index::get<RemoteTag>(d_logins);
+  auto count = remoteindex.count(remote);
+  auto range = remoteindex.equal_range(remote);
+  remoteindex.erase(range.first, range.second);
+  return count;
+}
+
+
 void WForceDB::reportTuple(const LoginTuple& lp)
 {
   std::lock_guard<std::mutex> lock(d_mutex);
@@ -74,6 +103,31 @@ vector<LoginTuple> WForceDB::getTuples() const
     ret.push_back(a);
   return ret;
 }
+
+vector<LoginTuple> WForceDB::getTuplesLogin(const std::string& login) const
+{   
+  std::lock_guard<std::mutex> lock(d_mutex);
+  vector<LoginTuple> ret;
+
+  auto& loginindex = boost::multi_index::get<LoginTag>(d_logins);
+  auto range = loginindex.equal_range(login);
+  for(auto iter = range.first; iter != range.second ; ++ iter)
+    ret.push_back(*iter);
+  return ret;
+}
+
+vector<LoginTuple> WForceDB::getTuplesRemote(const ComboAddress& remote) const
+{   
+  std::lock_guard<std::mutex> lock(d_mutex);
+  vector<LoginTuple> ret;
+
+  auto& remoteindex = boost::multi_index::get<RemoteTag>(d_logins);
+  auto range = remoteindex.equal_range(remote);
+  for(auto iter = range.first; iter != range.second ; ++ iter)
+    ret.push_back(*iter);
+  return ret;
+}
+
 
 int WForceDB::countDiffFailures(const ComboAddress& remote, int seconds) const
 {

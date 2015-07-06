@@ -106,7 +106,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     try {
       LoginTuple lt;
       lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].bool_value();
+      lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
       lt.t=getDoubleTime();
@@ -122,6 +122,73 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       resp.body=R"({"status":"failure"})";
     }
   }
+  else if(command=="clearLogin" && req.method=="POST") {
+    Json msg;
+    for(const auto& a : req.postvars) {
+      string err;
+      msg=Json::parse(a.first, err);
+      // XXX error checking
+    }
+      resp.postvars.clear();
+    try {
+      g_wfdb.clearLogin(msg["login"].string_value());
+      resp.status=200;
+
+      resp.body=R"({"status":"ok"})";
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
+  }
+  else if(command=="clearHost" && req.method=="POST") {
+    Json msg;
+    for(const auto& a : req.postvars) {
+      string err;
+      msg=Json::parse(a.first, err);
+      // XXX error checking
+    }
+      resp.postvars.clear();
+    try {
+      g_wfdb.clearRemote(ComboAddress(msg["host"].string_value()));
+      resp.status=200;
+
+      resp.body=R"({"status":"ok"})";
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
+  }
+  else if(command=="showLogin" && req.method=="POST") {
+    Json msg;
+    for(const auto& a : req.postvars) {
+      string err;
+      msg=Json::parse(a.first, err);
+      // XXX error checking
+    }
+      resp.postvars.clear();
+    try {
+      auto tuples =g_wfdb.getTuplesLogin(msg["login"].string_value());
+      Json::array lines;
+
+      for(const auto& t : tuples) {
+	Json::object o{{"t", t.t}, {"remote", t.remote.toString()},
+				     {"success", t.success},
+				       {"pwhash", t.pwhash}};
+	lines.push_back(o);
+      }
+      Json my_json = Json::object { {"status", "ok"}, {"tuples", lines} };
+      resp.status=200;
+
+      resp.body=my_json.dump();
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
+  }
+
   else if(command=="allow" && req.method=="POST") {
     Json msg;
     for(const auto& a : req.postvars) {
@@ -141,6 +208,8 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       status=g_allow(&g_wfdb, lt);
     }
     g_stats.allows++;
+    if(status < 0)
+      g_stats.denieds++;
     msg=Json::object{{"status", status}};
       
     resp.status=200;
@@ -154,6 +223,8 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     resp.status=200;
     Json my_json = Json::object {
       { "allows", (int)g_stats.allows },
+      { "denieds", (int)g_stats.denieds },
+      { "db-size", (int)g_wfdb.size() },
       { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
       { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
       { "uptime", uptimeOfProcess()},

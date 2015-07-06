@@ -65,7 +65,7 @@ struct ServiceTuple
   uint16_t port;
 };
 void parseService(const string &descr, ServiceTuple &st);
-
+string humanTime(time_t t);
 template <typename Container>
 void
 stringtok (Container &container, string const &in,

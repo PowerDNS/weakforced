@@ -241,6 +241,16 @@ int waitFor2Data(int fd1, int fd2, int seconds, int useconds, int*fd)
 }
 
 
+string humanTime(time_t t)
+{
+  char ret[256];
+  struct tm tm;
+  localtime_r(&t, &tm);
+  strftime(ret, sizeof(ret)-1, "%c", &tm);   // %h:%M %Y-%m-%d
+  return ret;
+}
+
+
 string humanDuration(time_t passed)
 {
   ostringstream ret;

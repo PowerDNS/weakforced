@@ -1,5 +1,7 @@
 AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) -O3 -Wall -pthread 
 
+GEOIP_LIBS=-lGeoIP
+
 SUBDIRS=pdns/ext/yahttp
 
 BUILT_SOURCES=htmlfiles.h
@@ -16,6 +18,7 @@ wforce_SOURCES = \
 	wforce-db.cc \
 	wforce-lua.cc \
 	wforce-web.cc \
+	wforce-geoip.cc \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
@@ -34,5 +37,5 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -lrt -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS}
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS)
 

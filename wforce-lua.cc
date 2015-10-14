@@ -1,4 +1,5 @@
 #include "wforce.hh"
+#include "wforce-geoip.hh"
 #include <thread>
 #include "dolog.hh"
 #include "sodcrypto.hh"
@@ -197,6 +198,14 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
     });
   g_lua.writeFunction("countDiffFailures", [](ComboAddress remote, int seconds) {
       return g_wfdb.countDiffFailures(remote, seconds);
+    });
+
+  g_lua.writeFunction("initGeoIPDB", []() {
+      g_wfgeodb.initGeoIPDB();
+    });
+
+  g_lua.writeFunction("lookupCountry", [](ComboAddress address) {
+      return g_wfgeodb.lookupCountry(address);
     });
 
   g_lua.registerMember("t", &LoginTuple::t);

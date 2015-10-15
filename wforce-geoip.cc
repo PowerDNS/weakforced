@@ -1,3 +1,5 @@
+#include "config.h"
+#ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
 
 WFGeoIPDB g_wfgeodb;
@@ -40,3 +42,5 @@ std::string const WFGeoIPDB::lookupCountry(const ComboAddress& address)
       ret = retstr;
     return ret;
   }
+
+#endif // HAVE_GEOIP

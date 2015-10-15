@@ -5,6 +5,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 AC_PROG_CXX
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_MODULES([GEOIP], [geoip],[], AC_MSG_ERROR([Could not find libGeoIP]))
 PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])], [true])
 AC_PROG_LIBTOOL
 BOOST_REQUIRE([1.35])

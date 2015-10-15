@@ -1,7 +1,5 @@
 AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) -O3 -Wall -pthread 
 
-GEOIP_LIBS=-lGeoIP
-
 SUBDIRS=pdns/ext/yahttp
 
 BUILT_SOURCES=htmlfiles.h

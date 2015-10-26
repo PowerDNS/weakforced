@@ -17,6 +17,9 @@ wforce_SOURCES = \
 	wforce-lua.cc \
 	wforce-web.cc \
 	wforce-geoip.cc \
+	twmap.cc \
+	murmur3.cc \
+	count_min_sketch.cpp \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \

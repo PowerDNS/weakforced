@@ -9,8 +9,8 @@
 #include <thread>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
-#include "hyperloglog.hpp"
-#include "count_min_sketch.hpp"
+#include "ext/hyperloglog.hpp"
+#include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
 
 class TWStatsMember;
@@ -47,7 +47,7 @@ public:
   void add(const std::string& s) { int a = std::stoi(s); i += a; return; }
   void add(const std::string& s, int a) { return; }
   void sub(int a) { i -= a;  }
-  void sub(const std::string& s) { int a = std::stoi(s); i += a; return; }
+  void sub(const std::string& s) { int a = std::stoi(s); i -= a; return; }
   int get() { return i; }
   int get(const std::string& s) { return i; }
   void set(int a) { i = a; }
@@ -510,6 +510,8 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, cons
   return(true);
 }
 
+typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
+
 // This is a Lua-friendly wrapper to the Stats DB
 class TWStringStatsDBWrapper
 {
@@ -521,12 +523,24 @@ public:
     sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
   }
 
+  TWStringStatsDBWrapper(int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
+  {
+    sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
+    (void)setFields(fmvec);
+  }
+
+  bool setFields(const std::vector<pair<std::string, std::string>>& fmvec) {
+    FieldMap fm;
+    for(const auto& f : fmvec) {
+      fm.insert(std::make_pair(f.first, f.second));
+    }
+    return sdbp->setFields(fm);
+  }
+
   bool setFields(const FieldMap& fm) 
   {
     return(sdbp->setFields(fm));
   }
-
-  typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
 
   std::string getStringKey(const TWKeyType vkey)
   {

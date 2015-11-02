@@ -18,8 +18,6 @@ wforce_SOURCES = \
 	wforce-web.cc \
 	wforce-geoip.cc \
 	twmap.cc \
-	murmur3.cc \
-	count_min_sketch.cpp \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
@@ -30,7 +28,9 @@ wforce_SOURCES = \
 	sstuff.hh pdns/ext/luawrapper/include/LuaContext.hpp \
 	pdns/ext/json11/json11.cpp \
 	pdns/ext/json11/json11.hpp \
-	pdns/ext/incbin/incbin.h
+	pdns/ext/incbin/incbin.h \
+	ext/murmur3.cc \
+	ext/count_min_sketch.cpp
 
 wforce_LDFLAGS = \
 	$(AM_LDFLAGS) \

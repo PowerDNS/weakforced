@@ -121,7 +121,7 @@ public:
   int get(const std::string& s) { return cm->estimate(s.c_str()); }
   void set(int a) { return; }
   void set(const std::string& s) { return; }
-  void erase() { return; }
+  void erase() { cm->erase(); return; }
   int sum(const TWStatsBuf& vec)
   {
     int count = 0;

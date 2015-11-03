@@ -1,3 +1,11 @@
+/** 
+    Author: Daniel Alabi
+    http://alabidan.me
+    Github: alabid/countminsketch
+    Count-Min Sketch Implementation based on paper by
+    Muthukrishnan and Cormode, 2004
+**/
+
 # include <iostream>
 # include <cmath>
 # include <cstdlib>
@@ -105,6 +113,16 @@ unsigned int CountMinSketch::estimate(int item) {
 unsigned int CountMinSketch::estimate(const char *str) {
   int hashval = hashstr(str);
   return estimate(hashval);
+}
+
+// erase counts
+void CountMinSketch::erase() {
+  unsigned int i, j;
+  for (i = 0; i < d; i++) {
+    for (j = 0; j < w; j++) {
+      C[i][j] = 0;
+    }
+  }
 }
 
 // generates aj,bj from field Z_p for use in hashing

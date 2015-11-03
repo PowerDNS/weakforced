@@ -1,5 +1,7 @@
 /** 
-    Daniel Alabi
+    Author: Daniel Alabi
+    http://alabidan.me
+    Github: alabid/countminsketch
     Count-Min Sketch Implementation based on paper by
     Muthukrishnan and Cormode, 2004
 **/
@@ -58,6 +60,9 @@ public:
   // generates a hash value for a string
   // same as djb2 hash function
   unsigned int hashstr(const char *str);
+
+  // erase counts
+  void erase();
 
   // destructor
   ~CountMinSketch();

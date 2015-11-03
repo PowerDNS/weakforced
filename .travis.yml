@@ -1,0 +1,32 @@
+language: cpp
+sudo: false
+compiler:
+  - gcc
+addons:
+  apt:
+    packages:
+      - libboost-dev
+      - gcc-5
+      - g++-5
+      - libstdc++-5-dev
+      - liblua5.1-0-dev
+      - libsodium-dev
+    sources:
+      - ubuntu-toolchain-r-test
+      - debian-sid
+before_script:
+script:
+ - export CC='gcc-5' CXX='g++-5'
+ - autoreconf -i
+ - ./configure
+ - make
+ - git status
+ - git status | grep -q clean
+notifications:
+  irc:
+    channels:
+      - "irc.oftc.net#dovepower"
+    template:
+      - "%{author} @ %{repository} / %{branch} - Build:#%{build_number} : %{message} - Changes: %{compare_url} - Build details: %{build_url}"
+    use_notice: true
+    skip_join: true

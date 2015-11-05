@@ -23,6 +23,7 @@ class TestBlock(ApiTestCase):
 
         for i in range(100):
             print i
+            # FIXME 70% copy from above
             payload = dict()
             payload['login'] = 'baddie'
             payload['remote'] = '127.0.0.1'
@@ -35,6 +36,7 @@ class TestBlock(ApiTestCase):
             r.json()
 
 
+        # FIXME excact copy from above
         payload = dict()
         payload['login'] = 'baddie'
         payload['remote'] = '127.0.0.1'

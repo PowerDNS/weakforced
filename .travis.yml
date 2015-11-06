@@ -10,16 +10,24 @@ addons:
       - g++-5
       - libstdc++-5-dev
       - liblua5.1-0-dev
-      - libsodium-dev
+      - python-virtualenv
     sources:
       - ubuntu-toolchain-r-test
-      - debian-sid
 before_script:
+ - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.3-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.3-1_amd64.deb
+ - dpkg-deb -x libsodium13_1.0.3-1_amd64.deb ${HOME}/libsodium
+ - dpkg-deb -x libsodium-dev_1.0.3-1_amd64.deb ${HOME}/libsodium
+ - rm libsodium13_1.0.3-1_amd64.deb libsodium-dev_1.0.3-1_amd64.deb
+ - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
+ - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
+ - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
 script:
  - export CC='gcc-5' CXX='g++-5'
  - autoreconf -i
  - ./configure
  - make
+ - cd regression-tests
+ - ./runtests
  - git status
  - git status | grep -q clean
 notifications:
@@ -29,4 +37,3 @@ notifications:
     template:
       - "%{author} @ %{repository} / %{branch} - Build:#%{build_number} : %{message} - Changes: %{compare_url} - Build details: %{build_url}"
     use_notice: true
-    skip_join: true

@@ -52,6 +52,8 @@ This requires recent versions of libtool, automake and autoconf to be
 installed.  Secondly, we require a recent g++ (4.8), Boost 1.40+, and Lua
 5.1 development libraries.
 
+To build on OS X, `brew install readline gcc` and use
+`./configure LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include CC=gcc-5 CXX=g++-5 CPP=cpp-5`
 
 Policies
 --------

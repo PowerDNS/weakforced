@@ -4,6 +4,7 @@
 #include "dolog.hh"
 #include "sodcrypto.hh"
 #include "base64.hh"
+#include "twmap.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -32,7 +33,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 	v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
       }
       g_siblings.setState(v);
-  });
+    });
 
 
   g_lua.writeFunction("siblingListener", [](const std::string& address) {
@@ -65,7 +66,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 	nmg.addMask(p.second);
       }
       g_ACL.setState(nmg);
-  });
+    });
   g_lua.writeFunction("showACL", []() {
       vector<string> vec;
 
@@ -116,8 +117,8 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 	SBind(sock, local);
 	SListen(sock, 5);
 	auto launch=[sock, local]() {
-	    thread t(controlThread, sock, local);
-	    t.detach();
+	  thread t(controlThread, sock, local);
+	  t.detach();
 	};
 	if(g_launchWork) 
 	  g_launchWork->push_back(launch);
@@ -144,7 +145,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.writeFunction("stats", []() {
       boost::format fmt("%d reports, %d allow-queries (%d denies), %d entries in database\n");
       g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_stats.denieds % g_wfdb.size()).str();
-      
+
     });
   g_lua.writeFunction("clearDB", []() { 
       g_wfdb.clear();
@@ -183,7 +184,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       g_outputBuffer= (fmt % "Address" % "Sucesses" % "Failures" % "Note").str();
       for(const auto& s : siblings)
 	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % (s->d_ignoreself ? "Self" : "") ).str();
-      
+
     });
 
 
@@ -196,7 +197,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       return g_allow(&g_wfdb, lt); // no locking needed, we are in Lua here already!
     });
 
-  
+
   g_lua.writeFunction("countFailures", [](ComboAddress remote, int seconds) {
       return g_wfdb.countFailures(remote, seconds);
     });
@@ -214,6 +215,16 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
     });
 #endif
 
+  g_lua.writeFunction("newStringStatsDB", [](int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
+      return TWStringStatsDBWrapper(window_size, num_windows, fmvec);
+    });
+
+  g_lua.registerFunction("twAdd", (void (TWStringStatsDBWrapper::*)(const TWKeyType vkey, const std::string&, const boost::variant<std::string, int, ComboAddress>&, boost::optional<int>)) &TWStringStatsDBWrapper::add);
+  g_lua.registerFunction("twSub", (void (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::variant<std::string, int>&)) &TWStringStatsDBWrapper::sub);
+  g_lua.registerFunction("twGet", (int (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get);
+  g_lua.registerFunction("twGetCurrent", (int (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get_current);
+  g_lua.registerFunction("twGetWindows", (std::vector<int> (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get_windows);
+
   g_lua.registerMember("t", &LoginTuple::t);
   g_lua.registerMember("remote", &LoginTuple::remote);
   g_lua.registerMember("login", &LoginTuple::login);
@@ -225,7 +236,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 
   g_lua.registerFunction("tostring", &ComboAddress::toString);
   g_lua.writeFunction("newCA", [](string address) { return ComboAddress(address); } );
-  g_lua.registerFunction("countDiffFailuresAddress", static_cast<int (WForceDB::*)(const ComboAddress&, int) const>(&WForceDB::countDiffFailures));
+  g_lua.registerFunction("countDiffFailuresAddress", static_cast<int (WForceDB::*)(const ComboAddress&,  int) const>(&WForceDB::countDiffFailures));
   g_lua.registerFunction("countDiffFailuresAddressLogin", static_cast<int (WForceDB::*)(const ComboAddress&, string, int) const>(&WForceDB::countDiffFailures));
 
   g_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
@@ -235,42 +246,42 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 
   g_lua.writeFunction("setAllow", [](allow_t func) { g_allow=func;});
 
-    g_lua.writeFunction("makeKey", []() {
+  g_lua.writeFunction("makeKey", []() {
       g_outputBuffer="setKey("+newKey()+")\n";
     });
   
   g_lua.writeFunction("setKey", [](const std::string& key) {
       if(B64Decode(key, g_key) < 0) {
-	  g_outputBuffer=string("Unable to decode ")+key+" as Base64";
-	  errlog("%s", g_outputBuffer);
-	}
+	g_outputBuffer=string("Unable to decode ")+key+" as Base64";
+	errlog("%s", g_outputBuffer);
+      }
     });
 
 
   g_lua.writeFunction("testCrypto", [](string testmsg)
-   {
-     try {
-       SodiumNonce sn, sn2;
-       sn.init();
-       sn2=sn;
-       string encrypted = sodEncryptSym(testmsg, g_key, sn);
-       string decrypted = sodDecryptSym(encrypted, g_key, sn2);
+		      {
+			try {
+			  SodiumNonce sn, sn2;
+			  sn.init();
+			  sn2=sn;
+			  string encrypted = sodEncryptSym(testmsg, g_key, sn);
+			  string decrypted = sodDecryptSym(encrypted, g_key, sn2);
        
-       sn.increment();
-       sn2.increment();
+			  sn.increment();
+			  sn2.increment();
 
-       encrypted = sodEncryptSym(testmsg, g_key, sn);
-       decrypted = sodDecryptSym(encrypted, g_key, sn2);
+			  encrypted = sodEncryptSym(testmsg, g_key, sn);
+			  decrypted = sodDecryptSym(encrypted, g_key, sn2);
 
-       if(testmsg == decrypted)
-	 g_outputBuffer="Everything is ok!\n";
-       else
-	 g_outputBuffer="Crypto failed..\n";
+			  if(testmsg == decrypted)
+			    g_outputBuffer="Everything is ok!\n";
+			  else
+			    g_outputBuffer="Crypto failed..\n";
        
-     }
-     catch(...) {
-       g_outputBuffer="Crypto failed..\n";
-     }});
+			}
+			catch(...) {
+			  g_outputBuffer="Crypto failed..\n";
+			}});
 
   
   std::ifstream ifs(config);

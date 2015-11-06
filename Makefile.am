@@ -38,6 +38,6 @@ wforce_LDFLAGS = \
 	-pthread 
 
 wforce_LDADD = \
-	-lreadline -lrt -ltermcap \
+	-lreadline -ltermcap \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS)
 

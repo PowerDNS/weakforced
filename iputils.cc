@@ -95,12 +95,14 @@ bool HarvestDestinationAddress(struct msghdr* msgh, ComboAddress* destination)
     }
 #endif
 
+#if defined(IPV6_PKTINFO)
     if ((cmsg->cmsg_level == IPPROTO_IPV6) && (cmsg->cmsg_type == IPV6_PKTINFO)) {
         struct in6_pktinfo *i = (struct in6_pktinfo *) CMSG_DATA(cmsg);
         destination->sin6.sin6_addr = i->ipi6_addr;
         destination->sin4.sin_family = AF_INET6;
         return true;
     }
+#endif
   }
   return false;
 }

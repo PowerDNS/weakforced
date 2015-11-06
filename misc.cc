@@ -657,6 +657,7 @@ void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* sour
   struct cmsghdr *cmsg = NULL;
 
   if(source->sin4.sin_family == AF_INET6) {
+#ifdef IPV6_PKTINFO
     struct in6_pktinfo *pkt;
 
     msgh->msg_control = cmsgbuf;
@@ -671,6 +672,7 @@ void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* sour
     memset(pkt, 0, sizeof(*pkt));
     pkt->ipi6_addr = source->sin6.sin6_addr;
     msgh->msg_controllen = cmsg->cmsg_len; // makes valgrind happy and is slightly better style
+#endif
   }
   else {
 #ifdef IP_PKTINFO

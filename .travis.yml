@@ -23,6 +23,7 @@ before_script:
  - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoIPv6.dat.gz
  - gunzip GeoIP.dat.gz
  - gunzip GeoIPv6.dat.gz
+ - mkdir -p /usr/share/GeoIP
  - cp GeoIP.dat GeoIPv6.dat /usr/share/GeoIP
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu

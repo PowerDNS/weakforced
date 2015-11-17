@@ -161,3 +161,5 @@ int allowTupleDefault(const WForceDB* wfd, const LoginTuple& lp);
 extern WForceDB g_wfdb;
 typedef std::function<int(const WForceDB*, const LoginTuple&)> allow_t;
 extern allow_t g_allow;
+typedef std::function<void(const WForceDB*, const LoginTuple&)> report_t;
+extern report_t g_report;

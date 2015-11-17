@@ -140,6 +140,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       lt.pwhash=pwhash;
       lt.success=success;
       g_wfdb.reportTuple(lt);
+      g_report(&g_wfdb, lt);
     });
 
   g_lua.writeFunction("stats", []() {
@@ -219,11 +220,11 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       return TWStringStatsDBWrapper(window_size, num_windows, fmvec);
     });
 
-  g_lua.registerFunction("twAdd", (void (TWStringStatsDBWrapper::*)(const TWKeyType vkey, const std::string&, const boost::variant<std::string, int, ComboAddress>&, boost::optional<int>)) &TWStringStatsDBWrapper::add);
-  g_lua.registerFunction("twSub", (void (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::variant<std::string, int>&)) &TWStringStatsDBWrapper::sub);
-  g_lua.registerFunction("twGet", (int (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get);
-  g_lua.registerFunction("twGetCurrent", (int (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get_current);
-  g_lua.registerFunction("twGetWindows", (std::vector<int> (TWStringStatsDBWrapper::*)(const std::string&, const std::string&, const boost::optional<boost::variant<std::string, ComboAddress>>)) &TWStringStatsDBWrapper::get_windows);
+  g_lua.registerFunction("twAdd", &TWStringStatsDBWrapper::add);
+  g_lua.registerFunction("twSub", &TWStringStatsDBWrapper::sub);
+  g_lua.registerFunction("twGet", &TWStringStatsDBWrapper::get);
+  g_lua.registerFunction("twGetCurrent", &TWStringStatsDBWrapper::get_current);
+  g_lua.registerFunction("twGetWindows", &TWStringStatsDBWrapper::get_windows);
 
   g_lua.registerMember("t", &LoginTuple::t);
   g_lua.registerMember("remote", &LoginTuple::remote);
@@ -245,6 +246,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
 
   g_lua.writeFunction("setAllow", [](allow_t func) { g_allow=func;});
+  g_lua.writeFunction("setReport", [](report_t func) { g_report=func;});
 
   g_lua.writeFunction("makeKey", []() {
       g_outputBuffer="setKey("+newKey()+")\n";

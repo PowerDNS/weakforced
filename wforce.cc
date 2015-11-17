@@ -134,7 +134,7 @@ try
     
     string line(msg, len);
     line = sodDecryptSym(line, g_key, theirs);
-    //    cerr<<"Have decrypted line: "<<line<<endl;
+    //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
     try {
       std::lock_guard<std::mutex> lock(g_luamutex);
@@ -466,7 +466,13 @@ int defaultAllowTuple(const WForceDB* wfd, const LoginTuple& lp)
   return 0;
 }
 
+void defaultReportTuple(const WForceDB* wfd, const LoginTuple& lp)
+{
+  // do nothing: we expect Lua function to be registered if something custom is needed
+}
+
 std::function<int(const WForceDB*, const LoginTuple&)> g_allow{defaultAllowTuple};
+std::function<void(const WForceDB*, const LoginTuple&)> g_report{defaultReportTuple};
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {

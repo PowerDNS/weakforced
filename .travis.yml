@@ -12,6 +12,7 @@ addons:
       - liblua5.1-0-dev
       - python-virtualenv
       - libgeoip-dev
+      - geoip-database
     sources:
       - ubuntu-toolchain-r-test
 before_script:
@@ -20,11 +21,6 @@ before_script:
  - dpkg-deb -x libsodium-dev_1.0.3-1_amd64.deb ${HOME}/libsodium
  - rm libsodium13_1.0.3-1_amd64.deb libsodium-dev_1.0.3-1_amd64.deb
  - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
- - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoIPv6.dat.gz
- - gunzip GeoIP.dat.gz
- - gunzip GeoIPv6.dat.gz
- - mkdir -p /usr/share/GeoIP
- - cp GeoIP.dat GeoIPv6.dat /usr/share/GeoIP
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
 script:

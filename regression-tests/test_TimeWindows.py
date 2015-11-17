@@ -46,7 +46,7 @@ class TestTimeWindows(ApiTestCase):
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('flbaddie', '127.0.0.1', "1234")
+        r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 

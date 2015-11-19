@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/neilcook/weakforced.svg)](https://travis-ci.org/neilcook/weakforced)
 Weakforced
 ----------
 The goal of 'wforced' is to detect brute forcing of passwords across many

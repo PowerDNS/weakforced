@@ -590,8 +590,9 @@ public:
     }
   }
 
-  void sub(const std::string& key, const std::string& field_name, const boost::variant<std::string, int>& val)
+  void sub(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int>& val)
   {
+    std::string key = getStringKey(vkey);
     if (val.which() == 0) {
       std::string mystr = boost::get<std::string>(val);
       sdbp->sub(key, field_name, mystr);
@@ -602,8 +603,9 @@ public:
     }
   }
   
-  int get(const std::string& key, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
+  int get(const TWKeyType vkey, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
   {
+    std::string key = getStringKey(vkey);
     if (param1) {
       if (param1->which() == 0) {
 	std::string s = boost::get<std::string>(*param1);  
@@ -619,8 +621,9 @@ public:
     }
   }
 
-  int get_current(const std::string& key, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
+  int get_current(const TWKeyType vkey, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
   {
+    std::string key = getStringKey(vkey);
     if (param1) {
       if (param1->which() == 0) {
 	std::string s = boost::get<std::string>(*param1);  
@@ -636,10 +639,11 @@ public:
     }
   }
 
-  std::vector<int> get_windows(const std::string& key, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
+  std::vector<int> get_windows(const TWKeyType vkey, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1)
   {
     std::vector<int> retvec;
     
+    std::string key = getStringKey(vkey);
     if (param1) {
       if (param1->which() == 0) {
 	std::string s = boost::get<std::string>(*param1);  

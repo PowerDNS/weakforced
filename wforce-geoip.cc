@@ -7,7 +7,7 @@ WFGeoIPDB g_wfgeodb;
 void WFGeoIPDB::initGeoIPDB()
   {
     if (gi_v4)
-      GeoIP_delete(gi_v4);
+      return;
     if (GeoIP_db_avail(GEOIP_COUNTRY_EDITION)) {
       gi_v4 = GeoIP_open_type(GEOIP_COUNTRY_EDITION, GEOIP_MEMORY_CACHE);
       if (!gi_v4)
@@ -16,7 +16,7 @@ void WFGeoIPDB::initGeoIPDB()
     else 
       throw std::runtime_error("No geoip v4 country db available");
     if (gi_v6)
-      GeoIP_delete(gi_v6);
+      return;
     if (GeoIP_db_avail(GEOIP_COUNTRY_EDITION_V6)) {
       gi_v6 = GeoIP_open_type(GEOIP_COUNTRY_EDITION_V6, GEOIP_MEMORY_CACHE);
       if (!gi_v6)

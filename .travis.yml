@@ -1,5 +1,6 @@
 language: cpp
-sudo: false
+sudo: required
+dist: trusty
 compiler:
   - gcc
 addons:
@@ -11,6 +12,8 @@ addons:
       - libstdc++-5-dev
       - liblua5.1-0-dev
       - python-virtualenv
+      - libgeoip-dev
+      - geoip-database
     sources:
       - ubuntu-toolchain-r-test
 before_script:

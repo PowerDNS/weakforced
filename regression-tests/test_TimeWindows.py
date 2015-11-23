@@ -91,4 +91,45 @@ class TestTimeWindows(ApiTestCase):
         r = self.allowFunc('subbaddie', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
-        
+
+    def test_countMinPrefixv4(self):
+        self.writeFileToConsole(configFile)
+        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(12):
+            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", 'true')
+            r.json()
+
+        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
+        # Wait for the time windows to clear and then check again
+        time.sleep(15)
+        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+    def test_countMinPrefixv6(self):
+        self.writeFileToConsole(configFile)
+        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(12):
+            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", 'true')
+            r.json()
+
+        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
+        # Wait for the time windows to clear and then check again
+        time.sleep(15)
+        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)

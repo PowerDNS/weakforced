@@ -113,7 +113,7 @@ public:
     cm = std::make_shared<CountMinSketch>(COUNTMIN_EPS, COUNTMIN_GAMMA);
   }
   void add(int a) { return; }
-  void add(const std::string& s) { return; }
+  void add(const std::string& s) { cm->update(s.c_str(), 1); }
   void add(const std::string& s, int a) { cm->update(s.c_str(), a); }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
@@ -517,6 +517,8 @@ class TWStringStatsDBWrapper
 {
 public:
   std::shared_ptr<TWStatsDB<std::string>> sdbp;
+  uint8_t v4_prefix=32;
+  uint8_t v6_prefix=128;
 
   TWStringStatsDBWrapper(int window_size, int num_windows)
   {
@@ -542,6 +544,16 @@ public:
     return(sdbp->setFields(fm));
   }
 
+  void setv4Prefix(uint8_t bits)
+  {
+    v4_prefix = bits > 32 ? 32 : bits;
+  }
+
+  void setv6Prefix(uint8_t bits)
+  {
+    v6_prefix = bits > 128 ? 128 : bits;
+  }
+
   std::string getStringKey(const TWKeyType vkey)
   {
     if (vkey.which() == 0) {
@@ -551,10 +563,15 @@ public:
       return std::to_string(boost::get<int>(vkey));
     }
     else if (vkey.which() == 2) {
-      return boost::get<ComboAddress>(vkey).toString();
+      const ComboAddress ca =  boost::get<ComboAddress>(vkey);
+      if (ca.isIpv4()) {
+	return Netmask(ca, v4_prefix).toStringNetwork();
+      }
+      else if (ca.isIpv6()) {
+	return Netmask(ca, v6_prefix).toStringNetwork();
+      }
     }
-    else
-      return std::string{};
+    return std::string{};
   }
 
   void add(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int, ComboAddress>& param1, boost::optional<int> param2) 

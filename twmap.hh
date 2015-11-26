@@ -38,10 +38,6 @@ public:
   virtual int sum(const std::string& s, const TWStatsBuf& vec) = 0; // combine an array of stored values
 };
 
-class TWStatsMemberInt;
-
-typedef std::shared_ptr<TWStatsMemberInt> TWStatsMemberIntP;
-
 class TWStatsMemberInt : public TWStatsMember
 {
 public:
@@ -171,7 +167,6 @@ typedef std::map<std::string, std::string> FieldMap;
 
 const unsigned int ctwstats_map_size_soft = 524288;
 
-
 template <typename T>
 class TWStatsDB
 {
@@ -183,20 +178,12 @@ public:
     num_windows = num_w ? num_w : 1;
     std::time(&start_time);
     map_size_soft = ctwstats_map_size_soft;
-    thread t(TWStatsDB<T>::twExpireThread, this);
-    t.detach();
   }
-  
-  static void twExpireThread(TWStatsDB<T>* statsdb)
+
+  static void twExpireThread(std::shared_ptr<TWStatsDB<std::string>> sdbp)
   {
-    // spend some time every now and again expiring entries which haven't been updated 
-    // wait at least window_size seconds before doing this each time
-    int wait_interval = statsdb->windowSize();
-    
-    sleep(wait_interval);
-    statsdb->expireEntries();
+    sdbp->expireEntries();
   }	
-  void setMapSizeSoft(int num_entries) { map_size_soft = num_entries; }
   void expireEntries();
   bool setFields(const FieldMap& fields);
   int incr(const T& key, const std::string& field_name);
@@ -214,6 +201,8 @@ public:
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
   void set(const T& key, const std::string& field_name, int a);
   void set(const T& key, const std::string& field_name, const std::string& s);
+  void set_map_size_soft(unsigned int size);
+  unsigned int get_size();
 protected:
   bool find_create_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec, typename TWKeyTrackerType::iterator* ktp, bool create=1);
   bool find_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec);  
@@ -270,19 +259,29 @@ bool TWStatsDB<T>::setFields(const FieldMap& fields)
 template <typename T>
 void TWStatsDB<T>::expireEntries()
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  // spend some time every now and again expiring entries which haven't been updated 
+  // wait at least window_size seconds before doing this each time
+  unsigned int wait_interval = window_size;
 
-  // don't bother expiring if the map isn't too big
-  if (stats_db.size() <= map_size_soft)
-    return;
+  for (;;) {
+    sleep(wait_interval);
+    {
+      std::lock_guard<std::mutex> lock(mutx);
+  
+      // don't bother expiring if the map isn't too big
+      if (stats_db.size() <= map_size_soft)
+	continue;
 
-  unsigned int num_expire = stats_db.size() - map_size_soft;
+      unsigned int num_expire = stats_db.size() - map_size_soft;
 
-  while (num_expire--) {
-    const typename TWStatsDBMap::iterator it = stats_db.find(key_tracker.front());
-    if (it != stats_db.end()) {
-      stats_db.erase(it);
-      key_tracker.pop_front();
+      // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
+      while (num_expire--) {
+	const typename TWStatsDBMap::iterator it = stats_db.find(key_tracker.front());
+	if (it != stats_db.end()) {
+	  stats_db.erase(it);
+	  key_tracker.pop_front();
+	}
+      }
     }
   }
 }
@@ -567,6 +566,22 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, cons
   return(true);
 }
 
+template <typename T>
+void TWStatsDB<T>::set_map_size_soft(unsigned int size) 
+{
+  std::lock_guard<std::mutex> lock(mutx);
+
+  map_size_soft = size;
+}
+
+template <typename T>
+unsigned int TWStatsDB<T>::get_size()
+{
+  std::lock_guard<std::mutex> lock(mutx);
+
+  return stats_db.size();
+}
+
 typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
 
 // This is a Lua-friendly wrapper to the Stats DB
@@ -580,12 +595,16 @@ public:
   TWStringStatsDBWrapper(int window_size, int num_windows)
   {
     sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
+    thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
+    t.detach();
   }
 
   TWStringStatsDBWrapper(int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
   {
     sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);    
     (void)setFields(fmvec);
+    thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
+    t.detach();
   }
 
   bool setFields(const std::vector<pair<std::string, std::string>>& fmvec) {
@@ -732,6 +751,16 @@ public:
       (void) sdbp->get_windows(key, field_name, retvec);
 
     return retvec; // copy
+  }
+
+  unsigned int get_size()
+  {	
+    return sdbp->get_size();
+  }
+
+  void set_size_soft(unsigned int size) 
+  {
+    sdbp->set_map_size_soft(size);
   }
 
 };

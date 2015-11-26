@@ -227,6 +227,8 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("twGetWindows", &TWStringStatsDBWrapper::get_windows);
   g_lua.registerFunction("twSetv4Prefix", &TWStringStatsDBWrapper::setv4Prefix);
   g_lua.registerFunction("twSetv6Prefix", &TWStringStatsDBWrapper::setv6Prefix);
+  g_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
+  g_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
 
   g_lua.registerMember("t", &LoginTuple::t);
   g_lua.registerMember("remote", &LoginTuple::remote);

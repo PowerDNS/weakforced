@@ -133,3 +133,24 @@ class TestTimeWindows(ApiTestCase):
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
+
+    def test_expiry(self):
+        self.writeFileToConsole(configFile)
+        r = self.allowFunc('expirebaddie', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(20):
+            r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", 'true')
+            r.json()
+
+        r = self.allowFunc('expirebaddie', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
+        # Wait for the expiry thread to delete everything bigger than size (10) and then check again
+        time.sleep(2)
+        r = self.allowFunc('expirebaddie', '127.0.01', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)

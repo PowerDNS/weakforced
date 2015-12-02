@@ -10,6 +10,9 @@
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
 #endif
+#ifdef HAVE_GEOIP
+#include "dns_lookup.hh"
+#endif
 
 using std::thread;
 
@@ -214,7 +217,13 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.writeFunction("lookupCountry", [](ComboAddress address) {
       return g_wfgeodb.lookupCountry(address);
     });
-#endif
+#endif // HAVE_GEOIP
+
+#ifdef HAVE_GETDNS
+  g_lua.writeFunction("newDNSResolver", []() { return WFResolver(); });
+  g_lua.registerFunction("addResolver", &WFResolver::add_resolver);
+  g_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
+#endif // HAVE_GETDNS
 
   g_lua.writeFunction("newStringStatsDB", [](int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
       return TWStringStatsDBWrapper(window_size, num_windows, fmvec);

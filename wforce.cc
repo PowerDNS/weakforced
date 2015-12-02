@@ -454,6 +454,7 @@ void receiveReports(ComboAddress local)
     lt.unserialize(msg);
     vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
     g_wfdb.reportTuple(lt);
+    g_report(&g_wfdb, lt);
   }
 }
 

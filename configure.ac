@@ -7,6 +7,7 @@ AC_PROG_CC
 AC_PROG_CXX
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GEOIP], [geoip], [AC_DEFINE([HAVE_GEOIP], [1], [Define to 1 if you have geoip])], [true])
+PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 1 if you have getdns])], [true])
 PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])], [true])
 AC_PROG_LIBTOOL
 BOOST_REQUIRE([1.35])

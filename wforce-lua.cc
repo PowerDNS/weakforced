@@ -10,7 +10,7 @@
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
 #endif
-#ifdef HAVE_GEOIP
+#ifdef HAVE_GETDNS
 #include "dns_lookup.hh"
 #endif
 

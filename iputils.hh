@@ -203,6 +203,15 @@ union ComboAddress {
     else
       return "["+toString() + "]:" + boost::lexical_cast<string>(ntohs(sin4.sin_port));
   }
+
+  bool isIpv6() const 
+  {
+    return sin6.sin6_family == AF_INET6;
+  }
+  bool isIpv4() const
+  {
+    return sin4.sin_family == AF_INET;
+  }
 };
 
 /** This exception is thrown by the Netmask class and by extension by the NetmaskGroup class */
@@ -240,6 +249,11 @@ public:
     
     if(bits == 0xff)
       bits = (network.sin4.sin_family == AF_INET) ? 32 : 128;
+
+    if ((network.sin4.sin_family == AF_INET) && bits > 32)
+      bits = 32;
+    if ((network.sin6.sin6_family == AF_INET6) && bits > 128)
+      bits = 128;
     
     d_bits = bits;
     if(d_bits<32)
@@ -326,6 +340,32 @@ public:
   {
     return d_network.toString();
   }
+
+  string toStringNetwork() const
+  {
+    if (d_network.sin4.sin_family == AF_INET) {
+      struct sockaddr_in sa;
+      sa.sin_family = AF_INET;
+      sa.sin_addr.s_addr = ntohl((ntohl(d_network.sin4.sin_addr.s_addr) & d_mask));
+      return (ComboAddress(&sa).toString()+"/"+boost::lexical_cast<string>((unsigned int)d_bits));
+    }
+    else if (d_network.sin6.sin6_family == AF_INET6) {
+      uint8_t bytes = d_bits/8, n;
+      struct sockaddr_in6 sa6 = { 0 };
+      sa6.sin6_family = AF_INET6;
+
+      for (n=0; n<bytes; ++n) {
+	sa6.sin6_addr.s6_addr[n] = d_network.sin6.sin6_addr.s6_addr[n] & 0xFF;
+      }
+      uint8_t bits = d_bits % 8;
+      uint8_t mask= ~(0xFF>>bits);
+      sa6.sin6_addr.s6_addr[n] = d_network.sin6.sin6_addr.s6_addr[n] & mask;
+      return (ComboAddress(&sa6).toString()+"/"+boost::lexical_cast<string>((unsigned int)d_bits));
+    }
+    else
+      return(string(""));
+  }
+
   const ComboAddress& getNetwork() const
   {
     return d_network;

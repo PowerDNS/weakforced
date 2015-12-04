@@ -13,6 +13,8 @@
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
 
+using std::thread;
+
 class TWStatsMember;
 
 typedef std::shared_ptr<TWStatsMember> TWStatsMemberP;
@@ -35,10 +37,6 @@ public:
   virtual int sum(const TWStatsBuf& vec) = 0; // combine an array of stored values
   virtual int sum(const std::string& s, const TWStatsBuf& vec) = 0; // combine an array of stored values
 };
-
-class TWStatsMemberInt;
-
-typedef std::shared_ptr<TWStatsMemberInt> TWStatsMemberIntP;
 
 class TWStatsMemberInt : public TWStatsMember
 {
@@ -113,7 +111,7 @@ public:
     cm = std::make_shared<CountMinSketch>(COUNTMIN_EPS, COUNTMIN_GAMMA);
   }
   void add(int a) { return; }
-  void add(const std::string& s) { return; }
+  void add(const std::string& s) { cm->update(s.c_str(), 1); }
   void add(const std::string& s, int a) { cm->update(s.c_str(), a); }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
@@ -167,17 +165,26 @@ extern TWStatsTypeMap g_field_types;
 // key is field name, value is field type
 typedef std::map<std::string, std::string> FieldMap;
 
+const unsigned int ctwstats_map_size_soft = 524288;
+
 template <typename T>
 class TWStatsDB
 {
 public:
+  typedef std::list<T> TWKeyTrackerType;
   explicit TWStatsDB(int w_siz, int num_w)
   {
     window_size = w_siz ? w_siz : 1;
     num_windows = num_w ? num_w : 1;
     std::time(&start_time);
-    
+    map_size_soft = ctwstats_map_size_soft;
   }
+
+  static void twExpireThread(std::shared_ptr<TWStatsDB<std::string>> sdbp)
+  {
+    sdbp->expireEntries();
+  }	
+  void expireEntries();
   bool setFields(const FieldMap& fields);
   int incr(const T& key, const std::string& field_name);
   int decr(const T& key, const std::string& field_name);
@@ -194,8 +201,10 @@ public:
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
   void set(const T& key, const std::string& field_name, int a);
   void set(const T& key, const std::string& field_name, const std::string& s);
+  void set_map_size_soft(unsigned int size);
+  unsigned int get_size();
 protected:
-  bool find_create_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec, bool create=1);
+  bool find_create_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec, typename TWKeyTrackerType::iterator* ktp, bool create=1);
   bool find_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec);  
   int current_window() {
     std::time_t now, diff;
@@ -204,24 +213,32 @@ protected:
     int cw = (diff/window_size) % num_windows;
     return cw;
   }
-  void update_write_timestamp(std::pair<std::time_t, TWStatsMemberP>& vec)
+  void update_write_timestamp(std::pair<std::time_t, TWStatsMemberP>& vec, typename TWKeyTrackerType::iterator& kt)
   {
+    std::time_t now, write_time;
+    std::time(&now);
     // only do this if the window first mod time is 0
     if (vec.first == 0) {
-      std::time_t now, write_time;
-      std::time(&now);
       write_time = now - ((now - start_time) % window_size);
       vec.first = write_time;
     }
+    // move this key to the end of the key tracker list
+    key_tracker.splice(key_tracker.end(),
+		       key_tracker,
+		       kt);
   }
+  int windowSize() { return window_size; }
+  int numWindows() { return num_windows; }
   void clean_windows(TWStatsBuf& twsbuf);
 private:
-  typedef std::unordered_map<T, std::map<std::string, TWStatsBuf>> TWStatsDBMap;
+  TWKeyTrackerType key_tracker;
+  typedef std::unordered_map<T, std::pair<typename TWKeyTrackerType::iterator, std::map<std::string, TWStatsBuf>>> TWStatsDBMap;
   TWStatsDBMap stats_db;
   FieldMap field_map;
   int window_size;
   int num_windows;
   int cur_window = 0;
+  unsigned int map_size_soft;
   std::time_t start_time;
   mutable std::mutex mutx;
 };
@@ -237,6 +254,36 @@ bool TWStatsDB<T>::setFields(const FieldMap& fields)
   }
   field_map = fields;
   return true;
+}
+
+template <typename T>
+void TWStatsDB<T>::expireEntries()
+{
+  // spend some time every now and again expiring entries which haven't been updated 
+  // wait at least window_size seconds before doing this each time
+  unsigned int wait_interval = window_size;
+
+  for (;;) {
+    sleep(wait_interval);
+    {
+      std::lock_guard<std::mutex> lock(mutx);
+  
+      // don't bother expiring if the map isn't too big
+      if (stats_db.size() <= map_size_soft)
+	continue;
+
+      unsigned int num_expire = stats_db.size() - map_size_soft;
+
+      // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
+      while (num_expire--) {
+	const typename TWStatsDBMap::iterator it = stats_db.find(key_tracker.front());
+	if (it != stats_db.end()) {
+	  stats_db.erase(it);
+	  key_tracker.pop_front();
+	}
+      }
+    }
+  }
 }
 
 // XXX this function probably needs to move into a background thread housekeeping task
@@ -265,12 +312,12 @@ void TWStatsDB<T>::clean_windows(TWStatsBuf& twsb)
 template <typename T>
 bool TWStatsDB<T>::find_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec)
 {
-  return find_create_key_field(key, field_name, ret_vec, false);
+  return find_create_key_field(key, field_name, ret_vec, NULL, false);
 }
 
 template <typename T>
 bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_name, TWStatsBuf*& ret_vec, 
-					 bool create)
+					 typename TWKeyTrackerType::iterator* keytrack, bool create)
 {
   TWStatsBuf myrv;
   // first check if the field name is in the field map - if not we throw the query out straight away
@@ -287,10 +334,12 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
   auto mysdb = stats_db.find(key);
   if (mysdb != stats_db.end()) {
     // the key already exists let's look for the field
-    auto myfm = mysdb->second.find(field_name);
-    if (myfm != mysdb->second.end()) {
+    auto myfm = mysdb->second.second.find(field_name);
+    if (myfm != mysdb->second.second.end()) {
       // awesome this key/field combination has already been created
       ret_vec = &(myfm->second);
+      if (keytrack)
+	*keytrack = mysdb->second.first;
       // whenever we retrieve a set of windows, we clean them to remove expired windows
       clean_windows(myfm->second);
       cur_window = current_window();
@@ -303,7 +352,7 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
 	for (int i=0; i< num_windows; i++) {
 	  myrv.push_back(std::pair<std::time_t, TWStatsMemberP>((std::time_t)0, mystat()));
 	}
-	mysdb->second.insert(std::pair<std::string, TWStatsBuf>(field_name, myrv));
+	mysdb->second.second.insert(std::pair<std::string, TWStatsBuf>(field_name, myrv));
       }
     }
   }
@@ -315,15 +364,17 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
 	myrv.push_back(std::pair<std::time_t, TWStatsMemberP>((std::time_t)0, mystat()));
       }
       std::map<std::string, TWStatsBuf> myfm;
-      myfm.insert(std::pair<std::string, TWStatsBuf>(field_name, myrv));
-      stats_db.insert(std::pair<T, std::map<std::string, TWStatsBuf>>(key, myfm));
+      myfm.insert(std::make_pair(field_name, myrv));
+      // add the key at the end of the key tracker list
+      typename TWKeyTrackerType::iterator kit = key_tracker.insert(key_tracker.end(), key);
+      stats_db.insert(std::make_pair(key, std::make_pair(kit, myfm)));
     }
   }
   // update the current window
   cur_window = current_window();
   // we created the field, now just look it up again so we get the actual pointer not a copy
   if (create)
-    return (find_create_key_field(key, field_name, ret_vec, false));
+    return (find_create_key_field(key, field_name, ret_vec, keytrack, false));
   else
     return(false);
 }
@@ -345,14 +396,15 @@ int TWStatsDB<T>::add(const T& key, const std::string& field_name, int a)
 {
   TWStatsBuf* myvec;
   std::lock_guard<std::mutex> lock(mutx);
+  typename TWKeyTrackerType::iterator kt;
 
-  if (find_create_key_field(key, field_name, myvec) != true) {
+  if (find_create_key_field(key, field_name, myvec, &kt) != true) {
     return 0;
   }
   auto sm = (*myvec)[cur_window];
 
   sm.second->add(a);
-  update_write_timestamp((*myvec)[cur_window]);
+  update_write_timestamp((*myvec)[cur_window], kt);
   return sm.second->sum(*myvec);
 }
 
@@ -360,15 +412,16 @@ template <typename T>
 int TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s)
 {
   TWStatsBuf* myvec;
+  typename TWKeyTrackerType::iterator kt;
   std::lock_guard<std::mutex> lock(mutx);
 
-  if (find_create_key_field(key, field_name, myvec) != true) {
+  if (find_create_key_field(key, field_name, myvec, &kt) != true) {
     return 0;
   }
   auto sm = (*myvec)[cur_window];
 
   sm.second->add(s);
-  update_write_timestamp((*myvec)[cur_window]);
+  update_write_timestamp((*myvec)[cur_window], kt);
   return sm.second->sum(*myvec);
 }
 
@@ -376,15 +429,16 @@ template <typename T>
 int TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s, int a)
 {
   TWStatsBuf* myvec;
+  typename TWKeyTrackerType::iterator kt;
   std::lock_guard<std::mutex> lock(mutx);
 
-  if (find_create_key_field(key, field_name, myvec) != true) {
+  if (find_create_key_field(key, field_name, myvec, &kt) != true) {
     return 0;
   }
   auto sm = (*myvec)[cur_window];
 
   sm.second->add(s, a);
-  update_write_timestamp((*myvec)[cur_window]);
+  update_write_timestamp((*myvec)[cur_window], kt);
   return sm.second->sum(s, *myvec);
 }
 
@@ -392,15 +446,16 @@ template <typename T>
 int TWStatsDB<T>::sub(const T& key, const std::string& field_name, int a)
 {
   TWStatsBuf* myvec;
+  typename TWKeyTrackerType::iterator kt;
   std::lock_guard<std::mutex> lock(mutx);
 
-  if (find_create_key_field(key, field_name, myvec) != true) {
+  if (find_create_key_field(key, field_name, myvec, &kt) != true) {
     return 0;
   }
   auto sm = (*myvec)[cur_window];
 
   sm.second->sub(a);
-  update_write_timestamp((*myvec)[cur_window]);
+  update_write_timestamp((*myvec)[cur_window], kt);
   return sm.second->sum(*myvec);
 }
 
@@ -408,15 +463,16 @@ template <typename T>
 int TWStatsDB<T>::sub(const T& key, const std::string& field_name, const std::string& s)
 {
   TWStatsBuf* myvec;
+  typename TWKeyTrackerType::iterator kt;
   std::lock_guard<std::mutex> lock(mutx);
 
-  if (find_create_key_field(key, field_name, myvec) != true) {
+  if (find_create_key_field(key, field_name, myvec, &kt) != true) {
     return 0;
   }
   auto sm = (*myvec)[cur_window];
 
   sm.second->sub(s);
-  update_write_timestamp((*myvec)[cur_window]);
+  update_write_timestamp((*myvec)[cur_window], kt);
   return sm.second->sum(*myvec);
 }
 
@@ -510,6 +566,22 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, cons
   return(true);
 }
 
+template <typename T>
+void TWStatsDB<T>::set_map_size_soft(unsigned int size) 
+{
+  std::lock_guard<std::mutex> lock(mutx);
+
+  map_size_soft = size;
+}
+
+template <typename T>
+unsigned int TWStatsDB<T>::get_size()
+{
+  std::lock_guard<std::mutex> lock(mutx);
+
+  return stats_db.size();
+}
+
 typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
 
 // This is a Lua-friendly wrapper to the Stats DB
@@ -517,16 +589,22 @@ class TWStringStatsDBWrapper
 {
 public:
   std::shared_ptr<TWStatsDB<std::string>> sdbp;
+  uint8_t v4_prefix=32;
+  uint8_t v6_prefix=128;
 
   TWStringStatsDBWrapper(int window_size, int num_windows)
   {
     sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
+    thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
+    t.detach();
   }
 
   TWStringStatsDBWrapper(int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
   {
-    sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
+    sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);    
     (void)setFields(fmvec);
+    thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
+    t.detach();
   }
 
   bool setFields(const std::vector<pair<std::string, std::string>>& fmvec) {
@@ -542,6 +620,16 @@ public:
     return(sdbp->setFields(fm));
   }
 
+  void setv4Prefix(uint8_t bits)
+  {
+    v4_prefix = bits > 32 ? 32 : bits;
+  }
+
+  void setv6Prefix(uint8_t bits)
+  {
+    v6_prefix = bits > 128 ? 128 : bits;
+  }
+
   std::string getStringKey(const TWKeyType vkey)
   {
     if (vkey.which() == 0) {
@@ -551,10 +639,15 @@ public:
       return std::to_string(boost::get<int>(vkey));
     }
     else if (vkey.which() == 2) {
-      return boost::get<ComboAddress>(vkey).toString();
+      const ComboAddress ca =  boost::get<ComboAddress>(vkey);
+      if (ca.isIpv4()) {
+	return Netmask(ca, v4_prefix).toStringNetwork();
+      }
+      else if (ca.isIpv6()) {
+	return Netmask(ca, v6_prefix).toStringNetwork();
+      }
     }
-    else
-      return std::string{};
+    return std::string{};
   }
 
   void add(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int, ComboAddress>& param1, boost::optional<int> param2) 
@@ -658,6 +751,16 @@ public:
       (void) sdbp->get_windows(key, field_name, retvec);
 
     return retvec; // copy
+  }
+
+  unsigned int get_size()
+  {	
+    return sdbp->get_size();
+  }
+
+  void set_size_soft(unsigned int size) 
+  {
+    sdbp->set_map_size_soft(size);
   }
 
 };

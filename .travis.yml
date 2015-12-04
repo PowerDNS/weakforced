@@ -31,8 +31,8 @@ before_script:
  - mkdir -p ${HOME}/getdns/usr/lib/pkgconfig
  - echo -e "prefix=${HOME}/usr\nexec_prefix=[prefix]\nlibdir=[exec_prefix]/lib\nincludedir=[prefix]/include\n\nName@ getdns\nVersion@ 0.5.1\nDescription@ A modern asynchronous DNS library\n\nLibs@ -L[libdir] -lgetdns\nCflags@ -I[includedir]\n" >${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - sed -i -e 's/@/:/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
- - sed -i -e 's/[/${/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
- - sed -i -e 's/\]/}/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
+ - sed -i -e 's/\[/${/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
+ - sed -i -e 's/]/}/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - cat ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${HOME}/getdns/usr/lib/pkgconfig
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/getdns/usr/lib/

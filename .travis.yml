@@ -34,6 +34,8 @@ before_script:
  - sed -i -e 's/\[/${/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - sed -i -e 's/]/}/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - cat ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
+ - ls ${HOME}/getdns/usr/include
+ - cat ${HOME}/getdns/usr/include/getdns/getdns.h
  - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${HOME}/getdns/usr/lib/pkgconfig
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/getdns/usr/lib/
 script:

@@ -14,7 +14,6 @@ addons:
       - python-virtualenv
       - libgeoip-dev
       - geoip-database
-      - libssl1.0.0
     sources:
       - ubuntu-toolchain-r-test
 before_script:
@@ -45,6 +44,7 @@ before_script:
  - rm libunbound2_1.5.6-1_amd64.deb
  - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${HOME}/libunbound/usr/lib/pkgconfig
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/libunbound/usr/lib/x86_64-linux-gnu
+ - dig @208.67.222.222 a.root-servers.net
 script:
  - export CC='gcc-5' CXX='g++-5'
  - autoreconf -i

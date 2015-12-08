@@ -223,6 +223,30 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.writeFunction("newDNSResolver", []() { return WFResolver(); });
   g_lua.registerFunction("addResolver", &WFResolver::add_resolver);
   g_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
+  g_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);
+  g_lua.registerFunction("lookupRBL", &WFResolver::lookupRBL);
+  // The following "show.." function are mainly for regression tests
+  g_lua.writeFunction("showAddrByName", [](WFResolver resolv, string name) {
+      std::vector<std::string> retvec = resolv.lookup_address_by_name(name);
+      boost::format fmt("%s %s\n");
+      for (const auto s : retvec) {
+	g_outputBuffer += (fmt % name % s).str();
+      }
+    });
+  g_lua.writeFunction("showNameByAddr", [](WFResolver resolv, ComboAddress address) {
+      std::vector<std::string> retvec = resolv.lookup_name_by_address(address);
+      boost::format fmt("%s %s\n");
+      for (const auto s : retvec) {
+  	g_outputBuffer += (fmt % address.toString() % s).str();
+      }
+    });
+    g_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) {
+	std::vector<std::string> retvec = resolv.lookupRBL(address, rblname);
+	boost::format fmt("%s\n");
+	for (const auto s : retvec) {
+	  g_outputBuffer += (fmt % s).str();
+	}	
+      });	
 #endif // HAVE_GETDNS
 
   g_lua.writeFunction("newStringStatsDB", [](int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {

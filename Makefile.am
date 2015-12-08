@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) -O3 -Wall -pthread
+AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) -O3 -Wall -pthread
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=pdns/ext/yahttp
@@ -13,6 +13,7 @@ EXTRA_DIST= wforce.conf README.md html
 bin_PROGRAMS = wforce
 wforce_SOURCES = \
 	base64.hh \
+	dns_lookup.cc \
 	wforce.cc wforce.hh \
 	wforce-db.cc \
 	wforce-lua.cc \
@@ -39,5 +40,5 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)
 

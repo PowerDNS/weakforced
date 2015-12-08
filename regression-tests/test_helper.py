@@ -4,7 +4,7 @@ import requests
 import urlparse
 import unittest
 import json
-from subprocess import call
+from subprocess import call, check_output
 
 DAEMON = os.environ.get('DAEMON', 'authoritative')
 
@@ -31,7 +31,7 @@ class ApiTestCase(unittest.TestCase):
         return call(["../wforce", "-C", "../wforce.conf", "-e", cmds])
 
     def writeCmdToConsole(self, cmd):
-        return call(["../wforce", "-C", "../wforce.conf", "-e", cmd])
+        return check_output(["../wforce", "-C", "../wforce.conf", "-e", cmd])
 
     def allowFunc(self, login, remote, pwhash):
         payload = dict()

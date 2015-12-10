@@ -49,6 +49,14 @@ function report(wfdb, lt)
 	-- twSub() can be used for the integer type. It does what you expect
 end
 
+-- initialise some DNS lookup objects
+resolv = newDNSResolver()
+rblresolv = newDNSResolver()
+
+-- Configure some resolvers for it to use
+resolv:addResolver("8.8.8.8", 53)
+rblresolv:addResolver("127.0.0.1", 5353)
+
 function allow(wfdb, lt)
 	if(bulkRetrievers:match(lt.remote))
 	then
@@ -56,10 +64,28 @@ function allow(wfdb, lt)
 	end
 
 	-- Example GeoIP lookup
-	--	if (lookupCountry(lt.remote) ~= "GB")
-	-- then
-	--	return -1
-	-- end
+	if (lookupCountry(lt.remote) ~= "GB")
+	then
+		return -1
+	end
+
+	-- Example DNS lookups
+	dnames = resolv:lookupNameByAddr(lt.remote)
+	for i, dname in ipairs(dnames) do
+	    if (string.match(dname, "XXX"))
+	    then
+		return -1
+	    end
+	end
+
+	dnames = rblresolv:lookupRBL(lt.remote, "sbl.spamhaus.org")
+	for i, dname in ipairs(dnames) do
+	    if (string.match(dname, "127.0.0.2"))
+	    then
+		-- tarpit the connection
+		return 5
+	    end
+	end
 
 	-- twGet() returns the "sum" of all the values over all the time windows. 
 	-- For integer and countmin types, this is just a sum. For HLL, it's a union.

@@ -6,7 +6,7 @@ from test_helper import ApiTestCase
 
 class TestDNSLookups(ApiTestCase):
 
-    def test_invalidPasswords(self):
+    def test_DNSLookups(self):
         self.writeCmdToConsole("rootca4 = newCA(\"198.41.0.4\")")
         self.writeCmdToConsole("rootca6 = newCA(\"2001:503:ba3e::2:30\")")
         self.writeCmdToConsole("rblca = newCA(\"127.0.0.2\")")

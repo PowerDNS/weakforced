@@ -268,6 +268,8 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerMember("login", &LoginTuple::login);
   g_lua.registerMember("pwhash", &LoginTuple::pwhash);
   g_lua.registerMember("success", &LoginTuple::success);
+  g_lua.registerMember("attrs", &LoginTuple::attrs);
+  g_lua.registerMember("attrs_mv", &LoginTuple::attrs_mv);
   g_lua.writeVariable("wfdb", &g_wfdb);
   g_lua.registerFunction("report", &WForceDB::reportTuple);
   g_lua.registerFunction("getTuples", &WForceDB::getTuples);

@@ -24,10 +24,10 @@ before_script:
  - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
- - wget http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns1_0.5.1-1_amd64.deb http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns-dev_0.5.1-1_amd64.deb
- - dpkg-deb -x libgetdns-dev_0.5.1-1_amd64.deb ${HOME}/getdns
- - dpkg-deb -x libgetdns1_0.5.1-1_amd64.deb ${HOME}/getdns
- - rm libgetdns-dev_0.5.1-1_amd64.deb libgetdns1_0.5.1-1_amd64.deb
+ - wget http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns1_0.5.1-2_amd64.deb http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns-dev_0.5.1-2_amd64.deb
+ - dpkg-deb -x libgetdns-dev_0.5.1-2_amd64.deb ${HOME}/getdns
+ - dpkg-deb -x libgetdns1_0.5.1-2_amd64.deb ${HOME}/getdns
+ - rm libgetdns-dev_0.5.1-2_amd64.deb libgetdns1_0.5.1-2_amd64.deb
  - mkdir -p ${HOME}/getdns/usr/lib/pkgconfig
  - echo -e "prefix=${HOME}/getdns/usr\nexec_prefix=[prefix]\nlibdir=[exec_prefix]/lib/x86_64-linux-gnu\nincludedir=[prefix]/include\n\nName@ getdns\nVersion@ 0.5.1\nDescription@ A modern asynchronous DNS library\n\nLibs@ -L[libdir] -lgetdns\nCflags@ -I[includedir]\n" >${HOME}/getdns/usr/lib/pkgconfig/getdns.pc
  - sed -i -e 's/@/:/g' ${HOME}/getdns/usr/lib/pkgconfig/getdns.pc

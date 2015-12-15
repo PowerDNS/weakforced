@@ -34,26 +34,34 @@ class ApiTestCase(unittest.TestCase):
         return check_output(["../wforce", "-C", "../wforce.conf", "-e", cmd])
 
     def allowFunc(self, login, remote, pwhash):
+        return self.allowFuncAttrs(login, remote, pwhash, {})
+
+    def allowFuncAttrs(self, login, remote, pwhash, attrs):
         payload = dict()
         payload['login'] = login
         payload['remote'] = remote
         payload['pwhash'] = pwhash
+        payload['attrs'] = attrs
         return self.session.post(
             self.url("/?command=allow"),
             data=json.dumps(payload),
-            headers={'content-type': 'application/x-www-form-urlencoded'}) # FIXME: content-type should be something/json but that kills wforce
+            headers={'Content-Type': 'application/json'}) 
+
 
     def reportFunc(self, login, remote, pwhash, success):
+        return self.reportFuncAttrs(login, remote, pwhash, success, {})
+
+    def reportFuncAttrs(self, login, remote, pwhash, success, attrs):
         payload = dict()
         payload['login'] = login
         payload['remote'] = remote
         payload['pwhash'] = pwhash
         payload['success'] = success
+        payload['attrs'] = attrs
         return self.session.post(
             self.url("/?command=report"),
             data=json.dumps(payload),
-            headers={'content-type': 'application/x-www-form-urlencoded'}) 
-
+            headers={'Content-Type': 'application/json'}) 
 
     def url(self, relative_url):
         return urlparse.urljoin(self.server_url, relative_url)

@@ -40,6 +40,29 @@ bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
   return auth_ok;
 }
 
+static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
+{
+  using namespace json11;
+  Json attrs = msg["attrs"];
+  if (attrs.is_object()) {
+    auto attrs_obj = attrs.object_items();
+    for (auto it=attrs_obj.begin(); it!=attrs_obj.end(); ++it) {
+      string attr_name = it->first;
+      if (it->second.is_string()) {
+	lt.attrs.insert(std::make_pair(attr_name, it->second.string_value()));
+      }
+      else if (it->second.is_array()) {
+	auto av_list = it->second.array_items();
+	std::vector<std::string> myvec;
+	for (auto avit=av_list.begin(); avit!=av_list.end(); ++avit) {
+	  myvec.push_back(avit->string_value());
+	}
+	lt.attrs_mv.insert(std::make_pair(attr_name, myvec));
+      }
+    }
+  }
+
+}
 
 static void connectionThread(int sock, ComboAddress remote, string password)
 {
@@ -73,8 +96,6 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     // request stays incomplete
   }
 
-
-  
   string command=req.getvars["command"];
 
   string callback;
@@ -88,134 +109,166 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 
   YaHTTP::Response resp(req);
 
+  string ctype = req.headers["Content-Type"];
   if (!compareAuthorization(req, password)) {
     errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, remote.toStringWithPort());
     resp.status=401;
-    resp.body="<h1>Unauthorized</h1>";
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":" << "Unauthorized" << "}";
+    resp.body=ss.str();
     resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
-
+  }
+  else if ((command != "") && (ctype.compare("application/json") != 0)) {
+    errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, remote.toStringWithPort());
+    resp.status = 415;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":" << "Invalid Content-Type - must be application/json" << "}";
+    resp.body=ss.str();
   }
   else if(command=="report" && req.method=="POST") {
     Json msg;
-    for(const auto& a : req.postvars) {
-      string err;
-      msg=Json::parse(a.first, err);
-      // XXX error checking
-    }
-      resp.postvars.clear();
-    try {
-      LoginTuple lt;
-      lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
-      lt.pwhash=msg["pwhash"].string_value();
-      lt.login=msg["login"].string_value();
-      lt.t=getDoubleTime();
-      spreadReport(lt);
-      g_wfdb.reportTuple(lt);
-      g_stats.reports++;
-      resp.status=200;
-      g_report(&g_wfdb, lt);
-
-      resp.body=R"({"status":"ok"})";
-    }
-    catch(...) {
+    string err;
+    msg=Json::parse(req.body, err);
+    if (msg.is_null()) {
       resp.status=500;
-      resp.body=R"({"status":"failure"})";
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      resp.body=ss.str();
+    }
+    else {
+      resp.postvars.clear();
+      try {
+	LoginTuple lt;
+	lt.remote=ComboAddress(msg["remote"].string_value());
+	lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
+	lt.pwhash=msg["pwhash"].string_value();
+	lt.login=msg["login"].string_value();
+	setLtAttrs(lt, msg);
+	lt.t=getDoubleTime();
+	spreadReport(lt);
+	g_wfdb.reportTuple(lt);
+	g_stats.reports++;
+	resp.status=200;
+	g_report(&g_wfdb, lt);
+
+	resp.body=R"({"status":"ok"})";
+      }
+      catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure"})";
+      }
     }
   }
   else if(command=="clearLogin" && req.method=="POST") {
     Json msg;
-    for(const auto& a : req.postvars) {
-      string err;
-      msg=Json::parse(a.first, err);
-      // XXX error checking
-    }
-      resp.postvars.clear();
-    try {
-      g_wfdb.clearLogin(msg["login"].string_value());
-      resp.status=200;
-
-      resp.body=R"({"status":"ok"})";
-    }
-    catch(...) {
+    string err;
+    msg=Json::parse(req.body, err);
+    if (msg.is_null()) {
       resp.status=500;
-      resp.body=R"({"status":"failure"})";
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      resp.body=ss.str();
+    }
+    else {
+      resp.postvars.clear();
+      try {
+	g_wfdb.clearLogin(msg["login"].string_value());
+	resp.status=200;
+	resp.body=R"({"status":"ok"})";
+      }
+      catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure"})";
+      }
     }
   }
   else if(command=="clearHost" && req.method=="POST") {
     Json msg;
-    for(const auto& a : req.postvars) {
-      string err;
-      msg=Json::parse(a.first, err);
-      // XXX error checking
-    }
-      resp.postvars.clear();
-    try {
-      g_wfdb.clearRemote(ComboAddress(msg["host"].string_value()));
-      resp.status=200;
-
-      resp.body=R"({"status":"ok"})";
-    }
-    catch(...) {
+    string err;
+    msg=Json::parse(req.body, err);
+    if (msg.is_null()) {
       resp.status=500;
-      resp.body=R"({"status":"failure"})";
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      resp.body=ss.str();
+    }
+    else {
+      resp.postvars.clear();
+      try {
+	g_wfdb.clearRemote(ComboAddress(msg["host"].string_value()));
+	resp.status=200;
+
+	resp.body=R"({"status":"ok"})";
+      }
+      catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure"})";
+      }
     }
   }
   else if(command=="showLogin" && req.method=="POST") {
     Json msg;
-    for(const auto& a : req.postvars) {
-      string err;
-      msg=Json::parse(a.first, err);
-      // XXX error checking
-    }
-      resp.postvars.clear();
-    try {
-      auto tuples =g_wfdb.getTuplesLogin(msg["login"].string_value());
-      Json::array lines;
-
-      for(const auto& t : tuples) {
-	Json::object o{{"t", t.t}, {"remote", t.remote.toString()},
-				     {"success", t.success},
-				       {"pwhash", t.pwhash}};
-	lines.push_back(o);
-      }
-      Json my_json = Json::object { {"status", "ok"}, {"tuples", lines} };
-      resp.status=200;
-
-      resp.body=my_json.dump();
-    }
-    catch(...) {
+    string err;
+    msg=Json::parse(req.body, err);
+    if (msg.is_null()) {
       resp.status=500;
-      resp.body=R"({"status":"failure"})";
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      resp.body=ss.str();
+    }
+    else {
+      resp.postvars.clear();
+      try {
+	auto tuples =g_wfdb.getTuplesLogin(msg["login"].string_value());
+	Json::array lines;
+
+	for(const auto& t : tuples) {
+	  Json::object o{{"t", t.t}, {"remote", t.remote.toString()},
+				       {"success", t.success},
+					 {"pwhash", t.pwhash}};
+	  lines.push_back(o);
+	}
+	Json my_json = Json::object { {"status", "ok"}, {"tuples", lines} };
+	resp.status=200;
+	resp.body=my_json.dump();
+      }
+      catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure"})";
+      }
     }
   }
-
   else if(command=="allow" && req.method=="POST") {
     Json msg;
-    for(const auto& a : req.postvars) {
-      string err;
-      msg=Json::parse(a.first, err);
-      // XXX error checking
+    string err;
+    msg=Json::parse(req.body, err);
+    if (msg.is_null()) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      resp.body=ss.str();
     }
-
-    LoginTuple lt;
-    lt.remote=ComboAddress(msg["remote"].string_value());
-    lt.success=msg["success"].bool_value();
-    lt.pwhash=msg["pwhash"].string_value();
-    lt.login=msg["login"].string_value();
-    int status=0;
-    {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      status=g_allow(&g_wfdb, lt);
-    }
-    g_stats.allows++;
-    if(status < 0)
-      g_stats.denieds++;
-    msg=Json::object{{"status", status}};
+    else {
+      LoginTuple lt;
+      lt.remote=ComboAddress(msg["remote"].string_value());
+      lt.success=msg["success"].bool_value();
+      lt.pwhash=msg["pwhash"].string_value();
+      lt.login=msg["login"].string_value();
+      setLtAttrs(lt, msg);
+      int status=0;
+      {
+	std::lock_guard<std::mutex> lock(g_luamutex);
+	status=g_allow(&g_wfdb, lt);
+      }
+      g_stats.allows++;
+      if(status < 0)
+	g_stats.denieds++;
+      msg=Json::object{{"status", status}};
       
-    resp.status=200;
-    resp.postvars.clear();
-    resp.body=msg.dump();
+      resp.status=200;
+      resp.postvars.clear();
+      resp.body=msg.dump();
+    }
   }
   else if(command=="stats") {
     struct rusage ru;

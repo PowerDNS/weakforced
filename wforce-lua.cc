@@ -222,26 +222,27 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
 #ifdef HAVE_GETDNS
   g_lua.writeFunction("newDNSResolver", []() { return WFResolver(); });
   g_lua.registerFunction("addResolver", &WFResolver::add_resolver);
+  g_lua.registerFunction("setRequestTimeout", &WFResolver::set_request_timeout);
   g_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
   g_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);
   g_lua.registerFunction("lookupRBL", &WFResolver::lookupRBL);
   // The following "show.." function are mainly for regression tests
   g_lua.writeFunction("showAddrByName", [](WFResolver resolv, string name) {
-      std::vector<std::string> retvec = resolv.lookup_address_by_name(name);
+      std::vector<std::string> retvec = resolv.lookup_address_by_name(name, 1);
       boost::format fmt("%s %s\n");
       for (const auto s : retvec) {
 	g_outputBuffer += (fmt % name % s).str();
       }
     });
   g_lua.writeFunction("showNameByAddr", [](WFResolver resolv, ComboAddress address) {
-      std::vector<std::string> retvec = resolv.lookup_name_by_address(address);
+      std::vector<std::string> retvec = resolv.lookup_name_by_address(address, 1);
       boost::format fmt("%s %s\n");
       for (const auto s : retvec) {
   	g_outputBuffer += (fmt % address.toString() % s).str();
       }
     });
     g_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) {
-	std::vector<std::string> retvec = resolv.lookupRBL(address, rblname);
+	std::vector<std::string> retvec = resolv.lookupRBL(address, rblname, 1);
 	boost::format fmt("%s\n");
 	for (const auto s : retvec) {
 	  g_outputBuffer += (fmt % s).str();
@@ -268,6 +269,8 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerMember("login", &LoginTuple::login);
   g_lua.registerMember("pwhash", &LoginTuple::pwhash);
   g_lua.registerMember("success", &LoginTuple::success);
+  g_lua.registerMember("attrs", &LoginTuple::attrs);
+  g_lua.registerMember("attrs_mv", &LoginTuple::attrs_mv);
   g_lua.writeVariable("wfdb", &g_wfdb);
   g_lua.registerFunction("report", &WForceDB::reportTuple);
   g_lua.registerFunction("getTuples", &WForceDB::getTuples);

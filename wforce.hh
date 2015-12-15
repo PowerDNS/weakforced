@@ -90,6 +90,8 @@ struct LoginTuple
   string login;
   string pwhash;
   bool success;
+  std::map<std::string, std::string> attrs; // additional attributes
+  std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
   std::string serialize() const;
   void unserialize(const std::string& src);
   bool operator<(const LoginTuple& r) const

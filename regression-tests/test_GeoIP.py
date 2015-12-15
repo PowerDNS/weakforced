@@ -8,7 +8,7 @@ configFile = "./wforce-tw.conf"
 
 class TestGeoIP(ApiTestCase):
 
-    def test_invalidPasswords(self):
+    def test_geoIP(self):
         self.writeFileToConsole(configFile)
         # don't allow IPs from Japan (arbitrary)
         r = self.allowFunc('baddie', '112.78.112.20', "1234")

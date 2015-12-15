@@ -24,7 +24,7 @@ before_script:
  - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
- - wget http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns1_0.5.1-1_amd64.deb http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns-dev_0.5.1-1_amd64.deb
+ - wget http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns1_0.5.1-2_amd64.deb http://http.us.debian.org/debian/pool/main/g/getdns/libgetdns-dev_0.5.1-2_amd64.deb
  - dpkg-deb -x libgetdns-dev_0.5.1-2_amd64.deb ${HOME}/getdns
  - dpkg-deb -x libgetdns1_0.5.1-2_amd64.deb ${HOME}/getdns
  - rm libgetdns-dev_0.5.1-2_amd64.deb libgetdns1_0.5.1-2_amd64.deb

@@ -18,6 +18,7 @@ class TestDNSLookups(ApiTestCase):
             self.writeCmdToConsole("resolv = newDNSResolver()")
             self.writeCmdToConsole("resolv:addResolver(\"192.168.1.254\", 53)")
             res = self.writeCmdToConsole("showAddrByName(resolv, \"a.root-servers.net.\")")
+            
         self.assertNotEqual(str.find(res,'198.41.0.4'), -1)
         self.assertNotEqual(str.find(res,'2001:503:ba3e::2:30'), -1)
         res = self.writeCmdToConsole("showNameByAddr(resolv, rootca4)")
@@ -26,4 +27,18 @@ class TestDNSLookups(ApiTestCase):
         self.assertNotEqual(str.find(res,'a.root-servers.net.'), -1)
         res = self.writeCmdToConsole("showRBL(resolv, rblca, \"sbl.spamhaus.org.\")")
         self.assertNotEqual(str.find(res,'127.0.0.2'), -1)
+
+    def test_DNSRetries(self):
+        self.writeCmdToConsole("resolv = newDNSResolver()")
+        self.writeCmdToConsole("resolv:addResolver(\"208.67.222.222\", 5353)")
+        self.writeCmdToConsole("resolv:addResolver(\"208.67.222.222\", 53)")
+        # the DNS show... functions are hardcoded to retry once if encountering a timeout
+        res = self.writeCmdToConsole("showAddrByName(resolv, \"a.root-servers.net.\")")
+        if ((str.find(res, '198.41.0.4') == -1) and (str.find(res, "a.root-servers.net") != -1)):
+            # this means there is a middlebox messing with us - replace 192.168.1.254 with your middlebox IP
+            self.writeCmdToConsole("resolv = newDNSResolver()")
+            self.writeCmdToConsole("resolv:addResolver(\"192.168.1.254\", 5353)")
+            self.writeCmdToConsole("resolv:addResolver(\"192.168.1.254\", 53)")
+            res = self.writeCmdToConsole("showAddrByName(resolv, \"a.root-servers.net.\")")
+        self.assertNotEqual(str.find(res,'198.41.0.4'), -1)
         

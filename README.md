@@ -10,7 +10,7 @@ hundreds of millions of users.  The current version of weakforced is not
 quit there yet.
 
 Weakforced is a project by PowerDNS and Dovecot. For now, if you have any questions, email
-bert.hubert@powerdns.com.
+neil.cook@open-xchange.com
 
 Here is how it works:
  * Report successful logins via JSON http-api
@@ -50,7 +50,8 @@ $ make
 
 This requires recent versions of libtool, automake and autoconf to be
 installed.  Secondly, we require a recent g++ (4.8), Boost 1.40+, and Lua
-5.1 development libraries.
+5.1 development libraries, as well as the getdns development libraries (if you
+want to use the DNS lookup functionality). 
 
 To build on OS X, `brew install readline gcc` and use
 `./configure LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include CC=gcc-5 CXX=g++-5 CPP=cpp-5`
@@ -79,7 +80,9 @@ function allow(wfdb, lt)
 end
 ```
 
-Many more metrics are available to base decisions on. Some example code is in [wforce.conf](wforce.conf).
+Many more metrics are available to base decisions on. Some example
+code is in [wforce.conf](wforce.conf), and more extensive examples are
+in [wforce.conf.example](wforce.conf.example).
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
@@ -103,6 +106,26 @@ $ curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234"}' 
 
 It appears we are not!
 
+You can also provide additional information for use by weakforce using
+the optional "attrs" object. An example:
+
+```
+$ curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1",
+"pwhash":"1234", "attrs":{"attr1":"val1", "attr2":"val2"}}' \
+  http://127.0.0.1:8084/?command=allow -u ahu:super
+{"status": 0}
+```
+
+An example using the optional attrs object using multi-valued
+attributes:
+
+```
+$ curl -X POST --data '{"login":"ahu", "remote": "127.0.0.1",
+"pwhash":"1234", "attrs":{"attr1":"val1", "attr2":["val2","val3"]}}' \
+  http://127.0.0.1:8084/?command=allow -u ahu:super
+{"status": 0}
+```
+
 Console
 -------
 Available over TCP/IP, like this:
@@ -124,12 +147,13 @@ To get some stats, try:
 
 Spec
 ----
-We report 4 fields in the LoginTuple
+We report 4 mandatory fields plus one optional field in the LoginTuple
 
  * login (string): the user name or number or whatever
  * remote (ip address): the address the user arrived on
  * pwhash (string): a highly truncated hash of the password used
- * succes (boolean): was the login a success or not?
+ * success (boolean): was the login a success or not?
+ * attrs (json object): additional information about the login. For example, attributes from a user database.
 
 All are rather clear, but pwhash deserves some clarification. In order to
 distinguish actual brute forcing of a password, and repeated incorrect but

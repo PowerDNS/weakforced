@@ -38,7 +38,9 @@ function report(wfdb, lt)
 	cur_ct = lookupCountry(lt.remote) 
 
 	-- A note on keys: You can use strings or ComboAddresses. ComboAdddress will be converted to a string and then used as a key.
-	-- XXX - TODO - allow to specify a netmask when creating the DB, which will be used for all ComboAddress keys
+	-- You can specify a separate ipv4 and v6 netmasks for the DB, which will be used for all ComboAddress keys, thus allowing aggregation of IP stats
+	-- Example for IPv4 addresses: sdb:twSetv4Prefix(24) 
+	-- Example for IPv6 addresses: sdb:twSetv6Prefix(64)
 	-- twAdd() is the generic way to add things to the stats bucket. For integers it does addition
 	sdb:twAdd(lt.login, "countLogins", 1)
 	sdb:twAdd(lt.remote, "countLogins", 1)
@@ -62,6 +64,23 @@ function allow(wfdb, lt)
 	then
 		return 0
 	end
+
+	// check optional attrs for things that indicate badness
+        for k, v in pairs(lt.attrs) do
+             if ((k == "accountStatus") and (v == "blocked"))
+             then
+                return -1
+             end
+        end
+	// attrs can be multi-valued, in which case they will appear in attrs_mv automagically
+        for k, v in pairs(lt.attrs_mv) do
+             for i, vi in ipairs(v) do
+                  if ((k == "countryList") and (vi == "Blockmestan"))
+                  then
+                        return -1
+                  end
+              end
+        end
 
 	-- Example GeoIP lookup
 	if (lookupCountry(lt.remote) ~= "GB")

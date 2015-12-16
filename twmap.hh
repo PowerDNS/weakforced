@@ -543,8 +543,9 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, std:
   if (find_key_field(key, field_name, myvec) != true) {
     return false;
   }
-  for (auto sm : (*myvec)) {
-    ret_vec.push_back(sm.second->get());
+  for (int i=cur_window+num_windows; i>cur_window; i--) {
+    int index = i % num_windows;
+    ret_vec.push_back((*myvec)[index].second->get());
   }
 
   return(true);

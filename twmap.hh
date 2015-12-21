@@ -162,6 +162,109 @@ struct TWStatsTypeMap
 
 extern TWStatsTypeMap g_field_types;
 
+class TWStatsEntry
+{
+public:
+  TWStatsEntry(int nw, int ws, std::time_t st, const std::string field_type) {
+    num_windows = nw;
+    start_time = st;
+    window_size = ws;
+    auto it = g_field_types.type_map.find(field_type);
+    for (int i=0; i< num_windows; i++) {
+      stats_array.push_back(std::pair<std::time_t, TWStatsMemberP>((std::time_t)0, it->second()));
+    }
+  }
+  int add(int a, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+
+    auto sm = stats_array[cur_window];
+    sm.second->add(a);
+    update_write_timestamp(cur_window);
+    return sm.second->sum(stats_array);
+  }
+  int add(const std::string& s, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+
+    auto sm = stats_array[cur_window];
+    sm.second->add(s);
+    update_write_timestamp(cur_window);
+    return sm.second->sum(stats_array);    
+  }
+  int add(const std::string& s, int a, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+
+    auto sm = stats_array[cur_window];
+    sm.second->add(s, a);
+    update_write_timestamp(cur_window);
+    return sm.second->sum(stats_array);        
+  }
+  int sub(int a, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+
+    auto sm = stats_array[cur_window];
+    sm.second->sub(a);
+    update_write_timestamp(cur_window);
+    return sm.second->sum(stats_array);
+  }
+  int sub(const std::string& s, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+
+    auto sm = stats_array[cur_window];
+    sm.second->sub(s);
+    update_write_timestamp(cur_window);
+    return sm.second->sum(stats_array);
+  }
+  int get(int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+    return stats_array[cur_window].second->sum(stats_array);
+  }
+  int get(const std::string& s, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+    return stats_array[cur_window].second->sum(s, stats_array);
+  }
+  int get_current(int cur_window) { 
+    std::lock_guard<std::mutex> lock(mutx);
+    return stats_array[cur_window].second->get();
+  }
+  int get_current(const std::string& s, int cur_window) {
+    std::lock_guard<std::mutex> lock(mutx);
+    return stats_array[cur_window].second->get(s);    
+  }
+  void get_windows(int cur_window, std::vector<int>& ret_vec) {
+    std::lock_guard<std::mutex> lock(mutx);
+    for (int i=cur_window+num_windows; i>cur_window; i--) {
+      int index = i % num_windows;
+      ret_vec.push_back(stats_array[index].second->get());
+    }
+  }
+  void get_windows(const std::string& s, int cur_window, std::vector<int>& ret_vec) {
+    std::lock_guard<std::mutex> lock(mutx);
+    for (int i=cur_window+num_windows; i>cur_window; i--) {
+      int index = i % num_windows;
+      ret_vec.push_back(stats_array[index].second->get(s));
+    }
+  }
+protected:
+  void update_write_timestamp(int cur_window)
+  {
+    std::time_t now, write_time;
+    std::time(&now);
+    // only do this if the window first mod time is 0
+    if (stats_array[cur_window].first == 0) {
+      write_time = now - ((now - start_time) % window_size);
+      stats_array[cur_window].first = write_time;
+    }
+  }
+private:
+  TWStatsBuf stats_array;
+  mutable std::mutex mutx;
+  int num_windows;
+  int window_size;
+  std::time_t start_time;
+};
+
+typedef std::shared_ptr<TWStatsEntry> TWStatsEntryP;
+
 // key is field name, value is field type
 typedef std::map<std::string, std::string> FieldMap;
 
@@ -199,8 +302,6 @@ public:
   int get_current(const T& key, const std::string& field_name, const std::string& s); // gets the value just for the current window for a particular value
   bool get_windows(const T& key, const std::string& field_name, std::vector<int>& ret_vec); // gets each window value returned in a vector
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
-  void set(const T& key, const std::string& field_name, int a);
-  void set(const T& key, const std::string& field_name, const std::string& s);
   void set_map_size_soft(unsigned int size);
   unsigned int get_size();
 protected:

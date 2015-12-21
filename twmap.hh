@@ -170,7 +170,7 @@ public:
     start_time = st;
     window_size = ws;
     auto it = g_field_types.type_map.find(field_type);
-    if (it == g_field_types.type_map.end()) {
+    if (it != g_field_types.type_map.end()) {
       for (int i=0; i< num_windows; i++) {
 	stats_array.push_back(std::pair<std::time_t, TWStatsMemberP>((std::time_t)0, it->second()));
       }
@@ -467,6 +467,8 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
 	auto field_type = mytype->first;
 	tp = std::make_shared<TWStatsEntry>(num_windows, window_size, start_time, field_type);
 	mysdb->second.second.insert(std::pair<std::string, TWStatsEntryP>(field_name, tp));
+	if (keytrack)
+	  *keytrack = mysdb->second.first;
 	return(true);
       }
     }
@@ -481,6 +483,8 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
       // add the key at the end of the key tracker list
       typename TWKeyTrackerType::iterator kit = key_tracker.insert(key_tracker.end(), key);
       stats_db.insert(std::make_pair(key, std::make_pair(kit, myfm)));
+      if (keytrack)
+	*keytrack = kit;
       return(true);
     }
   }

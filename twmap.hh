@@ -169,6 +169,7 @@ public:
     num_windows = nw;
     start_time = st;
     window_size = ws;
+    last_cleaned = 0;
     auto it = g_field_types.type_map.find(field_type);
     if (it != g_field_types.type_map.end()) {
       for (int i=0; i< num_windows; i++) {
@@ -301,6 +302,10 @@ protected:
     std::time(&now);
     expire_diff = window_size * num_windows;
 
+    // optimization - only clean windows if they need cleaning
+    if ((now-last_cleaned) < window_size)
+      return;
+
     for (TWStatsBuf::iterator i = stats_array.begin(); i != stats_array.end(); ++i) {
       std::time_t last_write = i->first;
       auto sm = i->second;
@@ -309,6 +314,7 @@ protected:
 	i->first = 0;
       }
     }
+    last_cleaned = now;
   }
 private:
   TWStatsBuf stats_array;
@@ -316,6 +322,7 @@ private:
   int num_windows;
   int window_size;
   std::time_t start_time;
+  std::time_t last_cleaned;
 };
 
 typedef std::shared_ptr<TWStatsEntry> TWStatsEntryP;

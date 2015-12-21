@@ -7,7 +7,7 @@ TWStatsTypeMap g_field_types{};
 #ifdef MAIN
 #include <string.h>
 
-main (int argc, char** argv)
+int main (int argc, char** argv)
 {
   FieldMap field_map;
 

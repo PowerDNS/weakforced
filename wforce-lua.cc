@@ -264,7 +264,7 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   g_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
 
-  g_lua.writeFunction("infolog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+  g_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";
       for (const auto& i : kvs) {

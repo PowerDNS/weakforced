@@ -94,6 +94,8 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     yarl.finalize();
   } catch (YaHTTP::ParseError &e) {
     // request stays incomplete
+  } catch (NetworkError& e) {
+    warnlog("Network error in web server: %s", e.what());
   }
 
   string command=req.getvars["command"];

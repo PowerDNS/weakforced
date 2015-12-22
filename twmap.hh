@@ -177,62 +177,57 @@ public:
       }
     }
   }
-  int add(int a) {
+  void add(int a) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
     auto sm = stats_array[cur_window];
     sm.second->add(a);
     update_write_timestamp(cur_window);
-    return sm.second->sum(stats_array);
   }
-  int add(const std::string& s) {
+  void add(const std::string& s) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
     auto sm = stats_array[cur_window];
     sm.second->add(s);
     update_write_timestamp(cur_window);
-    return sm.second->sum(stats_array);    
   }
-  int add(const std::string& s, int a) {
+  void add(const std::string& s, int a) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
     auto sm = stats_array[cur_window];
     sm.second->add(s, a);
     update_write_timestamp(cur_window);
-    return sm.second->sum(stats_array);        
   }
-  int sub(int a) {
+  void sub(int a) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
     auto sm = stats_array[cur_window];
     sm.second->sub(a);
     update_write_timestamp(cur_window);
-    return sm.second->sum(stats_array);
   }
-  int sub(const std::string& s) {
+  void sub(const std::string& s) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
     auto sm = stats_array[cur_window];
     sm.second->sub(s);
     update_write_timestamp(cur_window);
-    return sm.second->sum(stats_array);
   }
   int get() {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
-    return stats_array[cur_window].second->sum(stats_array);
+    return stats_array[cur_window].second->get();
   }
   int get(const std::string& s) {
     std::lock_guard<std::mutex> lock(mutx);
     clean_windows();
     int cur_window = current_window();
-    return stats_array[cur_window].second->sum(s, stats_array);
+    return stats_array[cur_window].second->get(s);
   }
   int get_current() { 
     std::lock_guard<std::mutex> lock(mutx);
@@ -351,13 +346,13 @@ public:
   }	
   void expireEntries();
   bool setFields(const FieldMap& fields);
-  int incr(const T& key, const std::string& field_name);
-  int decr(const T& key, const std::string& field_name);
-  int add(const T& key, const std::string& field_name, int a); // returns all fields summed/combined
-  int add(const T& key, const std::string& field_name, const std::string& s); // returns all fields summed/combined
-  int add(const T& key, const std::string& field_name, const std::string& s, int a); // returns all fields summed/combined
-  int sub(const T& key, const std::string& field_name, int a); // returns all fields summed/combined
-  int sub(const T& key, const std::string& field_name, const std::string& s); // returns all fields summed/combined
+  void incr(const T& key, const std::string& field_name);
+  void decr(const T& key, const std::string& field_name);
+  void add(const T& key, const std::string& field_name, int a); 
+  void add(const T& key, const std::string& field_name, const std::string& s); 
+  void add(const T& key, const std::string& field_name, const std::string& s, int a); 
+  void sub(const T& key, const std::string& field_name, int a); 
+  void sub(const T& key, const std::string& field_name, const std::string& s); 
   int get(const T& key, const std::string& field_name); // gets all fields summed/combined over all windows
   int get(const T& key, const std::string& field_name, const std::string& s); // gets all fields summed/combined over all windows for a particular value
   int get_current(const T& key, const std::string& field_name); // gets the value just for the current window
@@ -499,85 +494,80 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
 }
 
 template <typename T>
-int TWStatsDB<T>::incr(const T& key, const std::string& field_name)
+void TWStatsDB<T>::incr(const T& key, const std::string& field_name)
 {
-  return add(key, field_name, 1);
+  add(key, field_name, 1);
 }
 
 template <typename T>
-int TWStatsDB<T>::decr(const T& key, const std::string& field_name)
+void TWStatsDB<T>::decr(const T& key, const std::string& field_name)
 {
-  return sub(key, field_name, 1);
+  sub(key, field_name, 1);
 }
 
 template <typename T>
-int TWStatsDB<T>::add(const T& key, const std::string& field_name, int a)
+void TWStatsDB<T>::add(const T& key, const std::string& field_name, int a)
 {
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
   if (find_create_key_field(key, field_name, tp, &kt) != true) {
-    return 0;
+    return;
   }
   tp->add(a);
   update_write_timestamp(kt);
-  return tp->sum();
 }
 
 template <typename T>
-int TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s)
+void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s)
 {
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
   if (find_create_key_field(key, field_name, tp, &kt) != true) {
-    return 0;
+    return;
   }
   tp->add(s);
   update_write_timestamp(kt);
-  return tp->sum();
 }
 
 template <typename T>
-int TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s, int a)
+void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s, int a)
 {
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
   if (find_create_key_field(key, field_name, tp, &kt) != true) {
-    return 0;
+    return;
   }
   tp->add(s, a);
   update_write_timestamp(kt);
-  return tp->sum(s);
 }
 
 template <typename T>
-int TWStatsDB<T>::sub(const T& key, const std::string& field_name, int a)
+void TWStatsDB<T>::sub(const T& key, const std::string& field_name, int a)
 {
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
   if (find_create_key_field(key, field_name, tp, &kt) != true) {
-    return 0;
+    return;
   }
   tp->sub(a);
   update_write_timestamp(kt);
-  return tp->sum();
 }
 
 template <typename T>
-int TWStatsDB<T>::sub(const T& key, const std::string& field_name, const std::string& s)
+void TWStatsDB<T>::sub(const T& key, const std::string& field_name, const std::string& s)
 {
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
   if (find_create_key_field(key, field_name, tp, &kt) != true) {
-    return 0;
+    return;
   }
   tp->sub(s);
   update_write_timestamp(kt);
-  return tp->sum();
 }
 
 template <typename T>

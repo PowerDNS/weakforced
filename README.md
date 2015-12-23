@@ -59,24 +59,43 @@ To build on OS X, `brew install readline gcc` and use
 Policies
 --------
 
-There is a sensible default policy, and extensive support for crafting your own policies using
+There is a sensible default policy in wforce.conf (running without
+this means *no* policy), and extensive support for crafting your own policies using
 the insanely great Lua scripting language. 
 
 Sample:
 
 ```
-function allow(wfdb, lt)
-	if(wfdb:countDiffFailuresAddress(lt.remote, 10) > 50)
+-- set up the things we want to track
+field_map = {}
+-- use hyperloglog to track cardinality of (failed) password attempts
+field_map["diffFailedPasswords"] = "hll"
+-- track those things over 6x10 minute windows
+sdb = newStringStatsDB(600, 6, field_map)
+
+-- this function counts interesting things when "report" is invoked
+function twreport(lt)
+	if (not lt.success)
+	then
+	   sdb:twAdd(lt.remote, "diffFailedPasswords", lt.pwhash)
+	   addrlogin = lt.remote:tostring() .. lt.login
+	   sdb:twAdd(addrlogin, "diffFailedPasswords", lt.pwhash)
+	end
+end
+
+function allow(lt)
+	if(sdb:twGet(lt.remote, "diffFailedPasswords") > 50)
 	then
 		return -1 -- BLOCK!
 	end
-
-	if(wfdb:countDiffFailuresAddressLogin(lt.remote, lt.login, 10) > 3)
+	// concatenate the IP address and login string
+	addrlogin = lt.remote:tostring() .. lt.login	
+	if(sdb:twGet(addrlogin, "diffFailedPasswords") > 3)
 	then
-		return 3  -- must wait for 3 seconds 
+		return 3 -- must wait for 3 seconds
 	end
 
-	return 0          -- OK!
+	return 0 -- OK!
 end
 ```
 

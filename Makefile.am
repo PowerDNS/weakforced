@@ -15,7 +15,6 @@ wforce_SOURCES = \
 	base64.hh \
 	dns_lookup.cc \
 	wforce.cc wforce.hh \
-	wforce-db.cc \
 	wforce-lua.cc \
 	wforce-web.cc \
 	wforce-geoip.cc \

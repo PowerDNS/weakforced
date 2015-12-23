@@ -135,50 +135,9 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
     });
 
 
-  g_lua.writeFunction("report", [](string remote, string login, string pwhash, bool success) {
-      LoginTuple lt;
-      lt.t=getDoubleTime();
-      lt.remote=ComboAddress(remote);
-      lt.login=login;
-      lt.pwhash=pwhash;
-      lt.success=success;
-      g_wfdb.reportTuple(lt);
-      g_report(&g_wfdb, lt);
-    });
-
   g_lua.writeFunction("stats", []() {
-      boost::format fmt("%d reports, %d allow-queries (%d denies), %d entries in database\n");
-      g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_stats.denieds % g_wfdb.size()).str();
-
-    });
-  g_lua.writeFunction("clearDB", []() { 
-      g_wfdb.clear();
-    });
-  g_lua.writeFunction("clearLogin", [](const std::string& login) { 
-      auto count=g_wfdb.clearLogin(login);
-      g_outputBuffer = "Removed " + std::to_string(count)+" tuples\n";
-    });
-  g_lua.writeFunction("clearHost", [](const std::string& host) { 
-      auto count=g_wfdb.clearRemote(ComboAddress(host));
-      g_outputBuffer = "Removed " + std::to_string(count)+" tuples\n";
-    });
-
-
-  g_lua.writeFunction("showLogin", [](const std::string& login) { 
-      auto tuples=g_wfdb.getTuplesLogin(login);
-      boost::format fmt("%15s %20s %10s %1s\n");
-      for(const auto& t : tuples) {
-	g_outputBuffer += (fmt % humanTime(t.t) % t.remote.toString() % t.pwhash % (t.success ? "success" : "failure")).str();
-      }
-
-    });
-
-  g_lua.writeFunction("showHost", [](const std::string& remote) { 
-      auto tuples=g_wfdb.getTuplesRemote(ComboAddress(remote));
-      boost::format fmt("%15s %20s %10s %1s\n");
-      for(const auto& t : tuples) {
-	g_outputBuffer += (fmt % humanTime(t.t) % t.login % t.pwhash % (t.success ? "success" : "failure")).str();
-      }
+      boost::format fmt("%d reports, %d allow-queries (%d denies)\n");
+      g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_stats.denieds).str();
 
     });
 
@@ -189,24 +148,6 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
       for(const auto& s : siblings)
 	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % (s->d_ignoreself ? "Self" : "") ).str();
 
-    });
-
-
-  g_lua.writeFunction("allow", [](string remote, string login, string pwhash) {
-      LoginTuple lt;
-      lt.remote=ComboAddress(remote);
-      lt.login=login;
-      lt.pwhash=pwhash;
-      lt.success=0;
-      return g_allow(&g_wfdb, lt); // no locking needed, we are in Lua here already!
-    });
-
-
-  g_lua.writeFunction("countFailures", [](ComboAddress remote, int seconds) {
-      return g_wfdb.countFailures(remote, seconds);
-    });
-  g_lua.writeFunction("countDiffFailures", [](ComboAddress remote, int seconds) {
-      return g_wfdb.countDiffFailures(remote, seconds);
     });
 
 #ifdef HAVE_GEOIP
@@ -293,14 +234,9 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   g_lua.registerMember("success", &LoginTuple::success);
   g_lua.registerMember("attrs", &LoginTuple::attrs);
   g_lua.registerMember("attrs_mv", &LoginTuple::attrs_mv);
-  g_lua.writeVariable("wfdb", &g_wfdb);
-  g_lua.registerFunction("report", &WForceDB::reportTuple);
-  g_lua.registerFunction("getTuples", &WForceDB::getTuples);
 
   g_lua.registerFunction("tostring", &ComboAddress::toString);
   g_lua.writeFunction("newCA", [](string address) { return ComboAddress(address); } );
-  g_lua.registerFunction("countDiffFailuresAddress", static_cast<int (WForceDB::*)(const ComboAddress&,  int) const>(&WForceDB::countDiffFailures));
-  g_lua.registerFunction("countDiffFailuresAddressLogin", static_cast<int (WForceDB::*)(const ComboAddress&, string, int) const>(&WForceDB::countDiffFailures));
 
   g_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 

@@ -103,17 +103,6 @@ double getDoubleTime()
   return 1.0*now.tv_sec + now.tv_usec/1000000.0;
 }
 
-void* maintThread()
-{
-  int interval = 60;
-
-  for(;;) {
-    sleep(interval);
-    g_wfdb.timePurge(3600);
-  }
-  return 0;
-}
-
 string g_key;
 
 void controlClientThread(int fd, ComboAddress client)
@@ -453,30 +442,26 @@ void receiveReports(ComboAddress local)
     LoginTuple lt;
     lt.unserialize(msg);
     vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
-    g_wfdb.reportTuple(lt);
     {
       std::lock_guard<std::mutex> lock(g_luamutex);
-      g_report(&g_wfdb, lt);
+      g_report(lt);
     }
   }
 }
 
-int defaultAllowTuple(const WForceDB* wfd, const LoginTuple& lp)
+int defaultAllowTuple(const LoginTuple& lp)
 {
-  if(wfd->countDiffFailures(lp.remote, 1800) > 100)
-    return -1;
-  if(wfd->countDiffFailures(lp.remote, lp.login, 1800) > 10)
-    return -1;
+  // do nothing: we expect Lua function to be registered if wforce is required to actually do something
   return 0;
 }
 
-void defaultReportTuple(const WForceDB* wfd, const LoginTuple& lp)
+void defaultReportTuple(const LoginTuple& lp)
 {
   // do nothing: we expect Lua function to be registered if something custom is needed
 }
 
-std::function<int(const WForceDB*, const LoginTuple&)> g_allow{defaultAllowTuple};
-std::function<void(const WForceDB*, const LoginTuple&)> g_report{defaultReportTuple};
+std::function<int(const LoginTuple&)> g_allow{defaultAllowTuple};
+std::function<void(const LoginTuple&)> g_report{defaultReportTuple};
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {
@@ -733,14 +718,8 @@ try
     t1.detach();
   }
 
-  thread stattid(maintThread);
-  
   if(!g_cmdLine.beDaemon) {
-    stattid.detach();
     doConsole();
-  }
-  else {
-    stattid.join();
   }
   _exit(EXIT_SUCCESS);
 

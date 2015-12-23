@@ -94,6 +94,8 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     yarl.finalize();
   } catch (YaHTTP::ParseError &e) {
     // request stays incomplete
+  } catch (NetworkError& e) {
+    warnlog("Network error in web server: %s", e.what());
   }
 
   string command=req.getvars["command"];
@@ -149,7 +151,10 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 	g_wfdb.reportTuple(lt);
 	g_stats.reports++;
 	resp.status=200;
-	g_report(&g_wfdb, lt);
+	{
+	  std::lock_guard<std::mutex> lock(g_luamutex);
+	  g_report(&g_wfdb, lt);
+	}
 
 	resp.body=R"({"status":"ok"})";
       }

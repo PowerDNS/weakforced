@@ -616,7 +616,7 @@ try
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
       cout<<"-c,--client           Operate as a client, connect to wforce\n";
-      cout<<"-d,--daemon=[yes|no]  Operate as a daemon or not\n";
+      cout<<"-d,--daemon=[true|false]  Operate as a daemon or not\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-h,--help             Display this helpful message\n";
       cout<<"-l,--local address    Listen on this local address\n";
@@ -720,6 +720,10 @@ try
 
   if(!g_cmdLine.beDaemon) {
     doConsole();
+  } 
+  else {
+    while (true)
+      pause();
   }
   _exit(EXIT_SUCCESS);
 

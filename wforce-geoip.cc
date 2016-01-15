@@ -29,7 +29,7 @@ void WFGeoIPDB::initGeoIPDB()
 std::string const WFGeoIPDB::lookupCountry(const ComboAddress& address)
   {
     GeoIPLookup gl;
-    const char* retstr;
+    const char* retstr=NULL;
     std::string ret="";
 
     if (address.sin4.sin_family == AF_INET && gi_v4 != NULL) {

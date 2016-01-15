@@ -34,7 +34,7 @@ sdb_day = newStringStatsDB(3600, 24, field_map)
 initGeoIPDB()
 
 -- The report function is used to store custom stats
-function report(wfdb, lt)
+function report(lt)
 	cur_ct = lookupCountry(lt.remote) 
 
 	-- A note on keys: You can use strings or ComboAddresses. ComboAdddress will be converted to a string and then used as a key.
@@ -59,7 +59,7 @@ rblresolv = newDNSResolver()
 resolv:addResolver("8.8.8.8", 53)
 rblresolv:addResolver("127.0.0.1", 5353)
 
-function allow(wfdb, lt)
+function allow(lt)
 	if(bulkRetrievers:match(lt.remote))
 	then
 		allowLog(0, "bulkRetrievers", lt, { foo=1 })
@@ -131,18 +131,6 @@ function allow(wfdb, lt)
 	-- We also have:
 	--		 twGetCurrent() which returns the value for the current window 
 	--		 twGetWindows() which returns a table with all window values - the first item in the list is the "current" window. The last is the "oldest" window.
-
-	if(wfdb:countDiffFailuresAddress(lt.remote, 10) > 50)
-	then
-		allowLog(-1, "countDiffFailures", lt, { countDiffFailuresAddr=50 })
-		return -1
-	end
-
-	if(wfdb:countDiffFailuresAddressLogin(lt.remote, lt.login, 10) > 3)
-	then
-		allowLog(-1, "countDiffFailures", lt, { countDiffFailuresAddLogin=3 })
-		return -1
-	end
 
 	allowLog(0, "allowed", lt, { foo=1 })
 	return 0

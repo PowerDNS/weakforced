@@ -106,62 +106,8 @@ struct LoginTuple
   }
 };
 
-using namespace boost::multi_index;
-
-class WForceDB
-{
-public:
-  WForceDB() {}
-  WForceDB(const WForceDB&) = delete;
-  void reportTuple(const LoginTuple& lp);
-
-  int countFailures(const ComboAddress& remote, int seconds) const;
-  int countDiffFailures(const ComboAddress& remote, int seconds) const;
-  int countDiffFailures(const ComboAddress& remote, string login, int seconds) const;
-  void timePurge(int second);
-  void numberPurge(int amount);
-  std::vector<LoginTuple> getTuples() const;
-  std::vector<LoginTuple> getTuplesLogin(const std::string& login) const;
-  std::vector<LoginTuple> getTuplesRemote(const ComboAddress& remote) const;
-  size_t size();
-  void clear();
-  int clearLogin(const std::string& login);
-  int clearRemote(const ComboAddress& remote);
-private:
-  struct TimeTag{};
-  struct LoginTag{};
-  struct RemoteTag{};
-  struct RemoteLoginTag{};
-  struct SeqTag{};
-  
-  typedef multi_index_container<
-    LoginTuple,
-    indexed_by<
-      ordered_unique<identity<LoginTuple> >,
-      ordered_non_unique<
-        tag<TimeTag>,
-        member<LoginTuple, double, &LoginTuple::t>
-      >,
-      ordered_non_unique<
-        tag<LoginTag>,
-        member<LoginTuple, string, &LoginTuple::login>
-      >,
-      ordered_non_unique<
-        tag<RemoteTag>,
-        member<LoginTuple, ComboAddress, &LoginTuple::remote>, ComboAddress::addressOnlyLessThan
-	>,
-      sequenced<tag<SeqTag>>
-
-    >
-  > storage_t;
-
-  storage_t d_logins;
-  mutable std::mutex d_mutex;
-};
 void spreadReport(const LoginTuple& lt);
-int allowTupleDefault(const WForceDB* wfd, const LoginTuple& lp);
-extern WForceDB g_wfdb;
-typedef std::function<int(const WForceDB*, const LoginTuple&)> allow_t;
+typedef std::function<int(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
-typedef std::function<void(const WForceDB*, const LoginTuple&)> report_t;
+typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;

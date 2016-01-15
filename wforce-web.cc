@@ -148,94 +148,14 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 	setLtAttrs(lt, msg);
 	lt.t=getDoubleTime();
 	spreadReport(lt);
-	g_wfdb.reportTuple(lt);
 	g_stats.reports++;
 	resp.status=200;
 	{
 	  std::lock_guard<std::mutex> lock(g_luamutex);
-	  g_report(&g_wfdb, lt);
+	  g_report(lt);
 	}
 
 	resp.body=R"({"status":"ok"})";
-      }
-      catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure"})";
-      }
-    }
-  }
-  else if(command=="clearLogin" && req.method=="POST") {
-    Json msg;
-    string err;
-    msg=Json::parse(req.body, err);
-    if (msg.is_null()) {
-      resp.status=500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
-      resp.body=ss.str();
-    }
-    else {
-      resp.postvars.clear();
-      try {
-	g_wfdb.clearLogin(msg["login"].string_value());
-	resp.status=200;
-	resp.body=R"({"status":"ok"})";
-      }
-      catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure"})";
-      }
-    }
-  }
-  else if(command=="clearHost" && req.method=="POST") {
-    Json msg;
-    string err;
-    msg=Json::parse(req.body, err);
-    if (msg.is_null()) {
-      resp.status=500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
-      resp.body=ss.str();
-    }
-    else {
-      resp.postvars.clear();
-      try {
-	g_wfdb.clearRemote(ComboAddress(msg["host"].string_value()));
-	resp.status=200;
-
-	resp.body=R"({"status":"ok"})";
-      }
-      catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure"})";
-      }
-    }
-  }
-  else if(command=="showLogin" && req.method=="POST") {
-    Json msg;
-    string err;
-    msg=Json::parse(req.body, err);
-    if (msg.is_null()) {
-      resp.status=500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
-      resp.body=ss.str();
-    }
-    else {
-      resp.postvars.clear();
-      try {
-	auto tuples =g_wfdb.getTuplesLogin(msg["login"].string_value());
-	Json::array lines;
-
-	for(const auto& t : tuples) {
-	  Json::object o{{"t", t.t}, {"remote", t.remote.toString()},
-				       {"success", t.success},
-					 {"pwhash", t.pwhash}};
-	  lines.push_back(o);
-	}
-	Json my_json = Json::object { {"status", "ok"}, {"tuples", lines} };
-	resp.status=200;
-	resp.body=my_json.dump();
       }
       catch(...) {
 	resp.status=500;
@@ -263,7 +183,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       int status=0;
       {
 	std::lock_guard<std::mutex> lock(g_luamutex);
-	status=g_allow(&g_wfdb, lt);
+	status=g_allow(lt);
       }
       g_stats.allows++;
       if(status < 0)
@@ -283,7 +203,6 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     Json my_json = Json::object {
       { "allows", (int)g_stats.allows },
       { "denieds", (int)g_stats.denieds },
-      { "db-size", (int)g_wfdb.size() },
       { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
       { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
       { "uptime", uptimeOfProcess()},

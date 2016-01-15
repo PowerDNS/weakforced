@@ -215,6 +215,7 @@ void doClient(ComboAddress server, const std::string& command)
     msg.assign(resp, len);
     msg=sodDecryptSym(msg, g_key, theirs);
     cout<<msg<<endl;
+    close(fd);
     return; 
   }
 

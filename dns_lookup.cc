@@ -185,7 +185,7 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address(getdns_context* c
   if (!getdns_hostname_sync(context, addr_dict, NULL, &response)) {
     getdns_list* answer;
     size_t n_answers;
-    getdns_return_t r;
+    getdns_return_t r=GETDNS_RETURN_GOOD;
     uint32_t status;
     
     if (!getdns_dict_get_int(response, "status", &status)) {

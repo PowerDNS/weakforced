@@ -9,6 +9,11 @@
 #include <thread>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <iostream>
+#include <sstream>
 #include "ext/hyperloglog.hpp"
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
@@ -65,6 +70,8 @@ private:
   int i=0;
 };
 
+// BOOST_CLASS_EXPORT_GUID(TWStatsMemberInt, "TWSM_INT")
+
 #define HLL_NUM_REGISTER_BITS 10
 
 class TWStatsMemberHLL : public TWStatsMember
@@ -99,6 +106,8 @@ public:
 private:
   std::shared_ptr<hll::HyperLogLog> hllp;
 };
+
+// BOOST_CLASS_EXPORT_GUID(TWStatsMemberHLL, "TWSM_HLL")
 
 #define COUNTMIN_EPS 0.01
 #define COUNTMIN_GAMMA 0.1
@@ -141,6 +150,8 @@ public:
 private:
   std::shared_ptr<CountMinSketch> cm;
 };
+
+// BOOST_CLASS_EXPORT_GUID(TWStatsMemberCountMin, "TWSM_CM")
 
 template<typename T> TWStatsMemberP createInstance() { return std::make_shared<T>(); }
 

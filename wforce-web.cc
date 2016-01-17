@@ -124,7 +124,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
     errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, remote.toStringWithPort());
     resp.status = 415;
     std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":" << "Invalid Content-Type - must be application/json" << "}";
+    ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
     resp.body=ss.str();
   }
   else if(command=="report" && req.method=="POST") {

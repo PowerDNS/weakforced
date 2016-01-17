@@ -208,7 +208,7 @@ something that can be expressed as two bytes.
 
 API Calls
 ---------
-We can call 'report', 'allow' and (near future) 'clear', which removes
+We can call 'report', and 'allow' , which removes
 entries from a listed 'login' and/or 'remote'.
 
 To report, POST to /?command=report a JSON object with fields from the

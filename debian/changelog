@@ -1,0 +1,5 @@
+wforced (0.9-0) UNRELEASED; urgency=medium
+
+  * Initial packaging for Debian.
+
+ -- Marcus Klein <marcus.klein@open-xchange.com>  Wed, 13 Jan 2016 13:02:20 +0100

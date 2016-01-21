@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include "sodcrypto.hh"
 #include <getopt.h>
-#ifdef WITH_SYSTEMDSYSTEMUNITDIR
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
 
@@ -725,7 +725,7 @@ try
     t1.detach();
   }
 
-#ifdef WITH_SYSTEMDSYSTEMUNITDIR
+#ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");
 #endif
 

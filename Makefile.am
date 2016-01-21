@@ -40,7 +40,7 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
 
 if WITH_SYSTEMDSYSTEMUNITDIR
 wforce.service: wforce.service.in

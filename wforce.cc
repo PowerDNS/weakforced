@@ -33,8 +33,10 @@
 #include "ext/json11/json11.hpp"
 #include <unistd.h>
 #include "sodcrypto.hh"
-
 #include <getopt.h>
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 using std::atomic;
 using std::thread;
@@ -529,6 +531,7 @@ struct
 {
   vector<string> locals;
   bool beDaemon{false};
+  bool underSystemd{false};
   bool beClient{false};
   string command;
   string config;
@@ -580,11 +583,11 @@ try
   }
   g_sodnonce.init();
 #endif
-  g_cmdLine.config="./wforce.conf";
+  g_cmdLine.config=string(SYSCONFDIR) + "/wforce.conf";
   struct option longopts[]={ 
     {"config", required_argument, 0, 'C'},
     {"execute", required_argument, 0, 'e'},
-    {"command", optional_argument, 0, 'c'},
+    {"client", optional_argument, 0, 'c'},
     {"local",  required_argument, 0, 'l'},
     {"daemon", optional_argument, 0, 'd'},
     {"help", 0, 0, 'h'}, 
@@ -592,7 +595,7 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, "hbce:C:d:l:m:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, "hsdce:C:l:m:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -603,21 +606,22 @@ try
       g_cmdLine.beClient=true;
       break;
     case 'd':
-      if(!optarg)
 	g_cmdLine.beDaemon=true;
-      else
-	g_cmdLine.beDaemon=(string(optarg)=="true");
+      break;
+    case 's':
+	g_cmdLine.underSystemd=true;
       break;
     case 'e':
       g_cmdLine.command=optarg;
       break;
     case 'h':
-      cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon [yes|no]] [-e,--execute cmd]\n";
+      cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
-      cout<<"-c,--client           Operate as a client, connect to wforce\n";
-      cout<<"-d,--daemon=[true|false]  Operate as a daemon or not\n";
+      cout<<"-c,                   Operate as a client, connect to wforce\n";
+      cout<<"-s,                   Operate under systemd control.\n";
+      cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-h,--help             Display this helpful message\n";
       cout<<"-l,--local address    Listen on this local address\n";
@@ -683,6 +687,9 @@ try
     g_console=false;
     daemonize();
   }
+  else if (g_cmdLine.underSystemd) {
+    g_console=false;
+  }
   else {
     vinfolog("Running in the foreground");
   }
@@ -719,7 +726,11 @@ try
     t1.detach();
   }
 
-  if(!g_cmdLine.beDaemon) {
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify(0, "READY=1");
+#endif
+
+  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd)) {
     doConsole();
   } 
   else {

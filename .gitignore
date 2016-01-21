@@ -22,6 +22,7 @@
 /missing
 /stamp-h1
 /wforce
+/*.service
 
 libtool.m4
 ltoptions.m4

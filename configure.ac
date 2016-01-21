@@ -9,6 +9,7 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GEOIP], [geoip], [AC_DEFINE([HAVE_GEOIP], [1], [Define to 1 if you have geoip])], [true])
 PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 1 if you have getdns])], [true])
 PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])])
+PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd], [AC_DEFINE([HAVE_LIBSYSTEMD], [1], [Define to 1 if you have libsystemd-dev])], [true])
 AC_PROG_LIBTOOL
 BOOST_REQUIRE([1.35])
 BOOST_FOREACH
@@ -17,7 +18,7 @@ AC_SUBST([YAHTTP_LIBS], ['-L$(top_builddir)/pdns/ext/yahttp/yahttp -lyahttp'])
 PDNS_WITH_LUA
 AX_CXX_COMPILE_STDCXX_11(ext,mandatory)
 AM_CONDITIONAL([CXX2011],[test "$HAVE_CXX11" = "1"])
-
+SYSTEMD_SYSTEMUNITDIR
 AC_CONFIG_FILES([Makefile
 	pdns/ext/yahttp/Makefile
 	pdns/ext/yahttp/yahttp/Makefile])

@@ -587,7 +587,7 @@ try
   struct option longopts[]={ 
     {"config", required_argument, 0, 'C'},
     {"execute", required_argument, 0, 'e'},
-    {"command", optional_argument, 0, 'c'},
+    {"client", optional_argument, 0, 'c'},
     {"local",  required_argument, 0, 'l'},
     {"daemon", optional_argument, 0, 'd'},
     {"help", 0, 0, 'h'}, 
@@ -619,7 +619,8 @@ try
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
-      cout<<"-c,--client           Operate as a client, connect to wforce\n";
+      cout<<"-c,                   Operate as a client, connect to wforce\n";
+      cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-h,--help             Display this helpful message\n";

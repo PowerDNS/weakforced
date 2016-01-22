@@ -8,7 +8,7 @@ BUILT_SOURCES=htmlfiles.h
 htmlfiles.h: html/*
 	./incfiles > $@
 
-EXTRA_DIST= wforce.conf README.md html debian/wforce.service
+EXTRA_DIST= wforce.conf README.md html wforce.service
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce

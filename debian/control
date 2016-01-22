@@ -3,7 +3,7 @@ Maintainer: Neil Cook <neil.cook@open-xchange.com>
 Section: web
 Priority: optional
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 9), cdbs (>= 0.4.123), dh-autoreconf, libtool, automake, autoconf, pkg-config, g++, liblua5.1-0-dev, libboost-dev, libgeoip-dev, libsodium-dev, libgetdns-dev, dh-systemd
+Build-Depends: debhelper (>= 9), cdbs, dh-autoreconf, libtool, automake, autoconf, pkg-config, g++, liblua5.1-0-dev, libboost-dev, libgeoip-dev, libsodium-dev, libgetdns-dev
 
 Package: wforced
 Architecture: any

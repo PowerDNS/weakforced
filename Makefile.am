@@ -43,8 +43,8 @@ wforce_LDADD = \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
 
 if WITH_SYSTEMDSYSTEMUNITDIR
-debian/wforce.service: wforce.service.in
+wforce.service: wforce.service.in
 	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' < $< > $@
 
-#systemdsystemunit_DATA = wforce.service
+systemdsystemunit_DATA = wforce.service
 endif

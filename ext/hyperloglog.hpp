@@ -25,6 +25,11 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <iostream>
+#include <sstream>
 #include "murmur3.h"
 
 #define HLL_HASH_SEED 313
@@ -226,10 +231,15 @@ public:
     }
 
 protected:
-    uint8_t b_; ///< register bit width
-    uint32_t m_; ///< register size
-    double alphaMM_; ///< alpha * m^2
-    std::vector<uint8_t> M_; ///< registers
+  friend class boost::serialization::access;
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) { ar & b_; ar & m_; ar & alphaMM_; ar & M_;}    
+  
+  uint8_t b_; ///< register bit width
+  uint32_t m_; ///< register size
+  double alphaMM_; ///< alpha * m^2
+  std::vector<uint8_t> M_; ///< registers
 };
 
 /**
@@ -375,10 +385,10 @@ public:
         }       
         swap(tempHLL);
     }
-private: 
-    const uint8_t register_limit_;
-    double c_;
-    double p_;
+private:   
+  const uint8_t register_limit_;
+  double c_;
+  double p_;
 };
 
 } // namespace hll

@@ -6,12 +6,38 @@
     Muthukrishnan and Cormode, 2004
 **/
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 // define some constants
 # define LONG_PRIME 32993
 # define MIN(a,b)  (a < b ? a : b)
 
 /** CountMinSketch class definition here **/
 class CountMinSketch {
+private:
+  friend class boost::serialization::access;
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) { 
+    ar & w; 
+    ar & d; 
+    ar & eps; 
+    ar & gamma; 
+    ar & aj; 
+    ar & bj; 
+    ar & total; 
+    for (unsigned int i = 0; i < d; i++) {
+      for (unsigned int j = 0; j < w; j++) {
+	ar & C[i][j];
+      }
+    }
+    for (unsigned int i = 0; i < d; i++) {
+      ar & hashes[i][0];
+      ar & hashes[i][1];
+    }
+  }    
+
   // width, depth 
   unsigned int w,d;
   
@@ -43,6 +69,7 @@ class CountMinSketch {
 
 public:
   // constructor
+  CountMinSketch();
   CountMinSketch(float eps, float gamma);
   
   // update item (int) by count c

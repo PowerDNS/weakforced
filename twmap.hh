@@ -12,6 +12,8 @@
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 #include <iostream>
 #include <sstream>
 #include "ext/hyperloglog.hpp"
@@ -67,10 +69,13 @@ public:
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:
+  friend class boost::serialization::access;
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) { ar & i;}    
+
   int i=0;
 };
-
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberInt, "TWSM_INT")
 
 #define HLL_NUM_REGISTER_BITS 10
 
@@ -104,10 +109,13 @@ public:
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:
+  friend class boost::serialization::access;
+
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) { ar & hllp;}    
+
   std::shared_ptr<hll::HyperLogLog> hllp;
 };
-
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberHLL, "TWSM_HLL")
 
 #define COUNTMIN_EPS 0.01
 #define COUNTMIN_GAMMA 0.1
@@ -117,18 +125,18 @@ class TWStatsMemberCountMin : public TWStatsMember
 public:
   TWStatsMemberCountMin()
   {
-    cm = std::make_shared<CountMinSketch>(COUNTMIN_EPS, COUNTMIN_GAMMA);
+    cmp = std::make_shared<CountMinSketch>(COUNTMIN_EPS, COUNTMIN_GAMMA);
   }
   void add(int a) { return; }
-  void add(const std::string& s) { cm->update(s.c_str(), 1); }
-  void add(const std::string& s, int a) { cm->update(s.c_str(), a); }
+  void add(const std::string& s) { cmp->update(s.c_str(), 1); }
+  void add(const std::string& s, int a) { cmp->update(s.c_str(), a); }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
-  int get() { return cm->totalcount(); }
-  int get(const std::string& s) { return cm->estimate(s.c_str()); }
+  int get() { return cmp->totalcount(); }
+  int get(const std::string& s) { return cmp->estimate(s.c_str()); }
   void set(int a) { return; }
   void set(const std::string& s) { return; }
-  void erase() { cm->erase(); return; }
+  void erase() { cmp->erase(); return; }
   int sum(const TWStatsBuf& vec)
   {
     int count = 0;
@@ -148,10 +156,13 @@ public:
     return count;
   }
 private:
-  std::shared_ptr<CountMinSketch> cm;
-};
+  friend class boost::serialization::access;
 
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberCountMin, "TWSM_CM")
+  template <typename Archive>
+  void serialize(Archive &ar, const unsigned int version) { ar & cmp;}    
+
+  std::shared_ptr<CountMinSketch> cmp;
+};
 
 template<typename T> TWStatsMemberP createInstance() { return std::make_shared<T>(); }
 

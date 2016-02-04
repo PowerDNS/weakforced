@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS=pdns/ext/yahttp
+SUBDIRS=pdns/ext/yahttp docs
 
 BUILT_SOURCES=htmlfiles.h
 

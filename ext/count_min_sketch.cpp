@@ -25,12 +25,6 @@ using namespace std;
    unsigned int estimate(char *item);
 **/
 
-// CountMinSketch empty constructor for serialization
-CountMinSketch::CountMinSketch()
-{
-
-}
-
 
 // CountMinSketch constructor
 // ep -> error 0.01 < ep < 1 (the smaller the better)

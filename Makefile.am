@@ -39,7 +39,7 @@ wforce_LDFLAGS = \
 	-pthread 
 
 wforce_LDADD = \
-	-lreadline -ltermcap -lboost_serialization \
+	-lreadline -ltermcap \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
 
 if WITH_SYSTEMDSYSTEMUNITDIR

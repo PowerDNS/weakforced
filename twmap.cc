@@ -4,11 +4,6 @@
 
 TWStatsTypeMap g_field_types{};
 
-BOOST_CLASS_EXPORT_GUID(TWStatsMemberInt, "TWSM_INT")
-BOOST_CLASS_EXPORT_GUID(TWStatsMemberHLL, "TWSM_HLL")
-BOOST_CLASS_EXPORT_GUID(TWStatsMemberCountMin, "TWSM_CM")
-
-
 #ifdef MAIN
 #include <string.h>
 

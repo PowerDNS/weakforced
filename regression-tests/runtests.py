@@ -24,7 +24,7 @@ wait = ('--wait' in sys.argv)
 if wait:
     sys.argv.remove('--wait')
 
-cmd = ("../wforce --daemon=no -C ../wforce.conf").split()
+cmd = ("../wforce -C ../wforce.conf").split()
 
 # Now run wforce and the tests.
 print "Launching wforce..."

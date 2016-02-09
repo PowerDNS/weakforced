@@ -71,7 +71,7 @@ field_map = {}
 -- use hyperloglog to track cardinality of (failed) password attempts
 field_map["diffFailedPasswords"] = "hll"
 -- track those things over 6x10 minute windows
-sdb = newStringStatsDB(600, 6, field_map)
+sdb = newStringStatsDB("OneHourDB", 600, 6, field_map)
 
 -- this function counts interesting things when "report" is invoked
 function twreport(lt)

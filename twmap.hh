@@ -343,12 +343,13 @@ class TWStatsDB
 {
 public:
   typedef std::list<T> TWKeyTrackerType;
-  explicit TWStatsDB(int w_siz, int num_w)
+  explicit TWStatsDB(const std::string& name, int w_siz, int num_w)
   {
     window_size = w_siz ? w_siz : 1;
     num_windows = num_w ? num_w : 1;
     std::time(&start_time);
     map_size_soft = ctwstats_map_size_soft;
+    db_name = name;
   }
 
   static void twExpireThread(std::shared_ptr<TWStatsDB<std::string>> sdbp)
@@ -394,6 +395,7 @@ private:
   unsigned int map_size_soft;
   std::time_t start_time;
   mutable std::mutex mutx;
+  std::string db_name;
 };
 
 // Template methods
@@ -674,16 +676,16 @@ public:
   uint8_t v4_prefix=32;
   uint8_t v6_prefix=128;
 
-  TWStringStatsDBWrapper(int window_size, int num_windows)
+  TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows)
   {
-    sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);
+    sdbp = std::make_shared<TWStatsDB<std::string>>(name, window_size, num_windows);
     thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
     t.detach();
   }
 
-  TWStringStatsDBWrapper(int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
+  TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
   {
-    sdbp = std::make_shared<TWStatsDB<std::string>>(window_size, num_windows);    
+    sdbp = std::make_shared<TWStatsDB<std::string>>(name, window_size, num_windows);    
     (void)setFields(fmvec);
     thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
     t.detach();
@@ -847,3 +849,4 @@ public:
 
 };
   
+extern std::map<std::string, TWStringStatsDBWrapper> dbMap;

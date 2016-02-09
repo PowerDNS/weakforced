@@ -4,6 +4,8 @@
 
 TWStatsTypeMap g_field_types{};
 
+std::map<std::string, TWStringStatsDBWrapper> dbMap;
+
 #ifdef MAIN
 #include <string.h>
 

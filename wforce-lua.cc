@@ -182,17 +182,20 @@ vector<std::function<void(void)>> setupLua(bool client, const std::string& confi
   	g_outputBuffer += (fmt % address.toString() % s).str();
       }
     });
-    g_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) {
-	std::vector<std::string> retvec = resolv.lookupRBL(address, rblname, 1);
-	boost::format fmt("%s\n");
-	for (const auto s : retvec) {
-	  g_outputBuffer += (fmt % s).str();
-	}	
-      });	
+  g_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) {
+      std::vector<std::string> retvec = resolv.lookupRBL(address, rblname, 1);
+      boost::format fmt("%s\n");
+      for (const auto s : retvec) {
+	g_outputBuffer += (fmt % s).str();
+      }	
+    });	
 #endif // HAVE_GETDNS
 
-  g_lua.writeFunction("newStringStatsDB", [](int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
-      return TWStringStatsDBWrapper(window_size, num_windows, fmvec);
+  g_lua.writeFunction("newStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
+      auto twsdbw = TWStringStatsDBWrapper(name, window_size, num_windows, fmvec);
+      // register this statsDB in a map for retrieval later
+      dbMap.insert(std::pair<std::string, TWStringStatsDBWrapper>(name, twsdbw));
+      return twsdbw; // copy
     });
 
   g_lua.registerFunction("twAdd", &TWStringStatsDBWrapper::add);

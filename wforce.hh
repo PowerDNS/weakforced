@@ -7,6 +7,7 @@
 #include <boost/circular_buffer.hpp>
 #include <mutex>
 #include <thread>
+#include <random>
 #include "sholder.hh"
 #include "sstuff.hh"
 #include <boost/multi_index_container.hpp>
@@ -48,6 +49,7 @@ struct ClientState
 extern std::mutex g_luamutex;
 extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex
+
 void receiveReports(ComboAddress local);
 struct Sibling
 {
@@ -71,7 +73,6 @@ extern std::string g_key; // in theory needs locking
 struct dnsheader;
 
 void controlThread(int fd, ComboAddress local);
-vector<std::function<void(void)>> setupLua(bool client, const std::string& config);
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
 {
@@ -106,8 +107,83 @@ struct LoginTuple
   }
 };
 
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<int(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, const std::string& config);
+
 void spreadReport(const LoginTuple& lt);
 typedef std::function<int(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
 typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;
+
+struct LuaThreadContext {
+  std::shared_ptr<LuaContext> lua_contextp;
+  std::shared_ptr<std::mutex> lua_mutexp;
+  std::function<int(const LoginTuple&)> allow_func;
+  std::function<void(const LoginTuple&)> report_func;
+};
+
+#define NUM_LUA_STATES 1
+
+class LuaMultiThread
+{
+public:
+  LuaMultiThread() : rng(std::random_device()()),
+		     lua_cv(NUM_LUA_STATES),
+		     num_states(NUM_LUA_STATES)
+  {
+    for (auto i : lua_cv) {
+      i.lua_contextp = std::make_shared<LuaContext>();
+      i.lua_mutexp = std::make_shared<std::mutex>();
+    }	
+  }
+
+  LuaMultiThread(unsigned int nstates) : rng(std::random_device()()),
+					 lua_cv(nstates),
+					 num_states(nstates)
+  {
+    for (auto i : lua_cv) {
+      i.lua_contextp = std::make_shared<LuaContext>();
+      i.lua_mutexp = std::make_shared<std::mutex>();
+    }	
+  }
+
+  // these are used to setup the allow and report function pointers
+  std::vector<LuaThreadContext>::iterator begin() { return lua_cv.begin(); }
+  std::vector<LuaThreadContext>::iterator end() { return lua_cv.end(); }
+
+  int allow(const LoginTuple& lt) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    // call the allow function
+    return lt_context.allow_func(lt);
+  }
+
+  void report(const LoginTuple& lt) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    // call the allow function
+    lt_context.report_func(lt);
+  }
+protected:
+  LuaThreadContext& getLuaState()
+  {
+    int s;
+    { 
+      std::lock_guard<std::mutex> lock(mutx);
+      std::uniform_int_distribution<int> uni(0, num_states-1);
+      s = uni(rng);
+    }
+    // randomly select a lua state
+    return lua_cv[s];
+  }
+private:
+  std::mt19937 rng;
+  std::vector<LuaThreadContext> lua_cv;
+  unsigned int num_states;
+  std::mutex mutx;
+};
+
+extern std::shared_ptr<LuaMultiThread> g_luamultip;
+extern int g_num_luastates;

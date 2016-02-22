@@ -151,8 +151,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 	g_stats.reports++;
 	resp.status=200;
 	{
-	  std::lock_guard<std::mutex> lock(g_luamutex);
-	  g_report(lt);
+	  g_luamultip->report(lt);
 	}
 
 	resp.body=R"({"status":"ok"})";
@@ -182,8 +181,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       setLtAttrs(lt, msg);
       int status=0;
       {
-	std::lock_guard<std::mutex> lock(g_luamutex);
-	status=g_allow(lt);
+	status=g_luamultip->allow(lt);
       }
       g_stats.allows++;
       if(status < 0)

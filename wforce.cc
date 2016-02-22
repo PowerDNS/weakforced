@@ -76,7 +76,8 @@ catch(...) {
 
 std::mutex g_luamutex;
 LuaContext g_lua;
-
+int g_num_luastates=10;
+std::shared_ptr<LuaMultiThread> g_luamultip;
 
 static void daemonize(void)
 {
@@ -446,8 +447,7 @@ void receiveReports(ComboAddress local)
     lt.unserialize(msg);
     vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
     {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      g_report(lt);
+      g_luamultip->report(lt);
     }
   }
 }
@@ -641,12 +641,20 @@ try
 
 
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_allow, g_report, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
-  auto todo=setupLua(false, g_cmdLine.config);
+  // this sets up the global lua state used for config and setup
+  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_cmdLine.config);
+
+  // now we setup the allow/report lua states
+  g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
+  
+  for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+    setupLua(false, true, *(it->lua_contextp), it->allow_func, it->report_func, g_cmdLine.config);
+  }
 
   if(g_cmdLine.locals.size()) {
     g_locals.clear();

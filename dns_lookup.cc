@@ -13,6 +13,8 @@
 #define GETDNS_STR_ADDRESS_DATA "address_data"
 #define GETDNS_STR_PORT "port"
 
+std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
+
 WFResolver::WFResolver() 
 { 
   resolver_list = getdns_list_create(); 

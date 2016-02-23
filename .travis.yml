@@ -18,9 +18,9 @@ addons:
       - ubuntu-toolchain-r-test
 before_script:
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.3-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.3-1_amd64.deb
- - dpkg-deb -x libsodium13_1.0.3-1_amd64.deb ${HOME}/libsodium
- - dpkg-deb -x libsodium-dev_1.0.3-1_amd64.deb ${HOME}/libsodium
- - rm libsodium13_1.0.3-1_amd64.deb libsodium-dev_1.0.3-1_amd64.deb
+ - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium
+ - dpkg-deb -x libsodium-dev_1.0.0-1_amd64.deb ${HOME}/libsodium
+ - rm libsodium13_1.0.0-1_amd64.deb libsodium-dev_1.0.0-1_amd64.deb
  - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu

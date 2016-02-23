@@ -128,22 +128,19 @@ class LuaMultiThread
 {
 public:
   LuaMultiThread() : rng(std::random_device()()),
-		     lua_cv(NUM_LUA_STATES),
 		     num_states(NUM_LUA_STATES)
   {
-    for (auto i : lua_cv) {
-      i.lua_contextp = std::make_shared<LuaContext>();
-      i.lua_mutexp = std::make_shared<std::mutex>();
-    }	
+    LuaMultiThread(num_states);
   }
 
   LuaMultiThread(unsigned int nstates) : rng(std::random_device()()),
-					 lua_cv(nstates),
 					 num_states(nstates)
   {
-    for (auto i : lua_cv) {
-      i.lua_contextp = std::make_shared<LuaContext>();
-      i.lua_mutexp = std::make_shared<std::mutex>();
+    for (unsigned int i=0; i<num_states; i++) {
+      LuaThreadContext ltc;
+      ltc.lua_contextp = std::make_shared<LuaContext>();
+      ltc.lua_mutexp = std::make_shared<std::mutex>();
+      lua_cv.push_back(ltc);
     }	
   }
 

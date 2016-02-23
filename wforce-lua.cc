@@ -257,7 +257,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
   c_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);
   c_lua.registerFunction("lookupRBL", &WFResolver::lookupRBL);
-  // The following "show.." function are mainly for regression tests
+  // The following "show.." functions are mainly for regression tests
   if (!allow_report) {
     c_lua.writeFunction("showAddrByName", [](WFResolver resolv, string name) {
 	std::vector<std::string> retvec = resolv.lookup_address_by_name(name, 1);

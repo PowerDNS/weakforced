@@ -139,6 +139,17 @@ try
 	  >
 	>(line);
 
+      // execute the supplied lua code for all the allow/report lua states
+      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	it->lua_contextp->executeCode<	
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+      }
+
       if(ret) {
 	if (const auto strValue = boost::get<string>(&*ret)) {
 	  response=*strValue;
@@ -303,6 +314,17 @@ void doConsole()
 	    >
 	  >
 	>(line);
+
+      // execute the supplied lua code for all the allow/report lua states
+      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	it->lua_contextp->executeCode<	
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+      }
 
       if(ret) {
 	if (const auto strValue = boost::get<string>(&*ret)) {

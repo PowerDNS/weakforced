@@ -221,6 +221,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setNumLuaStates", [](int numStates) { });    
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) {
+	g_num_worker_threads = numThreads;
+      });
+  }
+  else {
+    c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) { });    
+  }
+
+
 #ifdef HAVE_GEOIP
   if (!allow_report) {
     c_lua.writeFunction("initGeoIPDB", []() {

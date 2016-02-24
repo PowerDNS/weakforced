@@ -7,6 +7,15 @@ addSibling("192.168.1.30")
 addSibling("192.168.1.54")
 siblingListener("0.0.0.0")
 
+-- Number of lua states used for allow/report queries. 
+-- Increasing this number will reduce lock contention if that is a problem
+setNumLuaStates(4)
+
+-- Number of worker threads used for allow/report queries
+-- Increasing this number increases concurrency but too many will just cause thrashing
+-- Should be >= number of lua states
+setNumWorkerThreads(4)
+
 bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")
 bulkRetrievers:addMask("145.132.0.0/16")

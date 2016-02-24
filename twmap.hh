@@ -77,7 +77,7 @@ public:
     hllp = std::make_shared<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
     cache_valid = false;
   }
-  void add(int a) { char buf[64]; int len = snprintf(buf, 63, "%d", a); hllp->add(buf, len); cache_valid = false; return; }
+  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); cache_valid = false; return; }
   void add(const std::string& s) { hllp->add(s.c_str(), s.length()); cache_valid = false; return; }
   void add(const std::string& s, int a) { return; }
   void sub(int a) { return; }

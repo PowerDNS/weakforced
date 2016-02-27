@@ -123,6 +123,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
       });
   }
+  else {
+    c_lua.writeFunction("showACL", []() { });
+  }
 
   c_lua.writeFunction("shutdown", []() { _exit(0);} );
 

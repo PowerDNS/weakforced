@@ -617,7 +617,7 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, "hsdce:C:l:m:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, "hsdc:e:C:l:m:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -626,6 +626,8 @@ try
       break;
     case 'c':
       g_cmdLine.beClient=true;
+      if (optarg)
+	g_cmdLine.config=optarg;
       break;
     case 'd':
 	g_cmdLine.beDaemon=true;
@@ -641,7 +643,7 @@ try
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
-      cout<<"-c,                   Operate as a client, connect to wforce\n";
+      cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";

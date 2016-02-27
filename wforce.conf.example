@@ -9,11 +9,12 @@ siblingListener("0.0.0.0")
 
 -- Number of lua states used for allow/report queries. 
 -- Increasing this number will reduce lock contention if that is a problem
+-- A lot of states will increase memory, but not by too much
 setNumLuaStates(4)
 
 -- Number of worker threads used for allow/report queries
--- Increasing this number increases concurrency but too many will just cause thrashing
--- Should be >= number of lua states
+-- Increasing this number increases concurrency but too many could cause thrashing
+-- Should be >= number of lua states 
 setNumWorkerThreads(4)
 
 bulkRetrievers = newNetmaskGroup()

@@ -8,9 +8,6 @@
 
 #ifdef HAVE_LIBSODIUM
 
-// we need to protect this code with a mutex because the nonce is global and we're incrementing it
-std::mutex sod_mutx;
-
 string newKey()
 {
   unsigned char key[crypto_secretbox_KEYBYTES];
@@ -20,7 +17,6 @@ string newKey()
 
 std::string sodEncryptSym(const std::string& msg, const std::string& key, SodiumNonce& nonce)
 {
-  std::lock_guard<std::mutex> lock(sod_mutx);
   unsigned char ciphertext[msg.length() + crypto_secretbox_MACBYTES];
   crypto_secretbox_easy(ciphertext, (unsigned char*)msg.c_str(), msg.length(), nonce.value, (unsigned char*)key.c_str());
 
@@ -30,7 +26,6 @@ std::string sodEncryptSym(const std::string& msg, const std::string& key, Sodium
 
 std::string sodDecryptSym(const std::string& msg, const std::string& key, SodiumNonce& nonce)
 {
-  std::lock_guard<std::mutex> lock(sod_mutx);
   unsigned char decrypted[msg.length() - crypto_secretbox_MACBYTES];
 
   if (crypto_secretbox_open_easy(decrypted, (const unsigned char*)msg.c_str(), 

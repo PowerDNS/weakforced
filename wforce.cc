@@ -431,14 +431,19 @@ void Sibling::send(const std::string& msg)
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 
 SodiumNonce g_sodnonce;
+std::mutex sod_mutx;
 
 void spreadReport(const LoginTuple& lt)
 {
   auto siblings = g_siblings.getLocal();
   string msg=lt.serialize();
+  string packet;
 
-  string packet =g_sodnonce.toString();
-  packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+  {
+      std::lock_guard<std::mutex> lock(sod_mutx);
+      packet =g_sodnonce.toString();
+      packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+  }
 
   for(auto& s : *siblings) {
     s->send(packet);

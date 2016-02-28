@@ -9,7 +9,7 @@
 #include "namespaces.hh"
 #include <sys/time.h>
 #include <sys/resource.h>
-#include "ext/incbin/incbin.h"
+#include "ext/ctpl.h"
 #include "htmlfiles.h"
 #include "base64.hh"
 
@@ -64,7 +64,7 @@ static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
 
 }
 
-static void connectionThread(int sock, ComboAddress remote, string password)
+static void connectionThread(int id, int sock, ComboAddress remote, string password)
 {
   Socket client(sock);
   using namespace json11;
@@ -109,7 +109,11 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 
   req.getvars.erase("_"); // jQuery cache buster
 
-  YaHTTP::Response resp(req);
+  YaHTTP::Response resp;
+  resp.headers["Content-Type"] = "application/json";
+  resp.headers["Connection"] = "close";
+  resp.version = req.version;
+  resp.url = req.url;
 
   string ctype = req.headers["Content-Type"];
   if (!compareAuthorization(req, password)) {
@@ -151,8 +155,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
 	g_stats.reports++;
 	resp.status=200;
 	{
-	  std::lock_guard<std::mutex> lock(g_luamutex);
-	  g_report(lt);
+	  g_luamultip->report(lt);
 	}
 
 	resp.body=R"({"status":"ok"})";
@@ -182,8 +185,7 @@ static void connectionThread(int sock, ComboAddress remote, string password)
       setLtAttrs(lt, msg);
       int status=0;
       {
-	std::lock_guard<std::mutex> lock(g_luamutex);
-	status=g_allow(lt);
+	status=g_luamultip->allow(lt);
       }
       g_stats.allows++;
       if(status < 0)
@@ -236,10 +238,14 @@ static void connectionThread(int sock, ComboAddress remote, string password)
   writen2(sock, done.c_str(), done.size());
 }
 
+unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
+
 void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::string& password)
 {
   infolog("Webserver launched on %s", local.toStringWithPort());
   auto localACL=g_ACL.getLocal();
+  ctpl::thread_pool p(g_num_worker_threads);
+
   for(;;) {
     try {
       ComboAddress remote(local);
@@ -249,8 +255,7 @@ void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::stri
 	close(fd);
 	continue;
       }
-      std::thread t(connectionThread, fd, remote, password);
-      t.detach();
+      p.push(connectionThread, fd, remote, password);
     }
     catch(std::exception& e) {
       errlog("Had an error accepting new webserver connection: %s", e.what());

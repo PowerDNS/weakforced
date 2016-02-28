@@ -1,4 +1,5 @@
 #include <iostream>
+#include <mutex>
 #include "namespaces.hh"
 #include "misc.hh"
 #include "base64.hh"

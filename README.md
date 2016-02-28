@@ -1,6 +1,6 @@
 Weakforced
 ----------
-The goal of 'wforced' is to detect brute forcing of passwords across many
+The goal of 'wforce' is to detect brute forcing of passwords across many
 servers, services and instances.  In order to support the real world, brute
 force detection policy can be tailored to deal with "bulk, but legitimate"
 users of your service, as well as botnet-wide slowscans of passwords.
@@ -9,8 +9,9 @@ The aim is to support the largest of installations, providing services to
 hundreds of millions of users.  The current version of weakforced is not
 quit there yet.
 
-Weakforced is a project by PowerDNS and Dovecot. For now, if you have any questions, email
-neil.cook@open-xchange.com
+Weakforced is a project by Dovecot and Open-Xchange. For historical
+reasons, it lives in the PowerDNS github tree. If you have any questions, email
+neil.cook@open-xchange.com.
 
 Here is how it works:
  * Report successful logins via JSON http-api
@@ -61,7 +62,10 @@ Policies
 
 There is a sensible default policy in wforce.conf (running without
 this means *no* policy), and extensive support for crafting your own policies using
-the insanely great Lua scripting language. 
+the insanely great Lua scripting language. Note that although there is
+a single Lua configuration file, the report and allow functions run in
+different lua states from the rest of the configuration, thus you
+cannot share state.
 
 Sample:
 
@@ -71,10 +75,11 @@ field_map = {}
 -- use hyperloglog to track cardinality of (failed) password attempts
 field_map["diffFailedPasswords"] = "hll"
 -- track those things over 6x10 minute windows
-sdb = newStringStatsDB("OneHourDB", 600, 6, field_map)
+newStringStatsDB("OneHourDB", 600, 6, field_map)
 
 -- this function counts interesting things when "report" is invoked
 function twreport(lt)
+	sdb = getStringStatsDB("OneHourDB")
 	if (not lt.success)
 	then
 	   sdb:twAdd(lt.remote, "diffFailedPasswords", lt.pwhash)
@@ -84,6 +89,7 @@ function twreport(lt)
 end
 
 function allow(lt)
+	sdb = getStringStatsDB("OneHourDB")
 	if(sdb:twGet(lt.remote, "diffFailedPasswords") > 50)
 	then
 		return -1 -- BLOCK!
@@ -208,8 +214,8 @@ something that can be expressed as two bytes.
 
 API Calls
 ---------
-We can call 'report', and 'allow' , which removes
-entries from a listed 'login' and/or 'remote'.
+We can call 'report', and 'allow' commands. The optional 'attrs' field
+enables the client to send additional data to weakforced.
 
 To report, POST to /?command=report a JSON object with fields from the
 LoginTuple as described above.

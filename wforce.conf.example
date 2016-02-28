@@ -5,7 +5,22 @@ controlSocket("0.0.0.0:4004")
 addSibling("192.168.1.79")
 addSibling("192.168.1.30")
 addSibling("192.168.1.54")
-siblingListener("0.0.0.0")
+siblingListener("0.0.0.0:4001")
+
+-- Number of lua states used for allow/report queries. 
+-- Increasing this number will reduce lock contention if that is a problem
+-- A lot of states will increase memory, but not by too much
+setNumLuaStates(6)
+
+-- Number of worker threads used for allow/report queries
+-- Increasing this number increases concurrency but too many could cause thrashing
+-- Should be >= number of lua states, and ideally == number of cores
+setNumWorkerThreads(4)
+
+-- Number of worker threads used to process siblings reports
+-- Increasing this number increases concurrency but too many could cause thrashing
+-- Should be around numWorkerThreads/2
+setNumSiblingThreads(2)
 
 bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")
@@ -25,16 +40,19 @@ field_map["countryCount"] = "countmin"
 -- create a db for storing stats. 
 -- You can create multiple dbs with different window lengths for storing stats over different time windows
 -- This one is 6 windows of 10 minutes each, so an hour in total. Every 10 minutes the oldest window's data will expire
-sdb = newStringStatsDB("OneHourDB",600,6,field_map)
+newStringStatsDB("OneHourDB",600,6,field_map)
 -- This one is 24 windows of 1 hour each, so 24 hours in total. Useful for tracking long-term stats.
 -- You can reuse field_map or create a different one
-sdb_day = newStringStatsDB("24HourDB",3600, 24, field_map)
+newStringStatsDB("24HourDB",3600, 24, field_map)
 
 -- Only initialize the GeoIPDB if you need it
 initGeoIPDB()
 
 -- The report function is used to store custom stats
+-- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function report(lt)
+	sdb = getStringStatsDB("OneHourDB")
+	sdb_day = getStringStatsDB("24HourDB")
 	cur_ct = lookupCountry(lt.remote) 
 
 	-- A note on keys: You can use strings or ComboAddresses. ComboAdddress will be converted to a string and then used as a key.
@@ -52,14 +70,22 @@ function report(lt)
 end
 
 -- initialise some DNS lookup objects
-resolv = newDNSResolver()
-rblresolv = newDNSResolver()
+newDNSResolver("Resolv")
+resolv = getDNSResolver("Resolv")
+newDNSResolver("RBLResolv")
+rblresolv = getDNSResolver("RBLResolv")
 
 -- Configure some resolvers for it to use
 resolv:addResolver("8.8.8.8", 53)
 rblresolv:addResolver("127.0.0.1", 5353)
 
+-- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function allow(lt)
+	sdb = getStringStatsDB("OneHourDB")
+	sdb_day = getStringStatsDB("24HourDB")
+	resolv = getDNSResolver("Resolv")
+	rblresolv = getDNSResolver("RBLResolv")
+
 	if(bulkRetrievers:match(lt.remote))
 	then
 		allowLog(0, "bulkRetrievers", lt, { foo=1 })

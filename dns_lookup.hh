@@ -23,3 +23,5 @@ private:
   getdns_list* resolver_list;
   uint64_t req_timeout;
 };
+
+extern std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;

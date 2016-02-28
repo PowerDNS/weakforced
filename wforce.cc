@@ -37,6 +37,7 @@
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
+#include "ext/ctpl.h"
 
 using std::atomic;
 using std::thread;
@@ -76,7 +77,8 @@ catch(...) {
 
 std::mutex g_luamutex;
 LuaContext g_lua;
-
+int g_num_luastates=10;
+std::shared_ptr<LuaMultiThread> g_luamultip;
 
 static void daemonize(void)
 {
@@ -137,6 +139,17 @@ try
 	    >
 	  >
 	>(line);
+
+      // execute the supplied lua code for all the allow/report lua states
+      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	it->lua_contextp->executeCode<	
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+      }
 
       if(ret) {
 	if (const auto strValue = boost::get<string>(&*ret)) {
@@ -303,6 +316,17 @@ void doConsole()
 	  >
 	>(line);
 
+      // execute the supplied lua code for all the allow/report lua states
+      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	it->lua_contextp->executeCode<	
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+      }
+
       if(ret) {
 	if (const auto strValue = boost::get<string>(&*ret)) {
 	  cout<<*strValue<<endl;
@@ -408,19 +432,26 @@ void Sibling::send(const std::string& msg)
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 
 SodiumNonce g_sodnonce;
+std::mutex sod_mutx;
 
 void spreadReport(const LoginTuple& lt)
 {
   auto siblings = g_siblings.getLocal();
   string msg=lt.serialize();
+  string packet;
 
-  string packet =g_sodnonce.toString();
-  packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+  {
+      std::lock_guard<std::mutex> lock(sod_mutx);
+      packet =g_sodnonce.toString();
+      packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+  }
 
   for(auto& s : *siblings) {
     s->send(packet);
   }
 }
+
+unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 
 void receiveReports(ComboAddress local)
 {
@@ -430,25 +461,28 @@ void receiveReports(ComboAddress local)
   ComboAddress remote=local;
   socklen_t remlen=remote.getSocklen();
   int len;
+  ctpl::thread_pool p(g_num_sibling_threads);
+
   infolog("Launched UDP sibling listener on %s", local.toStringWithPort());
   for(;;) {
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
 
-    SodiumNonce nonce;
-    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    p.push([&buf,&remote,len](int id) {
+	SodiumNonce nonce;
+	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
     
-    string msg=sodDecryptSym(packet, g_key, nonce);
+	string msg=sodDecryptSym(packet, g_key, nonce);
 
-    LoginTuple lt;
-    lt.unserialize(msg);
-    vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
-    {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      g_report(lt);
-    }
+	LoginTuple lt;
+	lt.unserialize(msg);
+	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
+	{
+	  g_luamultip->report(lt);
+	}
+      });
   }
 }
 
@@ -595,7 +629,7 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, "hsdce:C:l:m:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, "hsdc:e:C:l:m:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -604,6 +638,8 @@ try
       break;
     case 'c':
       g_cmdLine.beClient=true;
+      if (optarg)
+	g_cmdLine.config=optarg;
       break;
     case 'd':
 	g_cmdLine.beDaemon=true;
@@ -619,7 +655,7 @@ try
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
-      cout<<"-c,                   Operate as a client, connect to wforce\n";
+      cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
@@ -641,12 +677,20 @@ try
 
 
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_allow, g_report, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
-  auto todo=setupLua(false, g_cmdLine.config);
+  // this sets up the global lua state used for config and setup
+  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_cmdLine.config);
+
+  // now we setup the allow/report lua states
+  g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
+  
+  for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+    setupLua(false, true, *(it->lua_contextp), it->allow_func, it->report_func, g_cmdLine.config);
+  }
 
   if(g_cmdLine.locals.size()) {
     g_locals.clear();

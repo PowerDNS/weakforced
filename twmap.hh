@@ -9,9 +9,6 @@
 #include <thread>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 #include <iostream>
 #include <sstream>
 #include "ext/hyperloglog.hpp"
@@ -70,8 +67,6 @@ private:
   int i=0;
 };
 
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberInt, "TWSM_INT")
-
 #define HLL_NUM_REGISTER_BITS 10
 
 class TWStatsMemberHLL : public TWStatsMember
@@ -80,19 +75,22 @@ public:
   TWStatsMemberHLL()
   {
     hllp = std::make_shared<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
+    cache_valid = false;
   }
-  void add(int a) { char buf[64]; int len = snprintf(buf, 63, "%d", a); hllp->add(buf, len); return; }
-  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); return; }
+  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); cache_valid = false; return; }
+  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); cache_valid = false; return; }
   void add(const std::string& s, int a) { return; }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
   int get() { return std::lround(hllp->estimate()); }
   int get(const std::string& s) { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
   void set(int a) { return; }
-  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); }
-  void erase() { hllp->clear(); }
+  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); cache_valid = false; }
+  void erase() { hllp->clear(); cache_valid = false; }
   int sum(const TWStatsBuf& vec)
   {
+    if (cache_valid)
+      return cached_sum;
     hll::HyperLogLog hllsum(HLL_NUM_REGISTER_BITS);
     for (auto a : vec)
       {
@@ -100,14 +98,15 @@ public:
 	std::shared_ptr<TWStatsMemberHLL> twp = std::dynamic_pointer_cast<TWStatsMemberHLL>(a.second);
 	hllsum.merge((*(twp->hllp)));
       }
-    return std::lround(hllsum.estimate());
+    cached_sum = std::lround(hllsum.estimate());
+    return cached_sum;
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:
   std::shared_ptr<hll::HyperLogLog> hllp;
+  int cached_sum;
+  bool cache_valid;
 };
-
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberHLL, "TWSM_HLL")
 
 #define COUNTMIN_EPS 0.01
 #define COUNTMIN_GAMMA 0.1
@@ -150,8 +149,6 @@ public:
 private:
   std::shared_ptr<CountMinSketch> cm;
 };
-
-// BOOST_CLASS_EXPORT_GUID(TWStatsMemberCountMin, "TWSM_CM")
 
 template<typename T> TWStatsMemberP createInstance() { return std::make_shared<T>(); }
 
@@ -373,6 +370,10 @@ public:
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
   void set_map_size_soft(unsigned int size);
   unsigned int get_size();
+  uint8_t getv4Prefix() { return v4_prefix; }
+  uint8_t getv6Prefix() { return v6_prefix; }
+  void setv4Prefix(uint8_t prefix) { v4_prefix = prefix; }
+  void setv6Prefix(uint8_t prefix) { v6_prefix = prefix; }
 protected:
   bool find_create_key_field(const T& key, const std::string& field_name, TWStatsEntryP& tp, typename TWKeyTrackerType::iterator* ktp, bool create=1);
   bool find_key_field(const T& key, const std::string& field_name, TWStatsEntryP& tp);  
@@ -396,6 +397,8 @@ private:
   std::time_t start_time;
   mutable std::mutex mutx;
   std::string db_name;
+  uint8_t v4_prefix=32;
+  uint8_t v6_prefix=128;
 };
 
 // Template methods
@@ -669,12 +672,11 @@ unsigned int TWStatsDB<T>::get_size()
 typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
 
 // This is a Lua-friendly wrapper to the Stats DB
+// All state is stored in the TWStatsDB shared pointer because passing back/forth to Lua means copies
 class TWStringStatsDBWrapper
 {
 public:
   std::shared_ptr<TWStatsDB<std::string>> sdbp;
-  uint8_t v4_prefix=32;
-  uint8_t v6_prefix=128;
 
   TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows)
   {
@@ -706,12 +708,14 @@ public:
 
   void setv4Prefix(uint8_t bits)
   {
-    v4_prefix = bits > 32 ? 32 : bits;
+    uint8_t v4_prefix = bits > 32 ? 32 : bits;
+    sdbp->setv4Prefix(v4_prefix);
   }
 
   void setv6Prefix(uint8_t bits)
   {
-    v6_prefix = bits > 128 ? 128 : bits;
+    uint8_t v6_prefix = bits > 128 ? 128 : bits;
+    sdbp->setv6Prefix(v6_prefix);
   }
 
   std::string getStringKey(const TWKeyType vkey)
@@ -725,9 +729,11 @@ public:
     else if (vkey.which() == 2) {
       const ComboAddress ca =  boost::get<ComboAddress>(vkey);
       if (ca.isIpv4()) {
+	uint8_t v4_prefix = sdbp->getv4Prefix();
 	return Netmask(ca, v4_prefix).toStringNetwork();
       }
       else if (ca.isIpv6()) {
+	uint8_t v6_prefix = sdbp->getv6Prefix();
 	return Netmask(ca, v6_prefix).toStringNetwork();
       }
     }
@@ -848,5 +854,5 @@ public:
   }
 
 };
-  
+
 extern std::map<std::string, TWStringStatsDBWrapper> dbMap;

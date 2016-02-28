@@ -226,6 +226,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) {
+	// the number of threads used to process allow/report commands
 	g_num_worker_threads = numThreads;
       });
   }
@@ -233,6 +234,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) { });    
   }
 
+   if (!allow_report) {
+    c_lua.writeFunction("setNumSiblingThreads", [](int numThreads) {
+	// the number of threads used to process sibling reports
+	g_num_sibling_threads = numThreads;
+      });
+  }
+  else {
+    c_lua.writeFunction("setNumSiblingThreads", [](int numThreads) { });    
+  }
 
 #ifdef HAVE_GEOIP
   if (!allow_report) {

@@ -5,17 +5,22 @@ controlSocket("0.0.0.0:4004")
 addSibling("192.168.1.79")
 addSibling("192.168.1.30")
 addSibling("192.168.1.54")
-siblingListener("0.0.0.0")
+siblingListener("0.0.0.0:4001")
 
 -- Number of lua states used for allow/report queries. 
 -- Increasing this number will reduce lock contention if that is a problem
 -- A lot of states will increase memory, but not by too much
-setNumLuaStates(4)
+setNumLuaStates(6)
 
 -- Number of worker threads used for allow/report queries
 -- Increasing this number increases concurrency but too many could cause thrashing
--- Should be >= number of lua states 
+-- Should be >= number of lua states, and ideally == number of cores
 setNumWorkerThreads(4)
+
+-- Number of worker threads used to process siblings reports
+-- Increasing this number increases concurrency but too many could cause thrashing
+-- Should be around numWorkerThreads/2
+setNumSiblingThreads(2)
 
 bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")

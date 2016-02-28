@@ -26,18 +26,6 @@ struct WForceStats
 
 extern struct WForceStats g_stats;
 
-
-struct Rings {
-  Rings()
-  {
-    clientRing.set_capacity(10000);
-    
-  }
-  boost::circular_buffer<ComboAddress> clientRing;
-};
-
-extern Rings g_rings; // XXX locking for this is still substandard, queryRing and clientRing need RW lock
-
 struct ClientState
 {
   ComboAddress local;
@@ -48,7 +36,7 @@ struct ClientState
 
 extern std::mutex g_luamutex;
 extern LuaContext g_lua;
-extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex
+extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 
 void receiveReports(ComboAddress local);
 struct Sibling
@@ -186,3 +174,5 @@ extern std::shared_ptr<LuaMultiThread> g_luamultip;
 extern int g_num_luastates;
 extern unsigned int g_num_worker_threads;
 #define WFORCE_NUM_WORKER_THREADS 4
+extern unsigned int g_num_sibling_threads;
+#define WFORCE_NUM_SIBLING_THREADS 2

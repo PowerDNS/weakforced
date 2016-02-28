@@ -37,6 +37,7 @@
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
+#include "ext/ctpl.h"
 
 using std::atomic;
 using std::thread;
@@ -450,6 +451,8 @@ void spreadReport(const LoginTuple& lt)
   }
 }
 
+unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
+
 void receiveReports(ComboAddress local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
@@ -458,24 +461,28 @@ void receiveReports(ComboAddress local)
   ComboAddress remote=local;
   socklen_t remlen=remote.getSocklen();
   int len;
+  ctpl::thread_pool p(g_num_sibling_threads);
+
   infolog("Launched UDP sibling listener on %s", local.toStringWithPort());
   for(;;) {
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
 
-    SodiumNonce nonce;
-    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    p.push([&buf,&remote,len](int id) {
+	SodiumNonce nonce;
+	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
     
-    string msg=sodDecryptSym(packet, g_key, nonce);
+	string msg=sodDecryptSym(packet, g_key, nonce);
 
-    LoginTuple lt;
-    lt.unserialize(msg);
-    vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
-    {
-      g_luamultip->report(lt);
-    }
+	LoginTuple lt;
+	lt.unserialize(msg);
+	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
+	{
+	  g_luamultip->report(lt);
+	}
+      });
   }
 }
 

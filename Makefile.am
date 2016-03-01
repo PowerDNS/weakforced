@@ -3,12 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=pdns/ext/yahttp docs
 
-BUILT_SOURCES=htmlfiles.h
-
-htmlfiles.h: html/*
-	./incfiles > $@
-
-EXTRA_DIST= wforce.conf README.md html wforce.service
+EXTRA_DIST= wforce.conf README.md wforce.service
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce
@@ -23,7 +18,6 @@ wforce_SOURCES = \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
-	htmlfiles.h \
 	namespaces.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \

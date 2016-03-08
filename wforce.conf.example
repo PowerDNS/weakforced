@@ -150,7 +150,7 @@ function allow(lt)
 	cur_ct = lookupCountry(lt.remote) 
 	if ((sdb:twGet(lt.login, "diffIPs") > 5) and (sdb_day.twGet(lt.login, "countryCount", cur_ct) < 2))
 	then
-		allowLog(-1, "diffIPs", lt, { diffIPs=5 })
+		allowLog(-1, "diffIPs", lt, { diffIPs=5, countryCount24Hrs=1, country=cur_ct })
 		return -1
 	end
 

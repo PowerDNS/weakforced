@@ -10,7 +10,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "ext/ctpl.h"
-#include "htmlfiles.h"
 #include "base64.hh"
 
 static int uptimeOfProcess()
@@ -213,14 +212,6 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
 
     resp.headers["Content-Type"] = "application/json";
     resp.body=my_json.dump();
-  }
-  else if(!resp.url.path.empty() && g_urlmap.count(resp.url.path.c_str()+1)) {
-    resp.body.assign(g_urlmap[resp.url.path.c_str()+1]);
-    resp.status=200;
-  }
-  else if(resp.url.path=="/") {
-    resp.body.assign(g_urlmap["index.html"]);
-    resp.status=200;
   }
   else {
     // cerr<<"404 for: "<<resp.url.path<<endl;

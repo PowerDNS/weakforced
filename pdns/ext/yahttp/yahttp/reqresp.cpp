@@ -63,10 +63,7 @@ namespace YaHTTP {
         std::string key,value;
         size_t pos;
         if (line.empty()) {
-          if (target->kind == YAHTTP_TYPE_REQUEST)
-            chunked = (target->headers.find("content-transfer-encoding") != target->headers.end() && target->headers["content-transfer-encoding"] == "chunked");
-          else if (target->kind == YAHTTP_TYPE_RESPONSE)
-            chunked = (target->headers.find("transfer-encoding") != target->headers.end() && target->headers["transfer-encoding"] == "chunked");
+          chunked = (target->headers.find("transfer-encoding") != target->headers.end() && target->headers["transfer-encoding"] == "chunked");
           state = 2;
           break;
         }

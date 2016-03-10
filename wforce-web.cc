@@ -137,7 +137,7 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
     if (msg.is_null()) {
       resp.status=500;
       std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
       resp.body=ss.str();
     }
     else {
@@ -172,7 +172,7 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
     if (msg.is_null()) {
       resp.status=500;
       std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << err << "}";
+      ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
       resp.body=ss.str();
     }
     else {

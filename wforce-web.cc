@@ -12,6 +12,8 @@
 #include "ext/ctpl.h"
 #include "base64.hh"
 
+using std::thread;
+
 static int uptimeOfProcess()
 {
   static time_t start=time(0);
@@ -60,34 +62,60 @@ static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
       }
     }
   }
-
 }
 
-static void connectionThread(int id, int sock, ComboAddress remote, string password)
+struct WFConnection {
+  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
+  {
+    fd = sock;
+    remote = ca;
+    password = pass;
+    closeConnection = false;
+    inConnectionThread = false;
+  }
+  bool inConnectionThread;
+  bool closeConnection;
+  int fd;
+  Socket s;
+  ComboAddress remote;
+  std::string password;
+};
+
+typedef std::vector<std::shared_ptr<WFConnection>> WFCArray;
+static WFCArray sock_vec;
+static std::mutex sock_vec_mutx;
+
+static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 {
-  Socket client(sock);
   using namespace json11;
-  infolog("Webserver handling connection from %s", remote.toStringWithPort());
   string line;
   string request;
   YaHTTP::Request req;
+  bool keepalive = false;
+  bool closeConnection=true;
+
+  if (!wfc)
+    return;
+
+  warnlog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
   YaHTTP::AsyncRequestLoader yarl;
   yarl.initialize(&req);
-  int timeout = 5;
-  client.setNonBlocking();
+  int timeout = 5; // XXX make this configurable
+  wfc->s.setNonBlocking();
   bool complete=false;
   try {
     while(!complete) {
       int bytes;
       char buf[1024];
-      bytes = client.readWithTimeout(buf, sizeof(buf), timeout);
+      bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
       if (bytes > 0) {
-        string data(buf, bytes);
-        complete = yarl.feed(data);
+	string data(buf, bytes);
+	complete = yarl.feed(data);
       } else {
-        // read error OR EOF
-        break;
+	// read error OR EOF
+	closeConnection = true;
+	break;
       }
     }
     yarl.finalize();
@@ -96,6 +124,15 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
   } catch (NetworkError& e) {
     warnlog("Network error in web server: %s", e.what());
   }
+
+  string conn_header = req.headers["Connection"];
+  if (conn_header.compare("keep-alive") == 0)
+    keepalive = true;
+
+  if (conn_header.compare("close") == 0)
+    closeConnection = true;
+  else if (req.version == 1.1 || ((req.version < 1.1) && (keepalive == true)))
+    closeConnection = false;
 
   string command=req.getvars["command"];
 
@@ -110,13 +147,16 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
 
   YaHTTP::Response resp;
   resp.headers["Content-Type"] = "application/json";
-  resp.headers["Connection"] = "close";
+  if (closeConnection)
+    resp.headers["Connection"] = "close";
+  else if (keepalive == true)
+    resp.headers["Connection"] = "keep-alive";
   resp.version = req.version;
   resp.url = req.url;
 
   string ctype = req.headers["Content-Type"];
-  if (!compareAuthorization(req, password)) {
-    errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, remote.toStringWithPort());
+  if (!compareAuthorization(req, wfc->password)) {
+    errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
     resp.status=401;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":" << "Unauthorized" << "}";
@@ -124,7 +164,7 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
     resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
   }
   else if ((command != "") && (ctype.compare("application/json") != 0)) {
-    errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, remote.toStringWithPort());
+    errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
     resp.status = 415;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
@@ -226,27 +266,103 @@ static void connectionThread(int id, int sock, ComboAddress remote, string passw
   ofs << resp;
   string done;
   done=ofs.str();
-  writen2(sock, done.c_str(), done.size());
+  writen2(wfc->fd, done.c_str(), done.size());
+
+  if (closeConnection) {
+    std::lock_guard<std::mutex> lock(sock_vec_mutx);
+    wfc->closeConnection = true;
+    wfc->inConnectionThread = false;
+  }
+  return;
 }
 
 unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
 
+#include "poll.h"
+
+void pollThread()
+{
+  ctpl::thread_pool p(g_num_worker_threads);
+
+  for (;;) {
+    // parse the array of sockets and create a pollfd array
+    struct pollfd* fds;
+    int num_fds=0;
+    {
+      std::lock_guard<std::mutex> lock(sock_vec_mutx);
+      num_fds = sock_vec.size();
+      fds = new struct pollfd [num_fds];
+      if (!fds) {
+	errlog("Cannot allocate memory in pollThread()");
+	exit(-1);
+      }
+      int j=0;
+      for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end(); ++i, j++) {
+	fds[j].fd = (*i)->fd;
+	fds[j].events = 0;
+	if (!((*i)->inConnectionThread)) {
+	  warnlog("pollThread(): adding fd=%d to pollfd array", fds[j].fd);
+	  fds[j].events |= POLLIN;
+	}
+      }
+    }
+    // poll with shortish timeout
+    int res = poll(fds, num_fds, 50);
+
+    if (res < 0) {
+      warnlog("poll() system call returned error (%d)", errno);
+    }
+    else {
+      std::lock_guard<std::mutex> lock(sock_vec_mutx);
+      for (int i=0; i<num_fds; i++) {
+	// process any connections that have activity
+	if (fds->revents & POLLIN) {
+	  warnlog("pollThread(): Processing connection on fd=%d", sock_vec[i]->fd);
+	  sock_vec[i]->inConnectionThread = true;
+	  p.push(connectionThread, sock_vec[i]);
+	}
+	// set close flag for connections that need closing
+	if (fds->revents & (POLLHUP | POLLERR)) {
+	  sock_vec[i]->closeConnection = true;
+	}
+      }
+      // now erase any connections that are done with
+      for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end();) {
+	if ((*i)->closeConnection == true) {
+	  warnlog("pollThread(): closing connection with fd=%d", (*i)->fd);
+	  // this will implicitly close the socket through the Socket class destructor
+	  sock_vec.erase(i);
+	}
+	else
+	  ++i;
+      }
+    }
+    delete[] fds;
+  }
+}
+
 void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::string& password)
 {
-  infolog("Webserver launched on %s", local.toStringWithPort());
+  warnlog("Webserver launched on %s", local.toStringWithPort());
   auto localACL=g_ACL.getLocal();
-  ctpl::thread_pool p(g_num_worker_threads);
+
+  // spin up a thread to do the polling on the connections accepted by this thread
+  thread t1(pollThread);
+  t1.detach();
 
   for(;;) {
     try {
       ComboAddress remote(local);
       int fd = SAccept(sock, remote);
-      vinfolog("Got connection from %s", remote.toStringWithPort());
+      vinfolog("Got connection from %s, fd=%n", remote.toStringWithPort(), fd);
       if(!localACL->match(remote)) {
 	close(fd);
 	continue;
       }
-      p.push(connectionThread, fd, remote, password);
+      {
+	std::lock_guard<std::mutex> lock(sock_vec_mutx);
+	sock_vec.push_back(std::make_shared<WFConnection>(fd, remote, password));
+      }
     }
     catch(std::exception& e) {
       errlog("Had an error accepting new webserver connection: %s", e.what());

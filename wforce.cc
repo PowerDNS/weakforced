@@ -746,6 +746,15 @@ try
     acl.addMask(addr);
   g_ACL.setState(acl);
 
+  vector<string> vec;
+  std::string acls;
+  acl.toStringVector(&vec);
+  for(const auto& s : vec) {
+    if (!acls.empty())
+      acls += ", ";
+    acls += s;
+  }
+  infolog("ACL allowing queries from: %s", acls.c_str());
 
   for(const auto& local : g_locals) {
     ClientState* cs = new ClientState;

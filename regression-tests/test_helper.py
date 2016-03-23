@@ -28,10 +28,10 @@ class ApiTestCase(unittest.TestCase):
         # Lua doesn't need newlines and the console gets confused by them e.g.
         # function definitions
         cmds = cmds_nl.replace("\n", " ")
-        return call(["../wforce", "-C", "../wforce.conf", "-e", cmds])
+        return call(["../wforce", "-c", "../wforce.conf", "-e", cmds])
 
     def writeCmdToConsole(self, cmd):
-        return check_output(["../wforce", "-C", "../wforce.conf", "-e", cmd])
+        return check_output(["../wforce", "-c", "../wforce.conf", "-e", cmd])
 
     def allowFunc(self, login, remote, pwhash):
         return self.allowFuncAttrs(login, remote, pwhash, {})

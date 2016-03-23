@@ -97,7 +97,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   if (!wfc)
     return;
 
-  warnlog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
+  infolog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
   YaHTTP::AsyncRequestLoader yarl;
   yarl.initialize(&req);
@@ -131,7 +131,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 
   if (conn_header.compare("close") == 0)
     closeConnection = true;
-  else if (req.version == 1.1 || ((req.version < 1.1) && (keepalive == true)))
+  else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
     closeConnection = false;
 
   string command=req.getvars["command"];
@@ -271,8 +271,8 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   if (closeConnection) {
     std::lock_guard<std::mutex> lock(sock_vec_mutx);
     wfc->closeConnection = true;
-    wfc->inConnectionThread = false;
   }
+  wfc->inConnectionThread = false;
   return;
 }
 
@@ -301,7 +301,6 @@ void pollThread()
 	fds[j].fd = (*i)->fd;
 	fds[j].events = 0;
 	if (!((*i)->inConnectionThread)) {
-	  warnlog("pollThread(): adding fd=%d to pollfd array", fds[j].fd);
 	  fds[j].events |= POLLIN;
 	}
       }
@@ -315,21 +314,19 @@ void pollThread()
     else {
       std::lock_guard<std::mutex> lock(sock_vec_mutx);
       for (int i=0; i<num_fds; i++) {
+	// set close flag for connections that need closing
+	if (fds[i].revents & (POLLHUP | POLLERR)) {
+	  sock_vec[i]->closeConnection = true;
+	}
 	// process any connections that have activity
-	if (fds->revents & POLLIN) {
-	  warnlog("pollThread(): Processing connection on fd=%d", sock_vec[i]->fd);
+	else if (fds[i].revents & POLLIN) {
 	  sock_vec[i]->inConnectionThread = true;
 	  p.push(connectionThread, sock_vec[i]);
-	}
-	// set close flag for connections that need closing
-	if (fds->revents & (POLLHUP | POLLERR)) {
-	  sock_vec[i]->closeConnection = true;
 	}
       }
       // now erase any connections that are done with
       for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end();) {
 	if ((*i)->closeConnection == true) {
-	  warnlog("pollThread(): closing connection with fd=%d", (*i)->fd);
 	  // this will implicitly close the socket through the Socket class destructor
 	  sock_vec.erase(i);
 	}
@@ -354,7 +351,7 @@ void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::stri
     try {
       ComboAddress remote(local);
       int fd = SAccept(sock, remote);
-      vinfolog("Got connection from %s, fd=%n", remote.toStringWithPort(), fd);
+      vinfolog("Got connection from %s", remote.toStringWithPort());
       if(!localACL->match(remote)) {
 	close(fd);
 	continue;

@@ -297,6 +297,8 @@ void pollThread()
 	exit(-1);
       }
       int j=0;
+      // we want to keep the symmetry between pollfds and sock_vec in terms of number and order of items
+      // so rather than remove sockets which are not being processed we just don't set the POLLIN flag for them
       for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end(); ++i, j++) {
 	fds[j].fd = (*i)->fd;
 	fds[j].events = 0;
@@ -305,7 +307,7 @@ void pollThread()
 	}
       }
     }
-    // poll with shortish timeout
+    // poll with shortish timeout - XXX make timeout configurable
     int res = poll(fds, num_fds, 50);
 
     if (res < 0) {

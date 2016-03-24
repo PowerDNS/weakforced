@@ -115,14 +115,14 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 	complete = yarl.feed(data);
       } else {
 	// read error OR EOF
-	closeConnection = true;
+	validRequest = false;
 	break;
       }
     }
     yarl.finalize();
   } catch (YaHTTP::ParseError &e) {
     // request stays incomplete
-    infolog("Incomplete or unparseable HTTP request from %s", wfc->remote.toStringWithPort());
+    infolog("Unparseable HTTP request from %s", wfc->remote.toStringWithPort());
     validRequest = false;
   } catch (NetworkError& e) {
     warnlog("Network error in web server: %s", e.what());

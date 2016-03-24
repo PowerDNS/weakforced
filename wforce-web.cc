@@ -274,9 +274,8 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       wfc->closeConnection = true;
     }
     wfc->inConnectionThread = false;
+    return;
   }
-
-  return;
 }
 
 unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
@@ -320,7 +319,7 @@ void pollThread()
       std::lock_guard<std::mutex> lock(sock_vec_mutx);
       for (int i=0; i<num_fds; i++) {
 	// set close flag for connections that need closing
-	if (fds[i].revents & (POLLHUP | POLLERR)) {
+	if (fds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
 	  sock_vec[i]->closeConnection = true;
 	}
 	// process any connections that have activity

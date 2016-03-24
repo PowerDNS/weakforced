@@ -306,35 +306,37 @@ void doConsole()
 
     string response;
     try {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      g_outputBuffer.clear();
-      auto ret=g_lua.executeCode<
-	boost::optional<
-	  boost::variant<
-	    string
-	    >
-	  >
-	>(line);
-
       // execute the supplied lua code for all the allow/report lua states
-      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-	it->lua_contextp->executeCode<	
+      {
+	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	  std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
+	  it->lua_contextp->executeCode<	
+	    boost::optional<
+	      boost::variant<
+		string
+		>
+	      >
+	    >(line);
+	}
+      }
+      {
+	std::lock_guard<std::mutex> lock(g_luamutex);
+	g_outputBuffer.clear();
+	auto ret=g_lua.executeCode<
 	  boost::optional<
 	    boost::variant<
 	      string
 	      >
 	    >
 	  >(line);
-      }
-
-      if(ret) {
-	if (const auto strValue = boost::get<string>(&*ret)) {
-	  cout<<*strValue<<endl;
+	if(ret) {
+	  if (const auto strValue = boost::get<string>(&*ret)) {
+	    cout<<*strValue<<endl;
+	  }
 	}
+	else 
+	  cout << g_outputBuffer;
       }
-      else 
-	cout << g_outputBuffer;
-
     }
     catch(const LuaContext::ExecutionErrorException& e) {
       std::cerr << e.what() << ": ";

@@ -93,6 +93,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   YaHTTP::Request req;
   bool keepalive = false;
   bool closeConnection=true;
+  bool validRequest = true;
 
   if (!wfc)
     return;
@@ -121,152 +122,157 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     yarl.finalize();
   } catch (YaHTTP::ParseError &e) {
     // request stays incomplete
+    infolog("Incomplete or unparseable HTTP request from %s", wfc->remote.toStringWithPort());
+    validRequest = false;
   } catch (NetworkError& e) {
     warnlog("Network error in web server: %s", e.what());
+    validRequest = false;
   }
 
-  string conn_header = req.headers["Connection"];
-  if (conn_header.compare("keep-alive") == 0)
-    keepalive = true;
+  if (validRequest) {
+    string conn_header = req.headers["Connection"];
+    if (conn_header.compare("keep-alive") == 0)
+      keepalive = true;
 
-  if (conn_header.compare("close") == 0)
-    closeConnection = true;
-  else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
-    closeConnection = false;
+    if (conn_header.compare("close") == 0)
+      closeConnection = true;
+    else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
+      closeConnection = false;
 
-  string command=req.getvars["command"];
+    string command=req.getvars["command"];
 
-  string callback;
+    string callback;
 
-  if(req.getvars.count("callback")) {
-    callback=req.getvars["callback"];
-    req.getvars.erase("callback");
-  }
+    if(req.getvars.count("callback")) {
+      callback=req.getvars["callback"];
+      req.getvars.erase("callback");
+    }
 
-  req.getvars.erase("_"); // jQuery cache buster
+    req.getvars.erase("_"); // jQuery cache buster
 
-  YaHTTP::Response resp;
-  resp.headers["Content-Type"] = "application/json";
-  if (closeConnection)
-    resp.headers["Connection"] = "close";
-  else if (keepalive == true)
-    resp.headers["Connection"] = "keep-alive";
-  resp.version = req.version;
-  resp.url = req.url;
+    YaHTTP::Response resp;
+    resp.headers["Content-Type"] = "application/json";
+    if (closeConnection)
+      resp.headers["Connection"] = "close";
+    else if (keepalive == true)
+      resp.headers["Connection"] = "keep-alive";
+    resp.version = req.version;
+    resp.url = req.url;
 
-  string ctype = req.headers["Content-Type"];
-  if (!compareAuthorization(req, wfc->password)) {
-    errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
-    resp.status=401;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":" << "Unauthorized" << "}";
-    resp.body=ss.str();
-    resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
-  }
-  else if ((command != "") && (ctype.compare("application/json") != 0)) {
-    errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
-    resp.status = 415;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
-    resp.body=ss.str();
-  }
-  else if(command=="report" && req.method=="POST") {
-    Json msg;
-    string err;
-    msg=Json::parse(req.body, err);
-    if (msg.is_null()) {
-      resp.status=500;
+    string ctype = req.headers["Content-Type"];
+    if (!compareAuthorization(req, wfc->password)) {
+      errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
+      resp.status=401;
       std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+      ss << "{\"status\":\"failure\", \"reason\":" << "Unauthorized" << "}";
+      resp.body=ss.str();
+      resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
+    }
+    else if ((command != "") && (ctype.compare("application/json") != 0)) {
+      errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
+      resp.status = 415;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
       resp.body=ss.str();
     }
-    else {
-      resp.postvars.clear();
-      try {
+    else if(command=="report" && req.method=="POST") {
+      Json msg;
+      string err;
+      msg=Json::parse(req.body, err);
+      if (msg.is_null()) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+	resp.body=ss.str();
+      }
+      else {
+	resp.postvars.clear();
+	try {
+	  LoginTuple lt;
+	  lt.remote=ComboAddress(msg["remote"].string_value());
+	  lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
+	  lt.pwhash=msg["pwhash"].string_value();
+	  lt.login=msg["login"].string_value();
+	  setLtAttrs(lt, msg);
+	  lt.t=getDoubleTime();
+	  spreadReport(lt);
+	  g_stats.reports++;
+	  resp.status=200;
+	  {
+	    g_luamultip->report(lt);
+	  }
+
+	  resp.body=R"({"status":"ok"})";
+	}
+	catch(...) {
+	  resp.status=500;
+	  resp.body=R"({"status":"failure"})";
+	}
+      }
+    }
+    else if(command=="allow" && req.method=="POST") {
+      Json msg;
+      string err;
+      msg=Json::parse(req.body, err);
+      if (msg.is_null()) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+	resp.body=ss.str();
+      }
+      else {
 	LoginTuple lt;
 	lt.remote=ComboAddress(msg["remote"].string_value());
-	lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
+	lt.success=msg["success"].bool_value();
 	lt.pwhash=msg["pwhash"].string_value();
 	lt.login=msg["login"].string_value();
 	setLtAttrs(lt, msg);
-	lt.t=getDoubleTime();
-	spreadReport(lt);
-	g_stats.reports++;
-	resp.status=200;
+	int status=0;
 	{
-	  g_luamultip->report(lt);
+	  status=g_luamultip->allow(lt);
 	}
-
-	resp.body=R"({"status":"ok"})";
-      }
-      catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure"})";
+	g_stats.allows++;
+	if(status < 0)
+	  g_stats.denieds++;
+	msg=Json::object{{"status", status}};
+      
+	resp.status=200;
+	resp.postvars.clear();
+	resp.body=msg.dump();
       }
     }
-  }
-  else if(command=="allow" && req.method=="POST") {
-    Json msg;
-    string err;
-    msg=Json::parse(req.body, err);
-    if (msg.is_null()) {
-      resp.status=500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-      resp.body=ss.str();
+    else if(command=="stats") {
+      struct rusage ru;
+      getrusage(RUSAGE_SELF, &ru);
+
+      resp.status=200;
+      Json my_json = Json::object {
+	{ "allows", (int)g_stats.allows },
+	{ "denieds", (int)g_stats.denieds },
+	{ "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
+	{ "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
+	{ "uptime", uptimeOfProcess()},
+	{ "qa-latency", (int)g_stats.latency}
+      };
+
+      resp.headers["Content-Type"] = "application/json";
+      resp.body=my_json.dump();
     }
     else {
-      LoginTuple lt;
-      lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].bool_value();
-      lt.pwhash=msg["pwhash"].string_value();
-      lt.login=msg["login"].string_value();
-      setLtAttrs(lt, msg);
-      int status=0;
-      {
-	status=g_luamultip->allow(lt);
-      }
-      g_stats.allows++;
-      if(status < 0)
-	g_stats.denieds++;
-      msg=Json::object{{"status", status}};
-      
-      resp.status=200;
-      resp.postvars.clear();
-      resp.body=msg.dump();
+      // cerr<<"404 for: "<<resp.url.path<<endl;
+      resp.status=404;
     }
-  }
-  else if(command=="stats") {
-    struct rusage ru;
-    getrusage(RUSAGE_SELF, &ru);
 
-    resp.status=200;
-    Json my_json = Json::object {
-      { "allows", (int)g_stats.allows },
-      { "denieds", (int)g_stats.denieds },
-      { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
-      { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
-      { "uptime", uptimeOfProcess()},
-      { "qa-latency", (int)g_stats.latency}
-    };
+    if(!callback.empty()) {
+      resp.body = callback + "(" + resp.body + ");";
+    }
 
-    resp.headers["Content-Type"] = "application/json";
-    resp.body=my_json.dump();
+    std::ostringstream ofs;
+    ofs << resp;
+    string done;
+    done=ofs.str();
+    writen2(wfc->fd, done.c_str(), done.size());
   }
-  else {
-    // cerr<<"404 for: "<<resp.url.path<<endl;
-    resp.status=404;
-  }
-
-  if(!callback.empty()) {
-    resp.body = callback + "(" + resp.body + ");";
-  }
-
-  std::ostringstream ofs;
-  ofs << resp;
-  string done;
-  done=ofs.str();
-  writen2(wfc->fd, done.c_str(), done.size());
 
   {
     std::lock_guard<std::mutex> lock(sock_vec_mutx);

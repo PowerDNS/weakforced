@@ -268,11 +268,14 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   done=ofs.str();
   writen2(wfc->fd, done.c_str(), done.size());
 
-  if (closeConnection) {
+  {
     std::lock_guard<std::mutex> lock(sock_vec_mutx);
-    wfc->closeConnection = true;
+    if (closeConnection) {
+      wfc->closeConnection = true;
+    }
+    wfc->inConnectionThread = false;
   }
-  wfc->inConnectionThread = false;
+
   return;
 }
 

@@ -1,1 +1,1 @@
-SUBDIRS = yahttp
+SUBDIRS = yahttp json11

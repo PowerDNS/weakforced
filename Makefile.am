@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=ext docs
@@ -22,8 +22,6 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh pdns/ext/luawrapper/include/LuaContext.hpp \
-	ext/json11/json11.cpp \
-	ext/json11/json11.hpp \
 	ext/incbin/incbin.h \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
@@ -35,7 +33,7 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \

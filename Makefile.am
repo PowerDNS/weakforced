@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS=pdns/ext/yahttp docs
+SUBDIRS=ext docs
 
 EXTRA_DIST= wforce.conf README.md wforce.service
 
@@ -22,9 +22,10 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh pdns/ext/luawrapper/include/LuaContext.hpp \
-	pdns/ext/json11/json11.cpp \
-	pdns/ext/json11/json11.hpp \
-	pdns/ext/incbin/incbin.h \
+	ext/json11/json11.cpp \
+	ext/json11/json11.hpp \
+	ext/incbin/incbin.h \
+	ext/incbin/incbin.h \
 	ext/murmur3.cc \
 	ext/count_min_sketch.cpp
 

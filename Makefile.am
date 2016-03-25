@@ -37,6 +37,21 @@ wforce_LDADD = \
 	-lreadline -ltermcap \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
 
+noinst_HEADERS = \
+	base64.hh \
+	dns.hh \
+	dns_lookup.hh \
+	dolog.hh \
+	iputils.hh \
+	misc.hh \
+	namespaces.hh \
+	sholder.hh \
+	sodcrypto.hh \
+	sstuff.hh \
+	twmap.hh \
+	wforce-geoip.hh \
+	wforce.hh
+
 if WITH_SYSTEMDSYSTEMUNITDIR
 wforce.service: wforce.service.in
 	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' < $< > $@

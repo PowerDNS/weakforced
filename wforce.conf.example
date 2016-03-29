@@ -88,16 +88,15 @@ function allow(lt)
 
 	if(bulkRetrievers:match(lt.remote))
 	then
-		allowLog(0, "bulkRetrievers", lt, { foo=1 })
-		return 0
+		-- Must return 4 args - <return value>, <return msg>, <log msg>, <log key values>
+		return 0, "bulkRetrievers", "bulkRetrievers", { bulkRetrievers=1 }
 	end
 
 	-- check optional attrs for things that indicate badness
         for k, v in pairs(lt.attrs) do
              if ((k == "accountStatus") and (v == "blocked"))
              then
-	     	allowLog(-1, "account blocked", lt, { accountStatus="blocked" })
-                return -1
+		return -1, "account blocked", "account blocked", { accountStatus="blocked" }
              end
         end
 	-- attrs can be multi-valued, in which case they will appear in attrs_mv automagically
@@ -105,8 +104,7 @@ function allow(lt)
              for i, vi in ipairs(v) do
                   if ((k == "countryList") and (vi == "Blockmestan"))
                   then
-			allowLog(-1, "blocked", lt, { countryList="Blockmestan" })
-                        return -1
+			return -1, "blocked country list", "blocked country list", { countryList="Blockmestan" }
                   end
               end
         end
@@ -114,8 +112,7 @@ function allow(lt)
 	-- Example GeoIP lookup
 	if (lookupCountry(lt.remote) == "XX")
 	then
-		allowLog(-1, "country blocked", lt, { remoteCountry="XX" })
-		return -1
+		return -1, "country blocked", "country blocked", { remoteCountry="XX" }
 	end
 
 	-- Example DNS lookups
@@ -123,8 +120,7 @@ function allow(lt)
 	for i, dname in ipairs(dnames) do
 	    if (string.match(dname, "XXX"))
 	    then
-	    	allowLog(-1, "Reverse IP", lt, { ptrContains="XXX" })
-		return -1
+		return -1, "Reverse IP", "Reverse IP", { ptrContains="XXX" }
 	    end
 	end
 
@@ -132,9 +128,8 @@ function allow(lt)
 	for i, dname in ipairs(dnames) do
 	    if (string.match(dname, "127.0.0.2"))
 	    then
-	    	allowLog(5, "RBL", lt, { spamhaus=1 })
 		-- tarpit the connection
-		return 5
+	    	return 5, "RBL", "RBL", { spamhaus=1 }
 	    end
 	end
 
@@ -142,24 +137,22 @@ function allow(lt)
 	-- For integer and countmin types, this is just a sum. For HLL, it's a union.
 	if (sdb:twGet(lt.login, "diffPasswords") > 90)
 	then
-		allowLog(-1, "diffPasswords", lt, { diffPasswords=90 })
-		return -1
+		return -1, "too many different password attempts for this account", "diffPasswords", { diffPasswords=90 }
 	end
 
 	-- If user is logging in from multiple IPs and we haven't seen this country in the last 24 hours then reject
 	cur_ct = lookupCountry(lt.remote) 
 	if ((sdb:twGet(lt.login, "diffIPs") > 5) and (sdb_day.twGet(lt.login, "countryCount", cur_ct) < 2))
 	then
-		allowLog(-1, "diffIPs", lt, { diffIPs=5, countryCount24Hrs=1, country=cur_ct })
-		return -1
+		return -1, "Too many IPs and countries", "diffIPs", { diffIPs=5, countryCount24Hrs=1, country=cur_ct }
 	end
 
 	-- We also have:
 	--		 twGetCurrent() which returns the value for the current window 
 	--		 twGetWindows() which returns a table with all window values - the first item in the list is the "current" window. The last is the "oldest" window.
 
-	allowLog(0, "allowed", lt, { foo=1 })
-	return 0
+	-- return must have these 4 arguments
+	return 0, "allowed", "allowed", {}
 end
 
 setReport(report)

@@ -64,6 +64,40 @@ static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
   }
 }
 
+void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
+{
+  std::ostringstream os;
+  os << "allowLog " << msg << ": ";
+  os << "allow=\"" << retval << "\" ";
+  os << "remote=\"" << lt.remote.toString() << "\" ";
+  os << "login=\"" << lt.login << "\" ";
+  os << "attrs={";
+  for (auto i= lt.attrs.begin(); i!=lt.attrs.end(); ++i) {
+    os << i->first << "="<< "\"" << i->second << "\"";
+    if (i != --(lt.attrs.end()))
+      os << ", ";
+  }
+  for (auto i = lt.attrs_mv.begin(); i!=lt.attrs_mv.end(); ++i) {
+    if (i == lt.attrs_mv.begin())
+      os << ", ";
+    os << i->first << "=[";
+    std::vector<std::string> vec = i->second;
+    for (auto j = vec.begin(); j!=vec.end(); ++j) {
+      os << "\"" << *j << "\"";
+      if (j != --(vec.end()))
+	os << ", ";
+    }
+    os << "]";
+    if (i != --(lt.attrs_mv.end()))
+      os << ", ";
+  }
+  os << "} ";
+  for (const auto& i : kvs) {
+    os << i.first << "="<< "\"" << i.second << "\"" << " ";
+  }
+  infolog(os.str().c_str());
+}
+
 struct WFConnection {
   WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
   {
@@ -227,14 +261,22 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 	lt.pwhash=msg["pwhash"].string_value();
 	lt.login=msg["login"].string_value();
 	setLtAttrs(lt, msg);
-	int status=0;
+	AllowReturn ar;
 	{
-	  status=g_luamultip->allow(lt);
+	  ar=g_luamultip->allow(lt);
 	}
+	int status = std::get<0>(ar);
+	std::string ret_msg = std::get<1>(ar);
+	std::string log_msg = std::get<2>(ar);
+	std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
+
+	// log the results of the allow function
+	allowLog(status, log_msg, lt, log_attrs);
+
 	g_stats.allows++;
 	if(status < 0)
 	  g_stats.denieds++;
-	msg=Json::object{{"status", status}};
+	msg=Json::object{{"status", status}, {"msg", ret_msg}};
       
 	resp.status=200;
 	resp.postvars.clear();

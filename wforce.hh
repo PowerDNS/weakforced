@@ -95,10 +95,12 @@ struct LoginTuple
   }
 };
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<int(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, const std::string& config);
+typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
+
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<AllowReturn(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, const std::string& config);
 
 void spreadReport(const LoginTuple& lt);
-typedef std::function<int(const LoginTuple&)> allow_t;
+typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
 typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;
@@ -106,7 +108,7 @@ extern report_t g_report;
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
   std::shared_ptr<std::mutex> lua_mutexp;
-  std::function<int(const LoginTuple&)> allow_func;
+  std::function<AllowReturn(const LoginTuple&)> allow_func;
   std::function<void(const LoginTuple&)> report_func;
 };
 
@@ -136,7 +138,7 @@ public:
   std::vector<LuaThreadContext>::iterator begin() { return lua_cv.begin(); }
   std::vector<LuaThreadContext>::iterator end() { return lua_cv.end(); }
 
-  int allow(const LoginTuple& lt) {
+  AllowReturn allow(const LoginTuple& lt) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));

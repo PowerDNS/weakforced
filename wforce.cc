@@ -488,10 +488,11 @@ void receiveReports(ComboAddress local)
   }
 }
 
-int defaultAllowTuple(const LoginTuple& lp)
+AllowReturn defaultAllowTuple(const LoginTuple& lp)
 {
   // do nothing: we expect Lua function to be registered if wforce is required to actually do something
-  return 0;
+  std::vector<pair<std::string, std::string>> myvec;
+  return std::make_tuple(0, "", "", myvec);
 }
 
 void defaultReportTuple(const LoginTuple& lp)
@@ -499,7 +500,7 @@ void defaultReportTuple(const LoginTuple& lp)
   // do nothing: we expect Lua function to be registered if something custom is needed
 }
 
-std::function<int(const LoginTuple&)> g_allow{defaultAllowTuple};
+std::function<AllowReturn(const LoginTuple&)> g_allow{defaultAllowTuple};
 std::function<void(const LoginTuple&)> g_report{defaultReportTuple};
 
 /**** CARGO CULT CODE AHEAD ****/

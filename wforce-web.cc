@@ -71,11 +71,10 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   os << "allow=\"" << retval << "\" ";
   os << "remote=\"" << lt.remote.toString() << "\" ";
   os << "login=\"" << lt.login << "\" ";
-  os << "success=\"" << lt.success << "\" ";
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
-  warnlog(os.str().c_str());
+  infolog(os.str().c_str());
 }
 
 struct WFConnection {

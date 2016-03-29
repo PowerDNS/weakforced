@@ -92,16 +92,16 @@ function allow(lt)
 	sdb = getStringStatsDB("OneHourDB")
 	if(sdb:twGet(lt.remote, "diffFailedPasswords") > 50)
 	then
-		return -1 -- BLOCK!
+		return -1, "", "", {} -- BLOCK!
 	end
 	// concatenate the IP address and login string
 	addrlogin = lt.remote:tostring() .. lt.login	
 	if(sdb:twGet(addrlogin, "diffFailedPasswords") > 3)
 	then
-		return 3 -- must wait for 3 seconds
+		return 3, "tarpitted", "diffFailedPasswords", {} -- must wait for 3 seconds
 	end
 
-	return 0 -- OK!
+	return 0, "", "", {} -- OK!
 end
 ```
 
@@ -126,7 +126,7 @@ Now to look up if we're still allowed in:
 ```
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234"}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
-{"status": -1}
+{"status": -1, "msg": "diffFailedPasswords"}
 ```
 
 It appears we are not!
@@ -138,7 +138,7 @@ the optional "attrs" object. An example:
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1",
 "pwhash":"1234", "attrs":{"attr1":"val1", "attr2":"val2"}}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
-{"status": 0}
+{"status": 0, "msg": ""}
 ```
 
 An example using the optional attrs object using multi-valued
@@ -148,7 +148,7 @@ attributes:
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1",
 "pwhash":"1234", "attrs":{"attr1":"val1", "attr2":["val2","val3"]}}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
-{"status": 0}
+{"status": 0, "msg": ""}
 ```
 
 Console

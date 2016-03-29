@@ -67,10 +67,31 @@ static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
 void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
 {
   std::ostringstream os;
-  os << msg << "allowLog: ";
+  os << "allowLog " << msg << ": ";
   os << "allow=\"" << retval << "\" ";
   os << "remote=\"" << lt.remote.toString() << "\" ";
   os << "login=\"" << lt.login << "\" ";
+  os << "attrs={";
+  for (auto i= lt.attrs.begin(); i!=lt.attrs.end(); ++i) {
+    os << i->first << "="<< "\"" << i->second << "\"";
+    if (i != --(lt.attrs.end()))
+      os << ", ";
+  }
+  for (auto i = lt.attrs_mv.begin(); i!=lt.attrs_mv.end(); ++i) {
+    if (i == lt.attrs_mv.begin())
+      os << ", ";
+    os << i->first << "=[";
+    std::vector<std::string> vec = i->second;
+    for (auto j = vec.begin(); j!=vec.end(); ++j) {
+      os << "\"" << *j << "\"";
+      if (j != --(vec.end()))
+	os << ", ";
+    }
+    os << "]";
+    if (i != --(lt.attrs_mv.end()))
+      os << ", ";
+  }
+  os << "} ";
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }

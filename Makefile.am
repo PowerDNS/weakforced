@@ -1,7 +1,7 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS=pdns/ext/yahttp docs
+SUBDIRS=ext docs
 
 EXTRA_DIST= wforce.conf README.md wforce.service
 
@@ -22,9 +22,8 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh pdns/ext/luawrapper/include/LuaContext.hpp \
-	pdns/ext/json11/json11.cpp \
-	pdns/ext/json11/json11.hpp \
-	pdns/ext/incbin/incbin.h \
+	ext/incbin/incbin.h \
+	ext/incbin/incbin.h \
 	ext/murmur3.cc \
 	ext/count_min_sketch.cpp
 
@@ -34,7 +33,22 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS)
+
+noinst_HEADERS = \
+	base64.hh \
+	dns.hh \
+	dns_lookup.hh \
+	dolog.hh \
+	iputils.hh \
+	misc.hh \
+	namespaces.hh \
+	sholder.hh \
+	sodcrypto.hh \
+	sstuff.hh \
+	twmap.hh \
+	wforce-geoip.hh \
+	wforce.hh
 
 if WITH_SYSTEMDSYSTEMUNITDIR
 wforce.service: wforce.service.in

@@ -17,8 +17,8 @@
 /install-sh
 /libtool
 /ltmain.sh
-/Makefile
-/Makefile.in
+Makefile
+Makefile.in
 /missing
 /stamp-h1
 /wforce

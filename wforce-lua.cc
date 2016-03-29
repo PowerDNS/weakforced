@@ -26,7 +26,7 @@ static vector<std::function<void(void)>>* g_launchWork;
 // We have a single lua config file for historical reasons, hence the somewhat complex structure of this function
 // The Lua state and type is passed via "allow_report" (true means it's one of the multiple states used for allow/report, false means it's the global lua config state) 
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua,  
-					   std::function<int(const LoginTuple&)>& allow_func, 
+					   std::function<AllowReturn(const LoginTuple&)>& allow_func, 
 					   std::function<void(const LoginTuple&)>& report_func,
 					   const std::string& config)
 {
@@ -352,19 +352,6 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";
-      for (const auto& i : kvs) {
-	os << i.first << "="<< "\"" << i.second << "\"" << " ";
-      }
-      infolog(os.str().c_str());
-    });
-
-  c_lua.writeFunction("allowLog", [](int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) {
-      std::ostringstream os;
-      os << msg << ": ";
-      os << "allow=\"" << retval << "\" ";
-      os << "remote=\"" << lt.remote.toString() << "\" ";
-      os << "login=\"" << lt.login << "\" ";
-      os << "success=\"" << lt.success << "\" ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }

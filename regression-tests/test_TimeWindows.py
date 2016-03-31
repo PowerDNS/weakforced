@@ -154,3 +154,26 @@ class TestTimeWindows(ApiTestCase):
         r = self.allowFunc('expirebaddie', '127.0.01', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
+
+    def test_Reset(self):
+        self.writeFileToConsole(configFile)
+        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(31):
+            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", 'false')
+            r.json()
+
+        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
+        r = self.resetFunc('resetbaddie', '128.0.0.1')
+        j = r.json()
+        self.assertEquals(j['status'], "ok")
+
+        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)

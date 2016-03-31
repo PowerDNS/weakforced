@@ -97,19 +97,22 @@ struct LoginTuple
 
 typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<AllowReturn(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, const std::string& config);
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<AllowReturn(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, std::function<bool(const std::string&, const std::string&, const ComboAddress&)>& reset_func, const std::string& config);
 
 void spreadReport(const LoginTuple& lt);
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
 typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;
+typedef std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_t;
+extern reset_t g_reset;
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
   std::shared_ptr<std::mutex> lua_mutexp;
   std::function<AllowReturn(const LoginTuple&)> allow_func;
   std::function<void(const LoginTuple&)> report_func;
+  std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_func;
 };
 
 #define NUM_LUA_STATES 1
@@ -137,6 +140,14 @@ public:
   // these are used to setup the allow and report function pointers
   std::vector<LuaThreadContext>::iterator begin() { return lua_cv.begin(); }
   std::vector<LuaThreadContext>::iterator end() { return lua_cv.end(); }
+
+  bool reset(const std::string& type, const std::string& login_value, const ComboAddress& ca_value) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    // call the allow function
+    return lt_context.reset_func(type, login_value, ca_value);
+  }
 
   AllowReturn allow(const LoginTuple& lt) {
     auto lt_context = getLuaState();

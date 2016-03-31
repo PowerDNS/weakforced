@@ -279,6 +279,13 @@ public:
     int cur_window = current_window();
     return stats_array[cur_window].second->sum(s, stats_array);
   }
+  void reset() {
+    std::lock_guard<std::mutex> lock(mutx);
+    for (TWStatsBuf::iterator i = stats_array.begin(); i != stats_array.end(); ++i) {
+      auto sm = i->second;
+      sm->erase();
+    }
+  }
 protected:
   void update_write_timestamp(int cur_window)
   {
@@ -368,6 +375,7 @@ public:
   int get_current(const T& key, const std::string& field_name, const std::string& s); // gets the value just for the current window for a particular value
   bool get_windows(const T& key, const std::string& field_name, std::vector<int>& ret_vec); // gets each window value returned in a vector
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
+  void reset(const T&key); // Reset to zero all fields for a given key
   void set_map_size_soft(unsigned int size);
   unsigned int get_size();
   uint8_t getv4Prefix() { return v4_prefix; }
@@ -654,6 +662,22 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, cons
 }
 
 template <typename T>
+void TWStatsDB<T>::reset(const T& key)
+{
+  std::lock_guard<std::mutex> lock(mutx);  
+
+  auto mysdb = stats_db.find(key);
+  if (mysdb != stats_db.end()) {
+    auto myfm = mysdb->second.second;
+    // go through all the fields and reset them
+    for (auto it = myfm.begin(); it != myfm.end(); ++it) {
+      auto stats_entryp = it->second;
+      stats_entryp->reset();
+    }
+  }
+}
+
+template <typename T>
 void TWStatsDB<T>::set_map_size_soft(unsigned int size) 
 {
   std::lock_guard<std::mutex> lock(mutx);
@@ -841,6 +865,12 @@ public:
       (void) sdbp->get_windows(key, field_name, retvec);
 
     return retvec; // copy
+  }
+
+  void reset(const TWKeyType vkey)
+  {
+    std::string key = getStringKey(vkey);
+    sdbp->reset(key);
   }
 
   unsigned int get_size()

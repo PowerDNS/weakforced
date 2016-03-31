@@ -151,6 +151,55 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remo
 {"status": 0, "msg": ""}
 ```
 
+There is also a command to reset the stats for a given login and/or IP
+Address, using the 'reset' command, the logic for which is also
+implemented in Lua. The default configuration for reset is as follows:
+
+```
+function reset(type, login, ip)
+	 sdb = getStringStatsDB("OneHourDB")
+	 if (string.find(type, "ip"))
+	 then
+		sdb:twReset(ip)
+	 end
+	 if (string.find(type, "login"))
+	 then
+		sdb:twReset(login)
+	 end
+	 if (string.find(type, "ip") and string.find(type, "login"))
+	 then
+		iplogin = ip:tostring() .. login
+		sdb:twReset(iplogin)
+	 end
+	 return true
+end
+```
+
+To test it out, try the following to reset the login 'ahu':
+ 
+```
+$ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu"}'\
+  http://127.0.0.1:8084/?command=reset -u wforce:super
+{"status": "ok"}
+```
+
+You can reset IP addresses also:
+
+```
+$ curl -X POST -H "Content-Type: application/json" --data '{"ip":"128.243.21.16"}'\
+  http://127.0.0.1:8084/?command=reset -u wforce:super
+{"status": "ok"}
+```
+
+Or both in the same command (this helps if you are tracking stats using compound keys
+combining both IP address and login):
+
+```
+$ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "ip":"FE80::0202:B3FF:FE1E:8329"}'\
+  http://127.0.0.1:8084/?command=reset -u wforce:super
+{"status": "ok"}
+```
+
 Console
 -------
 Available over TCP/IP, like this:

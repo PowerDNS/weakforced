@@ -62,6 +62,15 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def resetFunc(self, login, ip):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=reset"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
     def url(self, relative_url):
         return urlparse.urljoin(self.server_url, relative_url)
 

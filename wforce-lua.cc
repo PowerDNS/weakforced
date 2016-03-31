@@ -28,6 +28,7 @@ static vector<std::function<void(void)>>* g_launchWork;
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua,  
 					   std::function<AllowReturn(const LoginTuple&)>& allow_func, 
 					   std::function<void(const LoginTuple&)>& report_func,
+					   std::function<bool(const std::string&, const std::string&, const ComboAddress&)>& reset_func,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -348,6 +349,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("twSetv6Prefix", &TWStringStatsDBWrapper::setv6Prefix);
   c_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
+  c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);
 
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
@@ -386,6 +388,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   else {
     c_lua.writeFunction("setReport", [](report_t func) { });
+  }
+
+  if (allow_report) {
+    c_lua.writeFunction("setReset", [&reset_func](reset_t func) { reset_func=func;});
+  }
+  else {
+    c_lua.writeFunction("setReset", [](reset_t func) { });
   }
 
   if (!allow_report) {

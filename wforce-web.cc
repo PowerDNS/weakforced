@@ -209,6 +209,60 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
       resp.body=ss.str();
     }
+    else if (command=="reset" && req.method=="POST") {
+      Json msg;
+      string err;
+      msg=Json::parse(req.body, err);
+      if (msg.is_null()) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+	resp.body=ss.str();
+      }
+      else {
+	resp.postvars.clear();
+	try {
+	  bool haveIP=false;
+	  bool haveLogin=false;
+	  std::string en_type, en_login;
+	  ComboAddress en_ca;
+	  if (!msg["ip"].is_null()) {
+	    en_ca = ComboAddress(msg["ip"].string_value());
+	    haveIP = true;
+	  }
+	  if (!msg["login"].is_null()) {
+	    en_login = msg["login"].string_value();
+	    haveLogin = true;
+	  }
+	  if (haveLogin && haveIP)
+	    en_type = "ip:login";
+	  else if (haveLogin)
+	    en_type = "login";
+	  else if (haveIP)
+	    en_type = "ip";
+	  
+	  if (!haveLogin && !haveIP) {
+	    resp.status = 415;
+	    resp.body=R"({"status":"failure", "reason":"No ip or login field supplied"})";
+	  }
+	  else {
+	    bool reset_ret;
+	    {
+	      reset_ret = g_luamultip->reset(en_type, en_login, en_ca);
+	    }
+	    resp.status = 200;
+	    if (reset_ret)
+	      resp.body=R"({"status":"ok"})";
+	    else
+	      resp.body=R"({"status":"failure", "reason":"reset function returned false"})";
+	  }
+	}
+	catch(...) {
+	  resp.status=500;
+	  resp.body=R"({"status":"failure"})";
+	}
+      }
+    }
     else if(command=="report" && req.method=="POST") {
       Json msg;
       string err;

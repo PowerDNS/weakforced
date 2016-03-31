@@ -500,8 +500,14 @@ void defaultReportTuple(const LoginTuple& lp)
   // do nothing: we expect Lua function to be registered if something custom is needed
 }
 
+bool defaultReset(const std::string& type, const std::string& str_val, const ComboAddress& ca_val)
+{
+  return true;
+}
+
 std::function<AllowReturn(const LoginTuple&)> g_allow{defaultAllowTuple};
 std::function<void(const LoginTuple&)> g_report{defaultReportTuple};
+std::function<bool(const std::string&, const std::string&, const ComboAddress&)> g_reset{defaultReset};
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {
@@ -680,19 +686,20 @@ try
 
 
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, false, g_lua, g_allow, g_report, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
   // this sets up the global lua state used for config and setup
-  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_cmdLine.config);
+  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_cmdLine.config);
 
   // now we setup the allow/report lua states
   g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
   
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-    setupLua(false, true, *(it->lua_contextp), it->allow_func, it->report_func, g_cmdLine.config);
+    setupLua(false, true, *(it->lua_contextp), it->allow_func, it->report_func, it->reset_func, 
+	     g_cmdLine.config);
   }
 
   if(g_cmdLine.locals.size()) {

@@ -39,7 +39,7 @@ field_map["countryCount"] = "countmin"
 
 -- create a db for storing stats. 
 -- You can create multiple dbs with different window lengths for storing stats over different time windows
--- This one is 6 windows of 10 minutes each, so an hour in total. Every 10 minutes the oldest window's data will expire
+-- This one is 6 windows of 10 minutes each, so an hour in total. Every 10 minutes the oldest windows data will expire
 newStringStatsDB("OneHourDB",600,6,field_map)
 -- This one is 24 windows of 1 hour each, so 24 hours in total. Useful for tracking long-term stats.
 -- You can reuse field_map or create a different one
@@ -155,5 +155,29 @@ function allow(lt)
 	return 0, "allowed", "allowed", {}
 end
 
+-- Use this function to reset stats if needed for particular IPs, logins or both
+function reset(type, login, ip)
+	 sdb = getStringStatsDB("OneHourDB")
+	 sdb_day = getStringStatsDB("24HourDB")
+	 if (string.find(type, "ip"))
+	 then
+		sdb:twReset(ip)
+		-- if you set a non-default prefix for IP addresses, then reset will not necessarily do what you expect
+		-- for example if v4Prefix==24 and you reset an IP address it will reset the stats for all IPs in that range
+	 end
+	 if (string.find(type, "login"))
+	 then
+		-- we do not actually set any login-only keys
+		sdb:twReset(login)
+		sdb_day:twReset(login)
+	 end
+	 if (string.find(type, "ip") and string.find(type, "login"))
+	 then
+		-- we do not set any compound keys in this policy
+	 end
+	 return true
+end
+
 setReport(report)
 setAllow(allow)
+setReset(reset)

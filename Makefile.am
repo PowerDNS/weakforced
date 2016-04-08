@@ -51,8 +51,13 @@ noinst_HEADERS = \
 	wforce.hh
 
 if WITH_SYSTEMDSYSTEMUNITDIR
+if LIBSYSTEMD
+SYSTEMD_TYPE = notify
+else
+SYSTEMD_TYPE = simple
+endif
 wforce.service: wforce.service.in
-	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' < $< > $@
+	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' -e 's![@]type[@]!$(SYSTEMD_TYPE)!' < $< > $@
 
 systemdsystemunit_DATA = wforce.service
 endif

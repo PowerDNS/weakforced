@@ -200,6 +200,14 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "ip":
 {"status": "ok"}
 ```
 
+Finally there is a "ping" command, to check the server is up and
+answering requests:
+
+```
+$ curl -X GET http://127.0.0.1:8084/?command=ping -u wforce:super
+{"status": "ok"}
+```
+
 Console
 -------
 Available over TCP/IP, like this:

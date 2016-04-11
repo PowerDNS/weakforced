@@ -71,6 +71,9 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def pingFunc(self):
+        return self.session.get(self.url("/?command=ping"))
+    
     def url(self, relative_url):
         return urlparse.urljoin(self.server_url, relative_url)
 

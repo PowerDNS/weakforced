@@ -202,6 +202,10 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       resp.body=ss.str();
       resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
     }
+    else if (command=="ping" && req.method=="GET") {
+      resp.status = 200;
+      resp.body=R"({"status":"ok"})";
+    }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
       resp.status = 415;

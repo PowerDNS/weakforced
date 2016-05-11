@@ -13,6 +13,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 
 struct BlackListEntry {
   std::string key;
@@ -91,7 +92,9 @@ public:
   {
     bl_db->purgeEntries();
   }
-  std::vector<BlackListEntry> getEntries();
+  std::vector<BlackListEntry> getIPEntries();
+  std::vector<BlackListEntry> getLoginEntries();
+  std::vector<BlackListEntry> getIPLoginEntries();
 };
 
 extern BlackListDB bl_db;

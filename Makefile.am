@@ -39,7 +39,7 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \

@@ -34,7 +34,7 @@ void BlackListDB::_addEntry(const std::string& key, time_t seconds, blacklist_t&
   std::lock_guard<std::mutex> lock(mutx);
 
   bl.key = key;
-  bl.expiration = boost::get_system_time() + boost::posix_time::seconds(seconds);
+  bl.expiration = boost::posix_time::from_time_t(time(NULL)) + boost::posix_time::seconds(seconds);
   bl.reason = reason;
 
   auto& keyindex = blacklist.get<KeyTag>();
@@ -191,7 +191,7 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist)
   }
 }
 
-std::vector<BlackListEntry> BlackListDB::getEntries()
+std::vector<BlackListEntry> BlackListDB::getIPEntries()
 {
   std::lock_guard<std::mutex> lock(mutx);
   std::vector<BlackListEntry> ret;
@@ -199,12 +199,26 @@ std::vector<BlackListEntry> BlackListDB::getEntries()
   auto& seqindex = ip_blacklist.get<SeqTag>();  
   for(const auto& a : seqindex)
     ret.push_back(a);
+  return ret;
+}
 
-  seqindex = login_blacklist.get<SeqTag>();  
+std::vector<BlackListEntry> BlackListDB::getLoginEntries()
+{
+  std::lock_guard<std::mutex> lock(mutx);
+  std::vector<BlackListEntry> ret;
+
+  auto& seqindex = login_blacklist.get<SeqTag>();  
   for(const auto& a : seqindex)
-    ret.push_back(a);
+    ret.push_back(a); 
+  return ret;
+}
 
-  seqindex = ip_login_blacklist.get<SeqTag>();  
+std::vector<BlackListEntry> BlackListDB::getIPLoginEntries()
+{
+  std::lock_guard<std::mutex> lock(mutx);
+  std::vector<BlackListEntry> ret;
+
+  auto& seqindex = ip_login_blacklist.get<SeqTag>();  
   for(const auto& a : seqindex)
     ret.push_back(a);
   return ret;

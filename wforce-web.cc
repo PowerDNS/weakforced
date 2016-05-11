@@ -11,6 +11,7 @@
 #include <sys/resource.h>
 #include "ext/ctpl.h"
 #include "base64.hh"
+#include "blacklist.hh"
 
 using std::thread;
 
@@ -96,6 +97,19 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
   infolog(os.str().c_str());
+}
+
+void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
+{
+  using namespace json11;
+  for (auto i = blv.begin(); i != blv.end(); ++i) {
+    Json my_entry = Json::object {
+      { key_name, (std::string)i->key },   
+      { "expiration", (std::string)boost::posix_time::to_simple_string(i->expiration)},
+      { "reason", (std::string)i->reason }
+    };
+    my_entries.push_back(my_entry);
+  }
 }
 
 struct WFConnection {
@@ -238,12 +252,18 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 	    en_login = msg["login"].string_value();
 	    haveLogin = true;
 	  }
-	  if (haveLogin && haveIP)
+	  if (haveLogin && haveIP) {
 	    en_type = "ip:login";
-	  else if (haveLogin)
+	    bl_db.deleteEntry(en_ca, en_login);
+	  }
+	  else if (haveLogin) {
 	    en_type = "login";
-	  else if (haveIP)
+	    bl_db.deleteEntry(en_login);
+	  }
+	  else if (haveIP) {
 	    en_type = "ip";
+	    bl_db.deleteEntry(en_ca);
+	  }
 	  
 	  if (!haveLogin && !haveIP) {
 	    resp.status = 415;
@@ -355,8 +375,26 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 	{ "qa-latency", (int)g_stats.latency}
       };
 
+      resp.status=200;
       resp.headers["Content-Type"] = "application/json";
       resp.body=my_json.dump();
+    }
+    else if(command=="getBL") {
+      Json::array my_entries;
+
+      std::vector<BlackListEntry> blv = bl_db.getIPEntries();
+      addBLEntries(blv, "ip", my_entries);
+      blv = bl_db.getLoginEntries();
+      addBLEntries(blv, "login", my_entries);
+      blv = bl_db.getIPLoginEntries();
+      addBLEntries(blv, "iplogin", my_entries);
+      
+      Json ret_json = Json::object {
+	{ "bl_entries", my_entries }
+      };
+      resp.status=200;
+      resp.headers["Content-Type"] = "application/json";
+      resp.body = ret_json.dump();
     }
     else {
       // cerr<<"404 for: "<<resp.url.path<<endl;

@@ -14,7 +14,8 @@ wforce_SOURCES = \
 	wforce-lua.cc \
 	wforce-web.cc \
 	wforce-geoip.cc \
-	twmap.cc \
+	twmap.cc twmap.hh \
+	blacklist.cc blacklist.hh \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
@@ -52,6 +53,7 @@ noinst_HEADERS = \
 	sodcrypto.hh \
 	sstuff.hh \
 	twmap.hh \
+	blacklist.hh \
 	wforce-geoip.hh \
 	wforce.hh
 

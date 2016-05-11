@@ -5,6 +5,7 @@
 #include "sodcrypto.hh"
 #include "base64.hh"
 #include "twmap.hh"
+#include "blacklist.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -358,6 +359,18 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }
       infolog(os.str().c_str());
+    });
+
+  c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(ca, seconds, reason);
+    });
+
+  c_lua.writeFunction("blacklistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(login, seconds, reason);
+    });
+
+  c_lua.writeFunction("blacklistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(ca, login, seconds, reason);
     });
 
   c_lua.registerMember("t", &LoginTuple::t);

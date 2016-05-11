@@ -7,6 +7,7 @@ addons:
   apt:
     packages:
       - libboost-dev
+      - libboost-date-time-dev
       - gcc-5
       - g++-5
       - libstdc++-5-dev

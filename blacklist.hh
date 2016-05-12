@@ -48,6 +48,7 @@ private:
 
   enum BLType { IP_BL=0, LOGIN_BL=1, IP_LOGIN_BL=2 };
   const char* bl_names[3] = { "ip_bl", "login_bl", "ip_login_bl" };
+  const char* key_names[3] = { "ip", "login", "ip_login" };
   blacklist_t ip_blacklist;
   blacklist_t login_blacklist;
   blacklist_t ip_login_blacklist;

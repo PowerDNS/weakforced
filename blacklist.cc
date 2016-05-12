@@ -81,12 +81,12 @@ bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret)
 
 bool BlackListDB::getEntry(const std::string& login, BlackListEntry& ret) 
 {
-  return _getEntry(login, ip_blacklist, ret);
+  return _getEntry(login, login_blacklist, ret);
 } 
 
 bool BlackListDB::getEntry(const ComboAddress& ca, const std::string& login, BlackListEntry& ret) 
 {
-  return _getEntry(ipLoginStr(ca, login), ip_blacklist, ret);
+  return _getEntry(ipLoginStr(ca, login), ip_login_blacklist, ret);
 } 
 
 bool BlackListDB::_getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble)
@@ -143,7 +143,7 @@ time_t BlackListDB::getExpiration(const ComboAddress& ca)
 
 time_t BlackListDB::getExpiration(const std::string& login)
 {
-  return _getExpiration(login, ip_blacklist);
+  return _getExpiration(login, login_blacklist);
 }
 
 time_t BlackListDB::getExpiration(const ComboAddress& ca, const std::string& login)
@@ -153,7 +153,7 @@ time_t BlackListDB::getExpiration(const ComboAddress& ca, const std::string& log
 
 // to_time_t is missing in some versions of boost
 #if BOOST_VERSION < 105700
-time_t my_to_time_t(boost::posix_time::ptime pt)
+inline time_t my_to_time_t(boost::posix_time::ptime pt)
 {
   boost::posix_time::time_duration dur = pt - boost::posix_time::ptime(boost::gregorian::date(1970,1,1));
   return std::time_t(dur.total_seconds());
@@ -244,27 +244,30 @@ void BlackListDB::addEntryLog(BLType blt, const std::string& key, time_t seconds
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
+  std::string key_name = string(key_names[blt]);
 
-  os << "addBLEntry " + bl_name + ": key=" + key + " expire_secs=" + std::to_string(seconds) + " reason=\"" + reason + "\"";
-  infolog(os.str().c_str());
+  os << "addBLEntry " + bl_name + ": " + key_name + "=" + key + " expire_secs=" + std::to_string(seconds) + " reason=\"" + reason + "\"";
+  warnlog(os.str().c_str());
 }
 
 void BlackListDB::deleteEntryLog(BLType blt, const std::string& key)
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
+  std::string key_name = string(key_names[blt]);
 
-  os << "deleteBLEntry " + bl_name + ": key=" + key;
-  infolog(os.str().c_str());
+  os << "deleteBLEntry " + bl_name + ": " + key_name + "=" + key;
+  warnlog(os.str().c_str());
 }
 
 void BlackListDB::expireEntryLog(BLType blt, const std::string& key)
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
+  std::string key_name = string(key_names[blt]);
 
-  os << "expireBLEntry " + bl_name + ": key=" + key;
-  infolog(os.str().c_str());
+  os << "expireBLEntry " + bl_name + ": " + key_name + "=" + key;
+  warnlog(os.str().c_str());
 }
 
 

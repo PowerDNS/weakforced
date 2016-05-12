@@ -96,7 +96,7 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
-  infolog(os.str().c_str());
+  warnlog(os.str().c_str());
 }
 
 void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
@@ -339,17 +339,42 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 	lt.pwhash=msg["pwhash"].string_value();
 	lt.login=msg["login"].string_value();
 	setLtAttrs(lt, msg);
-	AllowReturn ar;
-	{
-	  ar=g_luamultip->allow(lt);
+	int status = -1;
+	std::string ret_msg;
+	
+	// first check the built-in blacklists
+	BlackListEntry ble;
+	if (bl_db.getEntry(lt.remote, ble)) {
+	  std::vector<pair<std::string, std::string>> log_attrs = 
+	    { { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
+	  allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
+	  ret_msg = "Temporarily blacklisted IP Address - try again later";
 	}
-	int status = std::get<0>(ar);
-	std::string ret_msg = std::get<1>(ar);
-	std::string log_msg = std::get<2>(ar);
-	std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
+	else if (bl_db.getEntry(lt.login, ble)) {
+	  std::vector<pair<std::string, std::string>> log_attrs = 
+	    { { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
+	  allowLog(status, std::string("blacklisted Login"), lt, log_attrs);	  
+	  ret_msg = "Temporarily blacklisted Login Name - try again later";
+	}
+	else if (bl_db.getEntry(lt.remote, lt.login, ble)) {
+	  std::vector<pair<std::string, std::string>> log_attrs = 
+	    { { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
+	  allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	  	  
+	  ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+	}
+	else {
+	  AllowReturn ar;
+	  {
+	    ar=g_luamultip->allow(lt);
+	  }
+	  status = std::get<0>(ar);
+	  ret_msg = std::get<1>(ar);
+	  std::string log_msg = std::get<2>(ar);
+	  std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
 
-	// log the results of the allow function
-	allowLog(status, log_msg, lt, log_attrs);
+	  // log the results of the allow function
+	  allowLog(status, log_msg, lt, log_attrs);
+	}
 
 	g_stats.allows++;
 	if(status < 0)

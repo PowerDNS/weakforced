@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=ext docs
 
-EXTRA_DIST= wforce.conf README.md wforce.service
+EXTRA_DIST= wforce.conf README.md wforce.service wforce.service.in wforce.conf.example
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce
@@ -21,11 +21,16 @@ wforce_SOURCES = \
 	namespaces.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
-	sstuff.hh pdns/ext/luawrapper/include/LuaContext.hpp \
+	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
-	ext/count_min_sketch.cpp
+        ext/murmur3.h \ 
+	ext/count_min_sketch.cpp \
+	ext/ctpl.h \
+	ext/hyperloglog.hpp \
+	ext/count_min_sketch.hpp
+
 
 wforce_LDFLAGS = \
 	$(AM_LDFLAGS) \

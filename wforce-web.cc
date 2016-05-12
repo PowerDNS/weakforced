@@ -392,15 +392,18 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     } 
     else {
       Json::object js_db_stats;
-      for (auto i = dbMap.begin(); i != dbMap.end(); ++i) {
-	std::string dbName = i->first;
-	std::vector<std::pair<std::string, int>> db_fields;
-	if (i->second.get_all_fields(lookup_key, db_fields)) {
-	  Json::object js_db_fields;
-	  for (auto j = db_fields.begin(); j != db_fields.end(); ++j) {
-	    js_db_fields.insert(make_pair(j->first, j->second));
+      {
+	std::lock_guard<std::mutex> lock(dbMap_mutx);
+	for (auto i = dbMap.begin(); i != dbMap.end(); ++i) {
+	  std::string dbName = i->first;
+	  std::vector<std::pair<std::string, int>> db_fields;
+	  if (i->second.get_all_fields(lookup_key, db_fields)) {
+	    Json::object js_db_fields;
+	    for (auto j = db_fields.begin(); j != db_fields.end(); ++j) {
+	      js_db_fields.insert(make_pair(j->first, j->second));
+	    }
+	    js_db_stats.insert(make_pair(dbName, js_db_fields));
 	  }
-	  js_db_stats.insert(make_pair(dbName, js_db_fields));
 	}
       }
       Json ret_json = Json::object {

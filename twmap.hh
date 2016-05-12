@@ -913,4 +913,5 @@ public:
 
 };
 
+extern std::mutex dbMap_mutx;
 extern std::map<std::string, TWStringStatsDBWrapper> dbMap;

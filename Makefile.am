@@ -26,7 +26,7 @@ wforce_SOURCES = \
 	ext/incbin/incbin.h \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
-        ext/murmur3.h \ 
+        ext/murmur3.h \
 	ext/count_min_sketch.cpp \
 	ext/ctpl.h \
 	ext/hyperloglog.hpp \

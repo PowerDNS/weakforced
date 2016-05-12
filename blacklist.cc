@@ -1,4 +1,8 @@
 #include "blacklist.hh"
+#include <boost/version.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 BlackListDB bl_db;
 
@@ -147,6 +151,18 @@ time_t BlackListDB::getExpiration(const ComboAddress& ca, const std::string& log
   return _getExpiration(ipLoginStr(ca, login), ip_login_blacklist);
 }
 
+// to_time_t is missing in some versions of boost
+#if BOOST_VERSION < 105700
+time_t my_to_time_t(boost::posix_time::ptime pt)
+{
+  boost::posix_time::time_duration dur = pt - boost::posix_time::ptime(boost::gregorian::date(1970,1,1));
+  return std::time_t(dur.total_seconds());
+}
+#define TO_TIME_T my_to_time_t
+#else
+#define TO_TIME_T boost::posix_time::to_time_t
+#endif
+
 time_t BlackListDB::_getExpiration(const std::string& key, blacklist_t& blacklist)
 {
   std::lock_guard<std::mutex> lock(mutx);
@@ -155,7 +171,7 @@ time_t BlackListDB::_getExpiration(const std::string& key, blacklist_t& blacklis
   auto kit = keyindex.find(key);
 
   if (kit != keyindex.end()) {
-    time_t expiration_secs = boost::posix_time::to_time_t(kit->expiration) - time(NULL);
+    time_t expiration_secs = TO_TIME_T(kit->expiration) - time(NULL);
     if (expiration_secs >= 0)
       return expiration_secs;
     else

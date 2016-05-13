@@ -369,12 +369,13 @@ public:
   void add(const T& key, const std::string& field_name, const std::string& s, int a); 
   void sub(const T& key, const std::string& field_name, int a); 
   void sub(const T& key, const std::string& field_name, const std::string& s); 
-  int get(const T& key, const std::string& field_name); // gets all fields summed/combined over all windows
-  int get(const T& key, const std::string& field_name, const std::string& s); // gets all fields summed/combined over all windows for a particular value
+  int get(const T& key, const std::string& field_name); // gets all values summed/combined over all windows
+  int get(const T& key, const std::string& field_name, const std::string& s); // gets all values summed/combined over all windows for a particular value
   int get_current(const T& key, const std::string& field_name); // gets the value just for the current window
   int get_current(const T& key, const std::string& field_name, const std::string& s); // gets the value just for the current window for a particular value
   bool get_windows(const T& key, const std::string& field_name, std::vector<int>& ret_vec); // gets each window value returned in a vector
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
+  bool get_all_fields(const T& key,  std::vector<std::pair<std::string, int>>& ret_vec);
   void reset(const T&key); // Reset to zero all fields for a given key
   void set_map_size_soft(unsigned int size);
   unsigned int get_size();
@@ -662,6 +663,27 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, cons
 }
 
 template <typename T>
+bool TWStatsDB<T>::get_all_fields(const T& key, std::vector<std::pair<std::string, int>>& ret_vec)
+{
+  std::lock_guard<std::mutex> lock(mutx);  
+
+  auto mysdb = stats_db.find(key);
+  if (mysdb == stats_db.end()) {
+    return false;
+  }
+  else {
+    auto myfm = mysdb->second.second;
+    // go through all the fields, get them and add to a vector
+    for (auto it = myfm.begin(); it != myfm.end(); ++it) {
+      std::string field_name = it->first;
+      auto stats_entryp = it->second;
+      ret_vec.push_back(make_pair(field_name, stats_entryp->sum()));
+    }
+  }
+  return true;
+}
+
+template <typename T>
 void TWStatsDB<T>::reset(const T& key)
 {
   std::lock_guard<std::mutex> lock(mutx);  
@@ -867,6 +889,12 @@ public:
     return retvec; // copy
   }
 
+  bool get_all_fields(const TWKeyType vkey, std::vector<std::pair<std::string, int>>& ret_vec)
+  {
+    std::string key = getStringKey(vkey);
+    return sdbp->get_all_fields(key, ret_vec);
+  }
+
   void reset(const TWKeyType vkey)
   {
     std::string key = getStringKey(vkey);
@@ -885,4 +913,5 @@ public:
 
 };
 
+extern std::mutex dbMap_mutx;
 extern std::map<std::string, TWStringStatsDBWrapper> dbMap;

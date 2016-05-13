@@ -55,7 +55,7 @@ function report(lt)
 	sdb_day = getStringStatsDB("24HourDB")
 	cur_ct = lookupCountry(lt.remote) 
 
-	-- A note on keys: You can use strings or ComboAddresses. ComboAdddress will be converted to a string and then used as a key.
+	-- A note on keys: You can use strings or ComboAddresses.
 	-- You can specify a separate ipv4 and v6 netmasks for the DB, which will be used for all ComboAddress keys, thus allowing aggregation of IP stats
 	-- Example for IPv4 addresses: sdb:twSetv4Prefix(24) 
 	-- Example for IPv6 addresses: sdb:twSetv6Prefix(64)

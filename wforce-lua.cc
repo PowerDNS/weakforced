@@ -5,6 +5,7 @@
 #include "sodcrypto.hh"
 #include "base64.hh"
 #include "twmap.hh"
+#include "blacklist.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -325,6 +326,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("newStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
 	auto twsdbw = TWStringStatsDBWrapper(name, window_size, num_windows, fmvec);
 	// register this statsDB in a map for retrieval later
+	std::lock_guard<std::mutex> lock(dbMap_mutx);
 	dbMap.insert(std::pair<std::string, TWStringStatsDBWrapper>(name, twsdbw));
       });
   }
@@ -333,6 +335,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   c_lua.writeFunction("getStringStatsDB", [](const std::string& name) {
+      std::lock_guard<std::mutex> lock(dbMap_mutx);
       auto it = dbMap.find(name);
       if (it != dbMap.end())
 	return it->second; // copy
@@ -358,6 +361,18 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }
       infolog(os.str().c_str());
+    });
+
+  c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(ca, seconds, reason);
+    });
+
+  c_lua.writeFunction("blacklistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(login, seconds, reason);
+    });
+
+  c_lua.writeFunction("blacklistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+      bl_db.addEntry(ca, login, seconds, reason);
     });
 
   c_lua.registerMember("t", &LoginTuple::t);

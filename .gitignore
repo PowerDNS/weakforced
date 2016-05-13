@@ -62,3 +62,7 @@ lt~obsolete.m4
 *.exe
 *.out
 *.app
+
+# Compressed files
+*.gz
+*.bz2

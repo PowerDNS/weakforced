@@ -33,6 +33,7 @@
 #include "ext/json11/json11.hpp"
 #include <unistd.h>
 #include "sodcrypto.hh"
+#include "blacklist.hh"
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -193,7 +194,7 @@ try
   int sock;
   warnlog("Accepting control connections on %s", local.toStringWithPort());
   while((sock=SAccept(fd, client)) >= 0) {
-    warnlog("Got control connection from %s", client.toStringWithPort());
+    infolog("Got control connection from %s", client.toStringWithPort());
     thread t(controlClientThread, sock, client);
     t.detach();
   }
@@ -788,6 +789,10 @@ try
     thread t1(tcpAcceptorThread, cs);
     t1.detach();
   }
+
+  // setup blacklist_db purge thread
+  thread t1(BlackListDB::purgeEntriesThread, &bl_db);
+  t1.detach();
 
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");

@@ -123,6 +123,7 @@ void CountMinSketch::erase() {
       C[i][j] = 0;
     }
   }
+  total = 0; // zero the running total
 }
 
 // generates aj,bj from field Z_p for use in hashing

@@ -14,7 +14,8 @@ wforce_SOURCES = \
 	wforce-lua.cc \
 	wforce-web.cc \
 	wforce-geoip.cc \
-	twmap.cc \
+	twmap.cc twmap.hh \
+	blacklist.cc blacklist.hh \
 	dolog.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
@@ -25,7 +26,7 @@ wforce_SOURCES = \
 	ext/incbin/incbin.h \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
-        ext/murmur3.h \ 
+        ext/murmur3.h \
 	ext/count_min_sketch.cpp \
 	ext/ctpl.h \
 	ext/hyperloglog.hpp \
@@ -38,7 +39,7 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \
@@ -52,6 +53,7 @@ noinst_HEADERS = \
 	sodcrypto.hh \
 	sstuff.hh \
 	twmap.hh \
+	blacklist.hh \
 	wforce-geoip.hh \
 	wforce.hh
 

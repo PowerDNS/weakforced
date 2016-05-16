@@ -14,6 +14,7 @@ addons:
       - libgeoip-dev
       - geoip-database
 before_script:
+ - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
  - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium
  - dpkg-deb -x libsodium-dev_1.0.0-1_amd64.deb ${HOME}/libsodium
@@ -48,8 +49,16 @@ script:
  - make
  - cd regression-tests
  - ./runtests
+ - cd ..
+ - export WF_VERSION=`grep PACKAGE_VERSION Makefile | awk  '{ print $3}'`
  - git status
  - git status | grep -q clean
+ - make dist
+ - tar xvf wforce-$WF_VERSION.tar.gz
+ - cd wforce-$WF_VERSION
+ - autoreconf -i
+ - ./configure
+ - make
 notifications:
   irc:
     channels:

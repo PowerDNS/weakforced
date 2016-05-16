@@ -66,3 +66,6 @@ lt~obsolete.m4
 # Compressed files
 *.gz
 *.bz2
+
+# Other
+.DS_Store

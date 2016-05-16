@@ -57,14 +57,12 @@ noinst_HEADERS = \
 	wforce-geoip.hh \
 	wforce.hh
 
-if WITH_SYSTEMDSYSTEMUNITDIR
-if LIBSYSTEMD
+if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify
+systemdsystemunitdir = $(SYSTEMD_DIR)
+systemdsystemunit_DATA = wforce.service
 else
 SYSTEMD_TYPE = simple
 endif
 wforce.service: wforce.service.in
 	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' -e 's![@]type[@]!$(SYSTEMD_TYPE)!' < $< > $@
-
-systemdsystemunit_DATA = wforce.service
-endif

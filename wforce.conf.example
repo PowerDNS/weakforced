@@ -137,6 +137,8 @@ function allow(lt)
 	-- For integer and countmin types, this is just a sum. For HLL, it's a union.
 	if (sdb:twGet(lt.login, "diffPasswords") > 90)
 	then
+		-- blacklist the login for 300 seconds
+		blackistLogin(lt.login, 300, "too many different incorrect password attempts")
 		return -1, "too many different password attempts for this account", "diffPasswords", { diffPasswords=90 }
 	end
 

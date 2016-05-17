@@ -8,15 +8,11 @@ addons:
     packages:
       - libboost-dev
       - libboost-date-time-dev
-      - gcc-5
-      - g++-5
-      - libstdc++-5-dev
+      - build-essential
       - liblua5.1-0-dev
       - python-virtualenv
       - libgeoip-dev
       - geoip-database
-    sources:
-      - ubuntu-toolchain-r-test
 before_script:
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
  - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium
@@ -47,7 +43,6 @@ before_script:
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/libunbound/usr/lib/x86_64-linux-gnu
  - dig @208.67.222.222 a.root-servers.net
 script:
- - export CC='gcc-5' CXX='g++-5'
  - autoreconf -i
  - ./configure
  - make

@@ -441,6 +441,8 @@ void TWStatsDB<T>::expireEntries()
 
       unsigned int num_expire = stats_db.size() - map_size_soft;
 
+      warnlog("About to expire %d entries from stats db", num_expire);
+
       // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
       while (num_expire--) {
 	const typename TWStatsDBMap::iterator it = stats_db.find(key_tracker.front());
@@ -449,6 +451,7 @@ void TWStatsDB<T>::expireEntries()
 	  key_tracker.pop_front();
 	}
       }
+      warnlog("Finished expiring %d entries from stats db", num_expire);
     }
   }
 }

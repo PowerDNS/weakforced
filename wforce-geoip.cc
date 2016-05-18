@@ -1,6 +1,7 @@
 #include "config.h"
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
+#include "dolog.hh"
 
 WFGeoIPDB g_wfgeodb;
 
@@ -10,20 +11,28 @@ void WFGeoIPDB::initGeoIPDB()
       return;
     if (GeoIP_db_avail(GEOIP_COUNTRY_EDITION)) {
       gi_v4 = GeoIP_open_type(GEOIP_COUNTRY_EDITION, GEOIP_MEMORY_CACHE);
-      if (!gi_v4)
+      if (!gi_v4) {
+	errlog("Unable to open geoip v4 country db");
 	throw std::runtime_error("Unable to open geoip v4 country db");
+      }
     }
-    else 
+    else {
+      errlog("No geoip v4 country db available");
       throw std::runtime_error("No geoip v4 country db available");
+    }
     if (gi_v6)
       return;
     if (GeoIP_db_avail(GEOIP_COUNTRY_EDITION_V6)) {
       gi_v6 = GeoIP_open_type(GEOIP_COUNTRY_EDITION_V6, GEOIP_MEMORY_CACHE);
-      if (!gi_v6)
+      if (!gi_v6) {
+	errlog("Unable to open geoip v6 country db");
 	throw std::runtime_error("Unable to open geoip v6 country db");
+      }
     }
-    else 
+    else {
+      errlog("No geoip v6 country db available");
       throw std::runtime_error("No geoip v6 country db available");
+    }
   }
 
 std::string const WFGeoIPDB::lookupCountry(const ComboAddress& address)

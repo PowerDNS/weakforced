@@ -442,6 +442,7 @@ void TWStatsDB<T>::expireEntries()
 	continue;
 
       unsigned int num_expire = stats_db.size() - map_size_soft;
+      unsigned int num_expired = num_expire;
 
       warnlog("About to expire %d entries from stats db", num_expire);
 
@@ -453,7 +454,7 @@ void TWStatsDB<T>::expireEntries()
 	  key_tracker.pop_front();
 	}
       }
-      warnlog("Finished expiring %d entries from stats db", num_expire);
+      warnlog("Finished expiring %d entries from stats db", num_expired);
     }
   }
 }

@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=ext docs
 
-EXTRA_DIST= wforce.conf README.md wforce.service wforce.service.in wforce.conf.example
+EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce

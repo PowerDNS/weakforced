@@ -82,9 +82,9 @@ int readn2(int fd, void* buffer, unsigned int len)
       throw runtime_error("EOF while writing message");
     if(res < 0) {
       if (errno == EAGAIN)
-        throw std::runtime_error("used writen2 on non-blocking socket, got EAGAIN");
+        throw std::runtime_error("used readn2 on non-blocking socket, got EAGAIN");
       else
-        unixDie("failed in writen2");
+        unixDie("failed in readn2");
     } 
     
     pos+=res;

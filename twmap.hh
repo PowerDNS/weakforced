@@ -428,7 +428,7 @@ void TWStatsDB<T>::expireEntries()
 {
   // spend some time every now and again expiring entries which haven't been updated 
   // wait at least window_size seconds before doing this each time
-  unsigned int wait_interval = window_size;
+  unsigned int wait_interval = window_size < 30 ? window_size : 30;
 
   for (;;) {
     sleep(wait_interval);

@@ -68,7 +68,7 @@ private:
   int i=0;
 };
 
-#define HLL_NUM_REGISTER_BITS 10
+#define HLL_NUM_REGISTER_BITS 6
 
 class TWStatsMemberHLL : public TWStatsMember
 {
@@ -109,8 +109,8 @@ private:
   bool cache_valid;
 };
 
-#define COUNTMIN_EPS 0.01
-#define COUNTMIN_GAMMA 0.1
+#define COUNTMIN_EPS 0.05
+#define COUNTMIN_GAMMA 0.2
 
 class TWStatsMemberCountMin : public TWStatsMember
 {
@@ -721,6 +721,7 @@ void TWStatsDB<T>::set_map_size_soft(unsigned int size)
   std::lock_guard<std::mutex> lock(mutx);
 
   map_size_soft = size;
+  stats_db.reserve(size);
 }
 
 template <typename T>

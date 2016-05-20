@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <assert.h>
+#include <mutex>
 
 #define GETDNS_STR_IPV4 "IPv4"
 #define GETDNS_STR_IPV6 "IPv6"
@@ -68,9 +69,13 @@ void WFResolver::add_resolver(const std::string& address, int port)
   getdns_dict_destroy(resolver_dict);
 }
 
+// This is to get around a getdns bug
+std::mutex context_mutx;
+
 bool WFResolver::create_dns_context(getdns_context **context)
 {
   getdns_namespace_t d_namespace = GETDNS_NAMESPACE_DNS;
+  std::lock_guard<std::mutex> lock(context_mutx);
 
   // we don't want the set_from_os=1 because we want stub resolver behavior
   if (context && (getdns_context_create(context, 0) == GETDNS_RETURN_GOOD)) {

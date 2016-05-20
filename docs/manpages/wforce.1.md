@@ -1,5 +1,5 @@
 % WFORCE(1)
-% PowerDNS.com BV
+% Dovecot Oy
 % 2016
 
 # NAME
@@ -62,6 +62,6 @@ cluster, incremental performance gains will be less each time, eventually
 possibly leading to peformance degradation.
 
 
-# RESOURCES
-Website: http://github.com/PowerDNS/weakforced
+# SEE ALSO
+wforce.conf(5)
 

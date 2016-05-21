@@ -1,4 +1,4 @@
-MANPAGES_TARGET = wforce.1
+MANPAGES_TARGET = wforce.1 wforce.conf.5
 
 EXTRA_DIST = manpages
 

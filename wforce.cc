@@ -482,6 +482,7 @@ void receiveReports(ComboAddress local)
 	LoginTuple lt;
 	lt.unserialize(msg);
 	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
+	g_stats.reports++;
 	{
 	  g_luamultip->report(lt);
 	}

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <assert.h>
+#include <mutex>
 
 #define GETDNS_STR_IPV4 "IPv4"
 #define GETDNS_STR_IPV6 "IPv6"
@@ -68,24 +69,32 @@ void WFResolver::add_resolver(const std::string& address, int port)
   getdns_dict_destroy(resolver_dict);
 }
 
+// This is to get around a getdns bug
+std::mutex context_mutx;
+
 bool WFResolver::create_dns_context(getdns_context **context)
 {
   getdns_namespace_t d_namespace = GETDNS_NAMESPACE_DNS;
 
-  // we don't want the set_from_os=1 because we want stub resolver behavior
-  if (context && (getdns_context_create(context, 0) == GETDNS_RETURN_GOOD)) {
-    if ((getdns_context_set_context_update_callback(*context, NULL)) ||
-	(getdns_context_set_resolution_type(*context, GETDNS_RESOLUTION_STUB)) ||
-	(getdns_context_set_namespaces(*context, (size_t)1, &d_namespace)) ||
-	(getdns_context_set_dns_transport(*context, GETDNS_TRANSPORT_UDP_FIRST_AND_FALL_BACK_TO_TCP)) ||
-	(getdns_context_set_timeout(*context, req_timeout)))
+  {
+    // work around getdns bug
+    std::lock_guard<std::mutex> lock(context_mutx);
+    // we don't want the set_from_os=1 because we want stub resolver behavior
+    if (!context || (getdns_context_create(context, 0) != GETDNS_RETURN_GOOD)) {
       return false;
+    }
+  }
+  if ((getdns_context_set_context_update_callback(*context, NULL)) ||
+      (getdns_context_set_resolution_type(*context, GETDNS_RESOLUTION_STUB)) ||
+      (getdns_context_set_namespaces(*context, (size_t)1, &d_namespace)) ||
+      (getdns_context_set_dns_transport(*context, GETDNS_TRANSPORT_UDP_FIRST_AND_FALL_BACK_TO_TCP)) ||
+      (getdns_context_set_timeout(*context, req_timeout)))
+    return false;
 
-    if (*context && resolver_list) {
-      getdns_return_t r;
-      if ((r = getdns_context_set_upstream_recursive_servers(*context, resolver_list)) == GETDNS_RETURN_GOOD) {
-	return true;
-      }
+  if (*context && resolver_list) {
+    getdns_return_t r;
+    if ((r = getdns_context_set_upstream_recursive_servers(*context, resolver_list)) == GETDNS_RETURN_GOOD) {
+      return true;
     }
   }
   return false;

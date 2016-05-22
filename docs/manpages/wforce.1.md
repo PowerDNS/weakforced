@@ -1,5 +1,5 @@
 % WFORCE(1)
-% PowerDNS.com BV
+% Dovecot Oy
 % 2016
 
 # NAME
@@ -56,12 +56,35 @@ between all configured siblings.
 -l,--local *ADDRESS*
 :    Bind to *ADDRESS*.
 
+# CONSOLE COMMANDS
+
+The following commands can be run from the console when *wforce* is
+started with the -c option.
+
+* makeKey() - Returns a string to be used in the setKey() function in
+  wforce.conf to authenticate sibling communications. All siblings
+  must be configured with the same key.
+
+* stats() - Returns statistics about the wforce process. For example:
+  > stats()
+  40 reports, 8 allow-queries, 40 entries in database
+
+* siblings() - Returns information about configured siblings. For
+  example:
+  > siblings()
+  Address                             Sucesses  Failures     Note
+  192.168.1.79:4001                   18        7            
+  192.168.1.30:4001                   25        0            
+  192.168.1.54:4001                   0         0            Self
+
+* showACL() - Returns the configured ACLs for the wforce server.
+
 # BUGS
 The 'spread' function of clustering means that as more servers are added to a 
 cluster, incremental performance gains will be less each time, eventually
 possibly leading to peformance degradation.
 
 
-# RESOURCES
-Website: http://github.com/PowerDNS/weakforced
+# SEE ALSO
+wforce.conf(5)
 

@@ -274,10 +274,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("setRequestTimeout", &WFResolver::set_request_timeout);
   c_lua.writeFunction("getDNSResolver", [](const std::string& name) {
       auto it = resolvMap.find(name);
-            if (it != resolvMap.end())
-      return *(it->second); // copy
+      if (it != resolvMap.end())
+	return *(it->second); // copy
       else
-      return WFResolver(); // copy
+	return WFResolver(); // copy
   });
   c_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
   c_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);

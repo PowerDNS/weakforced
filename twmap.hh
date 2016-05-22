@@ -14,6 +14,7 @@
 #include "ext/hyperloglog.hpp"
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
+#include "dolog.hh"
 
 using std::thread;
 
@@ -67,7 +68,7 @@ private:
   int i=0;
 };
 
-#define HLL_NUM_REGISTER_BITS 10
+#define HLL_NUM_REGISTER_BITS 6
 
 class TWStatsMemberHLL : public TWStatsMember
 {
@@ -108,8 +109,8 @@ private:
   bool cache_valid;
 };
 
-#define COUNTMIN_EPS 0.01
-#define COUNTMIN_GAMMA 0.1
+#define COUNTMIN_EPS 0.05
+#define COUNTMIN_GAMMA 0.2
 
 class TWStatsMemberCountMin : public TWStatsMember
 {
@@ -388,6 +389,7 @@ protected:
   bool find_key_field(const T& key, const std::string& field_name, TWStatsEntryP& tp);  
   void update_write_timestamp(typename TWKeyTrackerType::iterator& kt)
   {
+    // this is always called from a mutex lock (or should be)
     // move this key to the end of the key tracker list
     key_tracker.splice(key_tracker.end(),
 		       key_tracker,
@@ -440,6 +442,9 @@ void TWStatsDB<T>::expireEntries()
 	continue;
 
       unsigned int num_expire = stats_db.size() - map_size_soft;
+      unsigned int num_expired = num_expire;
+
+      warnlog("About to expire %d entries from stats db", num_expire);
 
       // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
       while (num_expire--) {
@@ -449,6 +454,7 @@ void TWStatsDB<T>::expireEntries()
 	  key_tracker.pop_front();
 	}
       }
+      warnlog("Finished expiring %d entries from stats db", num_expired);
     }
   }
 }
@@ -464,7 +470,6 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
 					 typename TWKeyTrackerType::iterator* keytrack, bool create)
 {
   TWStatsBuf myrv;
-  std::lock_guard<std::mutex> lock(mutx);
 
   // first check if the field name is in the field map - if not we throw the query out straight away
   auto myfield = field_map.find(field_name);
@@ -533,6 +538,7 @@ void TWStatsDB<T>::decr(const T& key, const std::string& field_name)
 template <typename T>
 void TWStatsDB<T>::add(const T& key, const std::string& field_name, int a)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
@@ -546,6 +552,7 @@ void TWStatsDB<T>::add(const T& key, const std::string& field_name, int a)
 template <typename T>
 void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
@@ -559,6 +566,7 @@ void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::s
 template <typename T>
 void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::string& s, int a)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
@@ -572,6 +580,7 @@ void TWStatsDB<T>::add(const T& key, const std::string& field_name, const std::s
 template <typename T>
 void TWStatsDB<T>::sub(const T& key, const std::string& field_name, int a)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
@@ -585,6 +594,7 @@ void TWStatsDB<T>::sub(const T& key, const std::string& field_name, int a)
 template <typename T>
 void TWStatsDB<T>::sub(const T& key, const std::string& field_name, const std::string& s)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   typename TWKeyTrackerType::iterator kt;
   TWStatsEntryP tp;
 
@@ -598,6 +608,7 @@ void TWStatsDB<T>::sub(const T& key, const std::string& field_name, const std::s
 template <typename T>
 int TWStatsDB<T>::get(const T& key, const std::string& field_name)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
 
   if (find_key_field(key, field_name, tp) != true) {
@@ -609,6 +620,7 @@ int TWStatsDB<T>::get(const T& key, const std::string& field_name)
 template <typename T>
 int TWStatsDB<T>::get(const T& key, const std::string& field_name, const std::string& s)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
   if (find_key_field(key, field_name, tp) != true) {
     return 0;
@@ -619,6 +631,7 @@ int TWStatsDB<T>::get(const T& key, const std::string& field_name, const std::st
 template <typename T>
 int TWStatsDB<T>::get_current(const T& key, const std::string& field_name)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
   if (find_key_field(key, field_name, tp) != true) {
     return 0;
@@ -629,6 +642,7 @@ int TWStatsDB<T>::get_current(const T& key, const std::string& field_name)
 template <typename T>
 int TWStatsDB<T>::get_current(const T& key, const std::string& field_name, const std::string& val)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
 
   if (find_key_field(key, field_name, tp) != true) {
@@ -641,6 +655,7 @@ int TWStatsDB<T>::get_current(const T& key, const std::string& field_name, const
 template <typename T>
 bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, std::vector<int>& ret_vec)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
 
   if (find_key_field(key, field_name, tp) != true) {
@@ -653,6 +668,7 @@ bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, std:
 template <typename T>
 bool TWStatsDB<T>::get_windows(const T& key, const std::string& field_name, const std::string& val, std::vector<int>& ret_vec)
 {
+  std::lock_guard<std::mutex> lock(mutx);
   TWStatsEntryP tp;
 
   if (find_key_field(key, field_name, tp) != true) {
@@ -705,6 +721,7 @@ void TWStatsDB<T>::set_map_size_soft(unsigned int size)
   std::lock_guard<std::mutex> lock(mutx);
 
   map_size_soft = size;
+  stats_db.reserve(size);
 }
 
 template <typename T>

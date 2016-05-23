@@ -3,6 +3,7 @@
 #include "dns_lookup.hh"
 #include "misc.hh"
 #include "iputils.hh"
+#include "dolog.hh"
 #include <sstream>
 #include <iostream>
 #include <assert.h>
@@ -14,7 +15,8 @@
 #define GETDNS_STR_ADDRESS_DATA "address_data"
 #define GETDNS_STR_PORT "port"
 
-std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
+std::mutex resolv_mutx;
+std::map<std::string, WFResolver> resolvMap;
 
 WFResolver::WFResolver() 
 { 
@@ -28,16 +30,6 @@ WFResolver::WFResolver()
 
 WFResolver::~WFResolver() 
 {
-}
-
-WFResolver::WFResolver(const WFResolver& obj) 
-{ 
-  resolver_list = obj.resolver_list; 
-  req_timeout = obj.req_timeout;
-  mutxp = obj.mutxp;
-  num_contexts = obj.num_contexts;
-  contextsp = obj.contextsp;
-  context_indexp = obj.context_indexp;
 }
 
 void WFResolver::set_request_timeout(uint64_t timeout)
@@ -109,10 +101,9 @@ bool WFResolver::create_dns_context(getdns_context **context)
 void WFResolver::init_dns_contexts()
 {
   for (unsigned int i=0; i<num_contexts; i++) {
-    getdns_context* my_ctx;
-    if (create_dns_context(&my_ctx) != true)
-      continue;
-    else {
+    getdns_context* my_ctx=NULL;
+    
+    if (create_dns_context(&my_ctx)) {
       GetDNSContext ctx;
       ctx.context_ctx = my_ctx;
       ctx.context_mutex = std::make_shared<std::mutex>();

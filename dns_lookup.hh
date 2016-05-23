@@ -19,7 +19,6 @@ class WFResolver {
 public:
   WFResolver();
   ~WFResolver();
-  WFResolver(const WFResolver& obj);
   void add_resolver(const std::string& address, int port);
   void set_request_timeout(uint64_t timeout);
   void set_num_contexts(unsigned int nc);
@@ -41,4 +40,5 @@ private:
   std::shared_ptr<unsigned int> context_indexp;
 };
 
-extern std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
+extern std::mutex resolv_mutx;
+extern std::map<std::string, WFResolver> resolvMap;

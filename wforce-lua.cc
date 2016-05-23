@@ -263,8 +263,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 #ifdef HAVE_GETDNS
   if (!allow_report) {
     c_lua.writeFunction("newDNSResolver", [](const std::string& name) { 
-	auto resolvp = std::make_shared<WFResolver>(); 
-	resolvMap.insert(std::pair<std::string, std::shared_ptr<WFResolver>>(name, resolvp));
+	std::lock_guard<std::mutex> lock(resolv_mutx);
+	resolvMap.insert(std::make_pair(name, WFResolver()));
       });
   }
   else {
@@ -274,9 +274,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("setRequestTimeout", &WFResolver::set_request_timeout);
   c_lua.registerFunction("setNumContexts", &WFResolver::set_num_contexts);
   c_lua.writeFunction("getDNSResolver", [](const std::string& name) {
+      std::lock_guard<std::mutex> lock(resolv_mutx);
       auto it = resolvMap.find(name);
       if (it != resolvMap.end())
-	return *(it->second); // copy
+	return it->second; // copy
       else
 	return WFResolver(); // copy
   });

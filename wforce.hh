@@ -7,7 +7,6 @@
 #include <boost/circular_buffer.hpp>
 #include <mutex>
 #include <thread>
-#include <random>
 #include "sholder.hh"
 #include "sstuff.hh"
 #include <boost/multi_index_container.hpp>
@@ -120,14 +119,13 @@ struct LuaThreadContext {
 class LuaMultiThread
 {
 public:
-  LuaMultiThread() : rng(std::random_device()()),
-		     num_states(NUM_LUA_STATES)
+  LuaMultiThread() : num_states(NUM_LUA_STATES),
+		     state_index(0)
   {
     LuaMultiThread(num_states);
   }
 
-  LuaMultiThread(unsigned int nstates) : rng(std::random_device()()),
-					 num_states(nstates)
+  LuaMultiThread(unsigned int nstates) : num_states(nstates)
   {
     for (unsigned int i=0; i<num_states; i++) {
       LuaThreadContext ltc;
@@ -167,19 +165,16 @@ public:
 protected:
   LuaThreadContext& getLuaState()
   {
-    int s;
-    { 
-      std::lock_guard<std::mutex> lock(mutx);
-      std::uniform_int_distribution<int> uni(0, num_states-1);
-      s = uni(rng);
-    }
+    std::lock_guard<std::mutex> lock(mutx);
+    if (state_index >= num_states)
+      state_index = 0;
     // randomly select a lua state
-    return lua_cv[s];
+    return lua_cv[state_index++];
   }
 private:
-  std::mt19937 rng;
   std::vector<LuaThreadContext> lua_cv;
   unsigned int num_states;
+  unsigned int state_index;
   std::mutex mutx;
 };
 

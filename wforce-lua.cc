@@ -272,6 +272,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   c_lua.registerFunction("addResolver", &WFResolver::add_resolver);
   c_lua.registerFunction("setRequestTimeout", &WFResolver::set_request_timeout);
+  c_lua.registerFunction("setNumContexts", &WFResolver::set_num_contexts);
   c_lua.writeFunction("getDNSResolver", [](const std::string& name) {
       auto it = resolvMap.find(name);
       if (it != resolvMap.end())

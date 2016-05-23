@@ -19,22 +19,35 @@ std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
 WFResolver::WFResolver() 
 { 
   resolver_list = getdns_list_create(); 
-  req_timeout = 1000;
+  req_timeout = DNS_REQUEST_TIMEOUT;
+  mutxp = std::make_shared<std::mutex>();
+  num_contexts = NUM_GETDNS_CONTEXTS;
+  contextsp = std::make_shared<std::vector<GetDNSContext>>();
+  context_indexp = std::make_shared<unsigned int>(0);
 }
 
 WFResolver::~WFResolver() 
-{ 
+{
 }
 
 WFResolver::WFResolver(const WFResolver& obj) 
 { 
   resolver_list = obj.resolver_list; 
   req_timeout = obj.req_timeout;
+  mutxp = obj.mutxp;
+  num_contexts = obj.num_contexts;
+  contextsp = obj.contextsp;
+  context_indexp = obj.context_indexp;
 }
 
 void WFResolver::set_request_timeout(uint64_t timeout)
 {
   req_timeout = timeout;
+}
+
+void WFResolver::set_num_contexts(unsigned int nc)
+{
+  num_contexts = nc;
 }
 
 void setAddressDict(getdns_dict* dict, const ComboAddress& ca)
@@ -69,20 +82,13 @@ void WFResolver::add_resolver(const std::string& address, int port)
   getdns_dict_destroy(resolver_dict);
 }
 
-// This is to get around a getdns bug
-std::mutex context_mutx;
-
 bool WFResolver::create_dns_context(getdns_context **context)
 {
   getdns_namespace_t d_namespace = GETDNS_NAMESPACE_DNS;
 
-  {
-    // work around getdns bug
-    std::lock_guard<std::mutex> lock(context_mutx);
-    // we don't want the set_from_os=1 because we want stub resolver behavior
-    if (!context || (getdns_context_create(context, 0) != GETDNS_RETURN_GOOD)) {
-      return false;
-    }
+  // we don't want the set_from_os=1 because we want stub resolver behavior
+  if (!context || (getdns_context_create(context, 0) != GETDNS_RETURN_GOOD)) {
+    return false;
   }
   if ((getdns_context_set_context_update_callback(*context, NULL)) ||
       (getdns_context_set_resolution_type(*context, GETDNS_RESOLUTION_STUB)) ||
@@ -98,6 +104,37 @@ bool WFResolver::create_dns_context(getdns_context **context)
     }
   }
   return false;
+}
+
+void WFResolver::init_dns_contexts()
+{
+  for (unsigned int i=0; i<num_contexts; i++) {
+    getdns_context* my_ctx;
+    if (create_dns_context(&my_ctx) != true)
+      continue;
+    else {
+      GetDNSContext ctx;
+      ctx.context_ctx = my_ctx;
+      ctx.context_mutex = std::make_shared<std::mutex>();
+      contextsp->push_back(ctx);
+    }
+  }
+}
+
+bool WFResolver::get_dns_context(GetDNSContext& ret_ctx)
+{
+  std::lock_guard<std::mutex> lock(*mutxp);
+  if (contextsp->size() == 0) {
+    init_dns_contexts();
+  }
+  if (contextsp->size() > 0) {
+    if (*context_indexp >= num_contexts)
+      *context_indexp = 0;
+    ret_ctx = (*contextsp)[(*context_indexp)++]; // copy
+    return true;
+  }
+  else 
+    return false;
 }
 
 const char hexDigits[] = "0123456789abcdef";
@@ -168,7 +205,7 @@ std::vector<std::string> WFResolver::do_lookup_address_by_name(getdns_context *c
 
 std::vector<std::string> WFResolver::lookup_address_by_name(const std::string& name, boost::optional<size_t> num_retries_p)
 {
-  getdns_context *context;
+  GetDNSContext context;
   std::vector<std::string> retvec;
   size_t num_retries=0;
 
@@ -180,10 +217,10 @@ std::vector<std::string> WFResolver::lookup_address_by_name(const std::string& n
   if (num_retries >= num_resolvers)
     num_retries = num_resolvers - 1;
 
-  // if we can setup the context we can do the lookup
-  if (create_dns_context(&context)) {
-    retvec = do_lookup_address_by_name(context, name, num_retries);
-    getdns_context_destroy(context);
+  // if we can get a context we can do a lookup
+  if (get_dns_context(context) == true) {
+    std::lock_guard<std::mutex> lock(*(context.context_mutex));
+    retvec = do_lookup_address_by_name(context.context_ctx, name, num_retries);
   }
   return retvec;
 }
@@ -236,7 +273,7 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address(getdns_context* c
 
 std::vector<std::string> WFResolver::lookup_name_by_address(const ComboAddress& ca, boost::optional<size_t> num_retries_p)
 {
-  getdns_context *context;
+  GetDNSContext context;
   getdns_dict *address;
   std::vector<std::string> retvec;
   size_t num_retries=0;
@@ -247,10 +284,10 @@ std::vector<std::string> WFResolver::lookup_name_by_address(const ComboAddress& 
   address = getdns_dict_create();
   
   // if we can setup the context we can do the lookup
-  if (address && create_dns_context(&context)) {
+  if (address && get_dns_context(context)) {
+    std::lock_guard<std::mutex> lock(*(context.context_mutex));
     setAddressDict(address, ca);
-    retvec = do_lookup_name_by_address(context, address, num_retries);
-    getdns_context_destroy(context);
+    retvec = do_lookup_name_by_address(context.context_ctx, address, num_retries);
   }
   if (address)
     getdns_dict_destroy(address);

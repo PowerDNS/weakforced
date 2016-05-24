@@ -73,6 +73,34 @@ class ApiTestCase(unittest.TestCase):
 
     def pingFunc(self):
         return self.session.get(self.url("/?command=ping"))
+
+    def getBLFunc(self):
+        return self.session.get(self.url("/?command=getBL"))
+
+    def getDBStatsIPLogin(self, ip, login):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=getDBStats"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def getDBStatsIP(self, ip):
+        payload = dict()
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=getDBStats"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def getDBStatsLogin(self, login):
+        payload = dict()
+        payload['login'] = login
+        return self.session.post(
+            self.url("/?command=getDBStats"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
     
     def url(self, relative_url):
         return urlparse.urljoin(self.server_url, relative_url)

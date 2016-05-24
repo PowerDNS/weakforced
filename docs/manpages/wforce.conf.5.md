@@ -130,7 +130,7 @@ cannot be called inside the allow/report/reset functions:
 # GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 
-configuration or within the allow/report/rest functions:
+configuration or within the allow/report/reset functions:
 
 * lookupCountry(\<ComboAddress\>) - Returns the two-character country
   code of the country that the IP address is located in. A
@@ -166,6 +166,14 @@ configuration or within the allow/report/rest functions:
   
 		resolv = getDNSResolver("MyResolver")
 		resolv:setRequestTimeout(100)
+
+* Resolver:setNumContexts(\<num contexts\>) - Sets the number of DNS
+  contexts to use to perform DNS queries. Defaults to 12, but you may
+  want to increase for performance, although it should not need to be
+  higher than NumWorkerThreads. For example:
+
+		resolv = getDNSResolver("MyResolver")
+		resolv:setNumContexts(20)
 
 * Resolver:lookupAddrByName(\<name\>, [\<num retries\>]) - Performs DNS A record resolution
   for the specified name, returning an array of IP address strings. Optionally

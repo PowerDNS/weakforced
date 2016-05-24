@@ -4,6 +4,7 @@ import time
 import json
 from test_helper import ApiTestCase
 
+configFile = "./wforce-tw.conf"
 
 class TestBasics(ApiTestCase):
 
@@ -18,6 +19,22 @@ class TestBasics(ApiTestCase):
         r = self.pingFunc()
         j = r.json()
         self.assertEquals(j['status'], 'ok')
+
+    def test_getBL(self):
+        r = self.getBLFunc()
+        print r
+        j = r.json()
+        self.assertEquals(j['bl_entries'], [])
+
+    def test_getDBStats(self):
+        self.writeFileToConsole(configFile)
+        self.reportFunc('dbstats', '1.4.3.2', '1234', 'false'); 
+        r = self.getDBStatsLogin('dbstats')
+        j = r.json();
+        self.assertRegexpMatches(json.dumps(j), "countLogins")
+        r = self.getDBStatsIP('1.4.3.2')
+        j = r.json();
+        self.assertRegexpMatches(json.dumps(j), "countryCount")
 
     def chunkGen(self):
         payload = dict()

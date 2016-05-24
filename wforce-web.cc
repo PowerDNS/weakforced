@@ -504,6 +504,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       resp.status = 200;
       resp.body=R"({"status":"ok"})";
     }
+    else if(command=="stats") {
+      parseStatsCmd(req, resp);
+    }
+    else if(command=="getBL") {
+      parseGetBLCmd(req, resp);
+    }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
       resp.status = 415;
@@ -520,13 +526,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     else if(command=="allow" && req.method=="POST") {
       parseAllowCmd(req, resp);
     }
-    else if(command=="stats") {
-      parseStatsCmd(req, resp);
-    }
-    else if(command=="getBL") {
-      parseGetBLCmd(req, resp);
-    }
-    else if(command=="getStats") {
+    else if(command=="getDBStats" && req.method=="POST") {
       parseGetStatsCmd(req, resp);
     }
     else {

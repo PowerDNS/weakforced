@@ -43,6 +43,7 @@ before_script:
  - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${HOME}/libunbound/usr/lib/pkgconfig
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/libunbound/usr/lib/x86_64-linux-gnu
  - dig @208.67.222.222 a.root-servers.net
+ - cpan -T -i Template </dev/null
  - cpan -T -i Swagger2::Markdown </dev/null
 script:
  - autoreconf -i

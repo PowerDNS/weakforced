@@ -149,6 +149,25 @@ configuration or within the allow/report/reset functions:
   
 		mystr = my_ca:tostring()
 
+* newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
+  efficiently match IPs/subnets agagainst a range. For example:
+
+		mynm = newNetmaskGroup()
+
+* NetmaskGroup:addMask(\<cidr\>) - Add a mask to the NetmaskGroup, in
+  cidr format. For example:
+
+		mynm:addMask("182.22.0.0/16")
+
+* NetmaskGroup:match(\<ip address\>) - Match an IP address against a
+  NetmaskGroup. The IP address must be a ComboAddress object. For
+  example:
+
+		if (mynm.match(lt.remote)) 
+		then
+		    print("ip address matched") 
+		end
+
 * getDNSResolver(\<resolver name\>) - Return a DNS resolver object
   corresponding to the name specified. For example:
   

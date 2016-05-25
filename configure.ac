@@ -15,6 +15,8 @@ AC_PROG_LIBTOOL
 BOOST_REQUIRE([1.35])
 BOOST_DATE_TIME
 BOOST_FOREACH
+AC_CHECK_PROG(PERL, perl, perl)
+AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])
 AC_SUBST([YAHTTP_LIBS], ['-L$(top_builddir)/ext/yahttp/yahttp -lyahttp'])
 AC_SUBST([JSON11_CFLAGS], ['-I$(top_srcdir)/ext/json11'])

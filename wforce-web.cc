@@ -561,7 +561,7 @@ unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
 
 void pollThread()
 {
-  ctpl::thread_pool p(g_num_worker_threads);
+  ctpl::thread_pool p(g_num_worker_threads, 250);
 
   for (;;) {
     // parse the array of sockets and create a pollfd array

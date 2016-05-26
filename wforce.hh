@@ -114,7 +114,7 @@ struct LuaThreadContext {
   std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_func;
 };
 
-#define NUM_LUA_STATES 1
+#define NUM_LUA_STATES 6
 
 class LuaMultiThread
 {

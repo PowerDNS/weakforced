@@ -140,7 +140,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
 	  SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
 	  SBind(sock, local);
-	  SListen(sock, 5);
+	  SListen(sock, 1024);
 	  auto launch=[sock, local, password]() {
 	    thread t(dnsdistWebserverThread, sock, local, password);
 	    t.detach();

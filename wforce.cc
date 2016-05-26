@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include "sodcrypto.hh"
 #include "blacklist.hh"
+#include "perf-stats.hh"
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -794,6 +795,9 @@ try
   // setup blacklist_db purge thread
   thread t1(BlackListDB::purgeEntriesThread, &bl_db);
   t1.detach();
+
+  // start the performance stats thread
+  startStatsThread();
 
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");

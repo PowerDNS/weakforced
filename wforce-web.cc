@@ -3,6 +3,7 @@
 #include "ext/json11/json11.hpp"
 #include "ext/incbin/incbin.h"
 #include "dolog.hh"
+#include <chrono>
 #include <thread>
 #include <sstream>
 #include "yahttp/yahttp.hpp"
@@ -13,6 +14,7 @@
 #include "base64.hh"
 #include "blacklist.hh"
 #include "twmap.hh"
+#include "perf-stats.hh"
 
 using std::thread;
 
@@ -112,27 +114,6 @@ void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, 
     my_entries.push_back(my_entry);
   }
 }
-
-struct WFConnection {
-  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
-  {
-    fd = sock;
-    remote = ca;
-    password = pass;
-    closeConnection = false;
-    inConnectionThread = false;
-  }
-  bool inConnectionThread;
-  bool closeConnection;
-  int fd;
-  Socket s;
-  ComboAddress remote;
-  std::string password;
-};
-
-typedef std::vector<std::shared_ptr<WFConnection>> WFCArray;
-static WFCArray sock_vec;
-static std::mutex sock_vec_mutx;
 
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 {
@@ -417,6 +398,28 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
 }
 
+struct WFConnection {
+  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
+  {
+    fd = sock;
+    remote = ca;
+    password = pass;
+    closeConnection = false;
+    inConnectionThread = false;
+  }
+  bool inConnectionThread;
+  bool closeConnection;
+  int fd;
+  Socket s;
+  ComboAddress remote;
+  std::string password;
+  std::chrono::time_point<std::chrono::steady_clock> q_entry_time;
+};
+
+typedef std::vector<std::shared_ptr<WFConnection>> WFCArray;
+static WFCArray sock_vec;
+static std::mutex sock_vec_mutx;
+
 static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 {
   using namespace json11;
@@ -429,6 +432,11 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
 
   if (!wfc)
     return;
+
+  auto start_time = std::chrono::steady_clock::now();
+  auto wait_time = start_time - wfc->q_entry_time;
+  auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
+  addWTWStat(i_millis.count());
 
   infolog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
@@ -551,6 +559,10 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       wfc->closeConnection = true;
     }
     wfc->inConnectionThread = false;
+    auto end_time = std::chrono::steady_clock::now();
+    auto run_time = end_time - start_time;
+    auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
+    addWTRStat(i_millis.count());
     return;
   }
 }
@@ -602,6 +614,7 @@ void pollThread()
 	// process any connections that have activity
 	else if (fds[i].revents & POLLIN) {
 	  sock_vec[i]->inConnectionThread = true;
+	  sock_vec[i]->q_entry_time = std::chrono::steady_clock::now();
 	  p.push(connectionThread, sock_vec[i]);
 	}
       }

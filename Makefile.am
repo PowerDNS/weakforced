@@ -20,6 +20,7 @@ wforce_SOURCES = \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
 	namespaces.hh \
+	perf-stats.cc perf-stats.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \

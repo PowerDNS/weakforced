@@ -257,19 +257,26 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
     }
     else {
-      AllowReturn ar;
-      {
-	ar=g_luamultip->allow(lt);
+      try {
+	AllowReturn ar;
+	{
+	  ar=g_luamultip->allow(lt);
+	}
+	status = std::get<0>(ar);
+	ret_msg = std::get<1>(ar);
+	std::string log_msg = std::get<2>(ar);
+	std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
+
+	// log the results of the allow function
+	allowLog(status, log_msg, lt, log_attrs);
       }
-      status = std::get<0>(ar);
-      ret_msg = std::get<1>(ar);
-      std::string log_msg = std::get<2>(ar);
-      std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
-
-      // log the results of the allow function
-      allowLog(status, log_msg, lt, log_attrs);
+      catch(...) {
+	warnlog("Lua exception in allow() function");
+	resp.status=500;
+	resp.body=R"({"status":"failure"})";
+	return;
+      }
     }
-
     g_stats.allows++;
     if(status < 0)
       g_stats.denieds++;
@@ -430,7 +437,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   bool closeConnection=true;
   bool validRequest = true;
 
-  if (!wfc)
+  if (!wfc) 
     return;
 
   auto start_time = std::chrono::steady_clock::now();
@@ -573,7 +580,7 @@ unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
 
 void pollThread()
 {
-  ctpl::thread_pool p(g_num_worker_threads, 250);
+  ctpl::thread_pool p(g_num_worker_threads, 5000);
 
   for (;;) {
     // parse the array of sockets and create a pollfd array
@@ -598,8 +605,9 @@ void pollThread()
 	}
       }
     }
+
     // poll with shortish timeout - XXX make timeout configurable
-    int res = poll(fds, num_fds, 50);
+    int res = poll(fds, num_fds, 5);
 
     if (res < 0) {
       warnlog("poll() system call returned error (%d)", errno);
@@ -645,7 +653,6 @@ void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::stri
     try {
       ComboAddress remote(local);
       int fd = SAccept(sock, remote);
-      vinfolog("Got connection from %s", remote.toStringWithPort());
       if(!localACL->match(remote)) {
 	close(fd);
 	continue;

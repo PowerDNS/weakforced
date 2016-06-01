@@ -384,15 +384,24 @@ static void bindAny(int af, int sock)
 std::string LoginTuple::serialize() const
 {
   using namespace json11;
+  Json::object jattrs;
+
+  for (auto i = attrs_mv.begin(); i!=attrs_mv.end(); ++i) {
+    jattrs.insert(make_pair(i->first, Json(i->second)));
+  }
+  for (auto i = attrs.begin(); i!=attrs.end(); ++i) {
+    jattrs.insert(make_pair(i->first, Json(i->second)));
+  }
+
   Json msg=Json::object{
     {"login", login},
     {"success", success},
     {"t", (double)t}, 
     {"pwhash", pwhash},
     {"remote", remote.toString()},
-    {"attrs", Json(attrs)},
-    {"attrs_mv", Json(attrs_mv)},
+    {"attrs", jattrs},
     {"wf_reject", wf_reject}};
+
   return msg.dump();
 }
 

@@ -45,29 +45,6 @@ bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
   return auth_ok;
 }
 
-static void setLtAttrs(struct LoginTuple& lt, json11::Json& msg)
-{
-  using namespace json11;
-  Json attrs = msg["attrs"];
-  if (attrs.is_object()) {
-    auto attrs_obj = attrs.object_items();
-    for (auto it=attrs_obj.begin(); it!=attrs_obj.end(); ++it) {
-      string attr_name = it->first;
-      if (it->second.is_string()) {
-	lt.attrs.insert(std::make_pair(attr_name, it->second.string_value()));
-      }
-      else if (it->second.is_array()) {
-	auto av_list = it->second.array_items();
-	std::vector<std::string> myvec;
-	for (auto avit=av_list.begin(); avit!=av_list.end(); ++avit) {
-	  myvec.push_back(avit->string_value());
-	}
-	lt.attrs_mv.insert(std::make_pair(attr_name, myvec));
-      }
-    }
-  }
-}
-
 void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
 {
   std::ostringstream os;
@@ -170,6 +147,12 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	  resp.body=R"({"status":"failure", "reason":"reset function returned false"})";
       }
     }
+    catch(LuaContext::ExecutionErrorException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+    }
     catch(...) {
       resp.status=500;
       resp.body=R"({"status":"failure"})";
@@ -196,7 +179,8 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
-      setLtAttrs(lt, msg);
+      lt.setLtAttrs(msg);
+      lt.wf_reject=msg["wf_reject"].bool_value();
       lt.t=getDoubleTime();
       spreadReport(lt);
       g_stats.reports++;
@@ -206,6 +190,12 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       }
 
       resp.body=R"({"status":"ok"})";
+    }
+    catch(LuaContext::ExecutionErrorException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
     }
     catch(...) {
       resp.status=500;
@@ -232,7 +222,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     lt.success=msg["success"].bool_value();
     lt.pwhash=msg["pwhash"].string_value();
     lt.login=msg["login"].string_value();
-    setLtAttrs(lt, msg);
+    lt.setLtAttrs(msg);
     int status = -1;
     std::string ret_msg;
 	
@@ -270,8 +260,13 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	// log the results of the allow function
 	allowLog(status, log_msg, lt, log_attrs);
       }
+      catch(LuaContext::ExecutionErrorException& e) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+	resp.body=ss.str();
+      }
       catch(...) {
-	warnlog("Lua exception in allow() function");
 	resp.status=500;
 	resp.body=R"({"status":"failure"})";
 	return;

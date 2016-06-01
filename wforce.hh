@@ -9,6 +9,7 @@
 #include <thread>
 #include "sholder.hh"
 #include "sstuff.hh"
+#include "ext/json11/json11.hpp"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -80,8 +81,11 @@ struct LoginTuple
   bool success;
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
+  bool wf_reject;
   std::string serialize() const;
   void unserialize(const std::string& src);
+  void setLtAttrs(const json11::Json& msg);
+
   bool operator<(const LoginTuple& r) const
   {
     if(std::tie(t, login, pwhash, success) < std::tie(r.t, r.login, r.pwhash, r.success))

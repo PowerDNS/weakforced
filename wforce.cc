@@ -389,21 +389,48 @@ std::string LoginTuple::serialize() const
     {"success", success},
     {"t", (double)t}, 
     {"pwhash", pwhash},
-    {"remote", remote.toString()}};
+    {"remote", remote.toString()},
+    {"attrs", Json(attrs)},
+    {"attrs_mv", Json(attrs_mv)},
+    {"wf_reject", wf_reject}};
   return msg.dump();
 }
 
 void LoginTuple::unserialize(const std::string& str) 
 {
-  using namespace json11;
   string err;
-  Json msg=Json::parse(str, err);
+  json11::Json msg=json11::Json::parse(str, err);
   login=msg["login"].string_value();
   pwhash=msg["pwhash"].string_value();
   t=msg["t"].number_value();
   success=msg["success"].bool_value();
   remote=ComboAddress(msg["remote"].string_value());
+  setLtAttrs(msg);
+  wf_reject=msg["wf_reject"].bool_value();
 }
+
+void LoginTuple::setLtAttrs(const json11::Json& msg)
+{
+  json11::Json jattrs = msg["attrs"];
+  if (jattrs.is_object()) {
+    auto attrs_obj = jattrs.object_items();
+    for (auto it=attrs_obj.begin(); it!=attrs_obj.end(); ++it) {
+      string attr_name = it->first;
+      if (it->second.is_string()) {
+	attrs.insert(std::make_pair(attr_name, it->second.string_value()));
+      }
+      else if (it->second.is_array()) {
+	auto av_list = it->second.array_items();
+	std::vector<std::string> myvec;
+	for (auto avit=av_list.begin(); avit!=av_list.end(); ++avit) {
+	  myvec.push_back(avit->string_value());
+	}
+	attrs_mv.insert(std::make_pair(attr_name, myvec));
+      }
+    }
+  }
+}
+
 
  Sibling::Sibling(const ComboAddress& ca) : rem(ca), sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
 {

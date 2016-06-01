@@ -190,6 +190,23 @@ definitions:
         type: string
       success:
         type: string
+      wf_reject:
+        type: boolean
+      attrs:
+        $ref: "#/definitions/LTAttrs" 
+  LTAttrs:
+    type: object
+    properties:
+      attr_name_single_value:
+        type: string
+      attr_name multi_value:
+          type: array
+          items:
+            type: string
+    example:
+      attr1: value1
+      attr2: value2
+      attr3: [ value3, value4 ]
   LoginTupleAllow:
     required:
       - login
@@ -202,11 +219,14 @@ definitions:
         type: string
       pwhash:
         type: string
+      attrs:
+        $ref: "#/definitions/LTAttrs" 
     example:
       login: joe.bloggs
       remote: 192.168.1.2
       pwhash: cc04
       success: true
+      attrs: { "foo":"bar" }
   ResetStatsParams:
     properties:
       ip:

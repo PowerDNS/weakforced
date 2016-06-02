@@ -400,7 +400,7 @@ std::string LoginTuple::serialize() const
     {"pwhash", pwhash},
     {"remote", remote.toString()},
     {"attrs", jattrs},
-    {"wf_reject", wf_reject}};
+    {"policy_reject", policy_reject}};
 
   return msg.dump();
 }
@@ -415,7 +415,7 @@ void LoginTuple::unserialize(const std::string& str)
   success=msg["success"].bool_value();
   remote=ComboAddress(msg["remote"].string_value());
   setLtAttrs(msg);
-  wf_reject=msg["wf_reject"].bool_value();
+  policy_reject=msg["policy_reject"].bool_value();
 }
 
 void LoginTuple::setLtAttrs(const json11::Json& msg)
@@ -520,8 +520,11 @@ void receiveReports(ComboAddress local)
 	lt.unserialize(msg);
 	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
 	g_stats.reports++;
-	{
+	try {
 	  g_luamultip->report(lt);
+	}
+	catch(LuaContext::ExecutionErrorException& e) {
+	  errlog("Lua sibling report function exception: %s", e.what());
 	}
       });
   }
@@ -803,7 +806,7 @@ try
       acls += ", ";
     acls += s;
   }
-  infolog("ACL allowing queries from: %s", acls.c_str());
+  noticelog("ACL allowing queries from: %s", acls.c_str());
 
   for(const auto& local : g_locals) {
     ClientState* cs = new ClientState;
@@ -822,7 +825,7 @@ try
       bindAny(cs->local.sin4.sin_family, cs->tcpFD);
     SBind(cs->tcpFD, cs->local);
     SListen(cs->tcpFD, 64);
-    warnlog("Listening on %s",cs->local.toStringWithPort());
+    noticelog("Listening on %s",cs->local.toStringWithPort());
     
     thread t1(tcpAcceptorThread, cs);
     t1.detach();

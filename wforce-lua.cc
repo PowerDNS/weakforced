@@ -365,7 +365,25 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       infolog(os.str().c_str());
     });
 
-  c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+  c_lua.writeFunction("warnLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+      std::ostringstream os;
+      os << msg << ": ";
+      for (const auto& i : kvs) {
+	os << i.first << "="<< "\"" << i.second << "\"" << " ";
+      }
+      warnlog(os.str().c_str());
+    });
+
+    c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+      std::ostringstream os;
+      os << msg << ": ";
+      for (const auto& i : kvs) {
+	os << i.first << "="<< "\"" << i.second << "\"" << " ";
+      }
+      errlog(os.str().c_str());
+    });
+
+    c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
       bl_db.addEntry(ca, seconds, reason);
     });
 

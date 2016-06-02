@@ -81,7 +81,7 @@ struct LoginTuple
   bool success;
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
-  bool wf_reject;
+  bool policy_reject;
   std::string serialize() const;
   void unserialize(const std::string& src);
   void setLtAttrs(const json11::Json& msg);

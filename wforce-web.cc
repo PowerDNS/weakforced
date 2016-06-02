@@ -76,7 +76,11 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
-  infolog(os.str().c_str());
+  // only log at notice if login was rejected or tarpitted
+  if (retval == 0)
+    infolog(os.str().c_str());
+  else
+    noticelog(os.str().c_str());
 }
 
 void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
@@ -152,6 +156,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       std::stringstream ss;
       ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
       resp.body=ss.str();
+      errlog("Lua reset function exception: %s", e.what());
     }
     catch(...) {
       resp.status=500;
@@ -180,7 +185,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
       lt.setLtAttrs(msg);
-      lt.wf_reject=msg["wf_reject"].bool_value();
+      lt.policy_reject=msg["policy_reject"].bool_value();
       lt.t=getDoubleTime();
       spreadReport(lt);
       g_stats.reports++;
@@ -196,6 +201,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       std::stringstream ss;
       ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
       resp.body=ss.str();
+      errlog("Lua report function exception: %s", e.what());
     }
     catch(...) {
       resp.status=500;
@@ -265,6 +271,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	std::stringstream ss;
 	ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
 	resp.body=ss.str();
+	errlog("Lua allow function exception: %s", e.what());
       }
       catch(...) {
 	resp.status=500;

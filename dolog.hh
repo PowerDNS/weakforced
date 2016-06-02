@@ -69,6 +69,13 @@ void infolog(const char* s, Args... args)
 }
 
 template<typename... Args>
+void noticelog(const char* s, Args... args)
+{
+  if(g_verbose)
+    genlog(LOG_NOTICE, s, args...);
+}
+
+template<typename... Args>
 void warnlog(const char* s, Args... args)
 {
   genlog(LOG_WARNING, s, args...);

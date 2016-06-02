@@ -190,7 +190,7 @@ definitions:
         type: string
       success:
         type: string
-      wf_reject:
+      policy_reject:
         type: boolean
       attrs:
         $ref: "#/definitions/LTAttrs" 

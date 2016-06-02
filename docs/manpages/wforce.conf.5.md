@@ -307,6 +307,18 @@ configuration or within the allow/report/reset functions:
   
 		infoLog("Logging is very important", { logging=1, foo=bar })
 
+* warnLog(\<log string\>, \<key-value map\>) - Log at LOG_WARN level the
+  specified string, adding "key=value" strings to the log for all the
+  kvs specified in the key-value map. For example:
+  
+		warnLog("Logging is very important", { logging=1, foo=bar })
+
+* errorLog(\<log string\>, \<key-value map\>) - Log at LOG_ERR level the
+  specified string, adding "key=value" strings to the log for all the
+  kvs specified in the key-value map. For example:
+  
+		errorLog("Logging is very important", { logging=1, foo=bar })
+
 * blacklistIP(\<ip\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified IP for expiry seconds, with the specified reason. IP
   address must be a ComboAddress. For example:

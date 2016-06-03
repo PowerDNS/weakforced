@@ -105,21 +105,21 @@ bool BlackListDB::_getEntry(const std::string& key, blacklist_t& blacklist, Blac
 
 bool BlackListDB::deleteEntry(const ComboAddress& ca)
 {
-  return _deleteEntry(ca.toString(), ip_blacklist);
   deleteEntryLog(IP_BL, ca.toString());
+  return _deleteEntry(ca.toString(), ip_blacklist);
 }
 
 bool BlackListDB::deleteEntry(const std::string& login)
 {
-  return _deleteEntry(login, login_blacklist);
   deleteEntryLog(LOGIN_BL, login);
+  return _deleteEntry(login, login_blacklist);
 }
 
 bool BlackListDB::deleteEntry(const ComboAddress& ca, const std::string& login)
 {
   std::string key = ipLoginStr(ca, login);
-  return _deleteEntry(key, ip_login_blacklist);
   deleteEntryLog(IP_LOGIN_BL, key);
+  return _deleteEntry(key, ip_login_blacklist);
 }
 
 bool BlackListDB::_deleteEntry(const std::string& key, blacklist_t& blacklist)
@@ -197,10 +197,10 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist)
   
   auto& timeindex = blacklist.get<TimeTag>();
   
-  for (auto tit = timeindex.begin(); tit != timeindex.end(); ++tit) {
+  for (auto tit = timeindex.begin(); tit != timeindex.end();) {
     if (tit->expiration <= now) {
       expireEntryLog(blt, tit->key);
-      timeindex.erase(tit);
+      tit = timeindex.erase(tit);
     }
     else
       break; // stop when we run out of entries to expire

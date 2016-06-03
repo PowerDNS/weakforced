@@ -129,7 +129,8 @@ public:
     LuaMultiThread(num_states);
   }
 
-  LuaMultiThread(unsigned int nstates) : num_states(nstates)
+  LuaMultiThread(unsigned int nstates) : num_states(nstates),
+					 state_index(0)
   {
     for (unsigned int i=0; i<num_states; i++) {
       LuaThreadContext ltc;
@@ -172,7 +173,6 @@ protected:
     std::lock_guard<std::mutex> lock(mutx);
     if (state_index >= num_states)
       state_index = 0;
-    // randomly select a lua state
     return lua_cv[state_index++];
   }
 private:

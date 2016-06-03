@@ -77,6 +77,7 @@ public:
   {
     hllp = std::make_shared<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
     cache_valid = false;
+    cached_sum = 0;
   }
   void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); cache_valid = false; return; }
   void add(const std::string& s) { hllp->add(s.c_str(), s.length()); cache_valid = false; return; }
@@ -100,6 +101,7 @@ public:
 	hllsum.merge((*(twp->hllp)));
       }
     cached_sum = std::lround(hllsum.estimate());
+    cache_valid = true;
     return cached_sum;
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
@@ -444,7 +446,7 @@ void TWStatsDB<T>::expireEntries()
       unsigned int num_expire = stats_db.size() - map_size_soft;
       unsigned int num_expired = num_expire;
 
-      warnlog("About to expire %d entries from stats db", num_expire);
+      infolog("About to expire %d entries from stats db", num_expire);
 
       // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
       while (num_expire--) {
@@ -454,7 +456,7 @@ void TWStatsDB<T>::expireEntries()
 	  key_tracker.pop_front();
 	}
       }
-      warnlog("Finished expiring %d entries from stats db", num_expired);
+      infolog("Finished expiring %d entries from stats db", num_expired);
     }
   }
 }

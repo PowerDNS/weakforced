@@ -632,7 +632,7 @@ void pollThread()
       for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end();) {
 	if ((*i)->closeConnection == true) {
 	  // this will implicitly close the socket through the Socket class destructor
-	  sock_vec.erase(i);
+	  i = sock_vec.erase(i);
 	}
 	else
 	  ++i;

@@ -28,42 +28,9 @@ struct BlackListEntry {
 
 using namespace boost::multi_index;
 
+enum BLType { IP_BL=0, LOGIN_BL=1, IP_LOGIN_BL=2 };
+
 class BlackListDB {
-private:
-  struct TimeTag{};
-  struct KeyTag{};
-  struct SeqTag{};
-  typedef multi_index_container<
-    BlackListEntry,
-    indexed_by<
-      ordered_non_unique<
-	tag<TimeTag>,
-	member<BlackListEntry, boost::system_time, &BlackListEntry::expiration>	>,
-      hashed_unique<
-	tag<KeyTag>,
-	member<BlackListEntry, std::string, &BlackListEntry::key> >,
-      sequenced<tag<SeqTag>>
-    >
-    > blacklist_t;
-
-  enum BLType { IP_BL=0, LOGIN_BL=1, IP_LOGIN_BL=2 };
-  const char* bl_names[3] = { "ip_bl", "login_bl", "ip_login_bl" };
-  const char* key_names[3] = { "ip", "login", "ip_login" };
-  blacklist_t ip_blacklist;
-  blacklist_t login_blacklist;
-  blacklist_t ip_login_blacklist;
-  std::mutex mutx;
-
-  void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason);
-  bool _checkEntry(const std::string& key, blacklist_t& blacklist);
-  bool _getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble);
-  bool _deleteEntry(const std::string& key, blacklist_t& blacklist);
-  time_t _getExpiration(const std::string& key, blacklist_t& blacklist); // returns number of seconds until expiration
-  void _purgeEntries(BLType blt, blacklist_t& blacklist);
-  void addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason);
-  void deleteEntryLog(BLType blt, const std::string& key);
-  void expireEntryLog(BLType blt, const std::string& key);
-  std::string ipLoginStr(const ComboAddress& ca, const std::string& login);
 public:  
   BlackListDB() {}
   BlackListDB(const BlackListDB&) = delete;
@@ -96,6 +63,40 @@ public:
   std::vector<BlackListEntry> getIPEntries();
   std::vector<BlackListEntry> getLoginEntries();
   std::vector<BlackListEntry> getIPLoginEntries();
+private:
+  struct TimeTag{};
+  struct KeyTag{};
+  struct SeqTag{};
+  typedef multi_index_container<
+    BlackListEntry,
+    indexed_by<
+      ordered_non_unique<
+	tag<TimeTag>,
+	member<BlackListEntry, boost::system_time, &BlackListEntry::expiration>	>,
+      hashed_unique<
+	tag<KeyTag>,
+	member<BlackListEntry, std::string, &BlackListEntry::key> >,
+      sequenced<tag<SeqTag>>
+    >
+    > blacklist_t;
+
+  const char* bl_names[3] = { "ip_bl", "login_bl", "ip_login_bl" };
+  const char* key_names[3] = { "ip", "login", "ip_login" };
+  blacklist_t ip_blacklist;
+  blacklist_t login_blacklist;
+  blacklist_t ip_login_blacklist;
+  std::mutex mutx;
+
+  void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason);
+  bool _checkEntry(const std::string& key, blacklist_t& blacklist);
+  bool _getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble);
+  bool _deleteEntry(const std::string& key, blacklist_t& blacklist);
+  time_t _getExpiration(const std::string& key, blacklist_t& blacklist); // returns number of seconds until expiration
+  void _purgeEntries(BLType blt, blacklist_t& blacklist);
+  void addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason);
+  void deleteEntryLog(BLType blt, const std::string& key);
+  void expireEntryLog(BLType blt, const std::string& key);
+  std::string ipLoginStr(const ComboAddress& ca, const std::string& login);
 };
 
 extern BlackListDB bl_db;

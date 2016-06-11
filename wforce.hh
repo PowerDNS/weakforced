@@ -9,6 +9,7 @@
 #include <thread>
 #include "sholder.hh"
 #include "sstuff.hh"
+#include "replication.hh"
 #include "ext/json11/json11.hpp"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
@@ -39,6 +40,8 @@ extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 
 void receiveReports(ComboAddress local);
+void replicationOperation(const ReplicationOperation& rep_op);
+void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {
   explicit Sibling(const ComboAddress& rem);
@@ -102,7 +105,6 @@ typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, 
 
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, std::function<AllowReturn(const LoginTuple&)>& allow_func, std::function<void(const LoginTuple&)>& report_func, std::function<bool(const std::string&, const std::string&, const ComboAddress&)>& reset_func, const std::string& config);
 
-void spreadReport(const LoginTuple& lt);
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
 typedef std::function<void(const LoginTuple&)> report_t;

@@ -13,7 +13,7 @@
 #include "ext/ctpl.h"
 #include "base64.hh"
 #include "blacklist.hh"
-#include "twmap.hh"
+#include "twmap-wrapper.hh"
 #include "perf-stats.hh"
 
 using std::thread;

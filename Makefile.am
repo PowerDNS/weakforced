@@ -22,6 +22,8 @@ wforce_SOURCES = \
 	namespaces.hh \
 	perf-stats.cc perf-stats.hh \
 	replication.cc replication.hh \
+	replication_sdb.hh \
+	replication_bl.cc replication_bl.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \

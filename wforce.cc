@@ -35,6 +35,7 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -470,9 +471,60 @@ void Sibling::send(const std::string& msg)
 }
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
+unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 
 SodiumNonce g_sodnonce;
 std::mutex sod_mutx;
+
+void replicateOperation(const ReplicationOperation& rep_op)
+{
+  auto siblings = g_siblings.getLocal();
+  string msg = rep_op.serialize();
+  string packet;
+
+  {
+    std::lock_guard<std::mutex> lock(sod_mutx);
+    packet =g_sodnonce.toString();
+    packet+=sodEncryptSym(msg, g_key, g_sodnonce);    
+  }
+
+  for(auto& s : *siblings) {
+    s->send(packet);
+  }
+}
+
+void receiveReplicationOperations(ComboAddress local)
+{
+  Socket sock(local.sin4.sin_family, SOCK_DGRAM);
+  sock.bind(local);
+  char buf[1500];
+  ComboAddress remote=local;
+  socklen_t remlen=remote.getSocklen();
+  int len;
+  ctpl::thread_pool p(g_num_sibling_threads);
+
+  infolog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
+  for(;;) {
+    len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
+    if(len <= 0 || len >= (int)sizeof(buf))
+      continue;
+
+    p.push([&buf,&remote,len](int id) {
+	SodiumNonce nonce;
+	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    
+	string msg=sodDecryptSym(packet, g_key, nonce);
+
+	ReplicationOperation rep_op;
+	if (rep_op.unserialize(msg) != false) {
+	  warnlog("Got a replication operation from sibling %s", remote.toString());
+	  rep_op.applyOperation();
+	}
+      });
+  }
+}
+
 
 void spreadReport(const LoginTuple& lt)
 {
@@ -490,8 +542,6 @@ void spreadReport(const LoginTuple& lt)
     s->send(packet);
   }
 }
-
-unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 
 void receiveReports(ComboAddress local)
 {

@@ -4,7 +4,7 @@
 #include "dolog.hh"
 #include "sodcrypto.hh"
 #include "base64.hh"
-#include "twmap.hh"
+#include "twmap-wrapper.hh"
 #include "blacklist.hh"
 #include <fstream>
 

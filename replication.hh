@@ -13,10 +13,11 @@ public:
 
 typedef std::shared_ptr<AnyReplicationOperation> AnyReplicationOperationP;
 
+enum ReplObjectType { REPL_BLACKLIST=0, REPL_STATSDB=1, REPL_NONE=999 };
+
 class ReplicationOperation
 {
 public:
-  enum ReplObjectType { REPL_BLACKLIST=0, REPL_STATSDB=1, REPL_NONE=999 };
 
   ReplicationOperation() : obj_type(REPL_NONE)
   {}

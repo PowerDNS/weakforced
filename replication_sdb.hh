@@ -1,11 +1,12 @@
 #pragma once
 #include "twmap-wrapper.hh"
 
+enum RepOpType { SDB_OP_ADD=0, SDB_OP_SUB=1, SDB_OP_RESET=2, SDB_OP_NONE=999 };
+
 template <typename T>
 class SDBReplicationOperation : public AnyReplicationOperation
 {
 public:
-  enum RepOpType { REP_OP_ADD=0, REP_OP_SUB=1, REP_OP_RESET=2, REP_OP_NONE=999 };
   SDBReplicationOperation();
   SDBReplicationOperation(const std::string& db_name, RepOpType op, const T& key);
   SDBReplicationOperation(const std::string& db_name, RepOpType op, const T& key,
@@ -32,23 +33,20 @@ private:
 template <typename T>
 SDBReplicationOperation<T>::SDBReplicationOperation()
 {
-  op = REP_OP_NONE;
+  op = SDB_OP_NONE;
 }
 
 template <typename T>
-SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_name, RepOpType my_op, const T& my_key)
+SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_name, RepOpType my_op, const T& my_key): db_name(my_db_name), op(my_op), key(my_key)
 {
-  db_name = my_db_name;
-  op = my_op;
-  key = my_key;
 }
 
 template <typename T>
 SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_name, RepOpType my_op,
 						    const T& my_key, const std::string& my_field_name,
-						    const std::string& my_s)
+						    const std::string& my_s) : SDBReplicationOperation(my_db_name, my_op, my_key)
+
 {
-  SDBReplicationOperation(my_db_name, my_op, my_key);
   field_name = my_field_name;
   field_name_present = true;
   str_param = my_s;
@@ -58,9 +56,8 @@ SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_nam
 template <typename T>
 SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_name, RepOpType my_op,
 						    const T& my_key, const std::string& my_field_name,
-						    int my_a)
+						    int my_a) : SDBReplicationOperation(my_db_name, my_op, my_key)
 {
-  SDBReplicationOperation(my_db_name, my_op, my_key);
   field_name = my_field_name;
   field_name_present = true;
   int_param = my_a;
@@ -70,9 +67,8 @@ SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_nam
 template <typename T>
 SDBReplicationOperation<T>::SDBReplicationOperation(const std::string& my_db_name, RepOpType my_op,
 						    const T& my_key, const std::string& my_field_name,
-						    const std::string& my_s, int my_a)
+						    const std::string& my_s, int my_a) : SDBReplicationOperation(my_db_name, my_op, my_key)
 {
-  SDBReplicationOperation(my_db_name, my_op, my_key);
   field_name = my_field_name;
   field_name_present = true;
   str_param = my_s;
@@ -156,7 +152,7 @@ AnyReplicationOperationP SDBReplicationOperation<T>::unjsonize(const Json::objec
 template <typename T>
 void SDBReplicationOperation<T>::applyOperation()
 {
-  if (op != REP_OP_NONE) {
+  if (op != SDB_OP_NONE) {
     TWStringStatsDBWrapper* statsdb;
     {
       std::lock_guard<std::mutex> lock(dbMap_mutx);
@@ -169,32 +165,32 @@ void SDBReplicationOperation<T>::applyOperation()
       }
     }
     switch(op) {
-    case REP_OP_RESET:
-      statsdb->reset(key);
+    case SDB_OP_RESET:
+      statsdb->resetInternal(key, false);
       break;
-    case REP_OP_ADD:
+    case SDB_OP_ADD:
       if (field_name_present == false) {
 	errlog("applyOperation(): No field_name found for statsdb add");
 	return;
       }
       if ((str_param_present == true) && (int_param_present == true))
-	statsdb->add(key, field_name, str_param, int_param);
+	statsdb->addInternal(key, field_name, str_param, int_param, false);
       else if (str_param_present == true)
-	statsdb->add(key, field_name, str_param, {});
+	statsdb->addInternal(key, field_name, str_param, {}, false);
       else if (int_param_present == true)
-	statsdb->add(key, field_name, int_param, {});
+	statsdb->addInternal(key, field_name, int_param, {}, false);
       else
 	errlog("applyOperation(): Malformed statsdb add");
       break;
-    case REP_OP_SUB:
+    case SDB_OP_SUB:
       if (field_name_present == false) {
 	errlog("applyOperation(): No field_name found for statsdb sub");
 	return;
       }
       if (str_param_present == true)
-	statsdb->sub(key, field_name, str_param);
+	statsdb->subInternal(key, field_name, str_param, false);
       else if (int_param_present == true)
-	statsdb->sub(key, field_name, int_param);
+	statsdb->subInternal(key, field_name, int_param, false);
       else
 	errlog("applyOperation(): Malformed statsdb sub");
       break;

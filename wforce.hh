@@ -34,13 +34,12 @@ struct ClientState
   int tcpFD;
 };
 
-
 extern std::mutex g_luamutex;
 extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 
 void receiveReports(ComboAddress local);
-void replicationOperation(const ReplicationOperation& rep_op);
+void replicateOperation(const ReplicationOperation& rep_op);
 void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {
@@ -51,14 +50,15 @@ struct Sibling
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   void send(const std::string& msg);
+  void checkIgnoreSelf(const ComboAddress& ca);
   bool d_ignoreself{false};
 };
 
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
+extern ComboAddress g_sibling_listen;
 extern ComboAddress g_serverControl; // not changed during runtime
 
-extern std::vector<ComboAddress> g_locals; // not changed at runtime
 extern std::string g_key; // in theory needs locking
 
 struct dnsheader;
@@ -100,6 +100,8 @@ struct LoginTuple
     return cal < car;
   }
 };
+
+void spreadReport(const LoginTuple& lt);
 
 typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
 

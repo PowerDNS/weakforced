@@ -69,9 +69,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
 	ComboAddress ca(address, 4001);
-      
+
 	auto launch = [ca]() {
-	  thread t1(receiveReports, ca);
+	  thread t1(receiveReplicationOperations, ca);
 	  t1.detach();
 	};
 	if(g_launchWork)
@@ -82,23 +82,6 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   else {
     c_lua.writeFunction("siblingListener", [](const std::string& address) { });
-  }
-
-  if (!allow_report) {
-    c_lua.writeFunction("addLocal", [client](const std::string& addr) {
-	if(client)
-	  return;
-	try {
-	  ComboAddress loc(addr, 53);
-	  g_locals.push_back(loc); /// only works pre-startup, so no sync necessary
-	}
-	catch(std::exception& e) {
-	  g_outputBuffer="Error: "+string(e.what())+"\n";
-	}
-      });
-  }
-  else {
-    c_lua.writeFunction("addLocal", [client](const std::string& addr) { });
   }
 
   if (!allow_report) {
@@ -355,7 +338,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
   c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);
-
+  c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
+  
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";

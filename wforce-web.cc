@@ -207,7 +207,6 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.setLtAttrs(msg);
       lt.policy_reject=msg["policy_reject"].bool_value();
       lt.t=getDoubleTime();
-      spreadReport(lt);
       reportLog(lt);
       g_stats.reports++;
       resp.status=200;
@@ -245,14 +244,21 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
   else {
     LoginTuple lt;
-    lt.remote=ComboAddress(msg["remote"].string_value());
-    lt.success=msg["success"].bool_value();
-    lt.pwhash=msg["pwhash"].string_value();
-    lt.login=msg["login"].string_value();
-    lt.setLtAttrs(msg);
-    int status = -1;
-    std::string ret_msg;
-	
+    try {
+      lt.remote=ComboAddress(msg["remote"].string_value());
+      lt.success=msg["success"].bool_value();
+      lt.pwhash=msg["pwhash"].string_value();
+      lt.login=msg["login"].string_value();
+      lt.setLtAttrs(msg);
+      int status = -1;
+      std::string ret_msg;
+    }
+    catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
+	return;
+      }
+    
     // first check the built-in blacklists
     BlackListEntry ble;
     if (bl_db.getEntry(lt.remote, ble)) {
@@ -370,33 +376,41 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     bool is_blacklisted;
     ComboAddress en_ca;
 
-    if (!msg["ip"].is_null()) {
-      en_ca = ComboAddress(msg["ip"].string_value());
-      haveIP = true;
+    try {
+      if (!msg["ip"].is_null()) {
+	string myip = msg["ip"].string_value();
+	en_ca = ComboAddress(myip);
+	haveIP = true;
+      }
+      if (!msg["login"].is_null()) {
+	en_login = msg["login"].string_value();
+	haveLogin = true;
+      }
+      if (haveLogin && haveIP) {
+	key_name = "ip_login";
+	key_value = en_ca.toString() + ":" + en_login;
+	lookup_key = key_value;
+	is_blacklisted = bl_db.checkEntry(en_ca, en_login);
+      }
+      else if (haveLogin) {
+	key_name = "login";
+	key_value = en_login;
+	lookup_key = en_login;
+	is_blacklisted = bl_db.checkEntry(en_login);
+      }
+      else if (haveIP) {
+	key_name = "ip";
+	key_value = en_ca.toString();
+	lookup_key = en_ca;
+	is_blacklisted = bl_db.checkEntry(en_ca);
+      }
     }
-    if (!msg["login"].is_null()) {
-      en_login = msg["login"].string_value();
-      haveLogin = true;
+    catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
+	return;
     }
-    if (haveLogin && haveIP) {
-      key_name = "ip_login";
-      key_value = en_ca.toString() + ":" + en_login;
-      lookup_key = key_value;
-      is_blacklisted = bl_db.checkEntry(en_ca, en_login);
-    }
-    else if (haveLogin) {
-      key_name = "login";
-      key_value = en_login;
-      lookup_key = en_login;
-      is_blacklisted = bl_db.checkEntry(en_login);
-    }
-    else if (haveIP) {
-      key_name = "ip";
-      key_value = en_ca.toString();
-      lookup_key = en_ca;
-      is_blacklisted = bl_db.checkEntry(en_ca);
-    }
-	  
+    
     if (!haveLogin && !haveIP) {
       resp.status = 415;
       resp.body=R"({"status":"failure", "reason":"No ip or login field supplied"})";

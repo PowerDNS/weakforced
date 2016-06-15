@@ -55,6 +55,9 @@ public:
   time_t getExpiration(const std::string& login);
   time_t getExpiration(const ComboAddress& ca, const std::string& login);
 
+  void addEntryInternal(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason, bool replicate);
+  void deleteEntryInternal(const std::string& key, BLType bl_type, bool replicate);
+  
   void purgeEntries();
   static void purgeEntriesThread(BlackListDB* bl_db)
   {
@@ -87,10 +90,10 @@ private:
   blacklist_t ip_login_blacklist;
   std::mutex mutx;
 
-  void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason);
+  void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason, bool replicate);
   bool _checkEntry(const std::string& key, blacklist_t& blacklist);
   bool _getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble);
-  bool _deleteEntry(const std::string& key, blacklist_t& blacklist);
+  bool _deleteEntry(const std::string& key, blacklist_t& blacklist, bool replicate);
   time_t _getExpiration(const std::string& key, blacklist_t& blacklist); // returns number of seconds until expiration
   void _purgeEntries(BLType blt, blacklist_t& blacklist);
   void addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason);

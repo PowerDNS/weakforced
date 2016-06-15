@@ -359,6 +359,11 @@ public:
     db_name = name;
   }
 
+  std::string getDBName()
+  {
+    return db_name;
+  }
+  
   static void twExpireThread(std::shared_ptr<TWStatsDB<std::string>> sdbp)
   {
     sdbp->expireEntries();

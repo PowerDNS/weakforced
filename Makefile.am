@@ -15,6 +15,7 @@ wforce_SOURCES = \
 	wforce-web.cc \
 	wforce-geoip.cc \
 	twmap.cc twmap.hh \
+	twmap-wrapper.cc twmap-wrapper.hh \
 	blacklist.cc blacklist.hh \
 	dolog.hh \
 	iputils.cc iputils.hh \

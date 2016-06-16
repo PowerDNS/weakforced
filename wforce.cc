@@ -495,8 +495,6 @@ void receiveReplicationOperations(ComboAddress local)
 	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
 	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
 
-	warnlog("Received replication operation");
-	
 	string msg=sodDecryptSym(packet, g_key, nonce);
 	ReplicationOperation rep_op;
 	if (rep_op.unserialize(msg) != false) {

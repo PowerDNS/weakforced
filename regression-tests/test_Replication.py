@@ -4,180 +4,169 @@ import time
 import json
 from test_helper import ApiTestCase
 
-class TestTimeWindows(ApiTestCase):
+class TestTimeWindowsReplication(ApiTestCase):
     def setUp(self):
         time.sleep(16)
-        super(TestTimeWindows, self).setUp()
-        
+        super(TestTimeWindowsReplication, self).setUp()
+    
     def test_invalidPasswords(self):
-        r = self.allowFunc('ivbaddie', '127.0.0.1', "1234")
+        r = self.allowFunc('ivbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(25):
-            r = self.reportFunc('ivbaddie', '127.0.0.1', "1234'%s" % i, True)
+            r = self.reportFunc('ivbaddiereplication', '227.0.0.1', "1234'%s" % i, 'true')
             r.json()
 
-        r = self.allowFunc('ivbaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('ivbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('ivbaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('ivbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_FailedLogins(self):
-        r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
+        r = self.allowFunc('flbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(31):
-            r = self.reportFunc('flbaddie', '128.0.0.1', "1234", False)
+            r = self.reportFunc('flbaddiereplication', '228.0.0.1', "1234", 'false')
             r.json()
 
-        r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
+        r = self.allowFuncReplica('flbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
+        r = self.allowFuncReplica('flbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_diffIPs(self):
-        r = self.allowFunc('ipbaddie', '127.0.0.1', "1234")
+        r = self.allowFunc('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(12):
-            r = self.reportFunc('ipbaddie', "127.0.0.%s" % i, "1234", True)
+            r = self.reportFunc('ipbaddiereplication', "227.0.0.%s" % i, "1234", 'true')
             r.json()
 
-        r = self.allowFunc('ipbaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('ipbaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_subTest(self):
-        r = self.allowFunc('subbaddie', '128.0.0.1', "1234")
+        r = self.allowFunc('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(41):
-            r = self.reportFunc('subbaddie', '128.0.0.1', "1234", False)
+            r = self.reportFunc('subbaddiereplication', '228.0.0.1', "1234", 'false')
             r.json()
 
-        r = self.allowFunc('subbaddie', '128.0.0.1', "1234")
+        r = self.allowFuncReplica('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('subbaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('subbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_countMinPrefixv4(self):
-        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        r = self.allowFunc('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 73a1b5557451e1c9f695a80ad8c23dcd819dbecb
         for i in range(12):
-            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", True)
-=======
-        for i in range(50):
-            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", 'true')
->>>>>>> regression for replication
+            r = self.reportFunc('ipv4baddiereplication%s' % i, "114.31.193.%s" % i, "1234", 'true')
             r.json()
 
-        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        r = self.allowFuncReplica('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
+        r = self.allowFuncReplica('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_countMinPrefixv6(self):
-        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        r = self.allowFunc('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 73a1b5557451e1c9f695a80ad8c23dcd819dbecb
         for i in range(12):
-            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", True)
-=======
-        for i in range(50):
-            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", 'true')
->>>>>>> regression for replication
+            r = self.reportFunc('ipv6baddiereplication%s' % i, "2001:c78::%s" % i, "1234", 'true')
             r.json()
 
-        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        r = self.allowFuncReplica('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(15)
-        r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
+        r = self.allowFuncReplica('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_expiry(self):
-        r = self.allowFunc('expirebaddie', '127.0.0.1', "1234")
+        r = self.allowFunc('expirebaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(40):
-            r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", True)
+            r = self.reportFunc('expirebaddiereplication%s' % i, "227.0.0.1", "1234", 'true')
             r.json()
 
-        r = self.allowFunc('expirebaddie', '127.0.0.1', "1234")
+        r = self.allowFuncReplica('expirebaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
         time.sleep(3)
-        r = self.allowFunc('expirebaddie', '127.0.01', "1234")
+        r = self.allowFuncReplica('expirebaddiereplication', '227.0.01', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
     def test_Reset(self):
-        time.sleep(16)
-        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        r = self.allowFunc('resetbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
         for i in range(31):
-            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", False)
+            r = self.reportFunc('resetbaddiereplication', '228.0.0.1', "1234", 'false')
             r.json()
 
-        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        r = self.allowFuncReplica('resetbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
 
-        r = self.resetFunc('resetbaddie', '128.0.0.1')
+        r = self.resetFunc('resetbaddiereplication', '228.0.0.1')
         j = r.json()
         self.assertEquals(j['status'], "ok")
 
-        r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
+        r = self.allowFuncReplica('resetbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)

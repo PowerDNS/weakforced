@@ -4,12 +4,9 @@ import time
 import json
 from test_helper import ApiTestCase
 
-configFile = "./wforce-tw.conf"
-
 class TestAttrs(ApiTestCase):
 
     def test_Attrs(self):
-        self.writeFileToConsole(configFile)
         attrs = dict()
         attrs['accountStatus'] = "normal"
         r = self.allowFuncAttrs('fredbloggs', '127.0.0.1', "1234",  attrs)

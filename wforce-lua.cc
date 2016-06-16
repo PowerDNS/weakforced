@@ -324,8 +324,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       auto it = dbMap.find(name);
       if (it != dbMap.end())
 	return it->second; // copy
-      else
+      else {
+	warnlog("getStringStatsDB(): could not find DB %s", name);
 	return TWStringStatsDBWrapper("none", 1, 1);
+      }
     });
 
   c_lua.registerFunction("twAdd", &TWStringStatsDBWrapper::add);

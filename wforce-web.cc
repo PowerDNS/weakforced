@@ -244,14 +244,14 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
   else {
     LoginTuple lt;
+    int status = -1;
+    std::string ret_msg;
     try {
       lt.remote=ComboAddress(msg["remote"].string_value());
       lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
       lt.setLtAttrs(msg);
-      int status = -1;
-      std::string ret_msg;
     }
     catch(...) {
 	resp.status=500;

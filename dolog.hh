@@ -85,3 +85,9 @@ void errlog(const char* s, Args... args)
   genlog(LOG_ERR, s, args...);
 }
 
+template<typename... Args>
+void debuglog(const char* s, Args... args)
+{
+  genlog(LOG_DEBUG, s, args...);
+}
+

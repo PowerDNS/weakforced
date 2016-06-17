@@ -16,7 +16,7 @@ class ApiTestCase(unittest.TestCase):
         self.server_address = '127.0.0.1'
         self.server1_port = int(os.environ.get('WEBPORT', '8084'))
         self.server1_url = 'http://%s:%s/' % (self.server_address, self.server1_port)
-        self.server2_port = int(os.environ.get('WEBPORT', '8085'))
+        self.server2_port = 8085
         self.server2_url = 'http://%s:%s/' % (self.server_address, self.server2_port)
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))

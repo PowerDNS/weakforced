@@ -460,7 +460,7 @@ void replicateOperation(const ReplicationOperation& rep_op)
 
   {
     std::lock_guard<std::mutex> lock(sod_mutx);
-    packet =g_sodnonce.toString();
+    packet=g_sodnonce.toString();
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);    
   }
 
@@ -489,19 +489,26 @@ void receiveReplicationOperations(ComboAddress local)
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
-
-    p.push([&buf,&remote,len](int id) {
-	SodiumNonce nonce;
-	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
-
-	string msg=sodDecryptSym(packet, g_key, nonce);
+    
+    SodiumNonce nonce;
+    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    string msg;
+    try {
+      msg=sodDecryptSym(packet, g_key, nonce);
+    }
+    catch (std::runtime_error& e) {
+      errlog("Could not decrypt replication operation: %s", e.what());
+      return;
+    }
+    
+    p.push([msg,remote](int id) {
 	ReplicationOperation rep_op;
 	if (rep_op.unserialize(msg) != false) {
 	  rep_op.applyOperation();
 	}
 	else {
-	  warnlog("Invalid replication operation received from %s", remote.toString());
+	  errlog("Invalid replication operation received from %s", remote.toString());
 	}
       });
   }

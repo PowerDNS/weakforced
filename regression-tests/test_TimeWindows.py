@@ -35,8 +35,13 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
+<<<<<<< 81faf741ea8204ae7b293964eabf07698fc5255c
         for i in range(31):
             r = self.reportFunc('flbaddie', '128.0.0.1', "1234", False)
+=======
+        for i in range(32):
+            r = self.reportFunc('flbaddie', '128.0.0.1', "1234", 'false')
+>>>>>>> fix replication decryption
             r.json()
 
         r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
@@ -75,8 +80,8 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(41):
-            r = self.reportFunc('subbaddie', '128.0.0.1', "1234", False)
+        for i in range(42):
+            r = self.reportFunc('subbaddie', '128.0.0.1', "1234", 'false')
             r.json()
 
         r = self.allowFunc('subbaddie', '128.0.0.1', "1234")
@@ -166,8 +171,13 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
+<<<<<<< 81faf741ea8204ae7b293964eabf07698fc5255c
         for i in range(31):
             r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", False)
+=======
+        for i in range(32):
+            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", 'false')
+>>>>>>> fix replication decryption
             r.json()
 
         r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")

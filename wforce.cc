@@ -509,13 +509,12 @@ void receiveReports(ComboAddress local)
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
 
-    p.push([&buf,&remote,len](int id) {
-	SodiumNonce nonce;
-	memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-	string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
-    
-	string msg=sodDecryptSym(packet, g_key, nonce);
+    SodiumNonce nonce;
+    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+    string msg=sodDecryptSym(packet, g_key, nonce);
 
+    p.push([msg,remote](int id) {
 	LoginTuple lt;
 	lt.unserialize(msg);
 	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);

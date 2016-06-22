@@ -86,7 +86,7 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: ""
+        - name: "Reset"
           in: body
           description: "Provide IP and/or login"
           required: true
@@ -154,7 +154,7 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: ""
+        - name: "GetDBStats"
           in: body
           description: "Provide IP and/or login"
           required: true

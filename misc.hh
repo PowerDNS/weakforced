@@ -519,4 +519,7 @@ bool setBlocking( int sock );
 bool setNonBlocking( int sock );
 int closesocket(int fd);
 bool setCloseOnExec(int sock);
+
+unsigned int pdns_stou(const std::string& str, size_t * idx = 0, int base = 10);
 #endif
+

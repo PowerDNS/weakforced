@@ -247,7 +247,7 @@ void BlackListDB::addEntryLog(BLType blt, const std::string& key, time_t seconds
   std::string key_name = string(key_names[blt]);
 
   os << "addBLEntry " + bl_name + ": " + key_name + "=" + key + " expire_secs=" + std::to_string(seconds) + " reason=\"" + reason + "\"";
-  warnlog(os.str().c_str());
+  noticelog(os.str().c_str());
 }
 
 void BlackListDB::deleteEntryLog(BLType blt, const std::string& key)
@@ -257,7 +257,7 @@ void BlackListDB::deleteEntryLog(BLType blt, const std::string& key)
   std::string key_name = string(key_names[blt]);
 
   os << "deleteBLEntry " + bl_name + ": " + key_name + "=" + key;
-  warnlog(os.str().c_str());
+  noticelog(os.str().c_str());
 }
 
 void BlackListDB::expireEntryLog(BLType blt, const std::string& key)
@@ -267,7 +267,7 @@ void BlackListDB::expireEntryLog(BLType blt, const std::string& key)
   std::string key_name = string(key_names[blt]);
 
   os << "expireBLEntry " + bl_name + ": " + key_name + "=" + key;
-  warnlog(os.str().c_str());
+  noticelog(os.str().c_str());
 }
 
 

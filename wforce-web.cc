@@ -45,13 +45,9 @@ bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
   return auth_ok;
 }
 
-void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
+std::string LtAttrsToString(const LoginTuple& lt)
 {
   std::ostringstream os;
-  os << "allowLog " << msg << ": ";
-  os << "allow=\"" << retval << "\" ";
-  os << "remote=\"" << lt.remote.toString() << "\" ";
-  os << "login=\"" << lt.login << "\" ";
   os << "attrs={";
   for (auto i= lt.attrs.begin(); i!=lt.attrs.end(); ++i) {
     os << i->first << "="<< "\"" << i->second << "\"";
@@ -73,6 +69,29 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
       os << ", ";
   }
   os << "} ";
+  return os.str();
+}
+
+void reportLog(const LoginTuple& lt)
+{
+  std::ostringstream os;
+  os << "reportLog: ";
+  os << "remote=\"" << lt.remote.toString() << "\" ";
+  os << "login=\"" << lt.login << "\" ";
+  os << "success=\"" << lt.success << "\" ";
+  os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
+  os << LtAttrsToString(lt);
+  infolog(os.str().c_str());
+}
+
+void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
+{
+  std::ostringstream os;
+  os << "allowLog " << msg << ": ";
+  os << "allow=\"" << retval << "\" ";
+  os << "remote=\"" << lt.remote.toString() << "\" ";
+  os << "login=\"" << lt.login << "\" ";
+  os << LtAttrsToString(lt);
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
@@ -188,6 +207,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.policy_reject=msg["policy_reject"].bool_value();
       lt.t=getDoubleTime();
       spreadReport(lt);
+      reportLog(lt);
       g_stats.reports++;
       resp.status=200;
       {

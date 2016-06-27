@@ -839,3 +839,12 @@ bool setCloseOnExec(int sock)
   return true;
 }
 
+unsigned int pdns_stou(const std::string& str, size_t * idx, int base)
+{
+  if (str.empty()) return 0; // compability
+  unsigned long result = std::stoul(str, idx, base);
+  if (result > std::numeric_limits<unsigned int>::max()) {
+    throw std::out_of_range("stou");
+  }
+  return static_cast<unsigned int>(result);
+}

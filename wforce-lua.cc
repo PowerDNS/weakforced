@@ -408,7 +408,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 
-  c_lua.registerFunction("addMask", &NetmaskGroup::addMask);
+  c_lua.registerFunction("addMask", static_cast<void(NetmaskGroup::*)(const std::string&)>(&NetmaskGroup::addMask));
   c_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
 
   if (allow_report) {

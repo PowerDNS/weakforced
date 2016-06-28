@@ -6,7 +6,7 @@
 // This is somewhat similar to a CmRDT except that currently
 // weakforced uses UDP rather than a "safe" transport like TCP
 
-syntax = "proto3";
+syntax = "proto2";
 
 message SDBOperation {
   required string db_name = 1;

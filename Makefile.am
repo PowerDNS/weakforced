@@ -31,7 +31,6 @@ wforce_SOURCES = \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
-	ext/incbin/incbin.h \
 	ext/murmur3.cc \
         ext/murmur3.h \
 	ext/count_min_sketch.cpp \

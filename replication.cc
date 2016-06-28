@@ -4,29 +4,34 @@
 
 std::string ReplicationOperation::serialize() const
 {
-  Json::object jobj = rep_op->jsonize();
-  Json msg = Json::object {
-    {"obj_type", obj_type},
-    {"rep_op", jobj} };
-  return msg.dump();
+  std::string bytes = rep_op->serialize();
+  WforceReplicationMsg msg;
+
+  msg.set_rep_type(obj_type);
+  msg.set_rep_op(bytes);
+
+  std::string ret_str;
+  msg.SerializeToString(&ret_str);
+  return ret_str;
 }
 
 bool ReplicationOperation::unserialize(const std::string& str)
 {
   string err;
-  json11::Json msg=json11::Json::parse(str, err);
   bool retval=false;
+  WforceReplicationMsg msg;
   
-  obj_type = (ReplObjectType)msg["obj_type"].int_value();
-  Json::object jobj = msg["rep_op"].object_items();
-  if (obj_type == REPL_BLACKLIST) {
-    BLReplicationOperation bl_op = BLReplicationOperation();
-    rep_op = bl_op.unjsonize(jobj, retval);
-  }
-  else if (obj_type == REPL_STATSDB) {
-    SDBReplicationOperation<std::string> sdb_op = SDBReplicationOperation<std::string>();
-    rep_op = sdb_op.unjsonize(jobj, retval);
-  }
+  if (msg.ParseFromString(str)) {
+    obj_type = msg.rep_type();
+    if (obj_type == WforceReplicationMsg_RepType_SDBType) {
+      SDBReplicationOperation sdb_op = SDBReplicationOperation();
+      rep_op = sdb_op.unserialize(msg.rep_op(), retval);      
+    }
+    else if (obj_type == WforceReplicationMsg_RepType_BlacklistType) {
+      BLReplicationOperation bl_op = BLReplicationOperation();
+      rep_op = bl_op.unserialize(msg.rep_op(), retval);
+    }
+  }  
   return retval;
 }
 

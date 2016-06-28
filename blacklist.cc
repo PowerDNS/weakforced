@@ -1,6 +1,7 @@
 #include "blacklist.hh"
 #include "replication.hh"
 #include "replication_bl.hh"
+#include "replication.pb.h"
 #include "wforce.hh"
 #include <boost/version.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -22,8 +23,8 @@ void BlackListDB::addEntry(const ComboAddress& ca, time_t seconds, const std::st
   addEntryLog(IP_BL, key, seconds, reason);
 
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_ADD, IP_BL, key, seconds, reason);
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_BL, key, seconds, reason);
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 }
 
@@ -33,8 +34,8 @@ void BlackListDB::addEntry(const std::string& login, time_t seconds, const std::
   addEntryLog(LOGIN_BL, login, seconds, reason);
 
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_ADD, LOGIN_BL, login, seconds, reason);
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, LOGIN_BL, login, seconds, reason);
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 }
 
@@ -45,8 +46,8 @@ void BlackListDB::addEntry(const ComboAddress& ca, const std::string& login, tim
   addEntryLog(IP_LOGIN_BL, key, seconds, reason);
 
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_ADD, IP_LOGIN_BL, key, seconds, reason);
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_LOGIN_BL, key, seconds, reason);
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 }
 
@@ -146,8 +147,8 @@ bool BlackListDB::deleteEntry(const ComboAddress& ca)
 {
   std::string key = ca.toString();
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_DELETE, IP_BL, key, 0, "");
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_BL, key, 0, "");
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 
   deleteEntryLog(IP_BL, key);
@@ -157,8 +158,8 @@ bool BlackListDB::deleteEntry(const ComboAddress& ca)
 bool BlackListDB::deleteEntry(const std::string& login)
 {
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_DELETE, LOGIN_BL, login, 0, "");
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, LOGIN_BL, login, 0, "");
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 
   deleteEntryLog(LOGIN_BL, login);
@@ -170,8 +171,8 @@ bool BlackListDB::deleteEntry(const ComboAddress& ca, const std::string& login)
   std::string key = ipLoginStr(ca, login);
 
   std::shared_ptr<BLReplicationOperation> bl_rop;
-  bl_rop = std::make_shared<BLReplicationOperation>(BL_DELETE, IP_LOGIN_BL, key, 0, "");
-  ReplicationOperation rep_op(bl_rop, REPL_BLACKLIST);
+  bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_LOGIN_BL, key, 0, "");
+  ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
   replicateOperation(rep_op);
 
   deleteEntryLog(IP_LOGIN_BL, key);

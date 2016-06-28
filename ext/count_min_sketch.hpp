@@ -8,7 +8,9 @@
 
 // define some constants
 # define LONG_PRIME 32993
+#ifndef MIN
 # define MIN(a,b)  (a < b ? a : b)
+#endif
 
 /** CountMinSketch class definition here **/
 class CountMinSketch {

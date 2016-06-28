@@ -1,6 +1,7 @@
 #include "twmap-wrapper.hh"
 #include "replication.hh"
 #include "replication_sdb.hh"
+#include "replication.pb.h"
 #include "wforce.hh"
 
 TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows)
@@ -86,7 +87,7 @@ void TWStringStatsDBWrapper::add(const TWKeyType vkey, const std::string& field_
 void TWStringStatsDBWrapper::addInternal(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int, ComboAddress>& param1, boost::optional<int> param2, bool replicate)
 {	
   std::string key = getStringKey(vkey);
-  std::shared_ptr<SDBReplicationOperation<std::string>> sdb_rop;
+  std::shared_ptr<SDBReplicationOperation> sdb_rop;
   std::string db_name = sdbp->getDBName();
   
   // we're using the three argument version
@@ -97,13 +98,13 @@ void TWStringStatsDBWrapper::addInternal(const TWKeyType vkey, const std::string
       std::string mystr = boost::get<std::string>(param1);
       sdbp->add(key, field_name, mystr, *param2);
       if ((replicate == true) && (*replicated == true))
-	sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_ADD, key, field_name, mystr, *param2);
+	sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpAdd, key, field_name, mystr, *param2);
     }
     else if (param1.which() == 2) {
       ComboAddress ca = boost::get<ComboAddress>(param1);
       sdbp->add(key, field_name, ca.toString(), *param2);
       if ((replicate == true) && (*replicated == true))
-	sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_ADD, key, field_name, ca.toString(), *param2);
+	sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpAdd, key, field_name, ca.toString(), *param2);
     }
   }
   else {
@@ -111,24 +112,24 @@ void TWStringStatsDBWrapper::addInternal(const TWKeyType vkey, const std::string
       std::string mystr = boost::get<std::string>(param1);
       sdbp->add(key, field_name, mystr);
       if ((replicate == true) && (*replicated == true))
-	sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_ADD, key, field_name, mystr);
+	sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpAdd, key, field_name, mystr);
     }
     else if (param1.which() == 1) {
       int myint = boost::get<int>(param1);
       sdbp->add(key, field_name, myint);
       if ((replicate == true) && (*replicated == true))
-	sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_ADD, key, field_name, myint);
+	sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpAdd, key, field_name, myint);
     }
     else if (param1.which() == 2) {
       ComboAddress ca = boost::get<ComboAddress>(param1);
       sdbp->add(key, field_name, ca.toString());
       if ((replicate == true) && (*replicated == true))
-	sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_ADD,
+	sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpAdd,
 									 key, field_name, ca.toString());
     }
   }
   if ((replicate == true) && (*replicated == true)) {
-    ReplicationOperation rep_op(sdb_rop, REPL_STATSDB);
+    ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
     // this actually does the replication
     replicateOperation(rep_op);
   }
@@ -142,23 +143,23 @@ void TWStringStatsDBWrapper::sub(const TWKeyType vkey, const std::string& field_
 void TWStringStatsDBWrapper::subInternal(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int>& val, bool replicate)
 {
   std::string key = getStringKey(vkey);
-  std::shared_ptr<SDBReplicationOperation<std::string>> sdb_rop;
+  std::shared_ptr<SDBReplicationOperation> sdb_rop;
   std::string db_name = sdbp->getDBName();
 
   if (val.which() == 0) {
     std::string mystr = boost::get<std::string>(val);
     sdbp->sub(key, field_name, mystr);
     if ((replicate == true) && (*replicated == true))
-      sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_SUB, key, field_name, mystr);
+      sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSub, key, field_name, mystr);
   }
   else {
     int myint = boost::get<int>(val);
     sdbp->sub(key, field_name, myint);
     if ((replicate == true) && (*replicated == true))
-      sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_SUB, key, field_name, myint);
+      sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSub, key, field_name, myint);
   }
   if ((replicate == true) && (*replicated == true)) {
-    ReplicationOperation rep_op(sdb_rop, REPL_STATSDB);
+    ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
     // this actually does the replication
     replicateOperation(rep_op);
   }
@@ -235,14 +236,14 @@ void TWStringStatsDBWrapper::reset(const TWKeyType vkey)
 void TWStringStatsDBWrapper::resetInternal(const TWKeyType vkey, bool replicate)
 {
   std::string key = getStringKey(vkey);
-  std::shared_ptr<SDBReplicationOperation<std::string>> sdb_rop;
+  std::shared_ptr<SDBReplicationOperation> sdb_rop;
   std::string db_name = sdbp->getDBName();
 
   sdbp->reset(key);
 
   if ((replicate == true) && (*replicated == true)) {
-    sdb_rop = std::make_shared<SDBReplicationOperation<std::string>>(db_name, SDB_OP_RESET, key);
-    ReplicationOperation rep_op(sdb_rop, REPL_STATSDB);
+    sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpReset, key);
+    ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
     // this actually does the replication
     replicateOperation(rep_op);
   }

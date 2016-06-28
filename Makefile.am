@@ -3,7 +3,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=ext docs
 
-EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example
+EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto
+
+CLEANFILES = replication.pb.cc replication.pb.h
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce
@@ -23,7 +25,7 @@ wforce_SOURCES = \
 	namespaces.hh \
 	perf-stats.cc perf-stats.hh \
 	replication.cc replication.hh \
-	replication_sdb.hh \
+	replication_sdb.hh replication_sdb.cc \
 	replication_bl.cc replication_bl.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
@@ -44,7 +46,8 @@ wforce_LDFLAGS = \
 
 wforce_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS) $(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS)
+	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
+	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \
@@ -60,7 +63,19 @@ noinst_HEADERS = \
 	twmap.hh \
 	blacklist.hh \
 	wforce-geoip.hh \
-	wforce.hh
+	wforce.hh \
+	replication.hh \
+	replication_sdb.hh \
+	replication_bl.hh \
+	twmap-wrapper.hh \
+	perf-stats.hh
+
+replication.pb.cc: replication.proto
+	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<
+
+nodist_wforce_SOURCES = replication.pb.cc replication.pb.h
+
+wforce.$(OBJEXT): replication.pb.cc
 
 if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify

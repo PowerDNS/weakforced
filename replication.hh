@@ -1,27 +1,24 @@
 #pragma once
-#include "ext/json11/json11.hpp"
-
-using namespace json11;
+#include "replication.pb.h"
+#include <memory>
 
 class AnyReplicationOperation
 {
 public:
-  virtual Json::object jsonize()=0;
-  virtual std::shared_ptr<AnyReplicationOperation> unjsonize(const Json::object& jobj, bool& retval)=0;
+  virtual std::string serialize()=0;
+  virtual std::shared_ptr<AnyReplicationOperation> unserialize(const std::string& data, bool& retval)=0;
   virtual void applyOperation()=0;
 };
 
 typedef std::shared_ptr<AnyReplicationOperation> AnyReplicationOperationP;
 
-enum ReplObjectType { REPL_BLACKLIST=0, REPL_STATSDB=1, REPL_NONE=999 };
-
 class ReplicationOperation
 {
 public:
 
-  ReplicationOperation() : obj_type(REPL_NONE)
+  ReplicationOperation() : obj_type(WforceReplicationMsg_RepType_NoneType)
   {}
-  ReplicationOperation(AnyReplicationOperationP op, ReplObjectType type) : rep_op(op), obj_type(type)
+  ReplicationOperation(AnyReplicationOperationP op, WforceReplicationMsg_RepType type) : rep_op(op), obj_type(type)
   {
   }
   std::string serialize() const;
@@ -30,5 +27,5 @@ public:
 
 private:
   AnyReplicationOperationP rep_op;
-  ReplObjectType obj_type;
+  WforceReplicationMsg_RepType obj_type;
 };

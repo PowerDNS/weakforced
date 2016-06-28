@@ -2,83 +2,48 @@
 
 BLReplicationOperation::BLReplicationOperation()
 {
-  op_type = BL_NONE;
+  bl_msg.set_op_type(BLOperation_BLOpType_BLNone);
 }
 
-BLReplicationOperation::BLReplicationOperation(BLOpType my_op_type, BLType my_bl_type, const std::string& my_key, time_t my_ttl, const std::string& my_reason)
+BLReplicationOperation::BLReplicationOperation(BLOperation_BLOpType my_op_type, BLType my_bl_type, const std::string& my_key, time_t my_ttl, const std::string& my_reason)
 {
-  op_type = my_op_type;
-  type = my_bl_type;
-  key = my_key;
-  ttl = my_ttl;
-  reason = my_reason;
+  bl_msg.set_op_type(my_op_type);
+  bl_msg.set_type(my_bl_type);
+  bl_msg.set_key(my_key);
+  bl_msg.set_ttl(my_ttl);
+  bl_msg.set_reason(my_reason);
 }
 
-Json::object BLReplicationOperation::jsonize()
+std::string BLReplicationOperation::serialize()
 {
-  Json::object jobj;
+  std::string ret_str;
 
-  jobj.insert(make_pair("op_type", op_type));
-  jobj.insert(make_pair("type", type));
-  jobj.insert(make_pair("key", key));
-  if (op_type == BL_ADD) {
-    jobj.insert(make_pair("ttl", (double)ttl));
-    jobj.insert(make_pair("reason", reason));
-  }
-  return jobj;
+  bl_msg.SerializeToString(&ret_str);
+  return ret_str;
 }
 
-std::shared_ptr<AnyReplicationOperation> BLReplicationOperation::unjsonize(const Json::object& jobj, bool& retval)
+std::shared_ptr<AnyReplicationOperation> BLReplicationOperation::unserialize(const std::string& str, bool& retval)
 {
   retval = true;
 
-  auto it = jobj.find("op_type");
-  if (it != jobj.end())
-    op_type = (BLOpType)it->second.int_value();
-  else
-    retval = false;
-  if (op_type != BL_NONE) {
-    if (retval) {
-      it = jobj.find("type");
-      if (it!=jobj.end())
-	type = (BLType)it->second.int_value();
-      else
-	retval = false;
-    }
-    if (retval) {
-      it = jobj.find("key");
-      if (it!=jobj.end())
-	key = it->second.string_value();
-      else
-	retval = false;
-    }
-    if (retval) {
-      if (op_type == BL_ADD) {
-	it = jobj.find("ttl");
-	if (it!= jobj.end())
-	  ttl = (time_t)it->second.number_value();
-	else
-	  retval = false;
-	it = jobj.find("reason");
-	if (it!= jobj.end())
-	  reason = it->second.string_value();
-	else
-	  retval = false;
-      }
-    }
+  if (bl_msg.ParseFromString(str)) {
+    BLType type = static_cast<BLType>(bl_msg.type());
+    return std::make_shared<BLReplicationOperation>(bl_msg.op_type(), type, bl_msg.key(), bl_msg.ttl(), bl_msg.reason());
   }
-  return std::make_shared<BLReplicationOperation>(op_type, type, key, ttl, reason);
+  retval = false;
+  return std::make_shared<BLReplicationOperation>();
 }
 
 void BLReplicationOperation::applyOperation()
 {
-  if (op_type != BL_NONE) {
-    switch (op_type) {
-    case BL_ADD:
-      bl_db.addEntryInternal(key, ttl, type, reason, false);
+  if (bl_msg.op_type() != BLOperation_BLOpType_BLNone) {
+    BLType type = static_cast<BLType>(bl_msg.type());
+    switch (bl_msg.op_type()) {
+    case BLOperation_BLOpType_BLAdd:
+      bl_db.addEntryInternal(bl_msg.key(), bl_msg.ttl(), type, bl_msg.reason(), false);
       break;
-    case BL_DELETE:
-      bl_db.deleteEntryInternal(key, type, false);
+    case BLOperation_BLOpType_BLDelete:
+      bl_db.deleteEntryInternal(bl_msg.key(), type, false);
       break;
     default:
       errlog("applyOperation: invalid blacklist operation type found");

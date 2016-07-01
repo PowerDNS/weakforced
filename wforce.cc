@@ -754,7 +754,10 @@ try
   startStatsThread();
 
   // load the persistent blacklist entries
-  g_bl_db.loadPersistEntries();
+  if (!g_bl_db.loadPersistEntries()) {
+    errlog("Could not load persistent DB entries, please fix configuration or check redis availability. Exiting.");
+    exit(1);
+  }
   
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");

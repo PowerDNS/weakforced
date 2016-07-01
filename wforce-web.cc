@@ -144,15 +144,15 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       }
       if (haveLogin && haveIP) {
 	en_type = "ip:login";
-	bl_db.deleteEntry(en_ca, en_login);
+	g_bl_db.deleteEntry(en_ca, en_login);
       }
       else if (haveLogin) {
 	en_type = "login";
-	bl_db.deleteEntry(en_login);
+	g_bl_db.deleteEntry(en_login);
       }
       else if (haveIP) {
 	en_type = "ip";
-	bl_db.deleteEntry(en_ca);
+	g_bl_db.deleteEntry(en_ca);
       }
 	  
       if (!haveLogin && !haveIP) {
@@ -261,19 +261,19 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     
     // first check the built-in blacklists
     BlackListEntry ble;
-    if (bl_db.getEntry(lt.remote, ble)) {
+    if (g_bl_db.getEntry(lt.remote, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
       ret_msg = "Temporarily blacklisted IP Address - try again later";
     }
-    else if (bl_db.getEntry(lt.login, ble)) {
+    else if (g_bl_db.getEntry(lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted Login"), lt, log_attrs);	  
       ret_msg = "Temporarily blacklisted Login Name - try again later";
     }
-    else if (bl_db.getEntry(lt.remote, lt.login, ble)) {
+    else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	  	  
@@ -341,11 +341,11 @@ void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   using namespace json11;
   Json::array my_entries;
 
-  std::vector<BlackListEntry> blv = bl_db.getIPEntries();
+  std::vector<BlackListEntry> blv = g_bl_db.getIPEntries();
   addBLEntries(blv, "ip", my_entries);
-  blv = bl_db.getLoginEntries();
+  blv = g_bl_db.getLoginEntries();
   addBLEntries(blv, "login", my_entries);
-  blv = bl_db.getIPLoginEntries();
+  blv = g_bl_db.getIPLoginEntries();
   addBLEntries(blv, "iplogin", my_entries);
       
   Json ret_json = Json::object {
@@ -390,19 +390,19 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	key_name = "ip_login";
 	key_value = en_ca.toString() + ":" + en_login;
 	lookup_key = key_value;
-	is_blacklisted = bl_db.checkEntry(en_ca, en_login);
+	is_blacklisted = g_bl_db.checkEntry(en_ca, en_login);
       }
       else if (haveLogin) {
 	key_name = "login";
 	key_value = en_login;
 	lookup_key = en_login;
-	is_blacklisted = bl_db.checkEntry(en_login);
+	is_blacklisted = g_bl_db.checkEntry(en_login);
       }
       else if (haveIP) {
 	key_name = "ip";
 	key_value = en_ca.toString();
 	lookup_key = en_ca;
-	is_blacklisted = bl_db.checkEntry(en_ca);
+	is_blacklisted = g_bl_db.checkEntry(en_ca);
       }
     }
     catch(...) {

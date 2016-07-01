@@ -360,27 +360,38 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       warnlog(os.str().c_str());
     });
 
-    c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+  c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
-      }
+      }	
       errlog(os.str().c_str());
     });
 
-    c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(ca, seconds, reason);
+  c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+      g_bl_db.addEntry(ca, seconds, reason);
     });
 
   c_lua.writeFunction("blacklistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(login, seconds, reason);
+      g_bl_db.addEntry(login, seconds, reason);
     });
 
   c_lua.writeFunction("blacklistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(ca, login, seconds, reason);
+      g_bl_db.addEntry(ca, login, seconds, reason);
     });
 
+  if (!allow_report) {
+    c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {
+	g_bl_db.makePersistent(ip, port);
+      });
+    c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
+  }
+  else {
+    c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
+    c_lua.writeFunction("blacklistPersistReplicated", []() {});
+  }
+  
   c_lua.registerMember("t", &LoginTuple::t);
   c_lua.registerMember("remote", &LoginTuple::remote);
   c_lua.registerMember("login", &LoginTuple::login);

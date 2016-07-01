@@ -747,12 +747,15 @@ try
   noticelog("ACL allowing queries from: %s", acls.c_str());
 
   // setup blacklist_db purge thread
-  thread t1(BlackListDB::purgeEntriesThread, &bl_db);
+  thread t1(BlackListDB::purgeEntriesThread, &g_bl_db);
   t1.detach();
 
   // start the performance stats thread
   startStatsThread();
 
+  // load the persistent blacklist entries
+  g_bl_db.loadPersistEntries();
+  
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");
 #endif

@@ -40,10 +40,10 @@ void BLReplicationOperation::applyOperation()
     BLType type = static_cast<BLType>(bl_msg.type());
     switch (bl_msg.op_type()) {
     case BLOperation_BLOpType_BLAdd:
-      bl_db.addEntryInternal(bl_msg.key(), bl_msg.ttl(), type, bl_msg.reason(), false);
+      g_bl_db.addEntryInternal(bl_msg.key(), bl_msg.ttl(), type, bl_msg.reason(), false);
       break;
     case BLOperation_BLOpType_BLDelete:
-      bl_db.deleteEntryInternal(bl_msg.key(), type, false);
+      g_bl_db.deleteEntryInternal(bl_msg.key(), type, false);
       break;
     default:
       errlog("applyOperation: invalid blacklist operation type found");

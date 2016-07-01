@@ -334,10 +334,29 @@ configuration or within the allow/report/reset functions:
 * blacklistIPLogin(\<ip\>, \<login\>, \<expiry\>, \<reason string\>) -
   Blacklist the specified IP-Login tuple for expiry seconds, with the
   specified reason. Only when that IP and login are received in the
-  same login tuple will the request be blacklisted. For example:
+  same login tuple will the request be blacklisted. IP address must be
+  a ComboAddress. For example:
   
 		blacklistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
 
+* blacklistPersistDB(\<ip\>, \<port\>) - Make the blacklist persistent
+  by storing entries in the specified redis DB. The IP address is a
+  string, and port should be 6379 unless you are running redis
+  on a non-standard port. If this option is specified, wforce will
+  read all the blacklist entries from the redis DB on startup. For example:
+  
+		blacklistPersistDB("127.0.0.1", 6379)
+
+* blacklistPersistReplicated() - Store replicated blacklist entries in
+  the redis DB. By default, replicated blacklist entries
+  will not be stored in the specified redis DB. If you use a local
+  redis DB for each wforce server, then add this to wforce.conf. If
+  you use a single redis instance (or cluster) for all wforce servers,
+  then you should not specify this option, as it will cause
+  unnecessary writes to the redis DB. For example:
+  
+		blacklistPersistReplicated("127.0.0.1", 6379)
+		
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following
   fields:

@@ -200,7 +200,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     try {
       LoginTuple lt;
       lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].string_value() == "true"; // XXX this is wrong but works for dovecot
+      lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
       lt.setLtAttrs(msg);

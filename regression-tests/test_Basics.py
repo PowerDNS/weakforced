@@ -41,7 +41,7 @@ class TestBasics(ApiTestCase):
         payload['login'] = "chunky"
         payload['remote'] = "127.0.0.1"
         payload['pwhash'] = "1234"
-        payload['success'] = "true"
+        payload['success'] = true
         payload['attrs'] = {}
         yield json.dumps(payload)
 

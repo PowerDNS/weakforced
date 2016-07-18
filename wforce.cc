@@ -679,7 +679,7 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, "hsdc::e:C:l:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:l:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -688,8 +688,20 @@ try
       break;
     case 'c':
       g_cmdLine.beClient=true;
-      if (optarg)
+      if (optarg) {
 	g_cmdLine.config=optarg;
+      }
+      break;
+    case ':':
+      switch (optopt) {
+      case 'c':
+	g_cmdLine.beClient=true;
+	break;
+      default:
+	cout << "Option '-" << (char)optopt << "' requires an argument\n";
+	exit(1);
+	break;
+      }
       break;
     case 'd':
 	g_cmdLine.beDaemon=true;
@@ -720,6 +732,9 @@ try
     case 'v':
       g_verbose=true;
       break;
+    case '?':
+    default:
+      cout << "Option '-" << (char)optopt << "' is invalid: ignored\n";
     }
   }
   argc-=optind;

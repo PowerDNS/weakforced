@@ -189,7 +189,7 @@ definitions:
       pwhash:
         type: string
       success:
-        type: string
+        type: boolean
       policy_reject:
         type: boolean
       attrs:

@@ -679,7 +679,7 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, "hsdc:e:C:l:m:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, "hsdce:C:l:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {

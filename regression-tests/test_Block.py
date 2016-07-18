@@ -14,7 +14,7 @@ class TestBlock(ApiTestCase):
         r.close()
 
         for i in range(100):
-            r = self.reportFunc('baddie', '127.0.0.1', "1234'%s" % i, 'false')
+            r = self.reportFunc('baddie', '127.0.0.1', "1234'%s" % i, False)
             r.json()
 
         r = self.allowFunc('baddie', '127.0.0.1', "1234")

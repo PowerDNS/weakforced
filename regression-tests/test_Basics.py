@@ -28,7 +28,7 @@ class TestBasics(ApiTestCase):
 
     def test_getDBStats(self):
         self.writeFileToConsole(configFile)
-        self.reportFunc('dbstats', '1.4.3.2', '1234', 'false'); 
+        self.reportFunc('dbstats', '1.4.3.2', '1234', False); 
         r = self.getDBStatsLogin('dbstats')
         j = r.json();
         self.assertRegexpMatches(json.dumps(j), "countLogins")
@@ -41,7 +41,7 @@ class TestBasics(ApiTestCase):
         payload['login'] = "chunky"
         payload['remote'] = "127.0.0.1"
         payload['pwhash'] = "1234"
-        payload['success'] = true
+        payload['success'] = True
         payload['attrs'] = {}
         yield json.dumps(payload)
 

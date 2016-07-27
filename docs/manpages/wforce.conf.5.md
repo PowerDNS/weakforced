@@ -351,6 +351,9 @@ configuration or within the allow/report/reset functions:
   		
 * LoginTuple.success - Whether the user login was successful.
 
+* LoginTuple.policy_reject - If the login was not successful only because of a
+  policy-based reject from wforce (i.e. the username and password were correct).
+
 * LoginTuple.attrs - Additional array of (single valued) attributes
   about the login, e.g. information about the user from LDAP.
   		

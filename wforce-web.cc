@@ -79,6 +79,7 @@ void reportLog(const LoginTuple& lt)
   os << "remote=\"" << lt.remote.toString() << "\" ";
   os << "login=\"" << lt.login << "\" ";
   os << "success=\"" << lt.success << "\" ";
+  os << "policy_reject=\"" << lt.policy_reject << "\" ";
   os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
   os << LtAttrsToString(lt);
   infolog(os.str().c_str());

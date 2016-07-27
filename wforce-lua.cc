@@ -400,6 +400,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("login", &LoginTuple::login);
   c_lua.registerMember("pwhash", &LoginTuple::pwhash);
   c_lua.registerMember("success", &LoginTuple::success);
+  c_lua.registerMember("policy_reject", &LoginTuple::policy_reject);
   c_lua.registerMember("attrs", &LoginTuple::attrs);
   c_lua.registerMember("attrs_mv", &LoginTuple::attrs_mv);
 

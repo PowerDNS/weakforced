@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+#
+
+set -e
+
+case "$1" in
+  configure)
+    if [ -z "`getent group wforce`" ]; then
+      addgroup --quiet --system wforce
+    fi
+    if [ -z "`getent passwd wforce`" ]; then
+      echo -n "Creating user and group wforce..."
+      adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "Dovecot" wforce
+      echo "done"
+    fi
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+  ;;
+esac
+
+# Init script has errors in previous versions. Postinst script should just
+# return the exit status of this script
+initscript_error() {
+	return $1
+}
+
+#DEBHELPER#
+
+exit 0

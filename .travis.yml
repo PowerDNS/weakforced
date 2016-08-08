@@ -37,9 +37,9 @@ before_script:
  - dpkg-deb -x libssl1.0.2_1.0.2h-1_amd64.deb ${HOME}/libssl
  - rm libssl1.0.2_1.0.2h-1_amd64.deb
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/libssl/usr/lib/x86_64-linux-gnu
- - wget http://ftp.de.debian.org/debian/pool/main/u/unbound/libunbound2_1.5.9-1_amd64.deb
- - dpkg-deb -x libunbound2_1.5.9-1_amd64.deb ${HOME}/libunbound
- - rm libunbound2_1.5.9-1_amd64.deb
+ - wget http://ftp.de.debian.org/debian/pool/main/u/unbound/libunbound2_1.5.9-3_amd64.deb
+ - dpkg-deb -x libunbound2_1.5.9-3_amd64.deb ${HOME}/libunbound
+ - rm libunbound2_1.5.9-3_amd64.deb
  - export PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${HOME}/libunbound/usr/lib/pkgconfig
  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HOME}/libunbound/usr/lib/x86_64-linux-gnu
  - dig @208.67.222.222 a.root-servers.net

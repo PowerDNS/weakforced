@@ -9,7 +9,7 @@ The aim is to support the largest of installations, providing services to
 hundreds of millions of users.  The current version of weakforced is not
 quit there yet.
 
-Weakforced is a project by Dovecot and Open-Xchange. For historical
+wforce is a project by Dovecot and Open-Xchange. For historical
 reasons, it lives in the PowerDNS github tree. If you have any questions, email
 neil.cook@open-xchange.com.
 
@@ -20,7 +20,7 @@ Here is how it works:
 
 Runtime console for querying the status of logins, IP addresses, subnets.
 
-wforced is aimed to receive message from services like:
+wforce is aimed to receive message from services like:
 
  * IMAP
  * POP3
@@ -255,7 +255,7 @@ identical logins, it is good enough.
 For additional security, hash the login name together with the password - this
 prevents detecting different logins that might have the same password.
 
-NOTE: wforced does not require any specific kind of hashing scheme, but it
+NOTE: wforce does not require any specific kind of hashing scheme, but it
 is important that all services reporting successful/failed logins use the
 same scheme!
 
@@ -288,7 +288,7 @@ many seconds until allowing login validation to proceed.
 Load balancing: siblings
 ------------------------
 For high-availability or performance reasons it may be desireable to run
-multiple instances of wforced. To present a unified view of status however,
+multiple instances of wforce. To present a unified view of status however,
 these instances then need to share the login tuples. To do so, wforce
 implements a simple knowledge-sharing system.
 

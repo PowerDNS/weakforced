@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+VERSION=$1
+DEB_VERSION=$2
+RPM_VERSION=$3
+[ -z "$VERSION" -o -z "$DEB_VERSION" -o -z "$RPM_VERSION" ] && exit 1
+
+#sed -r "s/Version: (.*)/Version: $RPM_VERSION/" -i wforce.spec
+sed -r "s/AC_INIT\(\[wforce\],(.*)/AC_INIT([wforce], [$VERSION])/" -i configure.ac
+sed -r "1 s/^wforce \\(([^)]*)-([0-9.])\\)/wforce \\($DEB_VERSION-\\2\\)/" -i debian/changelog

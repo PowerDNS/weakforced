@@ -79,6 +79,8 @@ started with the -c option.
 
 * showACL() - Returns the configured ACLs for the wforce server.
 
+* showVersion() - Returns the current version of the wforce server.
+
 # BUGS
 The 'spread' function of clustering means that as more servers are added to a 
 cluster, incremental performance gains will be less each time, eventually

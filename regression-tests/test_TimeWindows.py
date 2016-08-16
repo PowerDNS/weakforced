@@ -144,7 +144,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
-        time.sleep(3)
+        time.sleep(30)
         r = self.allowFunc('expirebaddie', '127.0.01', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)

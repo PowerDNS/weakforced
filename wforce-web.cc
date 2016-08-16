@@ -116,6 +116,86 @@ void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, 
   }
 }
 
+void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+
+  resp.status = 200;
+
+  msg=Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    bool haveIP=false;
+    bool haveLogin=false;
+    unsigned int bl_seconds=0;
+    std::string bl_reason;
+    std::string en_login;
+    ComboAddress en_ca;
+
+    try {
+      if (!msg["ip"].is_null()) {
+	string myip = msg["ip"].string_value();
+	en_ca = ComboAddress(myip);
+	haveIP = true;
+      }
+      if (!msg["login"].is_null()) {
+	en_login = msg["login"].string_value();
+	haveLogin = true;
+      }
+      if (addCmd) {
+	if (!msg["expire_secs"].is_null()) {
+	  bl_seconds = msg["expire_secs"].int_value();
+	}
+	else {
+	  throw std::runtime_error("Missing mandatory expire_secs field");
+	}
+	if (!msg["reason"].is_null()) {
+	  bl_reason = msg["reason"].string_value();
+	}
+	else {
+	  throw std::runtime_error("Missing mandatory reason field");
+	}
+      }
+      if (haveLogin && haveIP) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_ca, en_login);
+      }
+      else if (haveLogin) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_login, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_login);
+      }
+      else if (haveIP) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_ca, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_ca);
+      }
+    }
+    catch (std::runtime_error& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
+  }
+  if (resp.status == 200)
+    resp.body=R"({"status":"ok"})";
+}
+
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 {
   using namespace json11;
@@ -561,6 +641,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     }
     else if(command=="getBL") {
       parseGetBLCmd(req, resp);
+    }
+    else if (command=="addBLEntry") {
+      parseAddDelBLEntryCmd(req, resp, true);
+    }
+    else if (command=="delBLEntry") {
+      parseAddDelBLEntryCmd(req, resp, false);
     }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());

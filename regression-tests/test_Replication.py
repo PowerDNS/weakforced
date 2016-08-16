@@ -153,8 +153,8 @@ class TestTimeWindowsReplication(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
-        time.sleep(3)
-        r = self.allowFuncReplica('expirebaddiereplication', '127.0.01', "1234")
+        time.sleep(30)
+        r = self.allowFuncReplica('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 

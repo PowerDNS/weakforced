@@ -35,13 +35,8 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 81faf741ea8204ae7b293964eabf07698fc5255c
-        for i in range(31):
-            r = self.reportFunc('flbaddie', '128.0.0.1', "1234", False)
-=======
         for i in range(32):
             r = self.reportFunc('flbaddie', '128.0.0.1', "1234", 'false')
->>>>>>> fix replication decryption
             r.json()
 
         r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
@@ -100,13 +95,8 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 73a1b5557451e1c9f695a80ad8c23dcd819dbecb
-        for i in range(12):
-            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", True)
-=======
         for i in range(50):
             r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", 'true')
->>>>>>> regression for replication
             r.json()
 
         r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
@@ -125,13 +115,8 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 73a1b5557451e1c9f695a80ad8c23dcd819dbecb
-        for i in range(12):
-            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", True)
-=======
         for i in range(50):
             r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", 'true')
->>>>>>> regression for replication
             r.json()
 
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
@@ -171,13 +156,8 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-<<<<<<< 81faf741ea8204ae7b293964eabf07698fc5255c
-        for i in range(31):
-            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", False)
-=======
         for i in range(32):
             r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", 'false')
->>>>>>> fix replication decryption
             r.json()
 
         r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")

@@ -496,7 +496,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   std::ifstream ifs(config);
   if(!ifs) 
     warnlog("Unable to read configuration from '%s'", config);
-  else
+  else if (!allow_report)
     infolog("Read configuration from '%s'", config);
 
   c_lua.executeCode(ifs);

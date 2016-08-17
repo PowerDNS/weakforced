@@ -82,14 +82,14 @@ int getStat(PerfStat stat)
 
 void statsReportingThread()
 {
-  int interval = STATS_WINDOW_SIZE;
+  int interval = STATS_WINDOW_SIZE*STATS_NUM_WINDOWS;
 
   for (;;) {
     std::stringstream ss;
     
     sleep(interval);
 
-    ss << "stats last " << interval*STATS_NUM_WINDOWS << " secs: ";
+    ss << "stats last " << interval << " secs: ";
     for (auto i=lookupPerfStat.begin(); i!=lookupPerfStat.end(); ++i) {
       ss << i->second << "=" << getStat(i->first) << " ";
     }

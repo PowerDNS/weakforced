@@ -151,7 +151,7 @@ cannot be called inside the allow/report/reset functions:
   then you should not specify this option, as it will cause
   unnecessary writes to the redis DB. For example:
   
-		blacklistPersistReplicated("127.0.0.1", 6379)
+		blacklistPersistReplicated()
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:

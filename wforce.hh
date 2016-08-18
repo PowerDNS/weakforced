@@ -101,8 +101,6 @@ struct LoginTuple
   }
 };
 
-void spreadReport(const LoginTuple& lt);
-
 typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
@@ -114,7 +112,6 @@ extern reset_t g_reset;
 typedef std::function<std::string(const std::string&)> canonicalize_t;
 
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, const std::string& config);
-
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;

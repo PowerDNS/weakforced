@@ -134,7 +134,63 @@ class ApiTestCase(unittest.TestCase):
 
     def getBLFuncReplica(self):
         return self.session.get(self.url2("/?command=getBL"))
-    
+
+    def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def addBLEntryIP(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def addBLEntryLogin(self, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delBLEntryIPLogin(self, ip, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delBLEntryIP(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delBLEntryLogin(self, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+            
     def getDBStatsIPLogin(self, ip, login):
         payload = dict()
         payload['login'] = login

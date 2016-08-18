@@ -17,11 +17,14 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        self.writeCmdToConsole("ca4 = newCA(\"192.168.72.14\")")
-        self.writeCmdToConsole("ca6 = newCA(\"2001:503:ba3e::2:30\")")
-        self.writeCmdToConsole("blacklistIP(ca4, 10, \"test blacklist\")")
-        self.writeCmdToConsole("blacklistIP(ca6, 10, \"test blacklist\")")
+        r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist");
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
 
+        r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist");
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+        
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
@@ -50,8 +53,10 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        self.writeCmdToConsole("blacklistLogin(\"goodie\", 10, \"test blacklist\")")
-
+        r = self.addBLEntryLogin("goodie", 10, "test blacklist");
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+        
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)
@@ -70,9 +75,10 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        self.writeCmdToConsole("ca4 = newCA(\"192.168.72.14\")")
-        self.writeCmdToConsole("blacklistIPLogin(ca4, \"goodie\", 10, \"test blacklist\")")
-
+        r = self.addBLEntryIPLogin("192.168.72.14", "goodie", 10, "test blacklist");
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+        
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)

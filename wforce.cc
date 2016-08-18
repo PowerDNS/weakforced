@@ -531,9 +531,15 @@ bool defaultReset(const std::string& type, const std::string& str_val, const Com
   return true;
 }
 
-std::function<AllowReturn(const LoginTuple&)> g_allow{defaultAllowTuple};
-std::function<void(const LoginTuple&)> g_report{defaultReportTuple};
-std::function<bool(const std::string&, const std::string&, const ComboAddress&)> g_reset{defaultReset};
+std::string defaultCanonicalize(const std::string& login)
+{
+  return login;
+}
+
+allow_t g_allow{defaultAllowTuple};
+report_t g_report{defaultReportTuple};
+reset_t g_reset{defaultReset};
+canonicalize_t g_canon{defaultCanonicalize};
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {
@@ -542,14 +548,8 @@ char* my_generator(const char* text, int state)
   string t(text);
   vector<string> words {"addACL",
       "addSibling(",
-      "clearDB()",
       "setSiblings(",
-      "showLogin(",
-      "showRemote(",
-      "clearLogin(",
-      "clearRemote(",
       "siblingListener(",
-      "addLocal",
       "setACL",
       "showACL()",
       "shutdown()",
@@ -559,8 +559,6 @@ char* my_generator(const char* text, int state)
       "stats()",
       "siblings",
       "allow",
-      "countFailures",
-      "countDiffFailures",
       "newCA",
       "newNetmaskGroup",
       "setAllow",
@@ -701,19 +699,28 @@ try
 
 
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
   // this sets up the global lua state used for config and setup
-  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_cmdLine.config);
+  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_canon, g_cmdLine.config);
 
   // now we setup the allow/report lua states
   g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
   
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-    setupLua(false, true, *(it->lua_contextp), it->allow_func, it->report_func, it->reset_func, 
+    // first setup defaults in case the config doesn't specify anything
+    it->allow_func = g_allow;
+    it->report_func = g_report;
+    it->reset_func = g_reset;
+    it->canon_func = g_canon;
+    setupLua(false, true, *(it->lua_contextp),
+	     it->allow_func,
+	     it->report_func,
+	     it->reset_func,
+	     it->canon_func,
 	     g_cmdLine.config);
   }
 

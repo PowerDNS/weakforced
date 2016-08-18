@@ -27,9 +27,10 @@ static vector<std::function<void(void)>>* g_launchWork;
 // We have a single lua config file for historical reasons, hence the somewhat complex structure of this function
 // The Lua state and type is passed via "allow_report" (true means it's one of the multiple states used for allow/report, false means it's the global lua config state) 
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua,  
-					   std::function<AllowReturn(const LoginTuple&)>& allow_func, 
-					   std::function<void(const LoginTuple&)>& report_func,
-					   std::function<bool(const std::string&, const std::string&, const ComboAddress&)>& reset_func,
+					   allow_t& allow_func, 
+					   report_t& report_func,
+					   reset_t& reset_func,
+					   canonicalize_t& canon_func,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -430,6 +431,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setReset", [](reset_t func) { });
   }
 
+  if (allow_report) {
+    c_lua.writeFunction("setCanonicalize", [&canon_func](canonicalize_t func) { canon_func=func;});
+  }
+  else {
+    c_lua.writeFunction("setCanonicalize", [](canonicalize_t func) { });
+  }
+
+  
   if (!allow_report) {
     c_lua.writeFunction("makeKey", []() {
 	g_outputBuffer="setKey("+newKey()+")\n";

@@ -4,7 +4,7 @@
 #include "dolog.hh"
 #include "sodcrypto.hh"
 #include "base64.hh"
-#include "twmap.hh"
+#include "twmap-wrapper.hh"
 #include "blacklist.hh"
 #include <fstream>
 
@@ -69,9 +69,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
 	ComboAddress ca(address, 4001);
-      
+
 	auto launch = [ca]() {
-	  thread t1(receiveReports, ca);
+	  thread t1(receiveReplicationOperations, ca);
 	  t1.detach();
 	};
 	if(g_launchWork)
@@ -82,23 +82,6 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   else {
     c_lua.writeFunction("siblingListener", [](const std::string& address) { });
-  }
-
-  if (!allow_report) {
-    c_lua.writeFunction("addLocal", [client](const std::string& addr) {
-	if(client)
-	  return;
-	try {
-	  ComboAddress loc(addr, 53);
-	  g_locals.push_back(loc); /// only works pre-startup, so no sync necessary
-	}
-	catch(std::exception& e) {
-	  g_outputBuffer="Error: "+string(e.what())+"\n";
-	}
-      });
-  }
-  else {
-    c_lua.writeFunction("addLocal", [client](const std::string& addr) { });
   }
 
   if (!allow_report) {
@@ -341,8 +324,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       auto it = dbMap.find(name);
       if (it != dbMap.end())
 	return it->second; // copy
-      else
+      else {
+	warnlog("getStringStatsDB(): could not find DB %s", name);
 	return TWStringStatsDBWrapper("none", 1, 1);
+      }
     });
 
   c_lua.registerFunction("twAdd", &TWStringStatsDBWrapper::add);
@@ -355,7 +340,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
   c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);
-
+  c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
+  
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";
@@ -374,27 +360,38 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       warnlog(os.str().c_str());
     });
 
-    c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+  c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
-      }
+      }	
       errlog(os.str().c_str());
     });
 
-    c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(ca, seconds, reason);
+  c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+      g_bl_db.addEntry(ca, seconds, reason);
     });
 
   c_lua.writeFunction("blacklistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(login, seconds, reason);
+      g_bl_db.addEntry(login, seconds, reason);
     });
 
   c_lua.writeFunction("blacklistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
-      bl_db.addEntry(ca, login, seconds, reason);
+      g_bl_db.addEntry(ca, login, seconds, reason);
     });
 
+  if (!allow_report) {
+    c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {
+	g_bl_db.makePersistent(ip, port);
+      });
+    c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
+  }
+  else {
+    c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
+    c_lua.writeFunction("blacklistPersistReplicated", []() {});
+  }
+  
   c_lua.registerMember("t", &LoginTuple::t);
   c_lua.registerMember("remote", &LoginTuple::remote);
   c_lua.registerMember("login", &LoginTuple::login);

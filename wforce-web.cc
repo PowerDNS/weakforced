@@ -13,7 +13,7 @@
 #include "ext/ctpl.h"
 #include "base64.hh"
 #include "blacklist.hh"
-#include "twmap.hh"
+#include "twmap-wrapper.hh"
 #include "perf-stats.hh"
 
 using std::thread;
@@ -116,6 +116,86 @@ void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, 
   }
 }
 
+void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+
+  resp.status = 200;
+
+  msg=Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    bool haveIP=false;
+    bool haveLogin=false;
+    unsigned int bl_seconds=0;
+    std::string bl_reason;
+    std::string en_login;
+    ComboAddress en_ca;
+
+    try {
+      if (!msg["ip"].is_null()) {
+	string myip = msg["ip"].string_value();
+	en_ca = ComboAddress(myip);
+	haveIP = true;
+      }
+      if (!msg["login"].is_null()) {
+	en_login = msg["login"].string_value();
+	haveLogin = true;
+      }
+      if (addCmd) {
+	if (!msg["expire_secs"].is_null()) {
+	  bl_seconds = msg["expire_secs"].int_value();
+	}
+	else {
+	  throw std::runtime_error("Missing mandatory expire_secs field");
+	}
+	if (!msg["reason"].is_null()) {
+	  bl_reason = msg["reason"].string_value();
+	}
+	else {
+	  throw std::runtime_error("Missing mandatory reason field");
+	}
+      }
+      if (haveLogin && haveIP) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_ca, en_login);
+      }
+      else if (haveLogin) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_login, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_login);
+      }
+      else if (haveIP) {
+	if (addCmd)
+	  g_bl_db.addEntry(en_ca, bl_seconds, bl_reason);
+	else
+	  g_bl_db.deleteEntry(en_ca);
+      }
+    }
+    catch (std::runtime_error& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"status":"failure"})";
+    }
+  }
+  if (resp.status == 200)
+    resp.body=R"({"status":"ok"})";
+}
+
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 {
   using namespace json11;
@@ -144,15 +224,15 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       }
       if (haveLogin && haveIP) {
 	en_type = "ip:login";
-	bl_db.deleteEntry(en_ca, en_login);
+	g_bl_db.deleteEntry(en_ca, en_login);
       }
       else if (haveLogin) {
 	en_type = "login";
-	bl_db.deleteEntry(en_login);
+	g_bl_db.deleteEntry(en_login);
       }
       else if (haveIP) {
 	en_type = "ip";
-	bl_db.deleteEntry(en_ca);
+	g_bl_db.deleteEntry(en_ca);
       }
 	  
       if (!haveLogin && !haveIP) {
@@ -207,7 +287,6 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.setLtAttrs(msg);
       lt.policy_reject=msg["policy_reject"].bool_value();
       lt.t=getDoubleTime();
-      spreadReport(lt);
       reportLog(lt);
       g_stats.reports++;
       resp.status=200;
@@ -245,29 +324,36 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
   else {
     LoginTuple lt;
-    lt.remote=ComboAddress(msg["remote"].string_value());
-    lt.success=msg["success"].bool_value();
-    lt.pwhash=msg["pwhash"].string_value();
-    lt.login=msg["login"].string_value();
-    lt.setLtAttrs(msg);
     int status = -1;
     std::string ret_msg;
-	
+    try {
+      lt.remote=ComboAddress(msg["remote"].string_value());
+      lt.success=msg["success"].bool_value();
+      lt.pwhash=msg["pwhash"].string_value();
+      lt.login=msg["login"].string_value();
+      lt.setLtAttrs(msg);
+    }
+    catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
+	return;
+      }
+    
     // first check the built-in blacklists
     BlackListEntry ble;
-    if (bl_db.getEntry(lt.remote, ble)) {
+    if (g_bl_db.getEntry(lt.remote, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
       ret_msg = "Temporarily blacklisted IP Address - try again later";
     }
-    else if (bl_db.getEntry(lt.login, ble)) {
+    else if (g_bl_db.getEntry(lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted Login"), lt, log_attrs);	  
       ret_msg = "Temporarily blacklisted Login Name - try again later";
     }
-    else if (bl_db.getEntry(lt.remote, lt.login, ble)) {
+    else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	  	  
@@ -335,11 +421,11 @@ void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   using namespace json11;
   Json::array my_entries;
 
-  std::vector<BlackListEntry> blv = bl_db.getIPEntries();
+  std::vector<BlackListEntry> blv = g_bl_db.getIPEntries();
   addBLEntries(blv, "ip", my_entries);
-  blv = bl_db.getLoginEntries();
+  blv = g_bl_db.getLoginEntries();
   addBLEntries(blv, "login", my_entries);
-  blv = bl_db.getIPLoginEntries();
+  blv = g_bl_db.getIPLoginEntries();
   addBLEntries(blv, "iplogin", my_entries);
       
   Json ret_json = Json::object {
@@ -370,33 +456,41 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     bool is_blacklisted;
     ComboAddress en_ca;
 
-    if (!msg["ip"].is_null()) {
-      en_ca = ComboAddress(msg["ip"].string_value());
-      haveIP = true;
+    try {
+      if (!msg["ip"].is_null()) {
+	string myip = msg["ip"].string_value();
+	en_ca = ComboAddress(myip);
+	haveIP = true;
+      }
+      if (!msg["login"].is_null()) {
+	en_login = msg["login"].string_value();
+	haveLogin = true;
+      }
+      if (haveLogin && haveIP) {
+	key_name = "ip_login";
+	key_value = en_ca.toString() + ":" + en_login;
+	lookup_key = key_value;
+	is_blacklisted = g_bl_db.checkEntry(en_ca, en_login);
+      }
+      else if (haveLogin) {
+	key_name = "login";
+	key_value = en_login;
+	lookup_key = en_login;
+	is_blacklisted = g_bl_db.checkEntry(en_login);
+      }
+      else if (haveIP) {
+	key_name = "ip";
+	key_value = en_ca.toString();
+	lookup_key = en_ca;
+	is_blacklisted = g_bl_db.checkEntry(en_ca);
+      }
     }
-    if (!msg["login"].is_null()) {
-      en_login = msg["login"].string_value();
-      haveLogin = true;
+    catch(...) {
+	resp.status=500;
+	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
+	return;
     }
-    if (haveLogin && haveIP) {
-      key_name = "ip_login";
-      key_value = en_ca.toString() + ":" + en_login;
-      lookup_key = key_value;
-      is_blacklisted = bl_db.checkEntry(en_ca, en_login);
-    }
-    else if (haveLogin) {
-      key_name = "login";
-      key_value = en_login;
-      lookup_key = en_login;
-      is_blacklisted = bl_db.checkEntry(en_login);
-    }
-    else if (haveIP) {
-      key_name = "ip";
-      key_value = en_ca.toString();
-      lookup_key = en_ca;
-      is_blacklisted = bl_db.checkEntry(en_ca);
-    }
-	  
+    
     if (!haveLogin && !haveIP) {
       resp.status = 415;
       resp.body=R"({"status":"failure", "reason":"No ip or login field supplied"})";
@@ -547,6 +641,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     }
     else if(command=="getBL") {
       parseGetBLCmd(req, resp);
+    }
+    else if (command=="addBLEntry") {
+      parseAddDelBLEntryCmd(req, resp, true);
+    }
+    else if (command=="delBLEntry") {
+      parseAddDelBLEntryCmd(req, resp, false);
     }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());

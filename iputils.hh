@@ -209,9 +209,9 @@ union ComboAddress {
     sin4.sin_port = 0;
     if(makeIPv4sockaddr(str, &sin4)) {
       sin6.sin6_family = AF_INET6;
-      if(makeIPv6sockaddr(str, &sin6) < 0)
-        throw std::runtime_error("Unable to convert presentation address '"+ str +"'"); 
-      
+      if(makeIPv6sockaddr(str, &sin6) < 0) {
+	throw std::runtime_error("Unable to convert presentation address '"+ str +"'");
+      }
     }
     if(!sin4.sin_port) // 'str' overrides port!
       sin4.sin_port=htons(port);

@@ -1,0 +1,47 @@
+// replication.proto
+// Neil Cook <neil.cook@open-xchange.com>
+// (C) Open-Xchange 2016
+//
+// Protobuf definitions for replication of weakforce DBs
+// This is somewhat similar to a CmRDT except that currently
+// weakforced uses UDP rather than a "safe" transport like TCP
+
+syntax = "proto2";
+
+message SDBOperation {
+  required string db_name = 1;
+  enum SDBOpType {
+    SDBOpAdd = 0;
+    SDBOpSub = 1;
+    SDBOpReset = 2;
+    SDBOpNone = 999;
+  }
+  required SDBOpType op_type = 2;
+  required string key = 3;
+  optional string field_name = 4;
+  optional string str_param = 5;
+  optional uint32 int_param = 6;
+}
+
+message BLOperation {
+  enum BLOpType {
+    BLAdd = 0;
+    BLDelete = 1;
+    BLNone = 999;
+  }
+  required BLOpType op_type = 1;
+  required uint32 type = 2;
+  required string key = 3;
+  optional uint32 ttl = 4;
+  optional string reason = 5;
+}
+
+message WforceReplicationMsg {
+  enum RepType {
+    SDBType = 0;
+    BlacklistType = 1;
+    NoneType = 999;
+  }
+  required RepType rep_type = 1;
+  required bytes rep_op = 2;
+}

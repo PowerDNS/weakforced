@@ -69,3 +69,7 @@ lt~obsolete.m4
 
 # Other
 .DS_Store
+
+# Protobuf files
+*.pb.h
+*.pb.cc

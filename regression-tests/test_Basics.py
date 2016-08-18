@@ -4,8 +4,6 @@ import time
 import json
 from test_helper import ApiTestCase
 
-configFile = "./wforce-tw.conf"
-
 class TestBasics(ApiTestCase):
 
     def test_unauth(self):
@@ -27,7 +25,6 @@ class TestBasics(ApiTestCase):
         self.assertEquals(j['bl_entries'], [])
 
     def test_getDBStats(self):
-        self.writeFileToConsole(configFile)
         self.reportFunc('dbstats', '1.4.3.2', '1234', False); 
         r = self.getDBStatsLogin('dbstats')
         j = r.json();

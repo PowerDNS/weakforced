@@ -4,7 +4,6 @@ import time
 import json
 from test_helper import ApiTestCase
 
-
 class TestBlock(ApiTestCase):
 
     def test_block(self):

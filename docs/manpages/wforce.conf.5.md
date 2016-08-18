@@ -112,6 +112,47 @@ cannot be called inside the allow/report/reset functions:
 	  	field_map["countCountries"] = "countmin"
   		newStringStatsDB("OneHourDB", 900, 4, field_map)
 
+* StringStatsDB:twSetv4Prefix(\<prefix\>) - Set the prefix to use for
+  any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
+  group statistics for class C networks. For example:
+  
+		statsdb:twSetv4Prefix(24)
+
+* StringStatsDB:twSetv6Prefix(\<prefix\>) - Set the prefix to use for
+  any IPv6 ComboAddress keys stored in the db. For example:
+  
+		statsdb:twSetv4Prefix(64)
+
+* StringStatsDB:twSetMaxSize(\<size\>) - Set the maximum number of keys
+  to be stored in the db. When the db reaches that size, keys will be
+  expired on a LRU basis. The default size is 500K keys. For example:
+  
+		statsdb:twSetMaxSize(1000000)
+
+* StringStatsDB:twEnableReplication() - Enable replication for this
+  db; only makes a difference if siblings have been configured. For
+  example:
+  
+		statsdb:twEnableReplication()
+
+* blacklistPersistDB(\<ip\>, \<port\>) - Make the blacklist persistent
+  by storing entries in the specified redis DB. The IP address is a
+  string, and port should be 6379 unless you are running redis
+  on a non-standard port. If this option is specified, wforce will
+  read all the blacklist entries from the redis DB on startup. For example:
+  
+		blacklistPersistDB("127.0.0.1", 6379)
+
+* blacklistPersistReplicated() - Store blacklist entries that have
+  been replicated in the redis DB. By default, replicated blacklist 
+  entries will not be persisted. If you use a local
+  redis DB for each wforce server, then use this config option. If
+  you use a single redis instance (or cluster) for all wforce servers,
+  then you should not specify this option, as it will cause
+  unnecessary writes to the redis DB. For example:
+  
+		blacklistPersistReplicated()
+
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
   
@@ -274,27 +315,10 @@ configuration or within the allow/report/reset functions:
   
 		myarray = statsdb:twGetWindows(lt.login, "countCountries", "AU")
 
-* StringStatsDB:twSetv4Prefix(\<prefix\>) - Set the prefix to use for
-  any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
-  group statistics for class C networks. For example:
-  
-		statsdb:twSetv4Prefix(24)
-
-* StringStatsDB:twSetv6Prefix(\<prefix\>) - Set the prefix to use for
-  any IPv6 ComboAddress keys stored in the db. For example:
-  
-		statsdb:twSetv4Prefix(64)
-
 * StringStatsDB:twGetSize() - Returns the number of keys stored in the
   db. For example
   
 		dbsize = statsdb:twGetSize()
-
-* StringStatsDB:twSetMaxSize(\<size\>) - Set the maximum number of keys
-  to be stored in the db. When the db reaches that size, keys will be
-  expired on a LRU basis. The default size is 500K keys. For example:
-  
-		statsdb:twSetMaxSize(1000000)
 
 * StringStatsDB:twReset(\<key\>) - Reset all stats for all windows in
   the db for the specified key. For example:
@@ -334,7 +358,8 @@ configuration or within the allow/report/reset functions:
 * blacklistIPLogin(\<ip\>, \<login\>, \<expiry\>, \<reason string\>) -
   Blacklist the specified IP-Login tuple for expiry seconds, with the
   specified reason. Only when that IP and login are received in the
-  same login tuple will the request be blacklisted. For example:
+  same login tuple will the request be blacklisted. IP address must be
+  a ComboAddress. For example:
   
 		blacklistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
 

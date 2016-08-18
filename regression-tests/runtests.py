@@ -24,12 +24,15 @@ wait = ('--wait' in sys.argv)
 if wait:
     sys.argv.remove('--wait')
 
-cmd = ("../wforce -C ../wforce.conf").split()
+cmd1 = ("../wforce -C ./wforce1.conf").split()
+cmd2 = ("../wforce -C ./wforce2.conf").split()
 
 # Now run wforce and the tests.
-print "Launching wforce..."
-print ' '.join(cmd)
-proc = subprocess.Popen(cmd, close_fds=True)
+print "Launching wforce (1 and 2)..."
+print ' '.join(cmd1)
+print ' '.join(cmd2)
+proc1 = subprocess.Popen(cmd1, close_fds=True)
+proc2 = subprocess.Popen(cmd2, close_fds=True)
 
 print "Waiting for webserver port to become available..."
 available = False
@@ -43,8 +46,10 @@ for try_number in range(0, 10):
 
 if not available:
     print "Webserver port not reachable after 10 tries, giving up."
-    proc.terminate()
-    proc.wait()
+    proc1.terminate()
+    proc1.wait()
+    proc2.terminate()
+    proc2.wait()
     sys.exit(2)
 
 print "Running tests..."
@@ -62,7 +67,11 @@ finally:
     if wait:
         print "Waiting as requested, press ENTER to stop."
         raw_input()
-    proc.terminate()
-    proc.wait()
+    proc1.terminate()
+    proc1.wait()
+    proc2.terminate()
+    proc2.wait()
 
+subprocess.call(["/bin/stty", "sane"])
+    
 sys.exit(rc)

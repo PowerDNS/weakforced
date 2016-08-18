@@ -32,7 +32,7 @@ paths:
             $ref: "#/definitions/LoginTupleReport"
       responses:
         "200":
-          description: "report reponse"
+          description: "report response"
           schema:
             type: object
             required:
@@ -61,7 +61,7 @@ paths:
             $ref: "#/definitions/LoginTupleAllow"
       responses:
         "200":
-          description: "report reponse"
+          description: “allow response"
           schema:
             type: object
             required:
@@ -81,7 +81,7 @@ paths:
             $ref: "#/definitions/Error"
   /?command=reset:
     post:
-      description: "Reset the stats for an IP and/or login"
+      description: "Reset the stats and any blacklist entry for an IP and/or login"
       operationId: "reset"
       produces:
         - "application/json"
@@ -94,7 +94,7 @@ paths:
             $ref: "#/definitions/ResetStatsParams"
       responses:
         "200":
-          description: "reset reponse"
+          description: "reset response"
           schema:
             type: object
             required:
@@ -102,7 +102,63 @@ paths:
             properties:
               status:
                 type: string
-              msg:
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=delBLEntry:
+    post:
+      description: “Delete a blacklist entry for an IP and/or login“
+      operationId: “delBLEntry”
+      produces:
+        - "application/json"
+      parameters:
+        - name: “delBLEntry”
+          in: body
+          description: "Provide IP and/or login"
+          required: true
+          schema:
+            $ref: "#/definitions/DelBLEntryParams"
+      responses:
+        "200":
+          description: “delBLEntry response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=addBLEntry:
+    post:
+      description: “Add a blacklist entry for an IP and/or login“
+      operationId: “addBLEntry”
+      produces:
+        - "application/json"
+      parameters:
+        - name: “addBLEntry”
+          in: body
+          description: "Provide IP and/or login"
+          required: true
+          schema:
+            $ref: "#/definitions/AddBLEntryParams"
+      responses:
+        "200":
+          description: “addBLEntry response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
                 type: string
             example:
               status: ok
@@ -235,6 +291,28 @@ definitions:
         type: string
     example:
       ip: 127.0.0.1
+  DelBLEntryParams:
+    properties:
+      ip:
+        type: string
+      login:
+        type: string
+    example:
+      ip: 127.0.0.1
+  AddBLEntryParams:
+    properties:
+      ip:
+        type: string
+      login:
+        type: string
+      expire_secs:
+        type: integer
+      reason:
+        type: string
+    example:
+      ip: 127.0.0.1
+      expire: 3600
+      reason: “Too many bad passwords”
   Error:
     required:
       - status

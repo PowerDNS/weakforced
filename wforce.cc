@@ -35,6 +35,7 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -50,7 +51,6 @@ bool g_console;
 
 GlobalStateHolder<NetmaskGroup> g_ACL;
 string g_outputBuffer;
-vector<ComboAddress> g_locals;
 
 bool getMsgLen(int fd, uint16_t* len)
 try
@@ -356,31 +356,6 @@ void doConsole()
   }
 }
 
-static void bindAny(int af, int sock)
-{
-  int one = 1;
-
-#ifdef IP_FREEBIND
-  if (setsockopt(sock, IPPROTO_IP, IP_FREEBIND, &one, sizeof(one)) < 0)
-    warnlog("Warning: IP_FREEBIND setsockopt failed: %s", strerror(errno));
-#endif
-
-#ifdef IP_BINDANY
-  if (af == AF_INET)
-    if (setsockopt(sock, IPPROTO_IP, IP_BINDANY, &one, sizeof(one)) < 0)
-      warnlog("Warning: IP_BINDANY setsockopt failed: %s", strerror(errno));
-#endif
-#ifdef IPV6_BINDANY
-  if (af == AF_INET6)
-    if (setsockopt(sock, IPPROTO_IPV6, IPV6_BINDANY, &one, sizeof(one)) < 0)
-      warnlog("Warning: IPV6_BINDANY setsockopt failed: %s", strerror(errno));
-#endif
-#ifdef SO_BINDANY
-  if (setsockopt(sock, SOL_SOCKET, SO_BINDANY, &one, sizeof(one)) < 0)
-    warnlog("Warning: SO_BINDANY setsockopt failed: %s", strerror(errno));
-#endif
-}
-
 std::string LoginTuple::serialize() const
 {
   using namespace json11;
@@ -444,6 +419,10 @@ void LoginTuple::setLtAttrs(const json11::Json& msg)
  Sibling::Sibling(const ComboAddress& ca) : rem(ca), sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
 {
   sock.connect(ca);
+}
+
+void Sibling::checkIgnoreSelf(const ComboAddress& ca)
+{
   ComboAddress actualLocal;
   actualLocal.sin4.sin_family = ca.sin4.sin_family;
   socklen_t socklen = actualLocal.getSocklen();
@@ -453,10 +432,9 @@ void LoginTuple::setLtAttrs(const json11::Json& msg)
   }
 
   actualLocal.sin4.sin_port = ca.sin4.sin_port;
-  if(actualLocal == ca) {
+  if(actualLocal == rem) {
     d_ignoreself=true;
   }
-
 }
 
 void Sibling::send(const std::string& msg)
@@ -470,20 +448,20 @@ void Sibling::send(const std::string& msg)
 }
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
-
+unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 SodiumNonce g_sodnonce;
 std::mutex sod_mutx;
 
-void spreadReport(const LoginTuple& lt)
+void replicateOperation(const ReplicationOperation& rep_op)
 {
   auto siblings = g_siblings.getLocal();
-  string msg=lt.serialize();
+  string msg = rep_op.serialize();
   string packet;
 
   {
-      std::lock_guard<std::mutex> lock(sod_mutx);
-      packet =g_sodnonce.toString();
-      packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+    std::lock_guard<std::mutex> lock(sod_mutx);
+    packet=g_sodnonce.toString();
+    packet+=sodEncryptSym(msg, g_key, g_sodnonce);    
   }
 
   for(auto& s : *siblings) {
@@ -491,9 +469,7 @@ void spreadReport(const LoginTuple& lt)
   }
 }
 
-unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
-
-void receiveReports(ComboAddress local)
+void receiveReplicationOperations(ComboAddress local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
   sock.bind(local);
@@ -502,28 +478,37 @@ void receiveReports(ComboAddress local)
   socklen_t remlen=remote.getSocklen();
   int len;
   ctpl::thread_pool p(g_num_sibling_threads);
-
-  infolog("Launched UDP sibling listener on %s", local.toStringWithPort());
+  auto siblings = g_siblings.getLocal();
+  
+  for(auto& s : *siblings) {
+    s->checkIgnoreSelf(local);
+  }
+  
+  warnlog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
   for(;;) {
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
-
+    
     SodiumNonce nonce;
     memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
     string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
-    string msg=sodDecryptSym(packet, g_key, nonce);
-
+    string msg;
+    try {
+      msg=sodDecryptSym(packet, g_key, nonce);
+    }
+    catch (std::runtime_error& e) {
+      errlog("Could not decrypt replication operation: %s", e.what());
+      return;
+    }
+    
     p.push([msg,remote](int id) {
-	LoginTuple lt;
-	lt.unserialize(msg);
-	vinfolog("Got a report from sibling %s: %s,%s,%s,%f", remote.toString(), lt.login,lt.pwhash,lt.remote.toString(),lt.t);
-	g_stats.reports++;
-	try {
-	  g_luamultip->report(lt);
+	ReplicationOperation rep_op;
+	if (rep_op.unserialize(msg) != false) {
+	  rep_op.applyOperation();
 	}
-	catch(LuaContext::ExecutionErrorException& e) {
-	  errlog("Lua sibling report function exception: %s", e.what());
+	else {
+	  errlog("Invalid replication operation received from %s", remote.toString());
 	}
       });
   }
@@ -620,32 +605,6 @@ struct
   string command;
   string config;
 } g_cmdLine;
-
-
-/* spawn as many of these as required, they call Accept on a socket on which they will accept queries, and 
-   they will hand off to worker threads & spawn more of them if required
-*/
-void* tcpAcceptorThread(void* p)
-{
-  ClientState* cs = (ClientState*) p;
-
-  ComboAddress remote;
-  remote.sin4.sin_family = cs->local.sin4.sin_family;
-  
-  for(;;) {
-    try {
-      int fd = SAccept(cs->tcpFD, remote);
-
-      vinfolog("Got connection from %s", remote.toStringWithPort());
-      writen2(fd, "220 Unimplemented\r\n");
-      close(fd);
-      // now what
-    }
-    catch(...){}
-  }
-
-  return 0;
-}
 
 
 int main(int argc, char** argv)
@@ -758,41 +717,6 @@ try
 	     g_cmdLine.config);
   }
 
-  if(g_cmdLine.locals.size()) {
-    g_locals.clear();
-    for(auto loc : g_cmdLine.locals)
-      g_locals.push_back(ComboAddress(loc, 4000));
-  }
-  
-  if(g_locals.empty())
-    g_locals.push_back(ComboAddress("0.0.0.0", 4000));
-  
-
-  vector<ClientState*> toLaunch;
-  for(const auto& local : g_locals) {
-    ClientState* cs = new ClientState;
-    cs->local= local;
-    cs->udpFD = SSocket(cs->local.sin4.sin_family, SOCK_DGRAM, 0);
-    if(cs->local.sin4.sin_family == AF_INET6) {
-      SSetsockopt(cs->udpFD, IPPROTO_IPV6, IPV6_V6ONLY, 1);
-    }
-    //if(g_vm.count("bind-non-local"))
-    bindAny(local.sin4.sin_family, cs->udpFD);
-
-    //    setSocketTimestamps(cs->udpFD);
-
-    if(IsAnyAddress(local)) {
-      int one=1;
-      setsockopt(cs->udpFD, IPPROTO_IP, GEN_IP_PKTINFO, &one, sizeof(one));     // linux supports this, so why not - might fail on other systems
-#ifdef IPV6_RECVPKTINFO
-      setsockopt(cs->udpFD, IPPROTO_IPV6, IPV6_RECVPKTINFO, &one, sizeof(one)); 
-#endif
-    }
-
-    SBind(cs->udpFD, cs->local);    
-    toLaunch.push_back(cs);
-  }
-
   if(g_cmdLine.beDaemon) {
     g_console=false;
     daemonize();
@@ -822,36 +746,19 @@ try
   }
   noticelog("ACL allowing queries from: %s", acls.c_str());
 
-  for(const auto& local : g_locals) {
-    ClientState* cs = new ClientState;
-    cs->local= local;
-
-    cs->tcpFD = SSocket(cs->local.sin4.sin_family, SOCK_STREAM, 0);
-
-    SSetsockopt(cs->tcpFD, SOL_SOCKET, SO_REUSEADDR, 1);
-#ifdef TCP_DEFER_ACCEPT
-    SSetsockopt(cs->tcpFD, SOL_TCP,TCP_DEFER_ACCEPT, 1);
-#endif
-    if(cs->local.sin4.sin_family == AF_INET6) {
-      SSetsockopt(cs->tcpFD, IPPROTO_IPV6, IPV6_V6ONLY, 1);
-    }
-    //    if(g_vm.count("bind-non-local"))
-      bindAny(cs->local.sin4.sin_family, cs->tcpFD);
-    SBind(cs->tcpFD, cs->local);
-    SListen(cs->tcpFD, 64);
-    noticelog("Listening on %s",cs->local.toStringWithPort());
-    
-    thread t1(tcpAcceptorThread, cs);
-    t1.detach();
-  }
-
   // setup blacklist_db purge thread
-  thread t1(BlackListDB::purgeEntriesThread, &bl_db);
+  thread t1(BlackListDB::purgeEntriesThread, &g_bl_db);
   t1.detach();
 
   // start the performance stats thread
   startStatsThread();
 
+  // load the persistent blacklist entries
+  if (!g_bl_db.loadPersistEntries()) {
+    errlog("Could not load persistent DB entries, please fix configuration or check redis availability. Exiting.");
+    exit(1);
+  }
+  
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");
 #endif

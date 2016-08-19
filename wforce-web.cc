@@ -116,6 +116,30 @@ void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, 
   }
 }
 
+bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
+{
+  bool retval = true;
+  
+  try {
+    // canonicalize the login - e.g. turn "foo" into "foo@foobar.com" and bar into "bar@barfoo.com"
+    login = g_luamultip->canonicalize(login);
+  }
+  catch(LuaContext::ExecutionErrorException& e) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+    resp.body=ss.str();
+    errlog("Lua canonicalize function exception: %s", e.what());
+    retval = false;
+  }
+  catch(...) {
+    resp.status=500;
+    resp.body=R"({"status":"failure"})";
+    retval = false;
+  }
+  return retval;
+}
+
 void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd)
 {
   using namespace json11;
@@ -147,6 +171,8 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
       }
       if (!msg["login"].is_null()) {
 	en_login = msg["login"].string_value();
+	if (!canonicalizeLogin(en_login, resp))
+	  return;
 	haveLogin = true;
       }
       if (addCmd) {
@@ -220,6 +246,9 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       }
       if (!msg["login"].is_null()) {
 	en_login = msg["login"].string_value();
+	// canonicalize the login - e.g. turn "foo" into "foo@foobar.com" and bar into "bar@barfoo.com"
+	if (!canonicalizeLogin(en_login, resp))
+	  return;
 	haveLogin = true;
       }
       if (haveLogin && haveIP) {
@@ -284,6 +313,9 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
+      // canonicalize the login - e.g. turn "foo" into "foo@foobar.com" and bar into "bar@barfoo.com"
+      if (!canonicalizeLogin(lt.login, resp))
+	return;
       lt.setLtAttrs(msg);
       lt.policy_reject=msg["policy_reject"].bool_value();
       lt.t=getDoubleTime();
@@ -326,6 +358,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     LoginTuple lt;
     int status = -1;
     std::string ret_msg;
+
     try {
       lt.remote=ComboAddress(msg["remote"].string_value());
       lt.success=msg["success"].bool_value();
@@ -338,6 +371,9 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
 	return;
       }
+
+    if (!canonicalizeLogin(lt.login, resp))
+      return;
     
     // first check the built-in blacklists
     BlackListEntry ble;
@@ -383,7 +419,6 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       catch(...) {
 	resp.status=500;
 	resp.body=R"({"status":"failure"})";
-	return;
       }
     }
     g_stats.allows++;
@@ -464,6 +499,8 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       }
       if (!msg["login"].is_null()) {
 	en_login = msg["login"].string_value();
+	if (!canonicalizeLogin(en_login, resp))
+	  return;
 	haveLogin = true;
       }
       if (haveLogin && haveIP) {

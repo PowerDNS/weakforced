@@ -30,6 +30,7 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
+	webhook.hh \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
         ext/murmur3.h \

@@ -37,6 +37,7 @@
 #include "blacklist.hh"
 #include "twmap-wrapper.hh"
 #include "perf-stats.hh"
+#include "webhook.hh"
 
 using std::thread;
 

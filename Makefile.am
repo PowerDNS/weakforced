@@ -11,11 +11,11 @@ sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce
 wforce_SOURCES = \
 	base64.hh \
-	dns_lookup.cc \
+	dns_lookup.cc dns_lookup.hh \
 	wforce.cc wforce.hh \
 	wforce-lua.cc \
 	wforce-web.cc \
-	wforce-geoip.cc \
+	wforce-geoip.cc wforce-geoip.hh \
 	twmap.cc twmap.hh \
 	twmap-wrapper.cc twmap-wrapper.hh \
 	blacklist.cc blacklist.hh \

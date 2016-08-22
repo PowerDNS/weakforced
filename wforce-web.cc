@@ -1,5 +1,5 @@
 /*
- * This file is part of PowerDNS or dnsdist.
+ * This file is part of PowerDNS or weakforced.
  * Copyright -- PowerDNS.COM B.V. and its contributors
  *
  * This program is free software; you can redistribute it and/or modify

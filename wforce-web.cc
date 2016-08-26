@@ -301,6 +301,12 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	else
 	  resp.body=R"({"status":"failure", "reason":"reset function returned false"})";
       }
+      // generate webhook events
+      Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}};
+      std::string hook_data = jobj.dump();
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
+	g_webhook_runner.runHook("reset", h, hook_data);
+      }
     }
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
@@ -348,10 +354,12 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	g_luamultip->report(lt);
       }
 
-      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
-	g_webhook_runner.runHook("report", h, lt.serialize());
+      std::string hook_data = lt.serialize();
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {	
+	g_webhook_runner.runHook("report", h, hook_data);
       }
-      
+
+      resp.status=200;
       resp.body=R"({"status":"ok"})";
     }
     catch(LuaContext::ExecutionErrorException& e) {
@@ -366,6 +374,24 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       resp.body=R"({"status":"failure"})";
     }
   }
+}
+
+bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
+{
+  bool retval = false;
+  if (hook->hasConfigKey("allow_filter")) {
+    std::string filter = hook->getConfigKey("allow_filter");
+    if (((filter.find("reject")!=string::npos) && (status < 0)) ||
+	(((filter.find("allow")!=string::npos) && (status == 0))) ||
+	(((filter.find("tarpit")!=string::npos) && (status > 0)))) {
+      retval = true;
+      debuglog("allow_filter: filter evaluates to true (allowing event)");
+    }
+  }
+  else
+    retval = true;
+  
+  return retval;
 }
 
 void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
@@ -451,7 +477,15 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     if(status < 0)
       g_stats.denieds++;
     msg=Json::object{{"status", status}, {"msg", ret_msg}};
-      
+
+    // generate webhook events
+    Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
+    std::string hook_data = jobj.dump();
+    for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
+      if (allow_filter(h, status))
+	g_webhook_runner.runHook("allow", h, hook_data);
+    }
+    
     resp.status=200;
     resp.body=msg.dump();
   }  

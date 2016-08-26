@@ -480,8 +480,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showWebHooks", []() { });
   }
 
-  if (!allow_report) {
-    if (!client)
+  if (!(allow_report || client)) {
       c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) {
 	  std::string err;
 	  WHEvents events;

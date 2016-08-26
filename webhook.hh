@@ -209,8 +209,16 @@ public:
     config_keys.erase(key);
     return config_keys;
   }
-  bool isActive() const { return active; }
-  void setActive(bool isActive) { active = isActive; }
+  bool isActive() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    return active;
+  }
+  void setActive(bool isActive)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    active = isActive;
+  }
   void toString(std::string& out) const
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -234,17 +242,33 @@ public:
     };
     return my_object;
   }
-  void incSuccess() const { num_success++; }
-  unsigned int getSuccess() const { return num_success; }
-  void incFailed() const { num_failed++; }
-  unsigned int getFailed() const { return num_failed; }
+  void incSuccess() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    num_success++;
+  }
+  unsigned int getSuccess() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);    
+    return num_success;
+  }
+  void incFailed() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    num_failed++;
+  }
+  unsigned int getFailed() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    return num_failed;
+  }
 private:
   unsigned int id;
   std::vector<std::string> events;
-  std::atomic<bool> active;
+  bool active;
   WHConfigMap config_keys;
-  mutable std::atomic<unsigned int> num_success;
-  mutable std::atomic<unsigned int> num_failed;
+  mutable unsigned int num_success;
+  mutable unsigned int num_failed;
   mutable std::mutex mutex;
   const WHEventTypes event_names = { { "report", {{ "url" }, {"secret"}}},
 				     { "allow", {{ "url" }, {"secret", "allow_filter"}}},
@@ -296,7 +320,7 @@ public:
     }
     return retval;
   }
-  std::shared_ptr<WebHook> getEditableWebHook(unsigned int wh_id)
+  std::shared_ptr<WebHook> getWebHook(unsigned int wh_id)
   {
     std::lock_guard<std::mutex> lock(mutex);
     for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
@@ -315,12 +339,12 @@ public:
     
     return retvec;
   }
-  const std::vector<std::shared_ptr<const WebHook>> getWebHooksForEvent(const std::string& event_name)
+  const std::vector<std::shared_ptr<const WebHook>> getWebHooksForEvent(const std::string& event_name) const
   {
     std::lock_guard<std::mutex> lock(mutex);
     std::vector<std::shared_ptr<const WebHook>> retvec;
     
-    for (auto& i : webhooks) {
+    for (const auto& i : webhooks) {
       for (const auto& ev : i->getEvents()) {
 	if (ev.compare(event_name) == 0) {
 	  retvec.push_back(i);

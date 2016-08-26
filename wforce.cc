@@ -361,7 +361,7 @@ void doConsole()
   }
 }
 
-std::string LoginTuple::serialize() const
+Json LoginTuple::to_json() const 
 {
   using namespace json11;
   Json::object jattrs;
@@ -373,7 +373,7 @@ std::string LoginTuple::serialize() const
     jattrs.insert(make_pair(i->first, Json(i->second)));
   }
 
-  Json msg=Json::object{
+  return Json::object{
     {"login", login},
     {"success", success},
     {"t", (double)t}, 
@@ -381,7 +381,11 @@ std::string LoginTuple::serialize() const
     {"remote", remote.toString()},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
+}
 
+std::string LoginTuple::serialize() const
+{
+  Json msg=to_json();
   return msg.dump();
 }
 

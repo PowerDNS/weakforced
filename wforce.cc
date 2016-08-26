@@ -36,6 +36,7 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+#include "webhook.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -52,6 +53,9 @@ bool g_console;
 
 GlobalStateHolder<NetmaskGroup> g_ACL;
 string g_outputBuffer;
+
+WebHookRunner g_webhook_runner;
+WebHookDB g_webhook_db;
 
 bool getMsgLen(int fd, uint16_t* len)
 try

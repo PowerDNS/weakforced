@@ -47,7 +47,6 @@ static int uptimeOfProcess()
   return time(0) - start;
 }
 
-
 bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
 {
   // validate password
@@ -349,6 +348,10 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	g_luamultip->report(lt);
       }
 
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
+	g_webhook_runner.runHook("report", h, lt.serialize());
+      }
+      
       resp.body=R"({"status":"ok"})";
     }
     catch(LuaContext::ExecutionErrorException& e) {

@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sstream>
+#include "dolog.hh"
 
 MiniCurl::MiniCurl()
 {
@@ -102,10 +103,8 @@ void MiniCurl::setCurlHeaders(const MiniCurlHeaders& headers, struct curl_slist*
 size_t MiniCurl::read_callback(char *buffer, size_t size, size_t nitems, void *userdata)
 {
   std::stringstream* ss = (std::stringstream*)userdata;
-  auto begin_count = ss->gcount();
   ss->read(buffer, size*nitems);
-  auto end_count = ss->gcount();
-  auto bytes_read = end_count - begin_count;
+  auto bytes_read = ss->gcount();
   return bytes_read;
 }
 
@@ -120,19 +119,23 @@ bool MiniCurl::postURL(const std::string& url,
   
   if (d_curl) {
     std::stringstream ss(post_body);
-    struct curl_slist* header_list;
+    struct curl_slist* header_list = NULL;
     
     curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(d_curl, CURLOPT_POST, 1);
     curl_easy_setopt(d_curl, CURLOPT_READFUNCTION, read_callback);
     curl_easy_setopt(d_curl, CURLOPT_READDATA, &ss);
+    curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
     setCurlHeaders(headers, &header_list);
     d_error_buf[0] = '\0';
+    d_data.clear();
     
     auto ret = curl_easy_perform(d_curl);
 
     clearCurlHeaders(header_list);
-
+    d_data.clear();
+    
     if (ret != CURLE_OK) {
       auto eb_len = strlen(d_error_buf);
       if (eb_len) {
@@ -142,8 +145,15 @@ bool MiniCurl::postURL(const std::string& url,
 	error_msg = std::string(curl_easy_strerror(ret));
       }
     }
-    else
-      retval = true;    
+    else {
+      long response_code;
+      curl_easy_getinfo(d_curl, CURLINFO_RESPONSE_CODE, &response_code);
+      if (response_code != 200) {
+	error_msg = std::string("Received non-200 response from webserver: ") + std::to_string(response_code);
+      }
+      else
+	retval = true;
+    }
   }
   return retval;
 }

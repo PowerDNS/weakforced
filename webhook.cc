@@ -20,21 +20,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "webhook.hh"
 #include "dolog.hh"
+#include "hmac.hh"
+#include "base64.hh"
+#include "wforce.hh"
 
-WebHookRunner::WebHookRunner(unsigned int num_threads):p(num_threads, 1000)
+using namespace boost::posix_time;
+
+WebHookRunner::WebHookRunner():p(NUM_WEBHOOK_THREADS, 1000)
 {
   curl_global_init(CURL_GLOBAL_ALL);
-}
-
-WebHookRunner::~WebHookRunner()
-{
-  for (auto& ci : conns) {
-    for (auto& i : ci.second) {
-      curl_easy_cleanup(i.curl);
-    }
-  }
 }
 
 void WebHookRunner::setNumThreads(unsigned int num_threads)
@@ -48,29 +45,31 @@ void WebHookRunner::setMaxConns(unsigned int max_conns)
 }
 
 // synchronously run the ping command for the hook
-bool WebHookRunner::pingHook(const WebHook& hook, std::string error_msg)
+bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg)
 {
-  std::shared_ptr<std::mutex> conn_mutex;
-  CURL* curl;
-  getConnection(hook.getID(), &curl, conn_mutex); // this will only return once it has a connection
+  CurlConnection cc;
+  getConnection(hook->getID(), cc); // this will only return once it has a connection
 
-  // do HTTP stuff here
-    
-  releaseConnection(conn_mutex);
-  return true;
+  return _runHook("ping", hook, std::string(), cc);
 }
 
-// asynchronously run the hook with the supplied data (must be in json format)
-void WebHookRunner::runHook(const std::string& event_name, const WebHook& hook, const Json& hook_json)
+// asynchronously run the hook with the supplied data (must be a string in json format)
+void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data)
 {
-  std::shared_ptr<std::mutex> conn_mutex;
-  CURL* curl;
-  getConnection(hook.getID(), &curl, conn_mutex); // this will only return once it has a connection
-  // the called function is responsible for releasing the mutex
-  p.push(_runHook, event_name, hook, hook_json, conn_mutex); 
+  CurlConnection cc;
+  std::string err_msg;
+  
+  if (!hook->validateConfig(err_msg)) {
+    errlog("runHook: Error validating configuration of webhook id=%d for event (%s) [%s]", hook->getID(), event_name, err_msg);
+  }
+  else {
+    getConnection(hook->getID(), cc); // this will only return once it has a connection
+    // XXX - the called function is responsible for releasing the mutex, which is not ideal
+    p.push(_runHookThread, event_name, hook, hook_data, cc);
+  }
 }
 
-void WebHookRunner::getConnection(unsigned int hook_id, CURL** curlp, std::shared_ptr<std::mutex>& out_mutex)
+void WebHookRunner::getConnection(unsigned int hook_id, CurlConnection& out_cc)
 {
   std::lock_guard<std::mutex> lock(conn_mutex);
     
@@ -79,8 +78,7 @@ void WebHookRunner::getConnection(unsigned int hook_id, CURL** curlp, std::share
     // first we try to get an existing connection
     for (auto& i : ci->second) {
       if (i.cmutex->try_lock()) {
-	*curlp = i.curl;
-	out_mutex = i.cmutex;
+	out_cc = i;
 	return;
       }
       else
@@ -91,8 +89,7 @@ void WebHookRunner::getConnection(unsigned int hook_id, CURL** curlp, std::share
     if (num_conns < max_hook_conns) {
       CurlConnection cc = CurlConnection();
       cc.cmutex->lock();
-      *curlp = cc.curl;
-      out_mutex = cc.cmutex;
+      out_cc = cc;
       ci->second.push_back(cc);
     }
     else {
@@ -101,8 +98,7 @@ void WebHookRunner::getConnection(unsigned int hook_id, CURL** curlp, std::share
       // XXX if very busy, we'll have a bunch of threads trying to get the first lock
       for (auto& i : ci->second) {
 	i.cmutex->lock();
-	*curlp = i.curl;
-	out_mutex = i.cmutex;
+	out_cc = i;
 	return;
       }
     }
@@ -111,21 +107,53 @@ void WebHookRunner::getConnection(unsigned int hook_id, CURL** curlp, std::share
     std::vector<CurlConnection> vec;
     CurlConnection cc = CurlConnection();
     cc.cmutex->lock();
-    *curlp = cc.curl;
-    out_mutex = cc.cmutex;
+    out_cc = cc;
     vec.push_back(cc);
     conns.insert(std::make_pair(hook_id, vec));
   }
 }
 
-void WebHookRunner::releaseConnection(std::shared_ptr<std::mutex> conn_mutex)
+void WebHookRunner::releaseConnection(CurlConnection& cc)
 {
-  conn_mutex->unlock();
+  cc.cmutex->unlock();
 }
 
-void WebHookRunner::_runHook(int id, const std::string& event_name, const WebHook& hook, const Json& hook_json, std::shared_ptr<std::mutex> conn_mutex)
+void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc)
 {
-  noticelog("Webhook id=%d starting for event (%s) to url (%s)",
-	    hook.getID(), event_name, hook.getConfigKey("url"));
-  releaseConnection(conn_mutex);
+  _runHook(event_name, hook, hook_data, cc);
+}
+
+bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc)
+{
+  // construct the necessary headers
+  MiniCurlHeaders mch;
+  std::string error_msg;
+  
+  mch.insert(std::make_pair("X-Wforce-Event", event_name));
+  mch.insert(std::make_pair("Content-Type", "application/json"));
+  if (hook->hasConfigKey("secret"))
+    mch.insert(std::make_pair("X-Wforce-Signature", calculateHMAC(hook->getConfigKey("secret"), hook_data, HashAlgo::SHA256)));
+  ptime t(microsec_clock::universal_time());
+  std::string b64_hash_id = Base64Encode(calculateHash(to_simple_string(t)+std::to_string(hook->getID())+event_name, HashAlgo::SHA256));
+  mch.insert(std::make_pair("X-Wforce-Delivery", b64_hash_id));
+
+  debuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s)",
+	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
+
+  bool ret = cc.mcurl->postURL(hook->getConfigKey("url"), hook_data, mch, error_msg);
+
+  if (ret != true) {
+    errlog("Webhook id=%d failed for event (%s) to url (%s) with delivery id (%s) [%s]",
+	     hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, error_msg);
+    hook->incFailed();
+  }
+  else {
+    infolog("Webhook succeeded for event (%s) to url (%s) with delivery id (%s)",
+	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
+    hook->incSuccess();
+  }
+  
+  releaseConnection(cc);
+
+  return ret;
 }

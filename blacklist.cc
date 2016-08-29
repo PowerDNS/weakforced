@@ -104,6 +104,14 @@ void BlackListDB::addEntryInternal(const std::string& key, time_t seconds, BLTyp
   default:
     break;
   }
+  // only generate webhook for this event for the first add, not for replicas
+  if (replicate == true) {
+    Json jobj = Json::object{{"key", key}, {"bl_type", BLTypeToName(bl_type)}, {"reason", reason}, {"expire_secs", (int)seconds}};
+    std::string hook_data = jobj.dump();
+    for (const auto& h : g_webhook_db.getWebHooksForEvent("addbl")) {
+      g_webhook_runner.runHook("addbl", h, hook_data);
+    }
+  }
 }
 
 void BlackListDB::_addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason)
@@ -245,6 +253,15 @@ void BlackListDB::deleteEntryInternal(const std::string& key, BLType bl_type, bo
   default:
     break;
   }
+  // only generate webhook for this event for the first delete, not for replicas
+  if (replicate == true) {
+    Json jobj = Json::object{{"key", key}, {"bl_type", BLTypeToName(bl_type)}};
+    std::string hook_data = jobj.dump();
+    for (const auto& h : g_webhook_db.getWebHooksForEvent("delbl")) {
+      g_webhook_runner.runHook("delbl", h, hook_data);
+    }
+  }
+
 }
 
 bool BlackListDB::_deleteEntry(const std::string& key, blacklist_t& blacklist)
@@ -307,13 +324,13 @@ void BlackListDB::purgeEntries()
 {
   while (true) {
     sleep(1);
-    _purgeEntries(IP_BL, ip_blacklist);
-    _purgeEntries(LOGIN_BL, login_blacklist);
-    _purgeEntries(IP_LOGIN_BL, ip_login_blacklist);
+    _purgeEntries(IP_BL, ip_blacklist, IP_BL);
+    _purgeEntries(LOGIN_BL, login_blacklist, LOGIN_BL);
+    _purgeEntries(IP_LOGIN_BL, ip_login_blacklist, IP_LOGIN_BL);
   }
 }
 
-void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist)
+void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_type)
 {
   std::lock_guard<std::mutex> lock(mutx);
   boost::system_time now = boost::get_system_time();
@@ -322,6 +339,11 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist)
   
   for (auto tit = timeindex.begin(); tit != timeindex.end();) {
     if (tit->expiration <= now) {
+      Json jobj = Json::object{{"key", tit->key}, {"bl_type", BLTypeToName(bl_type)}};
+      std::string hook_data = jobj.dump();
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("expirebl")) {
+	g_webhook_runner.runHook("expirebl", h, hook_data);
+      }
       expireEntryLog(blt, tit->key);
       tit = timeindex.erase(tit);
     }
@@ -573,4 +595,9 @@ BLType BlackListDB::BLNameToType(const std::string& bl_name)
       return (BLType)i;
   }
   return NONE_BL;
+}
+
+std::string BlackListDB::BLTypeToName(BLType bl_type)
+{
+  return std::string(bl_names[bl_type]);
 }

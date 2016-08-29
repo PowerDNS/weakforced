@@ -131,15 +131,18 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   
   mch.insert(std::make_pair("X-Wforce-Event", event_name));
   mch.insert(std::make_pair("Content-Type", "application/json"));
+  mch.insert(std::make_pair("Transfer-Encoding", "chunked"));
+  mch.insert(std::make_pair("X-Wforce-HookID", std::to_string(hook->getID())));
   if (hook->hasConfigKey("secret"))
-    mch.insert(std::make_pair("X-Wforce-Signature", calculateHMAC(hook->getConfigKey("secret"), hook_data, HashAlgo::SHA256)));
+    mch.insert(std::make_pair("X-Wforce-Signature", Base64Encode(calculateHMAC(hook->getConfigKey("secret"),
+									       hook_data, HashAlgo::SHA256))));
   ptime t(microsec_clock::universal_time());
   std::string b64_hash_id = Base64Encode(calculateHash(to_simple_string(t)+std::to_string(hook->getID())+event_name, HashAlgo::SHA256));
   mch.insert(std::make_pair("X-Wforce-Delivery", b64_hash_id));
 
-  debuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s)",
-	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
-
+  debuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
+	   hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
+  
   bool ret = cc.mcurl->postURL(hook->getConfigKey("url"), hook_data, mch, error_msg);
 
   if (ret != true) {

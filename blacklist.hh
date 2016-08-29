@@ -127,7 +127,7 @@ private:
   bool _getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble);
   bool _deleteEntry(const std::string& key, blacklist_t& blacklist);
   time_t _getExpiration(const std::string& key, blacklist_t& blacklist); // returns number of seconds until expiration
-  void _purgeEntries(BLType blt, blacklist_t& blacklist);
+  void _purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_type);
   void addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason);
   void deleteEntryLog(BLType blt, const std::string& key);
   void expireEntryLog(BLType blt, const std::string& key);
@@ -136,6 +136,7 @@ private:
   bool addPersistEntry(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason);
   bool deletePersistEntry(const std::string& key, BLType bl_type, blacklist_t& blacklist);
   BLType BLNameToType(const std::string& bl_name);
+  std::string BLTypeToName(BLType bl_type);
 };
 
 extern BlackListDB g_bl_db;

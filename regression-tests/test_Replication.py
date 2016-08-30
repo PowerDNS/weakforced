@@ -78,11 +78,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(40):
+        for i in range(42):
             r = self.reportFunc('subbaddiereplication', '228.0.0.1', "1234", 'false')
             r.json()
 
-        time.sleep(1)
         r = self.allowFuncReplica('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], -1)

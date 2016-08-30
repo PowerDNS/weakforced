@@ -188,13 +188,11 @@ void BlackListDB::deleteEntry(const ComboAddress& ca)
 {
   std::string key = ca.toString();
 
-  deleteEntryLog(IP_BL, key);
   deleteEntryInternal(key, IP_BL, true);
 }
 
 void BlackListDB::deleteEntry(const std::string& login)
 {
-  deleteEntryLog(LOGIN_BL, login);
   deleteEntryInternal(login, LOGIN_BL, true);
 }
 
@@ -202,7 +200,6 @@ void BlackListDB::deleteEntry(const ComboAddress& ca, const std::string& login)
 {
   std::string key = ipLoginStr(ca, login);
 
-  deleteEntryLog(IP_LOGIN_BL, key);
   deleteEntryInternal(key, IP_LOGIN_BL, true);
 }
 

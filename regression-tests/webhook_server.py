@@ -3,7 +3,11 @@ import hmac
 import hashlib
 import base64
 import json
-import syslog
+import os
+
+logfile = open('/tmp/webhook-server.log', 'w', 0)
+logfile.write("foo\n")
+mypid = os.getpid()
 
 @route('/webhook/<event>', method='POST')
 def webhook(event):
@@ -17,10 +21,10 @@ def webhook(event):
     for myline in request.body.readlines():
         shmac.update(myline)
     sdigest = base64.b64encode(shmac.digest())
-    print sdigest, secret
     if sdigest == secret:
         digest_match = True
-    syslog.syslog(syslog.LOG_NOTICE, "Received webhook id=%s, digest_match=%s, event=%s, body=%s" % (hook_id, digest_match, event, json.dumps(body_json)))
+    log_msg = "[%s] Received webhook id=%s, digest_match=%s, event=%s, body=%s\n" % (mypid, hook_id, digest_match, event, json.dumps(body_json))
+    logfile.write(log_msg)
     return "ok\n"
 
 run(host='localhost', port=8080)

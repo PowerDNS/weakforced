@@ -166,7 +166,7 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
-    def delBLEntryIPLogin(self, ip, login, expire_secs, reason):
+    def delBLEntryIPLogin(self, ip, login):
         payload = dict()
         payload['login'] = login
         payload['ip'] = ip
@@ -175,7 +175,7 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
-    def delBLEntryIP(self, ip, expire_secs, reason):
+    def delBLEntryIP(self, ip):
         payload = dict()
         payload['ip'] = ip
         return self.session.post(
@@ -183,7 +183,7 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
-    def delBLEntryLogin(self, login, expire_secs, reason):
+    def delBLEntryLogin(self, login):
         payload = dict()
         payload['login'] = login
         return self.session.post(

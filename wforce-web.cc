@@ -739,12 +739,6 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     else if(command=="getBL") {
       parseGetBLCmd(req, resp);
     }
-    else if (command=="addBLEntry") {
-      parseAddDelBLEntryCmd(req, resp, true);
-    }
-    else if (command=="delBLEntry") {
-      parseAddDelBLEntryCmd(req, resp, false);
-    }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
       resp.status = 415;
@@ -760,6 +754,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     }
     else if(command=="allow" && req.method=="POST") {
       parseAllowCmd(req, resp);
+    }
+    else if (command=="addBLEntry" && req.method=="POST") {
+      parseAddDelBLEntryCmd(req, resp, true);
+    }
+    else if (command=="delBLEntry" && req.method=="POST") {
+      parseAddDelBLEntryCmd(req, resp, false);
     }
     else if(command=="getDBStats" && req.method=="POST") {
       parseGetStatsCmd(req, resp);

@@ -151,7 +151,7 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
     hook->incFailed();
   }
   else {
-    infolog("Webhook succeeded for event (%s) to url (%s) with delivery id (%s)",
+    infolog("Webhook id=%d succeeded for event (%s) to url (%s) with delivery id (%s)",
 	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
     hook->incSuccess();
   }

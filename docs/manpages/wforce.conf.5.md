@@ -30,6 +30,18 @@ cannot be called inside the allow/report/reset functions:
   
 		addACL("127.0.0.0/8")
 
+* addWebHook(\<list of events\>, \<config key map\>) - Add a webhook
+  for the specified events, with the specified configuration keys. See
+  *wforce_webhook(5)* for the list of events, supported configuration
+  keys, and details of the HTTP(S) POST sent to webhook URLs. For
+  example:
+
+		config_keys={}
+		config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+		config_keys["secret"] = "verysecretcode"
+		events = { "report", "allow" }
+		addWebHook(events, config_keys)
+		
 * setSiblings(\<list of IP[:port]\>) - Set the list of siblings to which
   all received reports should be forwarded. If port is not specified
   it defaults to 4001. For example:
@@ -89,6 +101,11 @@ cannot be called inside the allow/report/reset functions:
   
 		setNumSiblingThreads(2)
 
+* setNumWebHookThreads(\<num threads\>) - Set the number of threads in
+  the pool used to send webhook events. For example:
+
+		setNumWebHookThreads(2)
+
 * initGeoIPDB() - Initializes the country-level IPv4 and IPv6 GeoIP
   databases. If either of these databases is not installed, this
   command will fail and wforce will not start. For example:
@@ -107,10 +124,10 @@ cannot be called inside the allow/report/reset functions:
   achieved with the getStringStatsDB() function. For example:
   
 		field_map = {}
-	  	field_map["countLogins"] = "int"
-	  	field_map["diffPasswords"] = "hll"
-	  	field_map["countCountries"] = "countmin"
-  		newStringStatsDB("OneHourDB", 900, 4, field_map)
+		field_map["countLogins"] = "int"
+		field_map["diffPasswords"] = "hll"
+		field_map["countCountries"] = "countmin"
+		newStringStatsDB("OneHourDB", 900, 4, field_map)
 
 * StringStatsDB:twSetv4Prefix(\<prefix\>) - Set the prefix to use for
   any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
@@ -167,6 +184,17 @@ cannot be called inside the allow/report/reset functions:
   function for handling all "reset" commands. For example:
   
 		setReset(reset)
+
+* setCanonicalize(\<canonicalize func\>) - Tell wforce to use the
+  specified Lua function for handling all "canonicalisation"
+  functionality. This function is responsible for mapping multiple
+  aliases for a user to a single login string, e.g. ncook, neil.cook
+  and neil.cook@foobar.com would all map to neil.cook@foobar.com. Use
+  Lua modules such as LuaSQL-MySQL (luarocks install luasql-mysql) or
+  LuaLDAP (luarocks install lualdap) to perform lookups in user
+  databases. For example:
+
+		setCanonicalize(canonicalize)
 
 # GENERAL FUNCTIONS
 
@@ -389,5 +417,4 @@ configuration or within the allow/report/reset functions:
 */etc/wforce.conf*
 
 # SEE ALSO
-wforce(1)
-
+wforce(1) wforce_webhook(5)

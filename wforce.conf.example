@@ -25,6 +25,16 @@ setNumWorkerThreads(4)
 -- Should be around numWorkerThreads/2
 setNumSiblingThreads(2)
 
+-- Number of threads to use for sending webhook events
+setNumWebHookThreads(2)
+
+-- Register a webhook for "report" events
+config_keys={}
+config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+config_keys["secret"] = "verysecretcode"
+events = { "report" }
+addWebHook(events, config_keys)
+
 bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")
 bulkRetrievers:addMask("145.132.0.0/16")

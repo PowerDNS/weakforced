@@ -1,5 +1,5 @@
-MANPAGES_TARGET = wforce.1 wforce.conf.5
-APIDOC = wforce_api.7
+MANPAGES_TARGET = wforce.1 wforce.conf.5 wforce_webhook.5
+APIDOC = wforce_api.7 wforce_webhook_api.7
 SWAG2MD_PROG = swag2md.pl
 
 EXTRA_DIST = manpages swagger $(SWAG2MD_PROG)

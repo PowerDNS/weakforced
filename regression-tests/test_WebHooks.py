@@ -15,7 +15,8 @@ class TestWebHooks(ApiTestCase):
         self.addBLEntryLogin('webhooktest', 10, 'This is not a reason'); 
         time.sleep(11)
         self.addBLEntryLogin('webhooktest', 10, 'This is not a reason'); 
-        self.delBLEntryLogin('webhooktest'); 
+        self.delBLEntryLogin('webhooktest');
+        time.sleep(5)
         logfile = open('/tmp/webhook-server.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
         for event in [ 'report', 'allow', 'reset', 'addbl', 'delbl', 'expirebl' ]:

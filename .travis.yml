@@ -11,6 +11,7 @@ addons:
       - build-essential
       - liblua5.1-0-dev
       - python-virtualenv
+      - python-bottle
       - libgeoip-dev
       - geoip-database
       - cpanminus
@@ -50,7 +51,6 @@ before_script:
  - dig @208.67.222.222 a.root-servers.net
  - cpanm --quiet --installdeps --notest Template
  - cpanm --quiet --installdeps --notest Swagger2::Markdown
- - pip install bottle
 script:
  - autoreconf -i
  - ./configure

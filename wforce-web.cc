@@ -416,6 +416,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
+      lt.t=getDoubleTime();
       lt.setLtAttrs(msg);
     }
     catch(...) {

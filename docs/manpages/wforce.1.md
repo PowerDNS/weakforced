@@ -123,5 +123,5 @@ partitioning siblings into separate clusters that do not share
 information, at the expense of missing potential abuse activity. 
 
 # SEE ALSO
-wforce.conf(5) wforce_webhook(5) wforce_webhook_api(7) wforce_api(7)
+wforce.conf(5) wforce_webhook(5) wforce_api(7)
 

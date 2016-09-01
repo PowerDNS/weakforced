@@ -7,39 +7,65 @@
 
 # DESCRIPTION
 The **wforce** daemon supports generating webhooks which run for
-specific events. The list of supported events and the supported
-configuration keys for those events are documented here. A brief
-summary of the custom HTTP(S) POST headers is also included. For full
-documentation of the WebHook HTTP API, please see
-*wforce_webhook_api(7)*. 
+specific events. The list of supported events, example payload for
+those events, and the supported configuration keys for those events
+are documented here. A summary of the custom HTTP(S) POST headers is
+also included.
 
 # WEBHOOK EVENTS
 
-The following events are available for generating webhooks:
+See **wforce.conf(5)** for details of the "addWebHook()" configuration
+setting. The following events are available for generating webhooks:
 
 * report - Runs each time a valid report command is received. The webhook
-  includes the report request payload but not the report response. The
-  following configuration keys are supported:
+  includes the report request payload but not the report response. An
+  example payload for the HTTP post is shown below:
+
+		{"remote": "1.4.3.1", "success": false, "policy_reject":
+		false, "attrs": {"cos": "basic"},
+		"login": "webhooktest@foobar.com", "pwhash": "1234",
+		"t": 1472718468.412865}
 
 * allow - Runs each time a valid allow command is received. The
   webhook includes the request payload and the response payload. This
   hook can be filtered on the return value using the "allow_filter" 
-  configuration key.
+  configuration key. An example payload for the HTTP post is shown below:
+
+		{"request": {"remote": "1.4.3.2", "success": false,
+		"policy_reject": true, "attrs": {},
+		"login": "webhooktest@foobar.com", "pwhash": "1234",
+		"t": 1472718469.827362}, "response": {"msg": "", "status": 0}}
 
 * reset - Runs each time a valid reset command is received. The
-  webhook includes the request payload.
+  webhook includes the request payload. An example payload for the
+  HTTP post is shown below:
+
+		{"ip": "1.4.3.3", "login": "webhooktest@foobar.com"}
 
 * addbl - Runs each time a blacklist entry is added (from Lua or the
-  REST API). The webhook includes the request payload.
+  REST API). The webhook includes the request payload. An example
+  payload for the HTTP post is shown below:
 
-* delbl - Runs each time a blacklist entry is deleted (from Lua or the
-  REST API). The webhook includes the request payload.
+		{"key": "webhooktest@foobar.com",
+		"reason": "Too many different bad password attempts",
+		"expire_secs": 10, "bl_type": "login_bl"}
 
-* expirebl - Runs each time a blacklist entry is expired. 
+* delbl - Runs each time a blacklist entry is deleted (from Lua or the 
+  REST API). The webhook includes the request payload. An example
+  payload for the HTTP post is shown below:
+
+		{"key": "1.4.3.3:webhooktest@foobar.com",
+		"bl_type": "ip_login_bl"}
+
+* expirebl - Runs each time a blacklist entry is expired. An example
+  payload for the HTTP post is shown below:
+
+		{"key": "webhooktest@foobar.com", "bl_type": "login_bl"}
 
 # WEBHOOK CONFIGURATION KEYS
 
-The following configuration keys can be used for all events:
+See **wforce.conf(5)** for details of the "addWebHook()" configuration
+setting. The following configuration keys can be used for all events:
 
 * url - The URL that the webhook should POST to. Supports http and
   https, for example:
@@ -79,10 +105,15 @@ each event:
 * X-Wforce-Signature - If the "secret" configuration key is specified,
   this header will contain a base64-encoded HMAC-SHA256 digest of the POST body.
 
-* X-Wforce-Delivery - A unique ID for this webhook. 
+* X-Wforce-Delivery - A unique ID for this webhook.
+
+# WEBHOOK HTTP Content-Type HEADER
+
+The payload of the HTTP POST will always be json, thus the
+Content-Type header is always set to application/json.
 
 # FILES
 */etc/wforce.conf*
 
 # SEE ALSO
-wforce(1) wforce_webhook(5) wforce_webhook_api(7) wforce_api(7)
+wforce(1) wforce_webhook(5) wforce_api(7)

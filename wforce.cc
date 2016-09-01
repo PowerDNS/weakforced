@@ -36,6 +36,7 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+#include "webhook.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -52,6 +53,9 @@ bool g_console;
 
 GlobalStateHolder<NetmaskGroup> g_ACL;
 string g_outputBuffer;
+
+WebHookRunner g_webhook_runner;
+WebHookDB g_webhook_db;
 
 bool getMsgLen(int fd, uint16_t* len)
 try
@@ -357,7 +361,7 @@ void doConsole()
   }
 }
 
-std::string LoginTuple::serialize() const
+Json LoginTuple::to_json() const 
 {
   using namespace json11;
   Json::object jattrs;
@@ -369,7 +373,7 @@ std::string LoginTuple::serialize() const
     jattrs.insert(make_pair(i->first, Json(i->second)));
   }
 
-  Json msg=Json::object{
+  return Json::object{
     {"login", login},
     {"success", success},
     {"t", (double)t}, 
@@ -377,7 +381,11 @@ std::string LoginTuple::serialize() const
     {"remote", remote.toString()},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
+}
 
+std::string LoginTuple::serialize() const
+{
+  Json msg=to_json();
   return msg.dump();
 }
 

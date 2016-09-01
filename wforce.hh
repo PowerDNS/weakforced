@@ -32,6 +32,7 @@
 #include "sholder.hh"
 #include "sstuff.hh"
 #include "replication.hh"
+#include "webhook.hh"
 #include "ext/json11/json11.hpp"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
@@ -107,6 +108,7 @@ struct LoginTuple
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
   bool policy_reject;
+  Json to_json() const;
   std::string serialize() const;
   void unserialize(const std::string& src);
   void setLtAttrs(const json11::Json& msg);
@@ -222,3 +224,6 @@ extern unsigned int g_num_worker_threads;
 #define WFORCE_NUM_WORKER_THREADS 4
 extern unsigned int g_num_sibling_threads;
 #define WFORCE_NUM_SIBLING_THREADS 2
+
+extern WebHookRunner g_webhook_runner;
+extern WebHookDB g_webhook_db;

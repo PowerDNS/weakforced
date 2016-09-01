@@ -26,6 +26,7 @@ if wait:
 
 cmd1 = ("../wforce -C ./wforce1.conf").split()
 cmd2 = ("../wforce -C ./wforce2.conf").split()
+webcmd = ("/usr/bin/python ./webhook_server.py").split()
 
 # Now run wforce and the tests.
 print "Launching wforce (1 and 2)..."
@@ -33,6 +34,8 @@ print ' '.join(cmd1)
 print ' '.join(cmd2)
 proc1 = subprocess.Popen(cmd1, close_fds=True)
 proc2 = subprocess.Popen(cmd2, close_fds=True)
+webproc = subprocess.Popen(webcmd, close_fds=True)
+webpid = webproc.pid
 
 print "Waiting for webserver port to become available..."
 available = False
@@ -50,13 +53,15 @@ if not available:
     proc1.wait()
     proc2.terminate()
     proc2.wait()
+    webproc.terminate()
+    webproc.wait()
     sys.exit(2)
 
 print "Running tests..."
 rc = 0
 test_env = {}
 test_env.update(os.environ)
-test_env.update({'WEBPORT': WEBPORT, 'APIKEY': APIKEY})
+test_env.update({'WEBPORT': WEBPORT, 'APIKEY': APIKEY, 'WEBPID': str(webpid)})
 
 try:
     print ""
@@ -71,6 +76,8 @@ finally:
     proc1.wait()
     proc2.terminate()
     proc2.wait()
+    webproc.terminate()
+    webproc.wait()
 
 subprocess.call(["/bin/stty", "sane"])
     

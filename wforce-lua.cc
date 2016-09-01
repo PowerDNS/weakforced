@@ -460,6 +460,48 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setCanonicalize", [](canonicalize_t func) { });
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { g_webhook_runner.setNumThreads(num_threads); });
+  }
+  else {
+    c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showWebHooks", []() {
+	auto webhooks = g_webhook_db.getWebHooks();
+	boost::format fmt("%-9d %-9d %-9d %-30.30s %-s\n");
+	g_outputBuffer= (fmt % "ID" % "Successes" % "Failures" % "URL" % "Events").str();
+	for(const auto& i : webhooks)
+	  g_outputBuffer += (fmt % i->getID() % i->getSuccess() % i->getFailed() % i->getConfigKey("url") % i->getEventsStr()).str();
+      });
+  }
+  else {
+    c_lua.writeFunction("showWebHooks", []() { });
+  }
+
+  if (!(allow_report || client)) {
+      c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) {
+	  std::string err;
+	  WHEvents events;
+	  WHConfigMap config_keys;
+
+	  auto id = g_webhook_db.getNewID();
+	  for (const auto& ev : events_vec) {
+	    events.push_back(ev.second);
+	  }
+	  for (const auto& ck : ck_vec) {
+	    config_keys.insert(ck);
+	  }
+	  auto ret = g_webhook_db.addWebHook(WebHook(id, events, true, config_keys), err);
+	  if (ret != true) {
+	    errlog("Registering webhook id=%d from Lua failed [%s]", id, err);
+	  }
+	});
+  }
+  else {
+    c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) { });
+  }
   
   if (!allow_report) {
     c_lua.writeFunction("makeKey", []() {

@@ -1,4 +1,4 @@
-MANPAGES_TARGET = wforce.1 wforce.conf.5
+MANPAGES_TARGET = wforce.1 wforce.conf.5 wforce_webhook.5
 APIDOC = wforce_api.7
 SWAG2MD_PROG = swag2md.pl
 

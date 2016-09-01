@@ -37,6 +37,7 @@
 #include "blacklist.hh"
 #include "twmap-wrapper.hh"
 #include "perf-stats.hh"
+#include "webhook.hh"
 
 using std::thread;
 
@@ -45,7 +46,6 @@ static int uptimeOfProcess()
   static time_t start=time(0);
   return time(0) - start;
 }
-
 
 bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
 {
@@ -301,6 +301,12 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	else
 	  resp.body=R"({"status":"failure", "reason":"reset function returned false"})";
       }
+      // generate webhook events
+      Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}};
+      std::string hook_data = jobj.dump();
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
+	g_webhook_runner.runHook("reset", h, hook_data);
+      }
     }
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
@@ -348,6 +354,12 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	g_luamultip->report(lt);
       }
 
+      std::string hook_data = lt.serialize();
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {	
+	g_webhook_runner.runHook("report", h, hook_data);
+      }
+
+      resp.status=200;
       resp.body=R"({"status":"ok"})";
     }
     catch(LuaContext::ExecutionErrorException& e) {
@@ -362,6 +374,24 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       resp.body=R"({"status":"failure"})";
     }
   }
+}
+
+bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
+{
+  bool retval = false;
+  if (hook->hasConfigKey("allow_filter")) {
+    std::string filter = hook->getConfigKey("allow_filter");
+    if (((filter.find("reject")!=string::npos) && (status < 0)) ||
+	(((filter.find("allow")!=string::npos) && (status == 0))) ||
+	(((filter.find("tarpit")!=string::npos) && (status > 0)))) {
+      retval = true;
+      debuglog("allow_filter: filter evaluates to true (allowing event)");
+    }
+  }
+  else
+    retval = true;
+  
+  return retval;
 }
 
 void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
@@ -386,6 +416,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       lt.success=msg["success"].bool_value();
       lt.pwhash=msg["pwhash"].string_value();
       lt.login=msg["login"].string_value();
+      lt.t=getDoubleTime();
       lt.setLtAttrs(msg);
     }
     catch(...) {
@@ -447,7 +478,15 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     if(status < 0)
       g_stats.denieds++;
     msg=Json::object{{"status", status}, {"msg", ret_msg}};
-      
+
+    // generate webhook events
+    Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
+    std::string hook_data = jobj.dump();
+    for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
+      if (allow_filter(h, status))
+	g_webhook_runner.runHook("allow", h, hook_data);
+    }
+    
     resp.status=200;
     resp.body=msg.dump();
   }  
@@ -701,12 +740,6 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     else if(command=="getBL") {
       parseGetBLCmd(req, resp);
     }
-    else if (command=="addBLEntry") {
-      parseAddDelBLEntryCmd(req, resp, true);
-    }
-    else if (command=="delBLEntry") {
-      parseAddDelBLEntryCmd(req, resp, false);
-    }
     else if ((command != "") && (ctype.compare("application/json") != 0)) {
       errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
       resp.status = 415;
@@ -722,6 +755,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     }
     else if(command=="allow" && req.method=="POST") {
       parseAllowCmd(req, resp);
+    }
+    else if (command=="addBLEntry" && req.method=="POST") {
+      parseAddDelBLEntryCmd(req, resp, true);
+    }
+    else if (command=="delBLEntry" && req.method=="POST") {
+      parseAddDelBLEntryCmd(req, resp, false);
     }
     else if(command=="getDBStats" && req.method=="POST") {
       parseGetStatsCmd(req, resp);

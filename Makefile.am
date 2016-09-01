@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=ext docs
@@ -27,6 +27,10 @@ wforce_SOURCES = \
 	replication.cc replication.hh \
 	replication_sdb.hh replication_sdb.cc \
 	replication_bl.cc replication_bl.hh \
+	webhook.cc webhook.hh \
+	minicurl.cc minicurl.hh \
+	hmac.hh hmac.cc \
+	wforce_exception.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
@@ -46,7 +50,7 @@ wforce_LDFLAGS = \
 wforce_LDADD = \
 	-lreadline -ltermcap \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
-	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) $(LIBHIREDIS_LIBS)
+	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \
@@ -67,7 +71,11 @@ noinst_HEADERS = \
 	replication_sdb.hh \
 	replication_bl.hh \
 	twmap-wrapper.hh \
-	perf-stats.hh
+	perf-stats.hh \
+	webhook.hh \
+	minicurl.hh \
+	hmac.hh \
+	wforce_exception.hh
 
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<

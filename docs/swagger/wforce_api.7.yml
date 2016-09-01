@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: "1.0"
+  version: "2.0"
   title: "Dovecot Anti-Abuse Shield"
   description: "An API to the Dovecot Anti-Abuse Shield to prevent brute-force and abuse of mail systems"
   contact:

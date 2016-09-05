@@ -337,16 +337,13 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   else {
     try {
       LoginTuple lt;
-      lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].bool_value();
-      lt.pwhash=msg["pwhash"].string_value();
-      lt.login=msg["login"].string_value();
+
+      lt.from_json(msg);
+
       // canonicalize the login - e.g. turn "foo" into "foo@foobar.com" and bar into "bar@barfoo.com"
       if (!canonicalizeLogin(lt.login, resp))
 	return;
-      lt.setLtAttrs(msg);
-      lt.policy_reject=msg["policy_reject"].bool_value();
-      lt.t=getDoubleTime();
+      lt.t=getDoubleTime(); // set the time
       reportLog(lt);
       g_stats.reports++;
       resp.status=200;
@@ -412,12 +409,8 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     std::string ret_msg;
 
     try {
-      lt.remote=ComboAddress(msg["remote"].string_value());
-      lt.success=msg["success"].bool_value();
-      lt.pwhash=msg["pwhash"].string_value();
-      lt.login=msg["login"].string_value();
+      lt.from_json(msg);
       lt.t=getDoubleTime();
-      lt.setLtAttrs(msg);
     }
     catch(...) {
 	resp.status=500;

@@ -408,10 +408,40 @@ configuration or within the allow/report/reset functions:
   policy-based reject from wforce (i.e. the username and password were correct).
 
 * LoginTuple.attrs - Additional array of (single valued) attributes
-  about the login, e.g. information about the user from LDAP.
+  about the login, e.g. information about the user from LDAP. For
+  example:
+
+		 for k, v in pairs(lt.attrs) do
+			 if (k == "xxx")
+			 then
+				 -- do something
+			 end
+		 end
   		
 * LoginTuple.attrs_mv - Additional array of (multi-valued)
-  attributes about the login.
+  attributes about the login. For example:
+
+		 for k, v in pairs(lt.attrs_mv) do
+			 for i, vi in ipairs(v) do
+				 if ((k == "xxx") and (vi == "yyy"))
+				 then
+					 -- do something
+				 end
+			 end
+		 end
+
+* LoginTuple.device_id - A string that represents the device that the
+  user logged in from. Also see device_attrs.
+
+* LoginTuple.device_attrs - Additional array of attributes about the
+  device. For example:
+
+		for k, v in pairs(lt.device_attrs) do
+			 if (k == "name")
+			 then
+				 -- do something with v
+			 end
+		 end
 
 # FILES
 */etc/wforce.conf*

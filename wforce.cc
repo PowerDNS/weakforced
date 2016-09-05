@@ -365,12 +365,16 @@ Json LoginTuple::to_json() const
 {
   using namespace json11;
   Json::object jattrs;
+  Json::object jattrs_dev;
 
   for (auto i = attrs_mv.begin(); i!=attrs_mv.end(); ++i) {
     jattrs.insert(make_pair(i->first, Json(i->second)));
   }
   for (auto i = attrs.begin(); i!=attrs.end(); ++i) {
     jattrs.insert(make_pair(i->first, Json(i->second)));
+  }
+  for (auto i = device_attrs.begin(); i!=device_attrs.end(); ++i) {
+    jattrs_dev.insert(make_pair(i->first, Json(i->second)));
   }
 
   return Json::object{
@@ -379,6 +383,8 @@ Json LoginTuple::to_json() const
     {"t", (double)t}, 
     {"pwhash", pwhash},
     {"remote", remote.toString()},
+    {"device_id", device_id},
+    {"device_attrs", jattrs_dev},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
 }
@@ -389,17 +395,38 @@ std::string LoginTuple::serialize() const
   return msg.dump();
 }
 
-void LoginTuple::unserialize(const std::string& str) 
+void LoginTuple::from_json(const Json& msg)
 {
-  string err;
-  json11::Json msg=json11::Json::parse(str, err);
   login=msg["login"].string_value();
   pwhash=msg["pwhash"].string_value();
   t=msg["t"].number_value();
   success=msg["success"].bool_value();
   remote=ComboAddress(msg["remote"].string_value());
   setLtAttrs(msg);
+  setDeviceAttrs(msg);
+  device_id=msg["device_id"].string_value();
   policy_reject=msg["policy_reject"].bool_value();
+}
+
+void LoginTuple::unserialize(const std::string& str) 
+{
+  string err;
+  json11::Json msg=json11::Json::parse(str, err);
+  from_json(msg);
+}
+
+void LoginTuple::setDeviceAttrs(const json11::Json& msg)
+{
+  json11::Json jattrs = msg["device_attrs"];
+  if (jattrs.is_object()) {
+    auto attrs_obj = jattrs.object_items();
+    for (auto it=attrs_obj.begin(); it!=attrs_obj.end(); ++it) {
+      string attr_name = it->first;
+      if (it->second.is_string()) {
+	device_attrs.insert(std::make_pair(attr_name, it->second.string_value()));
+      }
+    }
+  }
 }
 
 void LoginTuple::setLtAttrs(const json11::Json& msg)

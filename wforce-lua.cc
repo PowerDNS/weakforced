@@ -335,7 +335,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	auto twsdbw = TWStringStatsDBWrapper(name, window_size, num_windows, fmvec);
 	// register this statsDB in a map for retrieval later
 	std::lock_guard<std::mutex> lock(dbMap_mutx);
-	dbMap.insert(std::pair<std::string, TWStringStatsDBWrapper>(name, twsdbw));
+	dbMap.emplace(std::make_pair(name, twsdbw));
       });
   }
   else {
@@ -353,6 +353,29 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       }
     });
 
+  if (!allow_report) {
+    c_lua.writeFunction("showStringStatsDB", []() {
+	std::lock_guard<std::mutex> lock(dbMap_mutx);
+	boost::format fmt("%-20.20d %-11.11d %-9d %-9d %-16.16s %-s\n");
+	g_outputBuffer= (fmt % "DB Name" % "Win Size/No" % "Max Size" % "Cur Size" % "Field Name" % "Field Type").str();
+	for (auto& i : dbMap) {
+	  const FieldMap fields = i.second.getFields();
+	  for (auto f=fields.begin(); f!=fields.end(); ++f) {
+	    if (f == fields.begin()) {
+	      std::string win = std::to_string(i.second.windowSize()) + "/" + std::to_string(i.second.numWindows());
+	      g_outputBuffer += (fmt % i.first % win % i.second.get_max_size() % i.second.get_size() % f->first % f->second).str();
+	    }
+	    else {
+	      g_outputBuffer += (fmt % "" % "" % "" % "" % f->first % f->second).str();
+	    }
+	  }
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("showStringStatsDB", []() { });
+  }
+  
   c_lua.registerFunction("twAdd", &TWStringStatsDBWrapper::add);
   c_lua.registerFunction("twSub", &TWStringStatsDBWrapper::sub);
   c_lua.registerFunction("twGet", &TWStringStatsDBWrapper::get);
@@ -364,6 +387,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
   c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
+  c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
   
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;

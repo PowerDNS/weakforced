@@ -84,7 +84,7 @@ catch(...) {
 
 std::mutex g_luamutex;
 LuaContext g_lua;
-int g_num_luastates=10;
+int g_num_luastates=NUM_LUA_STATES;
 std::shared_ptr<LuaMultiThread> g_luamultip;
 
 static void daemonize(void)

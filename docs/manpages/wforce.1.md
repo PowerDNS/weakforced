@@ -87,6 +87,15 @@ started with the -c option.
 		192.168.1.30:4001                   25        0              
 		192.168.1.54:4001                   0         0            Self
 
+* showStringStatsDB() - Returns information about configured stats
+  databases. For example:
+
+		> showStringStatsDB()
+		DB Name              Win Size/No Max Size  Cur Size  Field Name       Field Type
+		MyDB1                1/15        524288    0         countLogins      int
+		                                                     diffPasswords    hll
+		MyDB2                600/6       5000      2093      diffIPs          hll
+
 * showACL() - Returns the configured ACLs for the wforce server.
 
 		> showACL()

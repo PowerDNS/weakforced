@@ -40,8 +40,10 @@ public:
 
   void enableReplication();
   void disableReplication();
+  std::string getDBName();
   bool setFields(const std::vector<pair<std::string, std::string>>& fmvec);
   bool setFields(const FieldMap& fm);
+  const FieldMap& getFields();
   void setv4Prefix(uint8_t bits);
   void setv6Prefix(uint8_t bits);
   std::string getStringKey(const TWKeyType vkey);
@@ -56,7 +58,10 @@ public:
   void reset(const TWKeyType vkey);
   void resetInternal(const TWKeyType vkey, bool replicate=true);
   unsigned int get_size();
+  unsigned int get_max_size();
   void set_size_soft(unsigned int size);
+  int windowSize();
+  int numWindows();
 };
 
 extern std::mutex dbMap_mutx;

@@ -53,6 +53,11 @@ void TWStringStatsDBWrapper::disableReplication()
   *replicated = false;
 }
 
+std::string TWStringStatsDBWrapper::getDBName()
+{
+  return sdbp->getDBName();
+}
+
 bool TWStringStatsDBWrapper::setFields(const std::vector<pair<std::string, std::string>>& fmvec)
 {
   FieldMap fm;
@@ -65,6 +70,11 @@ bool TWStringStatsDBWrapper::setFields(const std::vector<pair<std::string, std::
 bool TWStringStatsDBWrapper::setFields(const FieldMap& fm) 
 {
   return(sdbp->setFields(fm));
+}
+
+const FieldMap& TWStringStatsDBWrapper::getFields()
+{
+  return(sdbp->getFields());
 }
 
 void TWStringStatsDBWrapper::setv4Prefix(uint8_t bits)
@@ -279,4 +289,19 @@ unsigned int TWStringStatsDBWrapper::get_size()
 void TWStringStatsDBWrapper::set_size_soft(unsigned int size) 
 {
   sdbp->set_map_size_soft(size);
+}
+
+unsigned int TWStringStatsDBWrapper::get_max_size()
+{	
+  return sdbp->get_max_size();
+}
+
+int TWStringStatsDBWrapper::windowSize()
+{
+  return sdbp->windowSize();
+}
+
+int TWStringStatsDBWrapper::numWindows()
+{
+  return sdbp->numWindows();
 }

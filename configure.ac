@@ -5,6 +5,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 AC_PROG_CXX
+AC_LANG([C++])
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GEOIP], [geoip], [AC_DEFINE([HAVE_GEOIP], [1], [Define to 1 if you have geoip])], [true])
 PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 1 if you have getdns])], [true])
@@ -28,7 +29,14 @@ AC_SUBST([YAHTTP_LIBS], ['-L$(top_builddir)/ext/yahttp/yahttp -lyahttp'])
 AC_SUBST([JSON11_CFLAGS], ['-I$(top_srcdir)/ext/json11'])
 AC_SUBST([JSON11_LIBS], ['-L$(top_builddir)/ext/json11 -ljson11'])
 PDNS_CHECK_LIBCRYPTO
-PDNS_WITH_LUA
+PDNS_WITH_LUAJIT
+AS_IF([test "x$with_luajit" = "xno"], [
+  PDNS_WITH_LUA
+])
+AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
+  AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is not optional])
+])
+PDNS_CHECK_LUA_HPP
 PDNS_CHECK_PANDOC
 AX_CXX_COMPILE_STDCXX_11(ext,mandatory)
 AM_CONDITIONAL([CXX2011],[test "$HAVE_CXX11" = "1"])

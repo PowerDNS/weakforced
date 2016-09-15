@@ -51,3 +51,5 @@ private:
   AnyReplicationOperationP rep_op;
   WforceReplicationMsg_RepType obj_type;
 };
+
+void replicateOperation(const ReplicationOperation& rep_op);

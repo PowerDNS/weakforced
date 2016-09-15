@@ -62,7 +62,6 @@ extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 
 void receiveReports(ComboAddress local);
-void replicateOperation(const ReplicationOperation& rep_op);
 void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {

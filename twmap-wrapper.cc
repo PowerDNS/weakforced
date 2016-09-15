@@ -24,7 +24,6 @@
 #include "replication.hh"
 #include "replication_sdb.hh"
 #include "replication.pb.h"
-#include "wforce.hh"
 
 TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows)
 {

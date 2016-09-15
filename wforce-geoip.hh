@@ -23,7 +23,7 @@
 #pragma once
 #include <string>
 #include <GeoIP.h>
-#include "wforce.hh"
+#include "iputils.hh"
 
 class WFGeoIPDB
 {

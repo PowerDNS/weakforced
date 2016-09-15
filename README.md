@@ -7,7 +7,7 @@ users of your service, as well as botnet-wide slowscans of passwords.
 
 The aim is to support the largest of installations, providing services to
 hundreds of millions of users.  The current version of weakforced is not
-quit there yet.
+quite there yet.
 
 wforce is a project by Dovecot and Open-Xchange. For historical
 reasons, it lives in the PowerDNS github tree. If you have any questions, email
@@ -32,7 +32,7 @@ wforce is aimed to receive message from services like:
 
 By gathering failed and successful login attempts from as many services as
 possible, brute forcing attacks can be detected and prevented more
-effectively. 
+effectively.
 
 Inspiration:
 http://www.techspot.com/news/58199-developer-reported-icloud-brute-force-password-hack-to-apple-nearly-six-month-ago.html
@@ -52,7 +52,7 @@ $ make
 This requires recent versions of libtool, automake and autoconf to be
 installed.  Secondly, we require a recent g++ (4.8), Boost 1.40+, and Lua
 5.1 development libraries, as well as the getdns development libraries (if you
-want to use the DNS lookup functionality). 
+want to use the DNS lookup functionality).
 
 To build on OS X, `brew install readline gcc` and use
 `./configure LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include CC=gcc-5 CXX=g++-5 CPP=cpp-5`
@@ -113,10 +113,10 @@ To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
 ```
 $ for a in {1..101}
-  do 
+  do
     curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234'$a'", "success":"false"}' \
     http://127.0.0.1:8084/?command=report -u wforce:secret
-  done 
+  done
 ```
 
 This reports 101 failed logins for one user, but with different password hashes.
@@ -176,7 +176,7 @@ end
 ```
 
 To test it out, try the following to reset the login 'ahu':
- 
+
 ```
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu"}'\
   http://127.0.0.1:8084/?command=reset -u wforce:super
@@ -266,7 +266,7 @@ TRUNCATE(SHA256(SECRET + LOGIN + '\x00' + PASSWORD), 12)
 ```
 
 Which denotes to take the first 12 bits of the hash of the concatenation of
-a secret, the login, a 0 bytes and the password.  Prepend 4 0 bits to get
+a secret, the login, a 0 byte and the password.  Prepend 4 0 bits to get
 something that can be expressed as two bytes.
 
 API Calls
@@ -318,11 +318,10 @@ To view sibling stats:
 ```
 > siblings()
 Address                             Sucesses  Failures     Note
-192.168.1.79:4001                   18        7            
-192.168.1.30:4001                   25        0            
+192.168.1.79:4001                   18        7
+192.168.1.30:4001                   25        0
 192.168.1.54:4001                   0         0            Self
 ```
 
-
 With this setup, several wforces are all kept in sync, and can be load
-balanced behind for example haproxy, which incidentally can also offer SSL.
+balanced behind (for example) haproxy, which incidentally can also offer SSL.

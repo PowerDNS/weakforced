@@ -50,12 +50,28 @@ $ make
 ```
 
 This requires recent versions of libtool, automake and autoconf to be
-installed.  Secondly, we require a recent g++ (4.8), Boost 1.40+, and Lua
-5.1 development libraries, as well as the getdns development libraries (if you
-want to use the DNS lookup functionality).
+installed.  Secondly, we require (versions tagged up to 1.0.0):
+ * Recent g++ (4.8)
+ * Boost 1.40+
+ * Lua 5.1+ development libraries (or LuaJIT if you configure --with-luajit)
+ * Getdns development libraries (if you want to use the DNS lookup functionality)
+ * libsodium
+ * python + virtualenv for regression testing
+ * libgeoip-dev for GeoIP support
+ * libsystemd-dev for systemd support
+ * pandoc for building the manpages
+
+The most recent versions also require:
+ * Protobuf compiler and protobuf development libraries
+ * libcurl-dev (OpenSSL version)
+ * libhiredis-dev
+ * libssl-dev
+ * python-bottle for regression testing of webhooks
 
 To build on OS X, `brew install readline gcc` and use
 `./configure LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include CC=gcc-5 CXX=g++-5 CPP=cpp-5`
+
+Add --with-luajit to the end of the configure line if you want to use LuaJIT.
 
 Policies
 --------
@@ -279,7 +295,7 @@ LoginTuple as described above.
 
 To request if a login should be allowed, POST to /?command=allow, again with
 the LoginTuple. The result is a JSON object with a "status" field. If this is -1, do
-not perform login validation (ie, provide no clue to the client of the password
+not perform login validation (i.e. provide no clue to the client if the password
 was correct or not, or even if the account exists).
 
 If 0, allow login validation to proceed. If a positive number, sleep this

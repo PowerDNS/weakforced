@@ -19,7 +19,7 @@ case "$1" in
     echo -n "Modifying wforce.conf to replace password and key..."
     SETKEY=`echo "makeKey()" | wforce | grep setKey`
     WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
-    sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i "" $WFORCECONF
+    sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $WFORCECONF
     echo -n "done"
   ;;
 

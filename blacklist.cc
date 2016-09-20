@@ -441,7 +441,6 @@ void BlackListDB::makePersistent(const std::string& host, unsigned int port=6379
 bool BlackListDB::addPersistEntry(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason)
 {
   bool retval = false;
-  std::lock_guard<std::mutex> lock(mutx);
   if (checkSetupContext()) {
     std::stringstream redis_key_s;
     std::stringstream redis_value_s;
@@ -466,8 +465,6 @@ bool BlackListDB::addPersistEntry(const std::string& key, time_t seconds, BLType
 bool BlackListDB::deletePersistEntry(const std::string& key, BLType bl_type, blacklist_t& blacklist)
 {
   bool retval = false;
-  std::lock_guard<std::mutex> lock(mutx);
-
   if (checkSetupContext()) {
     BlackListEntry ble;
     std::stringstream redis_key_s;

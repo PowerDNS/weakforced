@@ -54,6 +54,14 @@ field_map["countryCount"] = "countmin"
 -- You can create multiple dbs with different window lengths for storing stats over different time windows
 -- This one is 6 windows of 10 minutes each, so an hour in total. Every 10 minutes the oldest windows data will expire
 newStringStatsDB("OneHourDB",600,6,field_map)
+
+-- Persist the blacklist entries in the specified redis DB
+-- blacklistPersistDB("127.0.0.1", 6379)
+
+-- Only set this option if every wforce server is using a separate redis DB
+-- Do not set when there is a central redis DB used by all wforce servers
+-- blacklistPersistReplicated()
+
 -- This one is 24 windows of 1 hour each, so 24 hours in total. Useful for tracking long-term stats.
 -- You can reuse field_map or create a different one
 newStringStatsDB("24HourDB",3600, 24, field_map)

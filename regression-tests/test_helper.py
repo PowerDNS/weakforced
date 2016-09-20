@@ -18,6 +18,8 @@ class ApiTestCase(unittest.TestCase):
         self.server1_url = 'http://%s:%s/' % (self.server_address, self.server1_port)
         self.server2_port = 8085
         self.server2_url = 'http://%s:%s/' % (self.server_address, self.server2_port)
+        self.server3_port = 8086
+        self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))
         #self.session.keep_alive = False
@@ -135,6 +137,9 @@ class ApiTestCase(unittest.TestCase):
     def getBLFuncReplica(self):
         return self.session.get(self.url2("/?command=getBL"))
 
+    def getBLFuncPersist(self):
+        return self.session.get(self.url3("/?command=getBL"))
+    
     def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -156,6 +161,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def addBLEntryIPPersist(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+    
     def addBLEntryLogin(self, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -221,7 +236,10 @@ class ApiTestCase(unittest.TestCase):
 
     def url2(self, relative_url):
         return urlparse.urljoin(self.server2_url, relative_url)
-    
+
+    def url3(self, relative_url):
+        return urlparse.urljoin(self.server3_url, relative_url)
+        
     def assert_success_json(self, result):
         try:
             result.raise_for_status()

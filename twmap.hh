@@ -430,10 +430,13 @@ public:
 protected:
   template<typename Fn>
   bool find_create_key_field(const T& key, const std::string& field_name,
-					   Fn fn, bool create=true);
+					   Fn fn);
   template<typename Fn>
   bool find_key_field(const T& key, const std::string& field_name,
 					   Fn fn);
+  template<typename Fn>
+  bool _find_create_key_field(const T& key, const std::string& field_name,
+					   Fn fn, bool create);
 
   void update_write_timestamp(typename TWKeyTrackerType::iterator& kt)
   {
@@ -510,19 +513,25 @@ template <typename Fn>
 bool TWStatsDB<T>::find_key_field(const T& key, const std::string& field_name, Fn fn)
 {
   std::lock_guard<std::mutex> lock(mutx);
-  return find_create_key_field(key, field_name, fn, false);
+  return _find_create_key_field(key, field_name, fn, false);
 }
 
 template <typename T>
 template <typename Fn>
 bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_name,
-					 Fn fn, bool create)
+					 Fn fn)
+{
+  std::lock_guard<std::mutex> lock(mutx);
+  return _find_create_key_field(key, field_name, fn, true);
+}
+
+template <typename T>
+template <typename Fn>
+bool TWStatsDB<T>::_find_create_key_field(const T& key, const std::string& field_name,
+					  Fn fn, bool create)
 {
   TWStatsBuf myrv;
   bool retval = false;
-
-  if (create == true)
-    std::lock_guard<std::mutex> lock(mutx);
 
   // first check if the field name is in the field map - if not we throw the query out straight away
   auto myfield = field_map.find(field_name);
@@ -548,7 +557,7 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
       if (create) {
 	// if we get here it means the key exists, but not the field so we need to add it
 	mysdb->second.second.emplace(std::make_pair(field_name, wforce::make_unique<TWStatsEntry>(num_windows, window_size, start_time, mytype->first)));
-	retval = find_create_key_field(key, field_name, fn, false);
+	retval = _find_create_key_field(key, field_name, fn, false);
       }
     }
   }
@@ -560,7 +569,7 @@ bool TWStatsDB<T>::find_create_key_field(const T& key, const std::string& field_
       std::map<std::string, TWStatsEntryP> myfm;
       myfm.emplace(std::make_pair(field_name, wforce::make_unique<TWStatsEntry>(num_windows, window_size, start_time, mytype->first)));
       stats_db.emplace(std::make_pair(key, std::make_pair(kit, std::move(myfm))));
-      retval = find_create_key_field(key, field_name, fn, false);
+      retval = _find_create_key_field(key, field_name, fn, false);
     }
   }
   return(retval);

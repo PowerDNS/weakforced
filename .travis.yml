@@ -3,6 +3,8 @@ sudo: required
 dist: trusty
 compiler:
   - gcc
+services:
+  - redis-server
 addons:
   apt:
     packages:
@@ -19,6 +21,7 @@ addons:
       - protobuf-compiler
       - libhiredis-dev
       - libcurl4-openssl-dev
+      - redis-server
 before_script:
  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb

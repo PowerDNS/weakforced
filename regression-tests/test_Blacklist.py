@@ -1,5 +1,7 @@
 import requests
 import socket
+import subprocess
+import sys
 import time
 import json
 from test_helper import ApiTestCase
@@ -17,11 +19,11 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist");
+        r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist")
         j = r.json()
         self.assertEquals(j['status'], 'ok')
 
-        r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist");
+        r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist")
         j = r.json()
         self.assertEquals(j['status'], 'ok')
         
@@ -53,7 +55,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        r = self.addBLEntryLogin("goodie", 10, "test blacklist");
+        r = self.addBLEntryLogin("goodie", 10, "test blacklist")
         j = r.json()
         self.assertEquals(j['status'], 'ok')
         
@@ -75,7 +77,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        r = self.addBLEntryIPLogin("192.168.72.14", "goodie", 10, "test blacklist");
+        r = self.addBLEntryIPLogin("192.168.72.14", "goodie", 10, "test blacklist")
         j = r.json()
         self.assertEquals(j['status'], 'ok')
         
@@ -100,3 +102,28 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
+
+    def test_PersistBlacklist(self):
+        cmd3 = ("../wforce -C ./wforce3.conf").split()
+        proc3 = subprocess.Popen(cmd3, close_fds=True)
+        time.sleep(1)
+        
+        r = self.addBLEntryIPPersist("99.99.99.99", 10, "test blacklist")
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+
+        print "Killing process"
+        proc3.terminate()
+        print "Waiting for process"
+        proc3.wait()
+
+        proc3 = subprocess.Popen(cmd3, close_fds=True)
+
+        time.sleep(1)
+        
+        r = self.getBLFuncPersist()
+        j = r.json()
+        self.assertNotEqual(str.find(json.dumps(j),'99.99.99.99'), -1)
+
+        proc3.terminate()
+        proc3.wait()

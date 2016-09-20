@@ -3,6 +3,8 @@ sudo: required
 dist: trusty
 compiler:
   - gcc
+services:
+  - redis-server
 addons:
   apt:
     packages:

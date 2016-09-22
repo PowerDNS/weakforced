@@ -115,9 +115,11 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   os << "remote=\"" << lt.remote.toString() << "\" ";
   os << "login=\"" << lt.login << "\" ";
   os << LtAttrsToString(lt);
+  os << "rattrs={";
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
+  os << "}";
   // only log at notice if login was rejected or tarpitted
   if (retval == 0)
     infolog(os.str().c_str());
@@ -398,6 +400,8 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   using namespace json11;
   Json msg;
   string err;
+  std::vector<pair<std::string, std::string>> ret_attrs;
+
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
     resp.status=500;
@@ -456,6 +460,8 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 
 	// log the results of the allow function
 	allowLog(status, log_msg, lt, log_attrs);
+
+	ret_attrs = std::move(log_attrs);
       }
       catch(LuaContext::ExecutionErrorException& e) {
 	resp.status=500;
@@ -472,7 +478,11 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     g_stats.allows++;
     if(status < 0)
       g_stats.denieds++;
-    msg=Json::object{{"status", status}, {"msg", ret_msg}};
+    Json::object jattrs;
+    for (auto& i : ret_attrs) {
+      jattrs.insert(make_pair(i.first, Json(i.second)));
+    }
+    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
 
     // generate webhook events
     Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};

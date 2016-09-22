@@ -367,14 +367,14 @@ Json LoginTuple::to_json() const
   Json::object jattrs;
   Json::object jattrs_dev;
 
-  for (auto i = attrs_mv.begin(); i!=attrs_mv.end(); ++i) {
-    jattrs.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : attrs_mv) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
   }
-  for (auto i = attrs.begin(); i!=attrs.end(); ++i) {
-    jattrs.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : attrs) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
   }
-  for (auto i = device_attrs.begin(); i!=device_attrs.end(); ++i) {
-    jattrs_dev.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : device_attrs) {
+    jattrs_dev.insert(make_pair(i.first, Json(i.second)));
   }
 
   return Json::object{

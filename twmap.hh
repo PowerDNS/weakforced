@@ -38,16 +38,9 @@
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
 #include "dolog.hh"
+#include "wforce_ns.hh"
 
 using std::thread;
-
-namespace wforce {
-  template<typename T, typename... Ts>
-  std::unique_ptr<T> make_unique(Ts&&... params)
-  {
-    return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
-  }
-}
 
 class TWStatsMember;
 

@@ -86,11 +86,6 @@ extern std::string g_key; // in theory needs locking
 struct dnsheader;
 
 void controlThread(int fd, ComboAddress local);
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 void dnsdistWebserverThread(int sock, const ComboAddress& local, const string& password);
 bool getMsgLen(int fd, uint16_t* len);
 bool putMsgLen(int fd, uint16_t len);

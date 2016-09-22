@@ -19,7 +19,7 @@ wforce_SOURCES = \
 	twmap.cc twmap.hh \
 	twmap-wrapper.cc twmap-wrapper.hh \
 	blacklist.cc blacklist.hh \
-	dolog.hh \
+	dolog.hh wforce_ns.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
 	namespaces.hh \
@@ -75,7 +75,8 @@ noinst_HEADERS = \
 	webhook.hh \
 	minicurl.hh \
 	hmac.hh \
-	wforce_exception.hh
+	wforce_exception.hh \
+	wforce_ns.hh
 
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<

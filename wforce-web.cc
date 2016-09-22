@@ -391,6 +391,8 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
   return retval;
 }
 
+enum AllowReturnFields { allowRetStatus=0, allowRetMsg=1, allowRetLogMsg=2, allowRetAttrs=3 };
+
 void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 {
   using namespace json11;
@@ -447,10 +449,10 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	{
 	  ar=g_luamultip->allow(lt);
 	}
-	status = std::get<0>(ar);
-	ret_msg = std::get<1>(ar);
-	std::string log_msg = std::get<2>(ar);
-	std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
+	status = std::get<allowRetStatus>(ar);
+	ret_msg = std::get<allowRetMsg>(ar);
+	std::string log_msg = std::get<allowRetLogMsg>(ar);
+	std::vector<pair<std::string, std::string>> log_attrs = std::get<allowRetAttrs>(ar);
 
 	// log the results of the allow function
 	allowLog(status, log_msg, lt, log_attrs);

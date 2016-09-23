@@ -100,6 +100,7 @@ struct LoginTuple
   string pwhash;
   string device_id;
   std::map<std::string, std::string> device_attrs;
+  string protocol;
   bool success;
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes

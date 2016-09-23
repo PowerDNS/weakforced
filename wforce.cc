@@ -385,6 +385,7 @@ Json LoginTuple::to_json() const
     {"remote", remote.toString()},
     {"device_id", device_id},
     {"device_attrs", jattrs_dev},
+    {"protocol", protocol},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
 }
@@ -405,6 +406,7 @@ void LoginTuple::from_json(const Json& msg)
   setLtAttrs(msg);
   setDeviceAttrs(msg);
   device_id=msg["device_id"].string_value();
+  protocol=msg["protocol"].string_value();
   policy_reject=msg["policy_reject"].bool_value();
 }
 

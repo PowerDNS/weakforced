@@ -46,6 +46,8 @@ public:
   ReplicationOperation(AnyReplicationOperationP op, WforceReplicationMsg_RepType type) : rep_op(op), obj_type(type)
   {
   }
+  ReplicationOperation(const ReplicationOperation&) = delete;
+  ReplicationOperation& operator=(const ReplicationOperation&) = delete;
   std::string serialize() const;
   bool unserialize(const std::string& str);
   void applyOperation();

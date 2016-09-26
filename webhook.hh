@@ -388,7 +388,7 @@ struct CurlConnection {
   MiniCurlP			mcurl;
 };
 
-typedef std::map<unsigned int, std::vector<CurlConnection>> CurlConnMap;
+using CurlConnMap = std::map<unsigned int, std::vector<CurlConnection>>;
 
 #define MAX_HOOK_CONN 10
 #define NUM_WEBHOOK_THREADS 5

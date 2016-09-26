@@ -41,6 +41,8 @@
 
 using std::thread;
 
+GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
+
 static int uptimeOfProcess()
 {
   static time_t start=time(0);
@@ -352,6 +354,9 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       {
 	g_luamultip->report(lt);
       }
+
+      // If any report sinks are configured, send the report to one of them
+      sendReportSink(lt);
 
       std::string hook_data = lt.serialize();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {	

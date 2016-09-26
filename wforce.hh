@@ -124,6 +124,9 @@ struct LoginTuple
   }
 };
 
+extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
+void sendReportSink(const LoginTuple& lt);
+
 typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;

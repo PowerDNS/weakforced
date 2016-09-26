@@ -485,6 +485,22 @@ void Sibling::send(const std::string& msg)
     ++success;
 }
 
+std::atomic<unsigned int> g_report_sink_rr(0);
+void sendReportSink(const LoginTuple& lt)
+{
+  auto rsinks = g_report_sinks.getLocal();
+  auto msg = lt.serialize();
+  auto vsize = rsinks->size();
+
+  if (vsize == 0)
+    return;
+
+  // round-robin between report sinks
+  unsigned int i = g_report_sink_rr++ % vsize;
+
+  (*rsinks)[i]->send(msg);
+}
+
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 SodiumNonce g_sodnonce;

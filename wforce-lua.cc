@@ -67,6 +67,29 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   if (!allow_report) {
+    c_lua.writeFunction("addReportSink", [](const std::string& address) {
+	ComboAddress ca(address, 4501);
+	g_report_sinks.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
+      });
+  }
+  else {
+    c_lua.writeFunction("addReportSink", [](const std::string& address) { });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) {
+	vector<shared_ptr<Sibling>> v;
+	for(const auto& p : parts) {
+	  v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	}
+	g_report_sinks.setState(v);
+      });
+  }
+  else {
+    c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) { });
+  }
+
+  if (!allow_report) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
 	ComboAddress ca(address, 4001);
 	g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
@@ -88,7 +111,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   else {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) { });
   }
-    
+
   if (!allow_report) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
 	ComboAddress ca(address, 4001);
@@ -212,8 +235,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("siblings", []() {
       auto siblings = g_siblings.getCopy();
-      boost::format fmt("%-35s %-9d %-9d    %s\n");
-      g_outputBuffer= (fmt % "Address" % "Sucesses" % "Failures" % "Note").str();
+      boost::format fmt("%-35s %-10d %-9d    %s\n");
+      g_outputBuffer= (fmt % "Address" % "Successes" % "Failures" % "Note").str();
       for(const auto& s : siblings)
 	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % (s->d_ignoreself ? "Self" : "") ).str();
       
@@ -222,6 +245,19 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   else {
     c_lua.writeFunction("siblings", []() { });
   }	
+
+  if (!allow_report) {
+    c_lua.writeFunction("reportSinks", []() {
+      auto rsinks = g_report_sinks.getCopy();
+      boost::format fmt("%-35s %-10d %-9d\n");
+      g_outputBuffer= (fmt % "Address" % "Successes" % "Failures").str();
+      for(const auto& s : rsinks)
+	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures).str();
+    });
+  }
+  else {
+    c_lua.writeFunction("reportSinks", []() { });
+  }
 
   if (!allow_report) {
     c_lua.writeFunction("setNumLuaStates", [](int numStates) {

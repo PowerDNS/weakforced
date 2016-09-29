@@ -247,7 +247,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }	
 
   if (!allow_report) {
-    c_lua.writeFunction("reportSinks", []() {
+    c_lua.writeFunction("showReportSinks", []() {
       auto rsinks = g_report_sinks.getCopy();
       boost::format fmt("%-35s %-10d %-9d\n");
       g_outputBuffer= (fmt % "Address" % "Successes" % "Failures").str();
@@ -256,7 +256,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     });
   }
   else {
-    c_lua.writeFunction("reportSinks", []() { });
+    c_lua.writeFunction("showReportSinks", []() { });
   }
 
   if (!allow_report) {

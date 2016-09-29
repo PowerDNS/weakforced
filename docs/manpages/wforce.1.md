@@ -87,6 +87,14 @@ started with the -c option.
 		192.168.1.30:4001                   25        0              
 		192.168.1.54:4001                   0         0            Self
 
+* showReportSinks() - Returns information about configured report sinks. For
+  example:
+
+		> showReportSinks()
+		Address                             Sucesses  Failures
+		192.168.1.79:4501                   18        7
+		192.168.1.30:4501                   25        0
+
 * showStringStatsDB() - Returns information about configured stats
   databases. For example:
 

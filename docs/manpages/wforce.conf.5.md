@@ -459,6 +459,15 @@ configuration or within the allow/report/reset functions:
 			 end
 		 end
 
+* LoginTuple.protocol - A string representing the protocol that was
+  used to access mail, e.g. http, https, imap, imaps, pop, pops etc. For
+  example:
+
+		if (lt.protocol == "http")
+		then
+			-- do something
+		end
+	
 # FILES
 */etc/wforce.conf*
 

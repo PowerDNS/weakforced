@@ -650,7 +650,6 @@ static char** my_completion( const char * text , int start,  int end)
 
 struct 
 {
-  vector<string> locals;
   bool beDaemon{false};
   bool underSystemd{false};
   bool beClient{false};
@@ -683,14 +682,14 @@ try
     {"config", required_argument, 0, 'C'},
     {"execute", required_argument, 0, 'e'},
     {"client", optional_argument, 0, 'c'},
-    {"local",  required_argument, 0, 'l'},
+    {"systemd",  optional_argument, 0, 's'},
     {"daemon", optional_argument, 0, 'd'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:l:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -736,9 +735,6 @@ try
       cout<<"-l,--local address    Listen on this local address\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
-      break;
-    case 'l':
-      g_cmdLine.locals.push_back(optarg);
       break;
     case 'v':
       g_verbose=true;

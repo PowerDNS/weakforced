@@ -309,7 +309,8 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}};
       std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
-	g_webhook_runner.runHook("reset", h, hook_data);
+	if (auto hs = h.lock())
+	  g_webhook_runner.runHook("reset", hs, hook_data);
       }
     }
     catch(LuaContext::ExecutionErrorException& e) {
@@ -359,8 +360,9 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       sendReportSink(lt);
 
       std::string hook_data = lt.serialize();
-      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {	
-	g_webhook_runner.runHook("report", h, hook_data);
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
+	if (auto hs = h.lock())
+	  g_webhook_runner.runHook("report", hs, hook_data);
       }
 
       resp.status=200;
@@ -493,8 +495,10 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
     std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
-      if (allow_filter(h, status))
-	g_webhook_runner.runHook("allow", h, hook_data);
+      if (auto hs = h.lock()) {
+	if (allow_filter(hs, status))
+	  g_webhook_runner.runHook("allow", hs, hook_data);
+      }
     }
     
     resp.status=200;

@@ -532,8 +532,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	auto webhooks = g_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-9d %-9d %-30.30s %-s\n");
 	g_outputBuffer= (fmt % "ID" % "Successes" % "Failures" % "URL" % "Events").str();
-	for(const auto& i : webhooks)
-	  g_outputBuffer += (fmt % i->getID() % i->getSuccess() % i->getFailed() % i->getConfigKey("url") % i->getEventsStr()).str();
+	for(const auto& i : webhooks) {
+	  if (auto is = i.lock())
+	    g_outputBuffer += (fmt % is->getID() % is->getSuccess() % is->getFailed() % is->getConfigKey("url") % is->getEventsStr()).str();
+	}
       });
   }
   else {

@@ -109,7 +109,8 @@ void BlackListDB::addEntryInternal(const std::string& key, time_t seconds, BLTyp
     Json jobj = Json::object{{"key", key}, {"bl_type", BLTypeToName(bl_type)}, {"reason", reason}, {"expire_secs", (int)seconds}};
     std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent("addbl")) {
-      g_webhook_runner.runHook("addbl", h, hook_data);
+      if (auto hs = h.lock())
+	g_webhook_runner.runHook("addbl", hs, hook_data);
     }
   }
 }
@@ -255,7 +256,8 @@ void BlackListDB::deleteEntryInternal(const std::string& key, BLType bl_type, bo
     Json jobj = Json::object{{"key", key}, {"bl_type", BLTypeToName(bl_type)}};
     std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent("delbl")) {
-      g_webhook_runner.runHook("delbl", h, hook_data);
+      if (auto hs = h.lock())
+	g_webhook_runner.runHook("delbl", hs, hook_data);
     }
   }
 
@@ -339,7 +341,8 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_ty
       Json jobj = Json::object{{"key", tit->key}, {"bl_type", BLTypeToName(bl_type)}};
       std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("expirebl")) {
-	g_webhook_runner.runHook("expirebl", h, hook_data);
+	if (auto hs = h.lock())
+	  g_webhook_runner.runHook("expirebl", hs, hook_data);
       }
       expireEntryLog(blt, tit->key);
       tit = timeindex.erase(tit);

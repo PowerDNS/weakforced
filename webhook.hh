@@ -401,7 +401,7 @@ public:
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
 protected:
   std::weak_ptr<CurlConnection> getConnection(unsigned int hook_id);
-  static void releaseConnection(CurlConnection* cc);
+  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id);
   static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
   static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
 private:

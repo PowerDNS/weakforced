@@ -76,23 +76,19 @@ public:
   TWStatsMemberHLL()
   {
     hllp = std::make_shared<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
-    cache_valid = false;
-    cached_sum = 0;
   }
-  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); cache_valid = false; return; }
-  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); cache_valid = false; return; }
+  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); }
+  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); }
   void add(const std::string& s, int a) { return; }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
   int get() { return std::lround(hllp->estimate()); }
   int get(const std::string& s) { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
   void set(int a) { return; }
-  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); cache_valid = false; }
-  void erase() { hllp->clear(); cache_valid = false; }
+  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); }
+  void erase() { hllp->clear(); }
   int sum(const TWStatsBuf& vec)
   {
-    if (cache_valid)
-      return cached_sum;
     hll::HyperLogLog hllsum(HLL_NUM_REGISTER_BITS);
     for (auto a : vec)
       {
@@ -100,15 +96,11 @@ public:
 	std::shared_ptr<TWStatsMemberHLL> twp = std::dynamic_pointer_cast<TWStatsMemberHLL>(a.second);
 	hllsum.merge((*(twp->hllp)));
       }
-    cached_sum = std::lround(hllsum.estimate());
-    cache_valid = true;
-    return cached_sum;
+    return std::lround(hllsum.estimate());
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:
   std::shared_ptr<hll::HyperLogLog> hllp;
-  int cached_sum;
-  bool cache_valid;
 };
 
 #define COUNTMIN_EPS 0.05

@@ -124,7 +124,7 @@ public:
 	// XXX yes not massively pretty
 	hllsum.merge(*((dynamic_cast<TWStatsMemberHLL&>(*(a->second))).hllp));
       }
-    return = std::lround(hllsum.estimate());
+    return std::lround(hllsum.estimate());
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:

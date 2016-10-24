@@ -320,29 +320,29 @@ public:
     }
     return retval;
   }
-  std::shared_ptr<WebHook> getWebHook(unsigned int wh_id)
+  std::weak_ptr<WebHook> getWebHook(unsigned int wh_id)
   {
     std::lock_guard<std::mutex> lock(mutex);
     for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
       if ((*i)->getID() == wh_id)
 	return *i;
     }
-    return nullptr;
+    return std::weak_ptr<WebHook>();
   }
-  const std::vector<std::shared_ptr<const WebHook>> getWebHooks() const
+  const std::vector<std::weak_ptr<const WebHook>> getWebHooks() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    std::vector<std::shared_ptr<const WebHook>> retvec;
+    std::vector<std::weak_ptr<const WebHook>> retvec;
     
     for (const auto& i : webhooks)
       retvec.push_back(i);
     
     return retvec;
   }
-  const std::vector<std::shared_ptr<const WebHook>> getWebHooksForEvent(const std::string& event_name) const
+  const std::vector<std::weak_ptr<const WebHook>> getWebHooksForEvent(const std::string& event_name) const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    std::vector<std::shared_ptr<const WebHook>> retvec;
+    std::vector<std::weak_ptr<const WebHook>> retvec;
     
     for (const auto& i : webhooks) {
       for (const auto& ev : i->getEvents()) {
@@ -376,19 +376,15 @@ private:
   mutable std::mutex mutex;
 };
 
-using MiniCurlP = std::shared_ptr<MiniCurl>;
-
 struct CurlConnection {
   CurlConnection()
   {
-    cmutex = std::make_shared<std::mutex>();
-    mcurl = std::make_shared<MiniCurl>();
   }
-  std::shared_ptr<std::mutex> 	cmutex;
-  MiniCurlP			mcurl;
+  std::mutex 	cmutex;
+  MiniCurl	mcurl;
 };
 
-typedef std::map<unsigned int, std::vector<CurlConnection>> CurlConnMap;
+using CurlConnMap = std::map<unsigned int, std::vector<std::shared_ptr<CurlConnection>>>;
 
 #define MAX_HOOK_CONN 10
 #define NUM_WEBHOOK_THREADS 5
@@ -404,10 +400,10 @@ public:
   // asynchronously run the hook with the supplied data (must be in json format)
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
 protected:
-  void getConnection(unsigned int hook_id, CurlConnection& out_cc);
-  static void releaseConnection(CurlConnection& cc);
-  static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc);
-  static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc);
+  std::weak_ptr<CurlConnection> getConnection(unsigned int hook_id);
+  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id);
+  static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
+  static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
 private:
   ctpl::thread_pool p;
   unsigned int max_hook_conns = MAX_HOOK_CONN;

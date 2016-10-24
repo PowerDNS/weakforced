@@ -24,15 +24,18 @@
 #include "replication.pb.h"
 #include <memory>
 
+class AnyReplicationOperation;
+
+typedef std::shared_ptr<AnyReplicationOperation> AnyReplicationOperationP;
+
 class AnyReplicationOperation
 {
 public:
   virtual std::string serialize()=0;
-  virtual std::shared_ptr<AnyReplicationOperation> unserialize(const std::string& data, bool& retval)=0;
+  virtual AnyReplicationOperationP unserialize(const std::string& data, bool& retval)=0;
   virtual void applyOperation()=0;
 };
 
-typedef std::shared_ptr<AnyReplicationOperation> AnyReplicationOperationP;
 
 class ReplicationOperation
 {
@@ -43,6 +46,8 @@ public:
   ReplicationOperation(AnyReplicationOperationP op, WforceReplicationMsg_RepType type) : rep_op(op), obj_type(type)
   {
   }
+  ReplicationOperation(const ReplicationOperation&) = delete;
+  ReplicationOperation& operator=(const ReplicationOperation&) = delete;
   std::string serialize() const;
   bool unserialize(const std::string& str);
   void applyOperation();
@@ -51,3 +56,5 @@ private:
   AnyReplicationOperationP rep_op;
   WforceReplicationMsg_RepType obj_type;
 };
+
+void replicateOperation(const ReplicationOperation& rep_op);

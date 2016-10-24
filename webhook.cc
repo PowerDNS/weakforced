@@ -47,87 +47,68 @@ void WebHookRunner::setMaxConns(unsigned int max_conns)
 // synchronously run the ping command for the hook
 bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg)
 {
-  CurlConnection cc;
-  getConnection(hook->getID(), cc); // this will only return once it has a connection
+  auto cc = getConnection(hook->getID()); // this will only return once it has a connection
 
-  return _runHook("ping", hook, std::string(), cc);
+  if (auto ccs = cc.lock())
+    return _runHook("ping", hook, std::string(), ccs.get());
+  else
+    return(false);
 }
 
 // asynchronously run the hook with the supplied data (must be a string in json format)
 void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data)
 {
-  CurlConnection cc;
   std::string err_msg;
   
   if (!hook->validateConfig(err_msg)) {
     errlog("runHook: Error validating configuration of webhook id=%d for event (%s) [%s]", hook->getID(), event_name, err_msg);
   }
   else {
-    getConnection(hook->getID(), cc); // this will only return once it has a connection
-    // XXX - the called function is responsible for releasing the mutex, which is not ideal
-    p.push(_runHookThread, event_name, hook, hook_data, cc);
+    auto cc = getConnection(hook->getID());
+    if (auto ccs = cc.lock())
+      p.push(_runHookThread, event_name, hook, hook_data, ccs.get());
   }
 }
 
-void WebHookRunner::getConnection(unsigned int hook_id, CurlConnection& out_cc)
+std::weak_ptr<CurlConnection> WebHookRunner::getConnection(unsigned int hook_id)
 {
   std::lock_guard<std::mutex> lock(conn_mutex);
-    
+  return (_getConnection(hook_id));
+}
+
+std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id)
+{ 
   auto ci = conns.find(hook_id);
-  if (ci != conns.end()) { // we already have some connections, maybe we can reuse
-    // first we try to get an existing connection
-    for (auto& i : ci->second) {
-      if (i.cmutex->try_lock()) {
-	out_cc = i;
-	return;
-      }
-      else
-	continue;
-    }
-    // ok, nothing doing so we create a new connection if we can
-    unsigned int num_conns = ci->second.size();
-    if (num_conns < max_hook_conns) {
-      CurlConnection cc = CurlConnection();
-      cc.cmutex->lock();
-      out_cc = cc;
-      ci->second.push_back(cc);
-    }
-    else {
-      // ok so we couldn't create a new connection so let's just wait for an
-      // existing connection to become available
-      // XXX if very busy, we'll have a bunch of threads trying to get the first lock
-      for (auto& i : ci->second) {
-	i.cmutex->lock();
-	out_cc = i;
-	return;
-      }
-    }
+  if (ci != conns.end()) { 
+    // return a random connection
+    int i = std::rand() % ci->second.size();
+    return (ci->second.at(i));
   }
-  else { // first time for this hook id
-    std::vector<CurlConnection> vec;
-    CurlConnection cc = CurlConnection();
-    cc.cmutex->lock();
-    out_cc = cc;
-    vec.push_back(cc);
+  else {
+    std::vector<std::shared_ptr<CurlConnection>> vec;
+    
+    for (unsigned int i=0; i< max_hook_conns; i++) {
+      std::shared_ptr<CurlConnection> cc = std::make_shared<CurlConnection>();
+      vec.push_back(cc);
+    }
     conns.insert(std::make_pair(hook_id, vec));
+    return (_getConnection(hook_id));
   }
 }
 
-void WebHookRunner::releaseConnection(CurlConnection& cc)
-{
-  cc.cmutex->unlock();
-}
-
-void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc)
+void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc)
 {
   _runHook(event_name, hook, hook_data, cc);
 }
 
-bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection& cc)
+bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc)
 {
   // construct the necessary headers
   MiniCurlHeaders mch;
   std::string error_msg;
+
+  if (cc == nullptr)
+    return false;
   
   mch.insert(std::make_pair("X-Wforce-Event", event_name));
   mch.insert(std::make_pair("Content-Type", "application/json"));
@@ -142,8 +123,12 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
 
   debuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
 	   hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
-  
-  bool ret = cc.mcurl->postURL(hook->getConfigKey("url"), hook_data, mch, error_msg);
+
+  bool ret;
+  {
+    std::lock_guard<std::mutex> lock(cc->cmutex);
+    ret = cc->mcurl.postURL(hook->getConfigKey("url"), hook_data, mch, error_msg);
+  }
 
   if (ret != true) {
     errlog("Webhook id=%d failed for event (%s) to url (%s) with delivery id (%s) [%s]",
@@ -156,7 +141,5 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
     hook->incSuccess();
   }
   
-  releaseConnection(cc);
-
   return ret;
 }

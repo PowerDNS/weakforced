@@ -21,37 +21,11 @@
  */
 
 #pragma once
-#include <string>
-#include <GeoIP.h>
-#include "iputils.hh"
 
-class WFGeoIPDB
-{
-public:
-  WFGeoIPDB()
+namespace wforce {
+  template<typename T, typename... Ts>
+  std::unique_ptr<T> make_unique(Ts&&... params)
   {
-    gi_v4 = gi_v6 = NULL;
+    return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
   }
-
-  ~WFGeoIPDB()
-  {
-    if (gi_v4) {
-      GeoIP_delete(gi_v4);
-    }
-    if (gi_v6) {
-      GeoIP_delete(gi_v6);
-    }
-  }
-
-  // Only load it if someone wants to use GeoIP, otherwise it's a waste of RAM
-  void initGeoIPDB();
-  // This will lookup in either the v4 or v6 GeoIP DB, depending on what address is
-  std::string const lookupCountry(const ComboAddress& address);
-
-private:
-  // GeoIPDB seems to have different DBs for v4 and v6 addresses, hence two DBs
-  GeoIP *gi_v4;
-  GeoIP *gi_v6;
-};
-
-extern WFGeoIPDB g_wfgeodb;
+}

@@ -62,7 +62,6 @@ extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 
 void receiveReports(ComboAddress local);
-void replicateOperation(const ReplicationOperation& rep_op);
 void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {
@@ -87,11 +86,6 @@ extern std::string g_key; // in theory needs locking
 struct dnsheader;
 
 void controlThread(int fd, ComboAddress local);
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 void dnsdistWebserverThread(int sock, const ComboAddress& local, const string& password);
 bool getMsgLen(int fd, uint16_t* len);
 bool putMsgLen(int fd, uint16_t len);
@@ -106,6 +100,7 @@ struct LoginTuple
   string pwhash;
   string device_id;
   std::map<std::string, std::string> device_attrs;
+  string protocol;
   bool success;
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
@@ -128,6 +123,9 @@ struct LoginTuple
     return cal < car;
   }
 };
+
+extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
+void sendReportSink(const LoginTuple& lt);
 
 typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
 

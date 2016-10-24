@@ -41,6 +41,8 @@
 
 using std::thread;
 
+GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
+
 static int uptimeOfProcess()
 {
   static time_t start=time(0);
@@ -115,9 +117,11 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   os << "remote=\"" << lt.remote.toString() << "\" ";
   os << "login=\"" << lt.login << "\" ";
   os << LtAttrsToString(lt);
+  os << "rattrs={";
   for (const auto& i : kvs) {
     os << i.first << "="<< "\"" << i.second << "\"" << " ";
   }
+  os << "}";
   // only log at notice if login was rejected or tarpitted
   if (retval == 0)
     infolog(os.str().c_str());
@@ -305,7 +309,8 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
       Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}};
       std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
-	g_webhook_runner.runHook("reset", h, hook_data);
+	if (auto hs = h.lock())
+	  g_webhook_runner.runHook("reset", hs, hook_data);
       }
     }
     catch(LuaContext::ExecutionErrorException& e) {
@@ -351,9 +356,13 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	g_luamultip->report(lt);
       }
 
+      // If any report sinks are configured, send the report to one of them
+      sendReportSink(lt);
+
       std::string hook_data = lt.serialize();
-      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {	
-	g_webhook_runner.runHook("report", h, hook_data);
+      for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
+	if (auto hs = h.lock())
+	  g_webhook_runner.runHook("report", hs, hook_data);
       }
 
       resp.status=200;
@@ -391,11 +400,15 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
   return retval;
 }
 
+enum AllowReturnFields { allowRetStatus=0, allowRetMsg=1, allowRetLogMsg=2, allowRetAttrs=3 };
+
 void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 {
   using namespace json11;
   Json msg;
   string err;
+  std::vector<pair<std::string, std::string>> ret_attrs;
+
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
     resp.status=500;
@@ -447,13 +460,15 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	{
 	  ar=g_luamultip->allow(lt);
 	}
-	status = std::get<0>(ar);
-	ret_msg = std::get<1>(ar);
-	std::string log_msg = std::get<2>(ar);
-	std::vector<pair<std::string, std::string>> log_attrs = std::get<3>(ar);
+	status = std::get<allowRetStatus>(ar);
+	ret_msg = std::get<allowRetMsg>(ar);
+	std::string log_msg = std::get<allowRetLogMsg>(ar);
+	std::vector<pair<std::string, std::string>> log_attrs = std::get<allowRetAttrs>(ar);
 
 	// log the results of the allow function
 	allowLog(status, log_msg, lt, log_attrs);
+
+	ret_attrs = std::move(log_attrs);
       }
       catch(LuaContext::ExecutionErrorException& e) {
 	resp.status=500;
@@ -470,14 +485,20 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     g_stats.allows++;
     if(status < 0)
       g_stats.denieds++;
-    msg=Json::object{{"status", status}, {"msg", ret_msg}};
+    Json::object jattrs;
+    for (auto& i : ret_attrs) {
+      jattrs.insert(make_pair(i.first, Json(i.second)));
+    }
+    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
 
     // generate webhook events
     Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
     std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
-      if (allow_filter(h, status))
-	g_webhook_runner.runHook("allow", h, hook_data);
+      if (auto hs = h.lock()) {
+	if (allow_filter(hs, status))
+	  g_webhook_runner.runHook("allow", hs, hook_data);
+      }
     }
     
     resp.status=200;

@@ -367,14 +367,14 @@ Json LoginTuple::to_json() const
   Json::object jattrs;
   Json::object jattrs_dev;
 
-  for (auto i = attrs_mv.begin(); i!=attrs_mv.end(); ++i) {
-    jattrs.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : attrs_mv) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
   }
-  for (auto i = attrs.begin(); i!=attrs.end(); ++i) {
-    jattrs.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : attrs) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
   }
-  for (auto i = device_attrs.begin(); i!=device_attrs.end(); ++i) {
-    jattrs_dev.insert(make_pair(i->first, Json(i->second)));
+  for (auto& i : device_attrs) {
+    jattrs_dev.insert(make_pair(i.first, Json(i.second)));
   }
 
   return Json::object{
@@ -385,6 +385,7 @@ Json LoginTuple::to_json() const
     {"remote", remote.toString()},
     {"device_id", device_id},
     {"device_attrs", jattrs_dev},
+    {"protocol", protocol},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
 }
@@ -405,6 +406,7 @@ void LoginTuple::from_json(const Json& msg)
   setLtAttrs(msg);
   setDeviceAttrs(msg);
   device_id=msg["device_id"].string_value();
+  protocol=msg["protocol"].string_value();
   policy_reject=msg["policy_reject"].bool_value();
 }
 
@@ -481,6 +483,22 @@ void Sibling::send(const std::string& msg)
     ++failures;
   else
     ++success;
+}
+
+std::atomic<unsigned int> g_report_sink_rr(0);
+void sendReportSink(const LoginTuple& lt)
+{
+  auto rsinks = g_report_sinks.getLocal();
+  auto msg = lt.serialize();
+  auto vsize = rsinks->size();
+
+  if (vsize == 0)
+    return;
+
+  // round-robin between report sinks
+  unsigned int i = g_report_sink_rr++ % vsize;
+
+  (*rsinks)[i]->send(msg);
 }
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
@@ -632,7 +650,6 @@ static char** my_completion( const char * text , int start,  int end)
 
 struct 
 {
-  vector<string> locals;
   bool beDaemon{false};
   bool underSystemd{false};
   bool beClient{false};
@@ -665,14 +682,14 @@ try
     {"config", required_argument, 0, 'C'},
     {"execute", required_argument, 0, 'e'},
     {"client", optional_argument, 0, 'c'},
-    {"local",  required_argument, 0, 'l'},
+    {"systemd",  optional_argument, 0, 's'},
     {"daemon", optional_argument, 0, 'd'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:l:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -718,9 +735,6 @@ try
       cout<<"-l,--local address    Listen on this local address\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
-      break;
-    case 'l':
-      g_cmdLine.locals.push_back(optarg);
       break;
     case 'v':
       g_verbose=true;

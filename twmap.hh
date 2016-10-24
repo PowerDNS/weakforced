@@ -38,16 +38,9 @@
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"
 #include "dolog.hh"
+#include "wforce_ns.hh"
 
 using std::thread;
-
-namespace wforce {
-  template<typename T, typename... Ts>
-  std::unique_ptr<T> make_unique(Ts&&... params)
-  {
-    return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
-  }
-}
 
 class TWStatsMember;
 
@@ -110,40 +103,32 @@ public:
   TWStatsMemberHLL()
   {
     hllp = wforce::make_unique<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
-    cache_valid = false;
-    cached_sum = 0;
   }
   TWStatsMemberHLL(const TWStatsMemberHLL&) = delete;
   TWStatsMemberHLL& operator=(const TWStatsMemberHLL&) = delete;
-  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); cache_valid = false; return; }
-  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); cache_valid = false; return; }
+  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
+  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); }
   void add(const std::string& s, int a) { return; }
   void sub(int a) { return; }
   void sub(const std::string& s) { return; }
   int get() { return std::lround(hllp->estimate()); }
   int get(const std::string& s) { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
   void set(int a) { return; }
-  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); cache_valid = false; }
-  void erase() { hllp->clear(); cache_valid = false; }
+  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); }
+  void erase() { hllp->clear(); }
   int sum(const TWStatsBuf& vec)
   {
-    if (cache_valid == true)
-      return cached_sum;
     hll::HyperLogLog hllsum(HLL_NUM_REGISTER_BITS);
     for (auto a = vec.begin(); a != vec.end(); ++a)
       {
 	// XXX yes not massively pretty
 	hllsum.merge(*((dynamic_cast<TWStatsMemberHLL&>(*(a->second))).hllp));
       }
-    cached_sum = std::lround(hllsum.estimate());
-    cache_valid = true;
-    return cached_sum;
+    return std::lround(hllsum.estimate());
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
 private:
   std::unique_ptr<hll::HyperLogLog> hllp;
-  int cached_sum;
-  bool cache_valid;
 };
 
 #define COUNTMIN_EPS 0.05
@@ -306,17 +291,30 @@ public:
   int sum() {
     clean_windows();
     int cur_window = current_window();
-    return stats_array[cur_window].second->sum(stats_array);
+    if (sum_cache_valid == true)
+      return sum_cache_value;
+    else {
+      sum_cache_value = stats_array[cur_window].second->sum(stats_array);
+      return sum_cache_value;
+    }
   }
   int sum(const std::string& s) {
     clean_windows();
     int cur_window = current_window();
-    return stats_array[cur_window].second->sum(s, stats_array);
+    if (ssum_cache_valid == true)
+      return ssum_cache_value;
+    else {
+      ssum_cache_value = stats_array[cur_window].second->sum(s, stats_array);
+      return ssum_cache_value;
+    }
   }
   void reset() {
     for (TWStatsBuf::iterator i = stats_array.begin(); i != stats_array.end(); ++i) {
       i->second->erase();
+      i->first = 0;
     }
+    sum_cache_valid = false;
+    ssum_cache_valid = false;
   }
 protected:
   void update_write_timestamp(int cur_window)
@@ -328,6 +326,8 @@ protected:
       write_time = now - ((now - start_time) % window_size);
       stats_array[cur_window].first = write_time;
     }
+    sum_cache_valid = false;
+    ssum_cache_valid = false;
   }
   int current_window() {
     std::time_t now, diff;
@@ -353,6 +353,8 @@ protected:
       if ((last_write != 0) && (now - last_write) >= expire_diff) {
 	i->second->erase();
 	i->first = 0;
+	sum_cache_valid = false;
+	ssum_cache_valid = false;
       }
     }
     last_cleaned = now;
@@ -363,6 +365,10 @@ private:
   int window_size;
   std::time_t start_time;
   std::time_t last_cleaned;
+  bool sum_cache_valid = false;
+  int sum_cache_value = 0;
+  bool ssum_cache_valid = false;
+  int ssum_cache_value = 0;
 };
 
 typedef std::unique_ptr<TWStatsEntry> TWStatsEntryP;

@@ -43,13 +43,13 @@ cannot be called inside the allow/report/reset functions:
 		addWebHook(events, config_keys)
 		
 * setSiblings(\<list of IP[:port]\>) - Set the list of siblings to which
-  all received reports should be forwarded. If port is not specified
+  stats db and blacklist data should be replicated. If port is not specified
   it defaults to 4001. For example:
   
 		setSiblings({"127.0.1.2", "127.0.1.3:4004"})
 
 * addSibling(\<IP[:port]\>) - Add a sibling to the list to which all
-  received reports should be forwarded.  If port is not specified
+  stats db and blacklist data should be replicated.  If port is not specified
   it defaults to 4001. For example:
   
 		addSibling("192.168.1.23")
@@ -59,6 +59,22 @@ cannot be called inside the allow/report/reset functions:
   it defaults to 4001. For example:
   
 		siblingListener("0.0.0.0:4001")
+
+* setReportSinks(\<list of IP[:port]\>) - Set the list of report sinks to which
+  all received reports should be forwarded. Reports will be sent to
+  the configured report sinks in a round-robin fashion if more than
+  one is specified. If port is not specified it defaults to 4501. For
+  example: 
+  
+		setReportSinks({"127.0.1.2", "127.0.1.3:4501"})
+
+* addReportSink(\<IP[:port]\>) - Add a report sink to the list to which all
+  received reports should be forwarded. Reports will be sent to
+  the configured report sinks in a round-robin fashion if more than
+  one is specified. If port is not specified it defaults to 4001. For
+  example:
+  
+		addReportSink("192.168.1.23")
 
 * webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
   specified IP address and port. The password is used to authenticate
@@ -90,7 +106,7 @@ cannot be called inside the allow/report/reset functions:
 * setNumWorkerThreads(\<num threads\>) - Set the number of threads in
   the pool used to run allow/report/reset commands. Each thread uses a
   separate Lua Context, (see setNumLuaStates()). Defaults to 4 if not
-  specified. For example: 
+  specified. For example:
   
 		setNumWorkerThreads(4)
 
@@ -443,6 +459,15 @@ configuration or within the allow/report/reset functions:
 			 end
 		 end
 
+* LoginTuple.protocol - A string representing the protocol that was
+  used to access mail, e.g. http, https, imap, imaps, pop, pops etc. For
+  example:
+
+		if (lt.protocol == "http")
+		then
+			-- do something
+		end
+	
 # FILES
 */etc/wforce.conf*
 

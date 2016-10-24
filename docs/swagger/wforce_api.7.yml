@@ -67,14 +67,19 @@ paths:
             required:
               - status
               - msg
+              - r_attrs
             properties:
               status:
                 type: integer
               msg:
                 type: string
-            example:
-              status: -1
-              msg: "Too many failed passwords"
+              r_attrs:
+                type: object
+                properties:
+                  attr_name:
+                    type: string
+                example:
+                  two_factor_required: true
         default:
           description: unexpected error
           schema:
@@ -174,7 +179,7 @@ paths:
         - "application/json"
       responses:
         "200":
-          description: "ping reponse"
+          description: "ping response"
           schema:
             type: object
             required:
@@ -196,7 +201,7 @@ paths:
         - "application/json"
       responses:
         "200":
-          description: "getBL reponse"
+          description: "getBL response"
           schema:
             $ref: "#/definitions/BLResponse"
         default:
@@ -218,7 +223,7 @@ paths:
             $ref: "#/definitions/ResetStatsParams"
       responses:
         "200":
-          description: "getDBStats reponse"
+          description: "getDBStats response"
           schema:
             $ref: "#/definitions/DBStatsResponse"
         default:

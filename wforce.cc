@@ -133,7 +133,13 @@ try
     readn2(fd, msg, len);
     
     string line(msg, len);
-    line = sodDecryptSym(line, g_key, theirs);
+    try {
+      line = sodDecryptSym(line, g_key, theirs);
+    }
+    catch (std::runtime_error& e) {
+      errlog("Could not decrypt client command: %s", e.what());
+      continue;
+    }
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
     try {

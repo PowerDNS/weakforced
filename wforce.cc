@@ -133,6 +133,7 @@ try
     }
     catch(std::runtime_error& e) {
       errlog("Could not decrypt received client command: %s", e.what());
+      return;
     }
 
     //cerr<<"Have decrypted line: "<<line<<endl;
@@ -525,6 +526,7 @@ void receiveReports(ComboAddress local)
     }
     catch(std::runtime_error& e) {
       errlog("Could not decrypt received report: %s", e.what());
+      continue;
     }
 
     p.push([msg,remote](int id) {

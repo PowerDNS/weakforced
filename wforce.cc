@@ -128,7 +128,13 @@ try
     readn2(fd, msg, len);
     
     string line(msg, len);
-    line = sodDecryptSym(line, g_key, theirs);
+    try {
+      line = sodDecryptSym(line, g_key, theirs);
+    }
+    catch(std::runtime_error& e) {
+      errlog("Could not decrypt received client command: %s", e.what());
+    }
+
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
     try {
@@ -512,7 +518,14 @@ void receiveReports(ComboAddress local)
     SodiumNonce nonce;
     memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
     string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
-    string msg=sodDecryptSym(packet, g_key, nonce);
+    string msg;
+    
+    try {
+      msg=sodDecryptSym(packet, g_key, nonce);
+    }
+    catch(std::runtime_error& e) {
+      errlog("Could not decrypt received report: %s", e.what());
+    }
 
     p.push([msg,remote](int id) {
 	LoginTuple lt;

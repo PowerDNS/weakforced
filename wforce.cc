@@ -46,7 +46,7 @@
 
 using std::atomic;
 using std::thread;
-bool g_verbose;
+bool g_verbose=false;
 
 struct WForceStats g_stats;
 bool g_console;

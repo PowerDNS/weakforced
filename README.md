@@ -42,7 +42,7 @@ Installing
 From GitHub:
 
 ```
-$ git clone git@github.com:ahupowerdns/weakforced.git
+$ git clone https://github.com/PowerDNS/weakforced.git
 $ cd weakforced
 $ autoreconf -i
 $ ./configure

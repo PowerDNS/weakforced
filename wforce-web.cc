@@ -106,7 +106,7 @@ void reportLog(const LoginTuple& lt)
   os << "policy_reject=\"" << lt.policy_reject << "\" ";
   os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
   os << LtAttrsToString(lt);
-  infolog(os.str().c_str());
+  vinfolog(os.str().c_str());
 }
 
 void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
@@ -123,8 +123,9 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   }
   os << "}";
   // only log at notice if login was rejected or tarpitted
-  if (retval == 0)
-    infolog(os.str().c_str());
+  if (retval == 0) {
+    vinfolog(os.str().c_str());
+  }
   else
     noticelog(os.str().c_str());
 }
@@ -674,7 +675,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
   auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
   addWTWStat(i_millis.count());
 
-  infolog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
+  vinfolog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
   YaHTTP::AsyncRequestLoader yarl;
   yarl.initialize(&req);

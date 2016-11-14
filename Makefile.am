@@ -5,7 +5,7 @@ SUBDIRS=ext docs
 
 EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto
 
-CLEANFILES = replication.pb.cc replication.pb.h
+CLEANFILES = replication.pb.cc replication.pb.h wforce.service.in
 
 sysconf_DATA= wforce.conf wforce.conf.example
 bin_PROGRAMS = wforce

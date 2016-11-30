@@ -155,6 +155,7 @@ try
 
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
 	it->lua_contextp->executeCode<	
 	  boost::optional<
 	    boost::variant<

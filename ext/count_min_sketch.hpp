@@ -25,11 +25,6 @@ class CountMinSketch {
   // the bigger the better
   float gamma;
   
-  // aj, bj \in Z_p
-  // both elements of fild Z_p used in generation of hash
-  // function
-  unsigned int aj, bj;
-
   // total count so far
   unsigned int total; 
 

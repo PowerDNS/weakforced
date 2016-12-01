@@ -32,8 +32,8 @@ before_script:
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
  - echo "deb http://cz.archive.ubuntu.com/ubuntu xenial main universe" | sudo tee -a /etc/apt/sources.list
- - apt update -qq
- - apt install libgetdns-dev -y
+ - sudo apt update -qq
+ - sudo apt install libgetdns-dev -y
  - dig @208.67.222.222 a.root-servers.net
  - cpanm --quiet --installdeps --notest Template
  - cpanm --quiet --installdeps --notest Swagger2::Markdown

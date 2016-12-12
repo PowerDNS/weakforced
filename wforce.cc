@@ -601,6 +601,7 @@ allow_t g_allow{defaultAllowTuple};
 report_t g_report{defaultReportTuple};
 reset_t g_reset{defaultReset};
 canonicalize_t g_canon{defaultCanonicalize};
+CustomFuncMap g_custom_func_map;
 
 /**** CARGO CULT CODE AHEAD ****/
 extern "C" {
@@ -756,13 +757,13 @@ try
 
 
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
   // this sets up the global lua state used for config and setup
-  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_canon, g_cmdLine.config);
+  auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_cmdLine.config);
 
   // now we setup the allow/report lua states
   g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
@@ -778,6 +779,7 @@ try
 	     it->report_func,
 	     it->reset_func,
 	     it->canon_func,
+	     it->custom_func_map,
 	     g_cmdLine.config);
   }
 

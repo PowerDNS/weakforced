@@ -204,3 +204,11 @@ end
 setReport(report)
 setAllow(allow)
 setReset(reset)
+
+function custom(args)
+	 attrs = args.attrs
+	 attrs_mv = args.attrs_mv
+end
+
+-- Register a custom endpoint
+setCustomEndpoint("custom", custom)

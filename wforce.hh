@@ -124,10 +124,17 @@ struct LoginTuple
   }
 };
 
+struct CustomFuncArgs {
+  std::map<std::string, std::string> attrs; // additional attributes
+  std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
+};
+typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
+
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 void sendReportSink(const LoginTuple& lt);
 
-typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
+typedef std::tuple<int, std::string, std::string, KeyValVector> AllowReturn;
+typedef std::tuple<int, KeyValVector> CustomFuncReturn;
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
@@ -136,8 +143,11 @@ extern report_t g_report;
 typedef std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_t;
 extern reset_t g_reset;
 typedef std::function<std::string(const std::string&)> canonicalize_t;
+typedef std::function<CustomFuncReturn(const CustomFuncArgs&)> custom_func_t;
+typedef std::map<std::string, custom_func_t> CustomFuncMap;
+extern CustomFuncMap g_custom_func_map;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, const std::string& config);
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, const std::string& config);
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
@@ -146,6 +156,7 @@ struct LuaThreadContext {
   report_t report_func;
   reset_t reset_func;
   canonicalize_t canon_func;
+  CustomFuncMap custom_func_map;
 };
 
 #define NUM_LUA_STATES 6

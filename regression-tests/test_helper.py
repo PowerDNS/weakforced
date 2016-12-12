@@ -126,7 +126,16 @@ class ApiTestCase(unittest.TestCase):
                 self.url2("/?command=reset"),
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
-            
+
+    def customFunc(self, login):
+        attrs = dict()
+        attrs['login'] = login
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url("/?command=custom"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
 
     def pingFunc(self):
         return self.session.get(self.url("/?command=ping"))

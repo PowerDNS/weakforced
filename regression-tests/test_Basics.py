@@ -20,10 +20,14 @@ class TestBasics(ApiTestCase):
 
     def test_getBL(self):
         r = self.getBLFunc()
-        print r
         j = r.json()
         self.assertEquals(j['bl_entries'], [])
 
+    def test_customFunc(self):
+        r = self.customFunc("custom1")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['login'], 'custom1')
+        
     def test_getDBStats(self):
         self.reportFunc('dbstats', '1.4.3.2', '1234', False); 
         r = self.getDBStatsLogin('dbstats')

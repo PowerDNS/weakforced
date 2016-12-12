@@ -228,7 +228,7 @@ public:
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
-    // call the allow function
+    // call the custom function
     for (const auto& i : lt_context.custom_func_map) {
       if (command.compare(i.first) == 0)
 	return i.second(cfa);

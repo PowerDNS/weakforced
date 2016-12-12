@@ -635,6 +635,66 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
 }
 
+enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
+
+void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+  KeyValVector ret_attrs;
+
+  msg=Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"success\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    CustomFuncArgs cfa;
+    bool status = false;
+    
+    try {
+      cfa.setAttrs(msg);
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"success":false, "reason":"Could not parse input"})";
+      return;
+    }
+
+    try {
+      CustomFuncReturn cr;
+      {
+	cr=g_luamultip->custom_func(command, cfa);
+      }
+      status = std::get<customRetStatus>(cr);
+      KeyValVector log_attrs = std::get<customRetAttrs>(cr);
+      ret_attrs = std::move(log_attrs);
+    }
+    catch(LuaContext::ExecutionErrorException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Lua custom function [%s] exception: %s", command, e.what());
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"success":false})";
+    }
+    Json::object jattrs;
+    for (auto& i : ret_attrs) {
+      jattrs.insert(make_pair(i.first, Json(i.second)));
+    }
+    msg=Json::object{{"success", status}, {"r_attrs", jattrs}};
+
+    resp.status=200;
+    resp.body=msg.dump();
+  }  
+}
+
 struct WFConnection {
   WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
   {
@@ -781,6 +841,12 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       parseGetStatsCmd(req, resp);
     }
     else {
+      for (const auto& i : g_custom_func_map) {
+	if (command.compare(i.first) == 0 && req.method=="POST") {
+	  parseCustomCmd(req, resp, command);
+	}
+      }
+      
       // cerr<<"404 for: "<<resp.url.path<<endl;
       resp.status=404;
     }

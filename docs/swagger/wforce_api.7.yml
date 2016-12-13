@@ -230,7 +230,50 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/Error"
+  /?command=customEndpoint:
+    post:
+      description: Extensible mechanism allows custom REST endpoints to be defined - this is an example
+      operationId: customEndpoint
+      produces:
+        - "application/json"
+      parameters:
+        - name: CustomFuncArgs
+          in: body
+          description: Arguments to custom REST endpoint
+          required: true
+          schema:
+            $ref: "#/definitions/CustomFuncArgs"
+      responses:
+        "200":
+          description: "custom endpoint response"
+          schema:
+            type: object
+            required:
+              - success
+              - r_attrs
+            properties:
+              success:
+                type: boolean
+              r_attrs:
+                type: object
+                properties:
+                  attr_name:
+                    type: string
+                example:
+                  two_factor_required: true
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/CustomError"
 definitions:
+  CustomFuncArgs:
+    required:
+      - attrs
+    example:
+      attrs: { "key"="value" }
+    properties:
+      attrs:
+        $ref: "#/definitions/LTAttrs" 
   LoginTupleReport:
     required:
       - login
@@ -318,6 +361,18 @@ definitions:
       ip: 127.0.0.1
       expire: 3600
       reason: “Too many bad passwords”
+  CustomError:
+    required:
+      - success
+      - reason
+    properties:
+      success:
+        type: boolean
+      reason:
+        type: string
+    example:
+      success: false
+      reason: Unauthorized
   Error:
     required:
       - status

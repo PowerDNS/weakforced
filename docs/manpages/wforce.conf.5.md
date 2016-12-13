@@ -61,7 +61,7 @@ cannot be called inside the allow/report/reset functions:
 		siblingListener("0.0.0.0:4001")
 
 * setReportSinks(\<list of IP[:port]\>) - Set the list of report sinks to which
-  all received reports should be forwarded. Reports will be sent to
+  all received reports should be forwarded over UDP. Reports will be sent to
   the configured report sinks in a round-robin fashion if more than
   one is specified. If port is not specified it defaults to 4501. For
   example: 
@@ -69,7 +69,7 @@ cannot be called inside the allow/report/reset functions:
 		setReportSinks({"127.0.1.2", "127.0.1.3:4501"})
 
 * addReportSink(\<IP[:port]\>) - Add a report sink to the list to which all
-  received reports should be forwarded. Reports will be sent to
+  received reports should be forwarded over UDP. Reports will be sent to
   the configured report sinks in a round-robin fashion if more than
   one is specified. If port is not specified it defaults to 4001. For
   example:
@@ -211,6 +211,29 @@ cannot be called inside the allow/report/reset functions:
   databases. For example:
 
 		setCanonicalize(canonicalize)
+
+* setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
+  Create a new custom REST endpoint with the given name, which when
+  invoked will call the supplied custom lua function. This allows
+  admins to arbitrarily extend the wforce REST API with new REST
+  endpoints. Admins can create as many custom endpoints as they
+  require. Custom endpoints can only be accessed via a POST method,
+  and all arguments as passed as key-value pairs of a top-level
+  "attrs" json object (these will be split into two tables - one for
+  single-valued attrs, and the other for multi-valued attrs - see
+  CustomFuncArgs below). Return information is passed with a boolean
+  "success" and "r_attrs" json object containing return key-value
+  pairs. See wforce.conf.example for an example. For example:
+
+		function custom(args)
+		  for k,v in pairs(args.attrs) do
+		    infoLog("custom func argument attrs", { key=k, value=v });
+		  end
+		  -- return consists of a boolean, followed by { key-value pairs }
+		  return true, { key=value }
+		end
+		  
+		setCustomEndpoint("custom", custom)
 
 # GENERAL FUNCTIONS
 
@@ -467,7 +490,32 @@ configuration or within the allow/report/reset functions:
 		then
 			-- do something
 		end
-	
+
+* CustomFuncArgs - The only parameter to custom functions
+  is a CustomFuncArgs table. This table contains the following fields:
+
+* CustomFuncArgs.attrs - Array of (single valued) attributes supplied
+  by the caller. For example:
+
+		 for k, v in pairs(args.attrs) do
+			 if (k == "xxx")
+			 then
+				 -- do something
+			 end
+		 end
+  		
+* CustomFuncArgs.attrs_mv - Array of (multi-valued)
+  attributes supplied by the caller. For example:
+
+		 for k, v in pairs(args.attrs_mv) do
+			 for i, vi in ipairs(v) do
+				 if ((k == "xxx") and (vi == "yyy"))
+				 then
+					 -- do something
+				 end
+			 end
+		 end
+
 # FILES
 */etc/wforce.conf*
 

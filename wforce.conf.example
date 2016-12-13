@@ -204,3 +204,14 @@ end
 setReport(report)
 setAllow(allow)
 setReset(reset)
+
+function custom(args)
+   for k,v in pairs(args.attrs) do
+      infoLog("custom func argument attrs", { key=k, value=v });
+   end
+   -- return consists of a boolean, followed by { key-value pairs }
+   return true, { key=value }
+end
+
+-- Register a custom endpoint
+setCustomEndpoint("custom", custom)

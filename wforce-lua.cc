@@ -53,6 +53,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 					   report_t& report_func,
 					   reset_t& reset_func,
 					   canonicalize_t& canon_func,
+					   CustomFuncMap& custom_func_map,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -520,6 +521,29 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setCanonicalize", [](canonicalize_t func) { });
   }
 
+  c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
+  c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
+
+  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, custom_func_t func) {
+      custom_func_map.insert(std::make_pair(f_name, func));
+      if (!allow_report && !client) {
+	noticelog("Registering custom endpoint [%s]", f_name);
+      }
+    });
+
+  if (!allow_report) {
+    c_lua.writeFunction("showCustomEndpoints", []() {
+	g_outputBuffer = "Custom Endpoint\n";
+	for (const auto& i : g_custom_func_map) {
+	  g_outputBuffer += i.first;
+	  g_outputBuffer += "\n";
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomEndpoints", []() { });
+  }
+  
   if (!allow_report) {
     c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { g_webhook_runner.setNumThreads(num_threads); });
   }

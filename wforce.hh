@@ -124,10 +124,24 @@ struct LoginTuple
   }
 };
 
+struct CustomFuncArgs {
+  std::map<std::string, std::string> attrs; // additional attributes
+  std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
+
+  void setAttrs(const json11::Json& msg) {
+    LoginTuple lt;
+    lt.setLtAttrs(msg);
+    attrs = std::move(lt.attrs);
+    attrs_mv = std::move(lt.attrs_mv);
+  }
+};
+typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
+
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 void sendReportSink(const LoginTuple& lt);
 
-typedef std::tuple<int, std::string, std::string, std::vector<pair<std::string, std::string>>> AllowReturn;
+typedef std::tuple<int, std::string, std::string, KeyValVector> AllowReturn;
+typedef std::tuple<bool, KeyValVector> CustomFuncReturn;
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
@@ -136,8 +150,11 @@ extern report_t g_report;
 typedef std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_t;
 extern reset_t g_reset;
 typedef std::function<std::string(const std::string&)> canonicalize_t;
+typedef std::function<CustomFuncReturn(const CustomFuncArgs&)> custom_func_t;
+typedef std::map<std::string, custom_func_t> CustomFuncMap;
+extern CustomFuncMap g_custom_func_map;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, const std::string& config);
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, const std::string& config);
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
@@ -146,6 +163,7 @@ struct LuaThreadContext {
   report_t report_func;
   reset_t reset_func;
   canonicalize_t canon_func;
+  CustomFuncMap custom_func_map;
 };
 
 #define NUM_LUA_STATES 6
@@ -178,7 +196,7 @@ public:
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
-    // call the allow function
+    // call the reset function
     return lt_context.reset_func(type, login_value, ca_value);
   }
 
@@ -194,7 +212,7 @@ public:
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
-    // call the allow function
+    // call the report function
     lt_context.report_func(lt);
   }
 
@@ -202,9 +220,22 @@ public:
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
-    // call the allow function
+    // call the canonicalize function
     return lt_context.canon_func(login);
   }
+
+  CustomFuncReturn custom_func(const std::string& command, const CustomFuncArgs& cfa) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    // call the custom function
+    for (const auto& i : lt_context.custom_func_map) {
+      if (command.compare(i.first) == 0)
+	return i.second(cfa);
+    }
+    return CustomFuncReturn(false, KeyValVector{});
+  }
+  
 protected:
   LuaThreadContext& getLuaState()
   {

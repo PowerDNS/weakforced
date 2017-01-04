@@ -370,7 +370,7 @@ public:
   std::weak_ptr<WebHook> getWebHook(unsigned int wh_id)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
+    for (auto i = webhooks.begin(); i!=webhooks.end(); ++i) {
       if ((*i)->getID() == wh_id)
 	return *i;
     }
@@ -379,7 +379,7 @@ public:
   std::weak_ptr<WebHook> getWebHook(const std::string& wh_name)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
+    for (auto i = webhooks.begin(); i!=webhooks.end(); ++i) {
       if ((*i)->getName().compare(wh_name) == 0)
 	return *i;
     }

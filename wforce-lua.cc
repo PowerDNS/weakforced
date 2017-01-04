@@ -594,7 +594,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 
 	  }
 	} else {
-	    errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 	  
+	  errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 	  
 	}
       });
   }

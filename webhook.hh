@@ -44,11 +44,22 @@ public:
     addEvents(wh_events);
     config_keys = wh_config_keys;
   }
-  bool operator==(const WebHook& rhs)
+  WebHook(unsigned int wh_id, bool wh_active, const WHConfigMap& wh_config_keys,
+	  const std::string& wh_name) : id(wh_id),  active(wh_active), num_success(0), num_failed(0), name(wh_name)  {
+    config_keys = wh_config_keys;
+  }
+  virtual bool operator==(const WebHook& rhs)
   {
     return id == rhs.getID();
   }
   unsigned int getID() const { return id; }
+  const std::string getName() const { return name; }
+  bool hasName() const {
+    if (name.compare("") == 0)
+      return false;
+    else
+      return true;
+  }
   WHEvents getEventNames() const
   {
     WHEvents ret_events;
@@ -129,7 +140,7 @@ public:
     return events;
   }
   // returns true if config is OK
-  bool validateConfig(std::string& error_msg) const
+  virtual bool validateConfig(std::string& error_msg) const
   {
     std::lock_guard<std::mutex> lock(mutex);
     if (event_names.begin() == event_names.end()) {
@@ -231,7 +242,7 @@ public:
     toString(out);
     return out;
   }
-  Json to_json() const
+  virtual Json to_json() const
   {
     std::lock_guard<std::mutex> lock(mutex);
     Json::array jevents;
@@ -244,31 +255,27 @@ public:
   }
   void incSuccess() const
   {
-    std::lock_guard<std::mutex> lock(mutex);
     num_success++;
   }
   unsigned int getSuccess() const
   {
-    std::lock_guard<std::mutex> lock(mutex);    
     return num_success;
   }
   void incFailed() const
   {
-    std::lock_guard<std::mutex> lock(mutex);
     num_failed++;
   }
   unsigned int getFailed() const
   {
-    std::lock_guard<std::mutex> lock(mutex);
     return num_failed;
   }
-private:
+protected:
   unsigned int id;
   std::vector<std::string> events;
   bool active;
   WHConfigMap config_keys;
-  mutable unsigned int num_success;
-  mutable unsigned int num_failed;
+  mutable std::atomic<unsigned int> num_success;
+  mutable std::atomic<unsigned int> num_failed;
   mutable std::mutex mutex;
   const WHEventTypes event_names = { { "report", {{ "url" }, {"secret"}}},
 				     { "allow", {{ "url" }, {"secret", "allow_filter"}}},
@@ -276,6 +283,39 @@ private:
 				     { "addbl", {{ "url" }, {"secret"}}},
 				     { "delbl", {{ "url" }, {"secret"}}},
 				     { "expirebl", {{ "url" }, {"secret"}}}};
+  const std::string name;
+};
+
+class CustomWebHook : public WebHook {
+public:
+  CustomWebHook(unsigned int wh_id, const std::string& wh_name, bool wh_active,
+		const WHConfigMap& wh_config_keys) : WebHook(wh_id, wh_active, wh_config_keys, wh_name)  {
+  }
+  bool operator==(const WebHook& rhs)
+  {
+    return ((id == rhs.getID()) && (name.compare(rhs.getName()) == 0));
+  }
+    // returns true if config is OK
+  bool validateConfig(std::string& error_msg) const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (config_keys.find("url") == config_keys.end()) {
+	  error_msg = "Missing mandatory configuration key: url";
+	  return false;
+    }
+    return true;
+  }
+  Json to_json() const
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    Json::array jevents;
+    Json my_object = Json::object {
+      { "id", (int)id },
+      { "name", name },
+      { "config", config_keys }
+    };
+    return my_object;
+  }
 };
 
 class WebHookDB
@@ -298,9 +338,16 @@ public:
 	}
       }
       if (retval == true) {
-	infolog("Registering webhook id=%d for events [%s] to url (%s)",
-		hook.getID(), hook.getEventsStr(), hook.getConfigKey("url"));
-	webhooks.push_back(std::make_shared<WebHook>(hook.getID(), hook.getEvents(), hook.isActive(), hook.getConfigKeys()));
+	if (hook.hasName()) {
+	  infolog("Registering custom webhook id=%d name=%s to url (%s)",
+		  hook.getID(), hook.getName(),  hook.getConfigKey("url"));
+	  webhooks.push_back(std::make_shared<CustomWebHook>(hook.getID(), hook.getName(), hook.isActive(), hook.getConfigKeys()));
+	}
+	else {
+	  infolog("Registering webhook id=%d for events [%s] to url (%s)",
+		  hook.getID(), hook.getEventsStr(), hook.getConfigKey("url"));
+	  webhooks.push_back(std::make_shared<WebHook>(hook.getID(), hook.getEvents(), hook.isActive(), hook.getConfigKeys()));
+	}
       }
     }
     return retval;
@@ -325,6 +372,15 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
     for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
       if ((*i)->getID() == wh_id)
+	return *i;
+    }
+    return std::weak_ptr<WebHook>();
+  }
+  std::weak_ptr<WebHook> getWebHook(const std::string& wh_name)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    for (auto i = webhooks.begin(); i!=webhooks.end(); ) {
+      if ((*i)->getName().compare(wh_name) == 0)
 	return *i;
     }
     return std::weak_ptr<WebHook>();
@@ -402,8 +458,8 @@ public:
 protected:
   std::weak_ptr<CurlConnection> getConnection(unsigned int hook_id);
   std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id);
-  static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
-  static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc);
+  static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
+  static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
 private:
   ctpl::thread_pool p;
   unsigned int max_hook_conns = MAX_HOOK_CONN;

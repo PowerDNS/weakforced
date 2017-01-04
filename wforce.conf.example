@@ -30,10 +30,18 @@ setNumWebHookThreads(2)
 
 -- Register a webhook for "report" events
 config_keys={}
-config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+config_keys["url"] = "http://localhost:8080/webhook/regression"
 config_keys["secret"] = "verysecretcode"
 events = { "report" }
 addWebHook(events, config_keys)
+
+-- Register a custom webhook for custom events
+config_keys={}
+config_keys["url"] = "http://localhost:8080/webhook/regression"
+config_keys["secret"] = "verysecretcustomcode"
+-- Change Content-Type of the HTTP post from the default application/json
+-- config_keys["content-type"] = "text/plain"
+addCustomWebHook("mycustomhook", config_keys)
 
 bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")
@@ -209,6 +217,9 @@ function custom(args)
    for k,v in pairs(args.attrs) do
       infoLog("custom func argument attrs", { key=k, value=v });
    end
+
+   runCustomWebHook("mycustomhook", "{ \"foo\":\"bar\" }")
+
    -- return consists of a boolean, followed by { key-value pairs }
    return true, { key=value }
 end

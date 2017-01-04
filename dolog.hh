@@ -107,6 +107,8 @@ void errlog(const char* s, Args... args)
   genlog(LOG_ERR, s, args...);
 }
 
+#define vdebuglog if(g_verbose)debuglog
+
 template<typename... Args>
 void debuglog(const char* s, Args... args)
 {

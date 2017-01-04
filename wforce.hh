@@ -260,3 +260,4 @@ extern unsigned int g_num_sibling_threads;
 
 extern WebHookRunner g_webhook_runner;
 extern WebHookDB g_webhook_db;
+extern WebHookDB g_custom_webhook_db;

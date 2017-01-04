@@ -6,7 +6,7 @@ import json
 import os
 
 logfile = open('/tmp/webhook-server.log', 'w', 0)
-logfile.write("foo\n")
+logfile.write("This is to ensure the file isn't empty\n")
 mypid = os.getpid()
 
 @route('/webhook/<event>', method='POST')

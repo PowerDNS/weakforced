@@ -23,3 +23,20 @@ class TestWebHooks(ApiTestCase):
             regex = r"digest_match=True, event=" + re.escape(event)
             result = re.search(regex, s);
             self.assertNotEquals(result, None)
+        s.close()
+        logfile.close()
+
+    def test_customwebhooks(self):
+        self.writeCmdToConsole("addCustomWebHook(\"customwebhook\", ck)")
+        r = self.customFunc("custom1")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['login'], 'custom1')
+        time.sleep(5)
+        logfile = open('/tmp/webhook-server.log', 'r')
+        s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        for event in [ 'customwebhook' ]:
+            regex = r"digest_match=True, event=" + re.escape(event)
+            result = re.search(regex, s);
+            self.assertNotEquals(result, None)
+        s.close()
+        logfile.close()

@@ -554,11 +554,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("showWebHooks", []() {
 	auto webhooks = g_webhook_db.getWebHooks();
-	boost::format fmt("%-9d %-9d %-9d %-30.30s %-s\n");
+	boost::format fmt("%-9d %-9d %-9d %-45.45s %-s\n");
 	g_outputBuffer= (fmt % "ID" % "Successes" % "Failures" % "URL" % "Events").str();
 	for(const auto& i : webhooks) {
 	  if (auto is = i.lock())
-	    g_outputBuffer += (fmt % is->getID() % is->getSuccess() % is->getFailed() % is->getConfigKey("url") % is->getEventsStr()).str();
+	    if (is)
+	      g_outputBuffer += (fmt % is->getID() % is->getSuccess() % is->getFailed() % is->getConfigKey("url") % is->getEventsStr()).str();
 	}
       });
   }
@@ -566,6 +567,41 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showWebHooks", []() { });
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("showCustomWebHooks", []() {
+	auto webhooks = g_custom_webhook_db.getWebHooks();
+	boost::format fmt("%-9d %-20.20s %-9d %-9d %-s\n");
+	g_outputBuffer= (fmt % "ID" % "Name" % "Successes" % "Failures" % "URL").str();
+	for(const auto& i : webhooks) {
+	  if (auto is = i.lock())
+	    if (is)
+	      g_outputBuffer += (fmt % is->getID() % is->getName() % is->getSuccess() % is->getFailed() % is->getConfigKey("url")).str();
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomWebHooks", []() { });
+  }
+
+  if (allow_report) {
+    c_lua.writeFunction("runCustomWebHook", [](const std::string& wh_name, const std::string& wh_data) {
+	auto whwp = g_custom_webhook_db.getWebHook(wh_name);
+	if (auto whp = whwp.lock()) {
+	  if (whp) {
+	    g_webhook_runner.runHook(wh_name, whp, wh_data);
+	  }
+	  else {
+	    errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 
+	  }
+	} else {
+	  errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 	  
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("runCustomWebHook", []() { });
+  }
+  
   if (!(allow_report || client)) {
       c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) {
 	  std::string err;
@@ -587,6 +623,26 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   else {
     c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) { });
+  }
+
+  if (!(allow_report || client)) {
+    c_lua.writeFunction("addCustomWebHook", [](const std::string& name,
+					       const std::vector<std::pair<std::string, std::string>>& ck_vec) {
+	  std::string err;
+	  WHConfigMap config_keys;
+
+	  auto id = g_custom_webhook_db.getNewID();
+	  for (const auto& ck : ck_vec) {
+	    config_keys.insert(ck);
+	  }
+	  auto ret = g_custom_webhook_db.addWebHook(CustomWebHook(id, name, true, config_keys), err);
+	  if (ret != true) {
+	    errlog("Registering custom webhook id=%d name=%d from Lua failed [%s]", id, name, err);
+	  }
+	});
+  }
+  else {
+    c_lua.writeFunction("addCustomWebHook", [](const std::string& name, const std::vector<std::pair<std::string, std::string>>& ck_vec) { });
   }
   
   if (!allow_report) {

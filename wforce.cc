@@ -56,6 +56,7 @@ string g_outputBuffer;
 
 WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
+WebHookDB g_custom_webhook_db;
 
 bool getMsgLen(int fd, uint16_t* len)
 try

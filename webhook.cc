@@ -50,7 +50,7 @@ bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string er
   auto cc = getConnection(hook->getID()); // this will only return once it has a connection
 
   if (auto ccs = cc.lock())
-    return _runHook("ping", hook, std::string(), ccs.get());
+    return _runHook("ping", hook, std::string(), ccs);
   else
     return(false);
 }
@@ -66,7 +66,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
   else {
     auto cc = getConnection(hook->getID());
     if (auto ccs = cc.lock())
-      p.push(_runHookThread, event_name, hook, hook_data, ccs.get());
+      p.push(_runHookThread, event_name, hook, hook_data, ccs);
   }
 }
 
@@ -96,12 +96,12 @@ std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id
   }
 }
 
-void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc)
+void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc)
 {
   _runHook(event_name, hook, hook_data, cc);
 }
 
-bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, CurlConnection* cc)
+bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc)
 {
   // construct the necessary headers
   MiniCurlHeaders mch;
@@ -111,17 +111,23 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
     return false;
   
   mch.insert(std::make_pair("X-Wforce-Event", event_name));
-  mch.insert(std::make_pair("Content-Type", "application/json"));
+  if (hook->hasConfigKey("content-type")) {
+    mch.insert(std::make_pair("Content-Type", hook->getConfigKey("content-type")));
+  }
+  else {
+    mch.insert(std::make_pair("Content-Type", "application/json"));
+  }
   mch.insert(std::make_pair("Transfer-Encoding", "chunked"));
   mch.insert(std::make_pair("X-Wforce-HookID", std::to_string(hook->getID())));
   if (hook->hasConfigKey("secret"))
-    mch.insert(std::make_pair("X-Wforce-Signature", Base64Encode(calculateHMAC(hook->getConfigKey("secret"),
-									       hook_data, HashAlgo::SHA256))));
+    mch.insert(std::make_pair("X-Wforce-Signature",
+			      Base64Encode(calculateHMAC(hook->getConfigKey("secret"),
+							 hook_data, HashAlgo::SHA256))));
   ptime t(microsec_clock::universal_time());
   std::string b64_hash_id = Base64Encode(calculateHash(to_simple_string(t)+std::to_string(hook->getID())+event_name, HashAlgo::SHA256));
   mch.insert(std::make_pair("X-Wforce-Delivery", b64_hash_id));
 
-  debuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
+  vdebuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
 	   hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
 
   bool ret;
@@ -136,7 +142,7 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
     hook->incFailed();
   }
   else {
-    infolog("Webhook id=%d succeeded for event (%s) to url (%s) with delivery id (%s)",
+    vinfolog("Webhook id=%d succeeded for event (%s) to url (%s) with delivery id (%s)",
 	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
     hook->incSuccess();
   }

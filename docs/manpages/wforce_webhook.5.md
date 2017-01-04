@@ -1,6 +1,6 @@
 % WFORCE_WEBHOOK(5)
 % Dovecot Oy
-% 2016
+% 2017
 
 # NAME
 **wforce_webhook** - Documentation for wforce webhook functionality
@@ -62,6 +62,11 @@ setting. The following events are available for generating webhooks:
 
 		{"key": "webhooktest@foobar.com", "bl_type": "login_bl"}
 
+# CUSTOM WEBHOOKS
+
+See **wforce.conf(5)** for details of the "addCustomWebHook()" configuration
+setting. This enables custom webhooks to be generated from Lua. 
+
 # WEBHOOK CONFIGURATION KEYS
 
 See **wforce.conf(5)** for details of the "addWebHook()" configuration
@@ -92,6 +97,13 @@ The following configuration keys are custom to specific events:
 		config_key["allow_filter"] = "tarpit allow"
 		config_key["allow_filter"] = "reject"
 
+* content-type - Only custom webhooks can set a custom
+  content-type. Doing so will set the HTTP Content-Type header to the
+  value specified in this key, so ensure it is a valid MIME
+  Content-Type. For example:
+
+		config_key["content-type"] = "text/plain"
+
 # WEBHOOK CUSTOM HTTP HEADERS
 
 The following custom headers will be added to the POST request for
@@ -109,8 +121,9 @@ each event:
 
 # WEBHOOK HTTP Content-Type HEADER
 
-The payload of the HTTP POST will always be json, thus the
-Content-Type header is always set to application/json.
+The HTTP Content-Type header defaults to application/json, and cannot
+be changed for normal webhooks. Custom webhooks however can change
+it using the "content-type" configuration key.
 
 # FILES
 */etc/wforce.conf*

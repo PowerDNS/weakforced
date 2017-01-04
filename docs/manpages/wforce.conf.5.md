@@ -1,6 +1,6 @@
 % WFORCE.CONF(5)
 % Dovecot Oy
-% 2016
+% 2017
 
 # NAME
 **wforce.conf** - configuration file for wforce daemon
@@ -41,7 +41,19 @@ cannot be called inside the allow/report/reset functions:
 		config_keys["secret"] = "verysecretcode"
 		events = { "report", "allow" }
 		addWebHook(events, config_keys)
-		
+
+* addCustomWebHook(\<custom webhook name\>, \<config key map\>) - Add
+  a custom webhook, i.e. one which can be called from Lua (using
+  "runCustomWebHook()" - see below) with arbitrary data, using the
+  specified configuration keys. See *wforce_webhook(5)* for the
+  supported config keys, and details of the HTTP(S) POST sent
+  to webhook URLs. For example:
+
+		config_keys={}
+		config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+		config_keys["secret"] = "verysecretcode"
+		addCustomWebHook("mycustomhook", config_keys)
+
 * setSiblings(\<list of IP[:port]\>) - Set the list of siblings to which
   stats db and blacklist data should be replicated. If port is not specified
   it defaults to 4001. For example:
@@ -335,6 +347,15 @@ configuration or within the allow/report/reset functions:
 		            -- the RBL matched
 	    	    end
   		end
+
+* runCustomWebHook(\<custom webhook name\>, \<webhook data\>) - Run a
+  previously configured custom webhook, using the supplied webhook
+  data. By default the Content-Type of the data is "application/json",
+  however this can be changed using the "content-type" config key when
+  configuring the custom webhook. Custom webhooks are run using the
+  same thread pool as normal webhooks. For example:
+
+		runCustomWebHook(mycustomhook", "{ \"foo\":\"bar\" }")
 
 * getStringStatsDB(\<stats db name\>) - Retrieve the StatsDB object specified by
   the name. For example:

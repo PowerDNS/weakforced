@@ -392,7 +392,7 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
 	(((filter.find("allow")!=string::npos) && (status == 0))) ||
 	(((filter.find("tarpit")!=string::npos) && (status > 0)))) {
       retval = true;
-      debuglog("allow_filter: filter evaluates to true (allowing event)");
+      vdebuglog("allow_filter: filter evaluates to true (allowing event)");
     }
   }
   else

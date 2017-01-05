@@ -114,22 +114,24 @@ string g_key;
 void controlClientThread(int fd, ComboAddress client)
 try
 {
-  SodiumNonce theirs;
-  readn2(fd, (char*)theirs.value, sizeof(theirs.value));
-  SodiumNonce ours;
+  SodiumNonce theirs, ours, readingNonce, writingNonce;
   ours.init();
+  readn2(fd, (char*)theirs.value, sizeof(theirs.value));
   writen2(fd, (char*)ours.value, sizeof(ours.value));
-
+  readingNonce.merge(ours, theirs);
+  writingNonce.merge(theirs, ours);
+  
   for(;;) {
     uint16_t len;
     if(!getMsgLen(fd, &len))
       break;
+    
     char msg[len];
     readn2(fd, msg, len);
     
     string line(msg, len);
     try {
-      line = sodDecryptSym(line, g_key, theirs);
+      line = sodDecryptSym(line, g_key, readingNonce);
     }
     catch(std::runtime_error& e) {
       errlog("Could not decrypt received client command: %s", e.what());
@@ -171,6 +173,9 @@ try
 
 
     }
+    catch(const LuaContext::WrongTypeException& e) {
+      response = "Command returned an object we can't print: " +std::string(e.what()) + "\n";
+    }
     catch(const LuaContext::ExecutionErrorException& e) {
       response = "Error: " + string(e.what()) + ": ";
       try {
@@ -180,7 +185,10 @@ try
         response+= string(e.what());
       }
     }
-    response = sodEncryptSym(response, g_key, ours);
+    catch(const LuaContext::SyntaxErrorException& e) {
+      response = "Error: " + string(e.what()) + ": ";
+    }
+    response = sodEncryptSym(response, g_key, writingNonce);
     putMsgLen(fd, response.length());
     writen2(fd, response.c_str(), (uint16_t)response.length());
   }
@@ -222,15 +230,17 @@ void doClient(ComboAddress server, const std::string& command)
   int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
   SConnect(fd, server);
 
-  SodiumNonce theirs, ours;
+  SodiumNonce theirs, ours, readingNonce, writingNonce;
   ours.init();
 
   writen2(fd, (const char*)ours.value, sizeof(ours.value));
   readn2(fd, (char*)theirs.value, sizeof(theirs.value));
-
+  readingNonce.merge(ours, theirs);
+  writingNonce.merge(theirs, ours);
+  
   if(!command.empty()) {
     string response;
-    string msg=sodEncryptSym(command, g_key, ours);
+    string msg=sodEncryptSym(command, g_key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
     uint16_t len;
@@ -238,7 +248,7 @@ void doClient(ComboAddress server, const std::string& command)
     char resp[len];
     readn2(fd, resp, len);
     msg.assign(resp, len);
-    msg=sodDecryptSym(msg, g_key, theirs);
+    msg=sodDecryptSym(msg, g_key, readingNonce);
     cout<<msg<<endl;
     close(fd);
     return; 
@@ -272,7 +282,7 @@ void doClient(ComboAddress server, const std::string& command)
       break;
 
     string response;
-    string msg=sodEncryptSym(line, g_key, ours);
+    string msg=sodEncryptSym(line, g_key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
     uint16_t len;
@@ -280,7 +290,7 @@ void doClient(ComboAddress server, const std::string& command)
     char resp[len];
     readn2(fd, resp, len);
     msg.assign(resp, len);
-    msg=sodDecryptSym(msg, g_key, theirs);
+    msg=sodDecryptSym(msg, g_key, readingNonce);
     cout<<msg<<endl;
   }
 }

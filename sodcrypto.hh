@@ -48,7 +48,8 @@ struct SodiumNonce
   {
     uint32_t* p = (uint32_t*)value;
     uint32_t count=htonl(*p);
-    *p=ntohl(++count);
+    ++count;
+    *p=ntohl(count);
   }
 
   string toString() const

@@ -27,6 +27,7 @@ if wait:
 cmd1 = ("../wforce -C ./wforce1.conf").split()
 cmd2 = ("../wforce -C ./wforce2.conf").split()
 webcmd = ("/usr/bin/python ./webhook_server.py").split()
+udpsinkcmd = ("/usr/bin/python ./udp_sink.py").split()
 
 # Now run wforce and the tests.
 print "Launching wforce (1 and 2)..."
@@ -36,6 +37,8 @@ proc1 = subprocess.Popen(cmd1, close_fds=True)
 proc2 = subprocess.Popen(cmd2, close_fds=True)
 webproc = subprocess.Popen(webcmd, close_fds=True)
 webpid = webproc.pid
+udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
+udppid = udpproc.pid
 
 print "Waiting for webserver port to become available..."
 available = False
@@ -55,6 +58,8 @@ if not available:
     proc2.wait()
     webproc.terminate()
     webproc.wait()
+    udpproc.terminate()
+    udpproc.wait()
     sys.exit(2)
 
 print "Running tests..."
@@ -78,6 +83,8 @@ finally:
     proc2.wait()
     webproc.terminate()
     webproc.wait()
+    udpproc.terminate()
+    udpproc.wait()
 
 subprocess.call(["/bin/stty", "sane"])
     

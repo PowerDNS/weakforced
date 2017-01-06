@@ -72,21 +72,25 @@ cannot be called inside the allow/report/reset functions:
   
 		siblingListener("0.0.0.0:4001")
 
-* setReportSinks(\<list of IP[:port]\>) - Set the list of report sinks to which
-  all received reports should be forwarded over UDP. Reports will be sent to
-  the configured report sinks in a round-robin fashion if more than
-  one is specified. If port is not specified it defaults to 4501. For
-  example: 
+* setNamedReportSinks(\<name\>, \<list of IP[:port]\>) - Set a named list
+  of report sinks to which all received reports should be forwarded
+  over UDP. Reports will be sent to the configured report sinks for a
+  given name in a round-robin fashion if more than one is
+  specified. Reports are sent separately to each named report sink. If
+  port is not specified it defaults to 4501. Replaces the deprecated
+  "setReportSinks()". For example: 
   
-		setReportSinks({"127.0.1.2", "127.0.1.3:4501"})
+		setNamedReportSinks("logstash", {"127.0.1.2", "127.0.1.3:4501"})
 
-* addReportSink(\<IP[:port]\>) - Add a report sink to the list to which all
-  received reports should be forwarded over UDP. Reports will be sent to
-  the configured report sinks in a round-robin fashion if more than
-  one is specified. If port is not specified it defaults to 4001. For
-  example:
+* addNamedReportSink(\<name\>, \<IP[:port]\>) - Add a report sink to
+  the named list to which all received reports should be forwarded
+  over UDP. Reports will be sent to the configured report sinks for a
+  given name in a round-robin fashion if more than one is
+  specified. Eeports are sent separately to each named report sink. If
+  port is not specified it defaults to 4501. Replaces the deprecated
+  "addReportSink()". For example:
   
-		addReportSink("192.168.1.23")
+		addReportSink("logstash", "192.168.1.23")
 
 * webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
   specified IP address and port. The password is used to authenticate

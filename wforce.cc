@@ -519,6 +519,26 @@ void sendReportSink(const LoginTuple& lt)
   (*rsinks)[i]->send(msg);
 }
 
+void sendNamedReportSink(const LoginTuple& lt)
+{
+  auto rsinks = g_named_report_sinks.getLocal();
+  auto msg = lt.serialize();
+
+  for (auto& i : *rsinks) {
+    auto vsize = i.second.second.size();
+
+    if (vsize == 0)
+      continue;
+
+    // round-robin between report sinks
+    unsigned int j = (*i.second.first)++ % vsize;
+    auto& vec = i.second.second;
+
+    vec[j]->send(msg);
+  }
+}
+
+
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 SodiumNonce g_sodnonce;

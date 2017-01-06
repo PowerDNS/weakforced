@@ -138,7 +138,9 @@ struct CustomFuncArgs {
 typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
 
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
+extern GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>> g_named_report_sinks;
 void sendReportSink(const LoginTuple& lt);
+void sendNamedReportSink(const LoginTuple& lt);
 
 typedef std::tuple<int, std::string, std::string, KeyValVector> AllowReturn;
 typedef std::tuple<bool, KeyValVector> CustomFuncReturn;

@@ -70,7 +70,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("addReportSink", [](const std::string& address) {
 	ComboAddress ca(address, 4501);
-	g_report_sinks.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
+	g_report_sinks.modify([ca](vector<shared_ptr<Sibling>>& v) {
+	    v.push_back(std::make_shared<Sibling>(ca));
+	  });
+	errlog("addReportSinks() is deprecated, and will be removed in a future release. Use addNamedReportSink() instead");
       });
   }
   else {
@@ -84,12 +87,56 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
 	}
 	g_report_sinks.setState(v);
+	errlog("setReportSinks() is deprecated, and will be removed in a future release. Use setNamedReportSinks() instead");
       });
   }
   else {
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) { });
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("addNamedReportSink", [](const std::string& sink_name, const std::string& address) {
+	ComboAddress ca(address, 4501);
+	g_named_report_sinks.modify([sink_name, ca](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
+	    const auto& mp = m.find(sink_name);
+	    if (mp != m.end())
+	      mp->second.second.push_back(std::make_shared<Sibling>(ca));
+	    else {
+	      vector<shared_ptr<Sibling>> vec;
+	      auto atomp = std::make_shared<std::atomic<unsigned int>>(0);
+	      vec.push_back(std::make_shared<Sibling>(ca));
+	      m.emplace(std::make_pair(sink_name, std::make_pair(atomp, std::move(vec))));
+	    }
+	  });
+      });
+  }
+  else {
+    c_lua.writeFunction("addNamedReportSink", [](const std::string& sink_name,
+						 const std::string& address) { });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) {
+	g_named_report_sinks.modify([sink_name, parts](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
+	    vector<shared_ptr<Sibling>> v;
+	    for(const auto& p : parts) {
+	      v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	    }
+	    const auto& mp = m.find(sink_name);
+	    if (mp != m.end())
+	      mp->second.second = v;
+	    else {
+	      auto atomp = std::make_shared<std::atomic<unsigned int>>(0);
+	      m.emplace(std::make_pair(sink_name, std::make_pair(atomp, std::move(v))));
+	    }
+	  });
+      });
+  }
+  else {
+    c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) { });
+  }
+
+  
   if (!allow_report) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
 	ComboAddress ca(address, 4001);
@@ -249,17 +296,31 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("showReportSinks", []() {
-      auto rsinks = g_report_sinks.getCopy();
-      boost::format fmt("%-35s %-10d %-9d\n");
-      g_outputBuffer= (fmt % "Address" % "Successes" % "Failures").str();
-      for(const auto& s : rsinks)
-	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures).str();
+	auto rsinks = g_report_sinks.getCopy();
+	boost::format fmt("%-35s %-10d %-9d\n");
+	g_outputBuffer= (fmt % "Address" % "Successes" % "Failures").str();
+	for(const auto& s : rsinks)
+	  g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures).str();
     });
   }
   else {
     c_lua.writeFunction("showReportSinks", []() { });
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("showNamedReportSinks", []() {
+	auto rsinks = g_named_report_sinks.getCopy();
+	boost::format fmt("%-15s %-35s %-10d %-9d\n");
+	g_outputBuffer= (fmt % "Name" % "Address" % "Successes" % "Failures").str();
+	for(const auto& s : rsinks)
+	  for (const auto& v : s.second.second)
+	    g_outputBuffer += (fmt % s.first % v->rem.toStringWithPort() % v->success % v->failures).str();
+    });
+  }
+  else {
+    c_lua.writeFunction("showNamedReportSinks", []() { });
+  }
+  
   if (!allow_report) {
     c_lua.writeFunction("setNumLuaStates", [](int numStates) {
 	g_num_luastates = numStates;

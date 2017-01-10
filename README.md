@@ -7,7 +7,9 @@ users of your service, as well as botnet-wide slowscans of passwords.
 
 The aim is to support the largest of installations, providing services to
 hundreds of millions of users.  The current version of weakforced is not
-quite there yet.
+quite there yet, although it certainly scales to support up to ten
+million users, if not more. The limiting factor is number of logins
+per second at peak.
 
 wforce is a project by Dovecot and Open-Xchange. For historical
 reasons, it lives in the PowerDNS github tree. If you have any questions, email
@@ -31,8 +33,8 @@ wforce is aimed to receive message from services like:
  * Password recovery services
 
 By gathering failed and successful login attempts from as many services as
-possible, brute forcing attacks can be detected and prevented more
-effectively.
+possible, brute forcing attacks as well as other suspicious behaviour
+can be detected and prevented more effectively.
 
 Inspiration:
 http://www.techspot.com/news/58199-developer-reported-icloud-brute-force-password-hack-to-apple-nearly-six-month-ago.html
@@ -123,7 +125,8 @@ end
 
 Many more metrics are available to base decisions on. Some example
 code is in [wforce.conf](wforce.conf), and more extensive examples are
-in [wforce.conf.example](wforce.conf.example).
+in [wforce.conf.example](wforce.conf.example). For full documentation,
+use "man wforce.conf".
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
@@ -301,16 +304,131 @@ was correct or not, or even if the account exists).
 If 0, allow login validation to proceed. If a positive number, sleep this
 many seconds until allowing login validation to proceed.
 
+Custom API Endpoints
+--------------------
+
+You can create custom API commands (REST Endpoints) using the
+following configuration:
+
+```
+setCustomEndpoint("custom", customfunc)
+```
+
+which will create a new API command "custom", which calls the Lua
+function "customfunc" whenever that command is invoked. Parameters to
+custom commands are always in the same form, which is key-value pairs
+wrapped in an 'attrs' object. For example, the following parameters
+sents as json in the message body would be valid:
+
+```
+{ "attrs" : { "key" : "value" }}
+```
+
+Custom functions return values are also key-value pairs, this time
+wrapped in an 'r_attrs' object, along with a boolean success field,
+for example:
+
+```
+{ "r_attrs" : { "key" : "value" }, "success" : true}
+```
+
+An example configuration for a custom API endpoint would look like:
+
+```
+function custom(args)
+	for k,v in pairs(args.attrs) do
+		infoLog("custom func argument attrs", { key=k, value=v });
+	end
+	-- return consists of a boolean, followed by { key-value pairs }
+	return true, { key=value }
+end
+setCustomEndpoint("custom", custom)
+```
+
+An example curl command would be:
+
+```
+% curl -v -X POST -H "Content-Type: application/json" --data
+  '{"attrs":{"login1":"ahu", "remote": "127.0.0.1",  "pwhash":"1234"}}'
+  http://127.0.0.1:8084/?command=custom -u wforce:super
+{"r_attrs": {}, "success": true}
+```
+
+WebHooks
+---------
+It is possible to configure webhooks, which get called whenever
+specific events occur. To do this, use the "addWebHook" configuration
+command. For example:
+
+```
+config_keys={}
+config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+config_keys["secret"] = "verysecretcode"
+events = { "report", "allow" }
+addWebHook(events, config_keys)
+```
+
+The above will call the webhook at the specified url, for every report
+and allow command received, with the body of the POST containing the
+original json data sent to wforce. For more information use "man
+wforce.conf" and "man wforce_webhook".
+
+Custom WebHooks
+----------------
+
+Custom webhooks can also be defined, which are not invoked based on
+specific events, but instead from Lua. Configuration is similar to
+normal webhooks:
+
+```
+config_keys={}
+config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+config_keys["secret"] = "verysecretcode"
+config_keys["content-type"] = "application/json"
+addCustomWebHook("mycustomhook", config_keys)
+```
+
+However, the webhook will only be invoked via the Lua
+"runCustomWebHook" command, for example:
+
+```
+runCustomWebHook(mycustomhook", "{ \"foo\":\"bar\" }")
+```
+
+The above command will invoke the custom webhook "mycustomhook" with
+the data contained in the second argument, which is simply a Lua
+string. No parsing of the data is performed, however the Content-Type
+of the webhook, which defaults to application/json can be customized
+as shown above.
+
+Blacklists
+----------
+
+Blacklisting capability is provided via either REST endpoints or Lua
+commands, to add/delete IP addresses, logins or IP:login tuples from
+the Blacklist. Blacklist information can be replicated (see below),
+and also optionally persisted in a Redis DB. Use "man wforce.conf" to
+learn more about the blacklist commands.
+
 Load balancing: siblings
 ------------------------
 For high-availability or performance reasons it may be desireable to run
 multiple instances of wforce. To present a unified view of status however,
-these instances then need to share the login tuples. To do so, wforce
+these instances then need to share data. To do so, wforce
 implements a simple knowledge-sharing system.
 
-Tuples received are broadcast (best effort, UDP) to all siblings. The
-sibling list is parsed such that we don't broadcast messages to ourselves
+The original version of wforce simply broadcast all received report
+tuples (best effort, UDP) to all siblings. However the latest version
+only broadcasts incremental changes to the underlying state databases,
+namely the stats dbs and the blacklist.
+
+The sibling list is parsed such that we don't broadcast messages to ourselves
 accidentally, and can thus be identical across all servers.
+
+Even if you configure siblings, stats db data is not replicated by default. To do
+this, use the "twEnableReplication()" command on each
+stats db for which you wish to enable replication. Blacklist
+information is automatically replicated if you have configured siblings.
 
 To define siblings, use:
 

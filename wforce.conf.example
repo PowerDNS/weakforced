@@ -224,5 +224,5 @@ function custom(args)
    return true, { key=value }
 end
 
--- Register a custom endpoint
-setCustomEndpoint("custom", custom)
+-- Register a custom endpoint - <endpoint name>, <endpoint function>, [<send to report sink?>]
+setCustomEndpoint("custom", custom, true)

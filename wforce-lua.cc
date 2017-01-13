@@ -29,6 +29,7 @@
 #include "twmap-wrapper.hh"
 #include "blacklist.hh"
 #include <fstream>
+#include <boost/optional.hpp>
 
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
@@ -585,8 +586,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
   c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
 
-  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, custom_func_t func) {
-      custom_func_map.insert(std::make_pair(f_name, func));
+  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, custom_func_t func, boost::optional<bool> reportSinkOpt) {
+      bool reportSink = false;
+      if (reportSinkOpt)
+	reportSink = *reportSinkOpt;
+      custom_func_map.insert(std::make_pair(f_name, std::make_pair(func, reportSink)));
       if (!allow_report && !client) {
 	noticelog("Registering custom endpoint [%s]", f_name);
       }
@@ -594,10 +598,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("showCustomEndpoints", []() {
-	g_outputBuffer = "Custom Endpoint\n";
+	boost::format fmt("%-30.30s %-s \n");
+	g_outputBuffer = (fmt % "Custom Endpoint" % "Send to Report Sink?").str();
 	for (const auto& i : g_custom_func_map) {
-	  g_outputBuffer += i.first;
-	  g_outputBuffer += "\n";
+	  std::string reportStr = i.second.second == true ? "true" : "false";
+	  g_outputBuffer += (fmt % i.first % reportStr).str();
 	}
       });
   }

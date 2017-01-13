@@ -471,6 +471,28 @@ void LoginTuple::setLtAttrs(const json11::Json& msg)
   }
 }
 
+Json CustomFuncArgs::to_json() const
+{
+  using namespace json11;
+  Json::object jattrs;
+
+  for (auto& i : attrs_mv) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
+  }
+  for (auto& i : attrs) {
+    jattrs.insert(make_pair(i.first, Json(i.second)));
+  }
+  return Json::object{
+    {"attrs", jattrs},
+      };
+}
+
+std::string CustomFuncArgs::serialize() const
+{
+  Json msg=to_json();
+  return msg.dump();
+}
+
 
  Sibling::Sibling(const ComboAddress& ca) : rem(ca), sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
 {
@@ -519,10 +541,9 @@ void sendReportSink(const LoginTuple& lt)
   (*rsinks)[i]->send(msg);
 }
 
-void sendNamedReportSink(const LoginTuple& lt)
+void sendNamedReportSink(const std::string& msg)
 {
   auto rsinks = g_named_report_sinks.getLocal();
-  auto msg = lt.serialize();
 
   for (auto& i : *rsinks) {
     auto vsize = i.second.second.size();

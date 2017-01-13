@@ -134,16 +134,19 @@ struct CustomFuncArgs {
     attrs = std::move(lt.attrs);
     attrs_mv = std::move(lt.attrs_mv);
   }
+  std::string serialize() const;
+  Json to_json() const;
 };
 typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
 
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 extern GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>> g_named_report_sinks;
 void sendReportSink(const LoginTuple& lt);
-void sendNamedReportSink(const LoginTuple& lt);
+void sendNamedReportSink(const std::string& msg);
 
 typedef std::tuple<int, std::string, std::string, KeyValVector> AllowReturn;
 typedef std::tuple<bool, KeyValVector> CustomFuncReturn;
+enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
@@ -153,7 +156,7 @@ typedef std::function<bool(const std::string&, const std::string&, const ComboAd
 extern reset_t g_reset;
 typedef std::function<std::string(const std::string&)> canonicalize_t;
 typedef std::function<CustomFuncReturn(const CustomFuncArgs&)> custom_func_t;
-typedef std::map<std::string, custom_func_t> CustomFuncMap;
+typedef std::map<std::string, std::pair<custom_func_t, bool>> CustomFuncMap;
 extern CustomFuncMap g_custom_func_map;
 
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, const std::string& config);
@@ -226,14 +229,16 @@ public:
     return lt_context.canon_func(login);
   }
 
-  CustomFuncReturn custom_func(const std::string& command, const CustomFuncArgs& cfa) {
+  CustomFuncReturn custom_func(const std::string& command, const CustomFuncArgs& cfa, bool& reportSink) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
     // call the custom function
     for (const auto& i : lt_context.custom_func_map) {
-      if (command.compare(i.first) == 0)
-	return i.second(cfa);
+      if (command.compare(i.first) == 0) {
+	reportSink = i.second.second;
+	return i.second.first(cfa);
+      }
     }
     return CustomFuncReturn(false, KeyValVector{});
   }

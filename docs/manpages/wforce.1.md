@@ -87,8 +87,18 @@ started with the -c option.
 		192.168.1.30:4001                   25        0              
 		192.168.1.54:4001                   0         0            Self
 
-* showReportSinks() - Returns information about configured report sinks. For
-  example:
+* showNamedReportSinks() - Returns information about configured report
+  sinks. For example: 
+
+		> showNamedReportSinks()
+		Name            Address                             Sucesses  Failures
+		trackalert      192.168.1.79:4501                   18        0
+		trackalert      192.168.1.30:4501                   19        0
+		elasticsearch   10.22.2.15:4501                     18        0
+		elasticsearch   10.22.2.16:4501                     19        0
+
+* showReportSinks() - Deprecated - use showNamedReportSinks() instead. Returns
+  information about configured report sinks. For example:
 
 		> showReportSinks()
 		Address                             Sucesses  Failures
@@ -122,21 +132,37 @@ started with the -c option.
 
 		> showWebHooks()
 		ID        Successes Failures  URL                            Events
-		1         0         2         http://localhost:8080/webhook/ report allow
+		1         5         2         http://localhost:8080/webhook/ report allow
+
+* showCustomWebHooks() - Returns information about configured custom
+  webhooks. For example:
+
+  	    	> showCustomWebHooks()
+		ID        Name                 Successes Failures  URL
+		1         mycustomhook         10         0         http://localhost:8080/webhook/regression
+
+* showCustomEndpoints() - Returns information about configured custom
+  endpoints. For example:
+
+  	     	 > showCustomEndpoints()
+		 Custom Endpoint                Send to Report Sink? 
+		 custom1                        true
+		 custom2                        false
 
 * showVersion() - Returns the current version of the wforce
   server. For example:
 
 		> showVersion()
-		wforce 1.0.0
+		wforce 1.2.0
 
 
 # BUGS
 The replication function of clustering means that as more servers are added to a 
 cluster, incremental performance gains may be less each time, eventually
-possibly leading to peformance degradation. This is because all
-operations are replicated to all siblings. This can be avoided by
-partitioning siblings into separate clusters that do not share
+possibly leading to peformance degradation. This is because each
+server keeps a full copy of the stats DBs and the blacklists, and
+changes to those are replicated to all siblings. This can be mitigated by
+partitioning siblings into smaller clusters that do not share
 information, at the expense of missing potential abuse activity. 
 
 # SEE ALSO

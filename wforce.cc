@@ -36,6 +36,7 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+#include "luastate.hh"
 #include "webhook.hh"
 
 #include <getopt.h>
@@ -519,10 +520,9 @@ void sendReportSink(const LoginTuple& lt)
   (*rsinks)[i]->send(msg);
 }
 
-void sendNamedReportSink(const LoginTuple& lt)
+void sendNamedReportSink(const std::string& msg)
 {
   auto rsinks = g_named_report_sinks.getLocal();
-  auto msg = lt.serialize();
 
   for (auto& i : *rsinks) {
     auto vsize = i.second.second.size();

@@ -586,10 +586,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
   c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
 
-  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, custom_func_t func, boost::optional<bool> reportSinkOpt) {
-      bool reportSink = false;
-      if (reportSinkOpt)
-	reportSink = *reportSinkOpt;
+  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, bool reportSink, custom_func_t func) {
       CustomFuncMapObject cobj;
       cobj.c_func = func;
       cobj.c_reportSink = reportSink;

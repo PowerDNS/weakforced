@@ -33,6 +33,7 @@ wforce_SOURCES = \
 	wforce_exception.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
+	luastate.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
@@ -76,7 +77,8 @@ noinst_HEADERS = \
 	minicurl.hh \
 	hmac.hh \
 	wforce_exception.hh \
-	wforce_ns.hh
+	wforce_ns.hh \
+	luastate.hh
 
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<

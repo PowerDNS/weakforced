@@ -225,4 +225,5 @@ function custom(args)
 end
 
 -- Register a custom endpoint
-setCustomEndpoint("custom", custom)
+-- Parameters: name, send arguments to report sink?, function)
+setCustomEndpoint("custom", false, custom)

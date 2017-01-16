@@ -44,10 +44,11 @@ class TestWebHooks(ApiTestCase):
     def test_namedreportsinks(self):
         self.writeCmdToConsole("addNamedReportSink(\"trackalert\", \"127.0.0.1\")")
         r = self.reportFunc('namedreportsink', '1.2.3.4', '1234', False)
+        r = self.customFunc("customargs")
         time.sleep(1)
         logfile = open('/tmp/udp-sink.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
-        for event in [ 'namedreportsink' ]:
+        for event in [ 'namedreportsink', 'customargs' ]:
             regex = r"\"login\": \"" + re.escape(event)
             result = re.search(regex, s);
             self.assertNotEquals(result, None)

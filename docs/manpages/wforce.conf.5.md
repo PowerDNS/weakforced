@@ -228,7 +228,7 @@ cannot be called inside the allow/report/reset functions:
 
 		setCanonicalize(canonicalize)
 
-* setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
+* setCustomEndpoint(\<name of endpoint\>, \<boolean\>, \<custom lua function\>) -
   Create a new custom REST endpoint with the given name, which when
   invoked will call the supplied custom lua function. This allows
   admins to arbitrarily extend the wforce REST API with new REST
@@ -237,9 +237,12 @@ cannot be called inside the allow/report/reset functions:
   and all arguments as passed as key-value pairs of a top-level
   "attrs" json object (these will be split into two tables - one for
   single-valued attrs, and the other for multi-valued attrs - see
-  CustomFuncArgs below). Return information is passed with a boolean
-  "success" and "r_attrs" json object containing return key-value
-  pairs. See wforce.conf.example for an example. For example:
+  CustomFuncArgs below). If the boolean argument is true,
+  then all arguments to the custom function will be sent to all
+  configured named report sinks. Return information is passed with a
+  boolean "success" and "r_attrs" json object containing return
+  key-value pairs. See wforce.conf.example for an example. For
+  example: 
 
 		function custom(args)
 		  for k,v in pairs(args.attrs) do
@@ -248,8 +251,10 @@ cannot be called inside the allow/report/reset functions:
 		  -- return consists of a boolean, followed by { key-value pairs }
 		  return true, { key=value }
 		end
-		  
-		setCustomEndpoint("custom", custom)
+		setCustomEndpoint("custom", false, custom)
+		-- Set boolean to true to enable arguments to be sent to all
+		-- report sinks
+		-- setCustomEndpoint("custom", true, custom)
 
 # GENERAL FUNCTIONS
 

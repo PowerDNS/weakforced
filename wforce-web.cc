@@ -37,6 +37,7 @@
 #include "blacklist.hh"
 #include "twmap-wrapper.hh"
 #include "perf-stats.hh"
+#include "luastate.hh"
 #include "webhook.hh"
 
 using std::thread;
@@ -360,7 +361,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 
       // If any normal or named report sinks are configured, send the report to one of them
       sendReportSink(lt); // XXX - this is deprecated now in favour of NamedReportSinks
-      sendNamedReportSink(lt);
+      sendNamedReportSink(lt.serialize());
       
       std::string hook_data = lt.serialize();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
@@ -472,6 +473,27 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	allowLog(status, log_msg, lt, log_attrs);
 
 	ret_attrs = std::move(log_attrs);
+	g_stats.allows++;
+	if(status < 0)
+	  g_stats.denieds++;
+	Json::object jattrs;
+	for (auto& i : ret_attrs) {
+	  jattrs.insert(make_pair(i.first, Json(i.second)));
+	}
+	msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
+
+	// generate webhook events
+	Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
+	std::string hook_data = jobj.dump();
+	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
+	  if (auto hs = h.lock()) {
+	    if (allow_filter(hs, status))
+	      g_webhook_runner.runHook("allow", hs, hook_data);
+	  }
+	}
+    
+	resp.status=200;
+	resp.body=msg.dump();
       }
       catch(LuaContext::ExecutionErrorException& e) {
 	resp.status=500;
@@ -479,31 +501,15 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
 	ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
 	resp.body=ss.str();
 	errlog("Lua allow function exception: %s", e.what());
+	return;
       }
       catch(...) {
 	resp.status=500;
 	resp.body=R"({"status":"failure"})";
+	return;
       }
     }
-    g_stats.allows++;
-    if(status < 0)
-      g_stats.denieds++;
-    Json::object jattrs;
-    for (auto& i : ret_attrs) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
-    }
-    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
-
-    // generate webhook events
-    Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
-    std::string hook_data = jobj.dump();
-    for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
-      if (auto hs = h.lock()) {
-	if (allow_filter(hs, status))
-	  g_webhook_runner.runHook("allow", hs, hook_data);
-      }
-    }
-    
+    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", Json::object{}}};
     resp.status=200;
     resp.body=msg.dump();
   }  
@@ -667,13 +673,26 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     }
 
     try {
+      bool reportSink=false;
       CustomFuncReturn cr;
       {
-	cr=g_luamultip->custom_func(command, cfa);
+	cr=g_luamultip->custom_func(command, cfa, reportSink);
       }
       status = std::get<customRetStatus>(cr);
       KeyValVector log_attrs = std::get<customRetAttrs>(cr);
       ret_attrs = std::move(log_attrs);
+      Json::object jattrs;
+      for (auto& i : ret_attrs) {
+	jattrs.insert(make_pair(i.first, Json(i.second)));
+      }
+      msg=Json::object{{"success", status}, {"r_attrs", jattrs}};
+
+      // send the custom parameters to the report sink if configured
+      if (reportSink)
+	sendNamedReportSink(cfa.serialize());
+      
+      resp.status=200;
+      resp.body=msg.dump();
     }
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
@@ -686,14 +705,6 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       resp.status=500;
       resp.body=R"({"success":false})";
     }
-    Json::object jattrs;
-    for (auto& i : ret_attrs) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
-    }
-    msg=Json::object{{"success", status}, {"r_attrs", jattrs}};
-
-    resp.status=200;
-    resp.body=msg.dump();
   }  
 }
 

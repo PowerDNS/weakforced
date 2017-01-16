@@ -33,9 +33,11 @@
 #include <fstream>
 #include "ext/json11/json11.hpp"
 #include <unistd.h>
+#include <sys/stat.h>
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+#include "luastate.hh"
 #include "webhook.hh"
 
 #include <getopt.h>
@@ -519,10 +521,9 @@ void sendReportSink(const LoginTuple& lt)
   (*rsinks)[i]->send(msg);
 }
 
-void sendNamedReportSink(const LoginTuple& lt)
+void sendNamedReportSink(const std::string& msg)
 {
   auto rsinks = g_named_report_sinks.getLocal();
-  auto msg = lt.serialize();
 
   for (auto& i : *rsinks) {
     auto vsize = i.second.second.size();
@@ -648,16 +649,28 @@ char* my_generator(const char* text, int state)
       "shutdown()",
       "webserver",
       "controlSocket",
-      "report",
       "stats()",
-      "siblings",
-      "allow",
+      "siblings()",
       "newCA",
       "newNetmaskGroup",
-      "setAllow",
       "makeKey",
       "setKey",
-      "testCrypto"
+      "testCrypto",
+      "showWebHooks()",
+      "showCustomWebHooks()",
+      "showCustomEndpoints()",
+      "showNamedReportSinks()",
+      "addNamedReportSink(",
+      "setNamedReportSinks(",
+      "showVersion()",
+      "addWebHook(",
+      "addCustomWebHook(",
+      "setNumWebHookThreads(",
+      "blacklistPersistDB(",
+      "blacklistPersistReplicated()",
+      "blacklistIP",
+      "blacklistLogin",
+      "blacklistIPLogin"
       };
   static int s_counter=0;
   int counter=0;
@@ -685,6 +698,17 @@ static char** my_completion( const char * text , int start,  int end)
     rl_bind_key('\t', rl_abort);
   return matches;
 }
+}
+
+std::string findDefaultConfigFile()
+{
+  std::string configFile = string(SYSCONFDIR) + "/wforce/wforce.conf";
+  struct stat statbuf;
+
+  if (stat(configFile.c_str(), &statbuf) != 0) {
+    configFile = string(SYSCONFDIR) + "/wforce.conf";
+  }
+  return configFile;
 }
 
 struct 
@@ -716,7 +740,7 @@ try
   }
   g_sodnonce.init();
 #endif
-  g_cmdLine.config=string(SYSCONFDIR) + "/wforce.conf";
+  g_cmdLine.config = findDefaultConfigFile();
   struct option longopts[]={ 
     {"config", required_argument, 0, 'C'},
     {"execute", required_argument, 0, 'e'},

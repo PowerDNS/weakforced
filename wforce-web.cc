@@ -494,6 +494,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
     
 	resp.status=200;
 	resp.body=msg.dump();
+	return;
       }
       catch(LuaContext::ExecutionErrorException& e) {
 	resp.status=500;

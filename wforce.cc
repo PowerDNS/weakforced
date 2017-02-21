@@ -45,6 +45,8 @@
 #include <systemd/sd-daemon.h>
 #endif
 #include "ext/ctpl.h"
+#include "device_parser.hh"
+#include "wforce_ns.hh"
 
 using std::atomic;
 using std::thread;
@@ -59,6 +61,9 @@ string g_outputBuffer;
 WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
+
+std::string g_configDir; // where the config files are located
+std::unique_ptr<UserAgentParser> g_ua_parser_p;
 
 bool getMsgLen(int fd, uint16_t* len)
 try
@@ -228,8 +233,6 @@ catch(std::exception& e)
   close(fd);
   errlog("Control connection died: %s", e.what());
 }
-
-
 
 void doClient(ComboAddress server, const std::string& command)
 {
@@ -706,9 +709,27 @@ std::string findDefaultConfigFile()
   struct stat statbuf;
 
   if (stat(configFile.c_str(), &statbuf) != 0) {
+    g_configDir = string(SYSCONFDIR);
     configFile = string(SYSCONFDIR) + "/wforce.conf";
   }
+  else
+    g_configDir = string(SYSCONFDIR) + "/wforce";
   return configFile;
+}
+
+void findUaRegexFile()
+{
+  std::string regexFile = g_configDir + "/regexes.yaml";
+  struct stat statbuf;
+  
+  if (stat(regexFile.c_str(), &statbuf) != 0) {
+    errlog("Fatal error: cannot find regexes.yaml at %d", regexFile);
+    exit(-1);
+  }
+  else {
+    vinfolog("Will read UserAgent regexes from %s", regexFile);
+    g_ua_parser_p = wforce::make_unique<UserAgentParser>(regexFile);
+  }
 }
 
 struct 
@@ -810,7 +831,8 @@ try
   argc-=optind;
   argv+=optind;
 
-
+  findUaRegexFile();
+  
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
     setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);

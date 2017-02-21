@@ -44,6 +44,9 @@ ensure that any firewalls forward UDP on the configured ports.
 -C,--config *FILE*
 :    Load configuration from *FILE*.
 
+-R,--regexes *FILE*
+:    Read device parsing regexes from *FILE* (usually regexes.yaml).
+
 -s
 :    Run in foreground, but do not spawn a console. Use this switch to run
      wforce inside a supervisor (use with e.g. systemd and daemontools).
@@ -57,8 +60,6 @@ ensure that any firewalls forward UDP on the configured ports.
 -h,--help
 :    Display a helpful message and exit.
 
--l,--local *ADDRESS*
-:    Bind to *ADDRESS*.
 
 # CONSOLE COMMANDS
 

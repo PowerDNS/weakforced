@@ -23,6 +23,7 @@ Makefile.in
 /stamp-h1
 /wforce
 /*.service
+/regexes.yaml
 
 *.libs/
 *.DSYM/

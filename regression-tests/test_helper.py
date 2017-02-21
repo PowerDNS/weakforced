@@ -48,23 +48,28 @@ class ApiTestCase(unittest.TestCase):
         return check_output(["../wforce", "-c", "./wforce2.conf", "-e", cmd])
     
     def allowFunc(self, login, remote, pwhash):
-        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, False)
+        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", False)
 
     def allowFuncAttrs(self, login, remote, pwhash, attrs):
-        return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, False)
+        return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", False)
 
     def allowFuncReplica(self, login, remote, pwhash):
-        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, True)
+        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", True)
     
     def allowFuncAttrsReplica(self, login, remote, pwhash, attrs):
-        return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, True)
+        return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True)
 
-    def allowFuncAttrsInternal(self, login, remote, pwhash, attrs, replica):
+    def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
+        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)
+    
+    def allowFuncAttrsInternal(self, login, remote, pwhash, attrs, device_id, protocol, replica):
         payload = dict()
         payload['login'] = login
         payload['remote'] = remote
         payload['pwhash'] = pwhash
         payload['attrs'] = attrs
+        payload['device_id'] = device_id
+        payload['protocol'] = protocol
         if not replica:
             return self.session.post(
                 self.url("/?command=allow"),

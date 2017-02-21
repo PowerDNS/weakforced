@@ -45,6 +45,8 @@
 #include <systemd/sd-daemon.h>
 #endif
 #include "ext/ctpl.h"
+#include "device_parser.hh"
+#include "wforce_ns.hh"
 
 using std::atomic;
 using std::thread;
@@ -59,6 +61,9 @@ string g_outputBuffer;
 WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
+
+std::string g_configDir; // where the config files are located
+std::unique_ptr<UserAgentParser> g_ua_parser_p;
 
 bool getMsgLen(int fd, uint16_t* len)
 try
@@ -228,8 +233,6 @@ catch(std::exception& e)
   close(fd);
   errlog("Control connection died: %s", e.what());
 }
-
-
 
 void doClient(ComboAddress server, const std::string& command)
 {
@@ -447,6 +450,36 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg)
       if (it->second.is_string()) {
 	device_attrs.insert(std::make_pair(attr_name, it->second.string_value()));
       }
+    }
+  }
+  else {  // client didn't supply, we will parse device_id ourselves
+    std::string my_device_id=msg["device_id"].string_value();
+    std::string my_protocol=msg["protocol"].string_value();
+
+    // parse using the uap-cpp Parser
+    if ((my_protocol.compare("http") == 0) ||
+        (my_protocol.compare("https") == 0)) {
+      UserAgent ua = g_ua_parser_p->parse(my_device_id);
+      device_attrs.insert(std::make_pair("device.family", ua.device.family));
+      device_attrs.insert(std::make_pair("device.model", ua.device.model));
+      device_attrs.insert(std::make_pair("device.brand", ua.device.brand));
+      device_attrs.insert(std::make_pair("os.family", ua.os.family));
+      device_attrs.insert(std::make_pair("os.major", ua.os.major));
+      device_attrs.insert(std::make_pair("os.minor", ua.os.minor));
+      device_attrs.insert(std::make_pair("browser.family", ua.browser.family));
+      device_attrs.insert(std::make_pair("browser.major", ua.browser.major));
+      device_attrs.insert(std::make_pair("browser.minor", ua.browser.minor));
+    }
+    else if ((my_protocol.compare("imap") == 0) ||
+             (my_protocol.compare("imaps") == 0)) {
+      IMAPClientIDParser imap_parser;
+      IMAPClientID ic = imap_parser.parse(my_device_id);
+      device_attrs.insert(std::make_pair("imapc.family", ic.imapc.family));
+      device_attrs.insert(std::make_pair("imapc.major", ic.imapc.major));
+      device_attrs.insert(std::make_pair("imapc.minor", ic.imapc.minor));
+      device_attrs.insert(std::make_pair("os.family", ic.os.family));
+      device_attrs.insert(std::make_pair("os.major", ic.os.major));
+      device_attrs.insert(std::make_pair("os.minor", ic.os.minor));
     }
   }
 }
@@ -706,9 +739,27 @@ std::string findDefaultConfigFile()
   struct stat statbuf;
 
   if (stat(configFile.c_str(), &statbuf) != 0) {
+    g_configDir = string(SYSCONFDIR);
     configFile = string(SYSCONFDIR) + "/wforce.conf";
   }
+  else
+    g_configDir = string(SYSCONFDIR) + "/wforce";
   return configFile;
+}
+
+std::string findUaRegexFile()
+{
+  return(g_configDir + "/regexes.yaml");
+}
+
+void checkUaRegexFile(const std::string& regexFile)
+{
+  struct stat statbuf;
+  
+  if (stat(regexFile.c_str(), &statbuf) != 0) {
+    errlog("Fatal error: cannot find regexes.yaml at %d", regexFile);
+    exit(-1);
+  }
 }
 
 struct 
@@ -718,6 +769,7 @@ struct
   bool beClient{false};
   string command;
   string config;
+  string regexes;
 } g_cmdLine;
 
 
@@ -741,8 +793,10 @@ try
   g_sodnonce.init();
 #endif
   g_cmdLine.config = findDefaultConfigFile();
+  g_cmdLine.regexes = findUaRegexFile();
   struct option longopts[]={ 
     {"config", required_argument, 0, 'C'},
+    {"regexes", required_argument, 0, 'R'},
     {"execute", required_argument, 0, 'e'},
     {"client", optional_argument, 0, 'c'},
     {"systemd",  optional_argument, 0, 's'},
@@ -752,12 +806,15 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:R:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
     case 'C':
       g_cmdLine.config=optarg;
+      break;
+    case 'R':
+      g_cmdLine.regexes=optarg;
       break;
     case 'c':
       g_cmdLine.beClient=true;
@@ -790,12 +847,12 @@ try
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
+      cout<<"-R,--regexes file     Load User-Agent regexes from 'file'\n";
       cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-h,--help             Display this helpful message\n";
-      cout<<"-l,--local address    Listen on this local address\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
       break;
@@ -810,7 +867,12 @@ try
   argc-=optind;
   argv+=optind;
 
-
+  if (!g_cmdLine.beClient) {
+    checkUaRegexFile(g_cmdLine.regexes);
+    vinfolog("Will read UserAgent regexes from %s", g_cmdLine.regexes);
+    g_ua_parser_p = wforce::make_unique<UserAgentParser>(g_cmdLine.regexes);
+  }
+  
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
     setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);

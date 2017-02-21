@@ -1,13 +1,15 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_CFLAGS) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
+
+UAP_REGEX_FILE=regexes.yaml
 
 SUBDIRS=ext docs
 
-EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto
+EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 
-CLEANFILES = replication.pb.cc replication.pb.h wforce.service
+CLEANFILES = replication.pb.cc replication.pb.h wforce.service $(UAP_REGEX_FILE)
 
-sysconf_DATA= wforce.conf wforce.conf.example
+sysconf_DATA= wforce.conf wforce.conf.example $(UAP_REGEX_FILE)
 bin_PROGRAMS = wforce
 wforce_SOURCES = \
 	base64.hh \
@@ -34,6 +36,7 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	luastate.hh \
+	device_parser.hh device_parser.cc \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
@@ -41,8 +44,9 @@ wforce_SOURCES = \
 	ext/count_min_sketch.cpp \
 	ext/ctpl.h \
 	ext/hyperloglog.hpp \
-	ext/count_min_sketch.hpp
-
+	ext/count_min_sketch.hpp \
+	ext/uap-cpp/UaParser.h \
+	ext/uap-cpp/UaParser.cpp
 
 wforce_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -51,7 +55,7 @@ wforce_LDFLAGS = \
 wforce_LDADD = \
 	-lreadline -ltermcap \
 	$(LUA_LIBS) $(YAHTTP_LIBS) ${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
-	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS)
+	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) $(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) $(YAMLCPP_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \
@@ -78,7 +82,8 @@ noinst_HEADERS = \
 	hmac.hh \
 	wforce_exception.hh \
 	wforce_ns.hh \
-	luastate.hh
+	luastate.hh \
+	device_parser.hh
 
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<
@@ -86,6 +91,9 @@ replication.pb.cc: replication.proto
 nodist_wforce_SOURCES = replication.pb.cc replication.pb.h
 
 wforce.$(OBJEXT): replication.pb.cc
+
+$(UAP_REGEX_FILE):
+	wget -q https://raw.githubusercontent.com/ua-parser/uap-core/master/$(UAP_REGEX_FILE) -O $(UAP_REGEX_FILE)
 
 if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify

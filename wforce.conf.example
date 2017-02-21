@@ -57,6 +57,7 @@ field_map["countLogins"] = "int"
 field_map["diffPasswords"] = "hll"
 field_map["diffIPs"] = "hll"
 field_map["countryCount"] = "countmin"
+field_map["osCount"] = "countmin"
 
 -- create a db for storing stats. 
 -- You can create multiple dbs with different window lengths for storing stats over different time windows
@@ -95,6 +96,14 @@ function report(lt)
 	sdb:twAdd(lt.login, "diffIPs", lt.remote)
 	sdb_day:twAdd(lt.login, "countryCount", cur_ct)
 
+	-- look for things in device_attrs
+	if (not ((lt.device_attrs["os.family"] == "") or
+		  (lt.device_attrs["os.family"] == nil)))
+	then
+	   -- store the os family
+	   sdb:twAdd(lt.login, "osCount", lt.device_attrs["os.family"])
+	end
+
 	-- twSub() can be used for the integer type. It does what you expect
 end
 
@@ -115,7 +124,13 @@ function allow(lt)
 	resolv = getDNSResolver("Resolv")
 	rblresolv = getDNSResolver("RBLResolv")
 
-	if(bulkRetrievers:match(lt.remote))
+	-- look for things in device_attrs
+	if (lt.device_attrs["os.family"] == "iOS")
+	then
+	  -- do something special for iOS
+	end
+
+	if (bulkRetrievers:match(lt.remote))
 	then
 		-- Must return 4 args - <return value>, <return msg>, <log msg>, <log key values>
 		return 0, "bulkRetrievers", "bulkRetrievers", { bulkRetrievers=1 }

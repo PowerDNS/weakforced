@@ -30,7 +30,7 @@ AS_IF([test "x$HAVE_WGET" == "x"], [
 ])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 PDNS_WITH_PROTOBUF
-AS_IF([test "x$PROTOBUF_LIBS" == "x" -o x"$PROTOC" == "x"], [
+AS_IF([test "x$PROTOBUF_LIBS" == "x" -o "x$PROTOC" == "x"], [
   AC_MSG_ERROR([Protobuf not found, protobuf support is not optional])
 ])
 AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])

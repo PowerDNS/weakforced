@@ -57,8 +57,6 @@ ensure that any firewalls forward UDP on the configured ports.
 -h,--help
 :    Display a helpful message and exit.
 
--l,--local *ADDRESS*
-:    Bind to *ADDRESS*.
 
 # CONSOLE COMMANDS
 

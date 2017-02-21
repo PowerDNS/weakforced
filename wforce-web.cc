@@ -98,35 +98,58 @@ std::string LtAttrsToString(const LoginTuple& lt)
   return os.str();
 }
 
-void reportLog(const LoginTuple& lt)
+std::string DeviceAttrsToString(const LoginTuple& lt)
 {
   std::ostringstream os;
-  os << "reportLog: ";
-  os << "remote=\"" << lt.remote.toString() << "\" ";
-  os << "login=\"" << lt.login << "\" ";
-  os << "success=\"" << lt.success << "\" ";
-  os << "policy_reject=\"" << lt.policy_reject << "\" ";
-  os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
-  os << LtAttrsToString(lt);
-  vinfolog(os.str().c_str());
+  os << "device_attrs={";
+  for (auto i= lt.device_attrs.begin(); i!=lt.device_attrs.end(); ++i) {
+    os << i->first << "="<< "\"" << i->second << "\"";
+    if (i != --(lt.device_attrs.end()))
+      os << ", ";
+  }
+  os << "} ";
+  return os.str();
+}
+
+void reportLog(const LoginTuple& lt)
+{
+  if (g_verbose) {
+    std::ostringstream os;
+    os << "reportLog: ";
+    os << "remote=\"" << lt.remote.toString() << "\" ";
+    os << "login=\"" << lt.login << "\" ";
+    os << "success=\"" << lt.success << "\" ";
+    os << "policy_reject=\"" << lt.policy_reject << "\" ";
+    os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
+    os << "protocol=\"" << lt.protocol << "\" ";
+    os << "device_id=\"" << lt.device_id << "\" ";
+    os << DeviceAttrsToString(lt);
+    os << LtAttrsToString(lt);
+    infolog(os.str().c_str());
+  }
 }
 
 void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
 {
   std::ostringstream os;
-  os << "allowLog " << msg << ": ";
-  os << "allow=\"" << retval << "\" ";
-  os << "remote=\"" << lt.remote.toString() << "\" ";
-  os << "login=\"" << lt.login << "\" ";
-  os << LtAttrsToString(lt);
-  os << "rattrs={";
-  for (const auto& i : kvs) {
-    os << i.first << "="<< "\"" << i.second << "\"" << " ";
+  if ((retval != 0) || ((retval == 0) && (g_verbose))) {
+    os << "allowLog " << msg << ": ";
+    os << "allow=\"" << retval << "\" ";
+    os << "remote=\"" << lt.remote.toString() << "\" ";
+    os << "login=\"" << lt.login << "\" ";
+    os << "protocol=\"" << lt.protocol << "\" ";
+    os << "device_id=\"" << lt.device_id << "\" ";
+    os << DeviceAttrsToString(lt);
+    os << LtAttrsToString(lt);
+    os << "rattrs={";
+    for (const auto& i : kvs) {
+      os << i.first << "="<< "\"" << i.second << "\"" << " ";
+    }
+    os << "}";
   }
-  os << "}";
   // only log at notice if login was rejected or tarpitted
-  if (retval == 0) {
-    vinfolog(os.str().c_str());
+  if ((retval == 0) && g_verbose) {
+    infolog(os.str().c_str());
   }
   else
     noticelog(os.str().c_str());

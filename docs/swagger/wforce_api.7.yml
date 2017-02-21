@@ -296,6 +296,19 @@ definitions:
         type: boolean
       policy_reject:
         type: boolean
+      protocol:
+        type: string
+        enum:
+          - http
+          - https
+          - imap
+          - imaps
+          - pop
+          - pops
+          - smtp
+          - smtps
+      device_id:
+        type: string
       attrs:
         $ref: "#/definitions/LTAttrs" 
   LTAttrs:
@@ -322,6 +335,19 @@ definitions:
       remote:
         type: string
       pwhash:
+        type: string
+      protocol:
+        type: string
+        enum:
+          - http
+          - https
+          - imap
+          - imaps
+          - pop
+          - pops
+          - smtp
+          - smtps
+      device_id:
         type: string
       attrs:
         $ref: "#/definitions/LTAttrs" 

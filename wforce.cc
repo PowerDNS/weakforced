@@ -452,6 +452,36 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg)
       }
     }
   }
+  else {  // client didn't supply, we will parse device_id ourselves
+    std::string my_device_id=msg["device_id"].string_value();
+    std::string my_protocol=msg["protocol"].string_value();
+
+    // parse using the uap-cpp Parser
+    if ((my_protocol.compare("http") == 0) ||
+        (my_protocol.compare("https") == 0)) {
+      UserAgent ua = g_ua_parser_p->parse(my_device_id);
+      device_attrs.insert(std::make_pair("device.family", ua.device.family));
+      device_attrs.insert(std::make_pair("device.model", ua.device.model));
+      device_attrs.insert(std::make_pair("device.brand", ua.device.brand));
+      device_attrs.insert(std::make_pair("os.family", ua.os.family));
+      device_attrs.insert(std::make_pair("os.major", ua.os.major));
+      device_attrs.insert(std::make_pair("os.minor", ua.os.minor));
+      device_attrs.insert(std::make_pair("browser.family", ua.browser.family));
+      device_attrs.insert(std::make_pair("browser.major", ua.browser.major));
+      device_attrs.insert(std::make_pair("browser.minor", ua.browser.minor));
+    }
+    else if ((my_protocol.compare("imap") == 0) ||
+             (my_protocol.compare("imaps") == 0)) {
+      IMAPClientIDParser imap_parser;
+      IMAPClientID ic = imap_parser.parse(my_device_id);
+      device_attrs.insert(std::make_pair("imapc.family", ic.imapc.family));
+      device_attrs.insert(std::make_pair("imapc.major", ic.imapc.major));
+      device_attrs.insert(std::make_pair("imapc.minor", ic.imapc.minor));
+      device_attrs.insert(std::make_pair("os.family", ic.os.family));
+      device_attrs.insert(std::make_pair("os.major", ic.os.major));
+      device_attrs.insert(std::make_pair("os.minor", ic.os.minor));
+    }
+  }
 }
 
 void LoginTuple::setLtAttrs(const json11::Json& msg)

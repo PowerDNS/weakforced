@@ -747,18 +747,18 @@ std::string findDefaultConfigFile()
   return configFile;
 }
 
-void findUaRegexFile()
+std::string findUaRegexFile()
 {
-  std::string regexFile = g_configDir + "/regexes.yaml";
+  return(g_configDir + "/regexes.yaml");
+}
+
+void checkUaRegexFile(const std::string& regexFile)
+{
   struct stat statbuf;
   
   if (stat(regexFile.c_str(), &statbuf) != 0) {
     errlog("Fatal error: cannot find regexes.yaml at %d", regexFile);
     exit(-1);
-  }
-  else {
-    vinfolog("Will read UserAgent regexes from %s", regexFile);
-    g_ua_parser_p = wforce::make_unique<UserAgentParser>(regexFile);
   }
 }
 
@@ -769,6 +769,7 @@ struct
   bool beClient{false};
   string command;
   string config;
+  string regexes;
 } g_cmdLine;
 
 
@@ -792,8 +793,10 @@ try
   g_sodnonce.init();
 #endif
   g_cmdLine.config = findDefaultConfigFile();
+  g_cmdLine.regexes = findUaRegexFile();
   struct option longopts[]={ 
     {"config", required_argument, 0, 'C'},
+    {"regexes", required_argument, 0, 'R'},
     {"execute", required_argument, 0, 'e'},
     {"client", optional_argument, 0, 'c'},
     {"systemd",  optional_argument, 0, 's'},
@@ -803,12 +806,15 @@ try
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:R:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
     case 'C':
       g_cmdLine.config=optarg;
+      break;
+    case 'R':
+      g_cmdLine.regexes=optarg;
       break;
     case 'c':
       g_cmdLine.beClient=true;
@@ -841,12 +847,12 @@ try
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
+      cout<<"-R,--regexes file     Load User-Agent regexes from 'file'\n";
       cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-h,--help             Display this helpful message\n";
-      cout<<"-l,--local address    Listen on this local address\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
       break;
@@ -861,7 +867,11 @@ try
   argc-=optind;
   argv+=optind;
 
-  findUaRegexFile();
+  if (!g_cmdLine.beClient) {
+    checkUaRegexFile(g_cmdLine.regexes);
+    vinfolog("Will read UserAgent regexes from %s", g_cmdLine.regexes);
+    g_ua_parser_p = wforce::make_unique<UserAgentParser>(g_cmdLine.regexes);
+  }
   
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
     setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_cmdLine.config);

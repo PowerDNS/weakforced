@@ -22,6 +22,8 @@ addons:
       - libhiredis-dev
       - libcurl4-openssl-dev
       - redis-server
+      - libyaml-cpp-dev
+      - wget
 before_script:
  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb

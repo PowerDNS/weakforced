@@ -10,6 +10,7 @@ addons:
     packages:
       - libboost-dev
       - libboost-date-time-dev
+      - libboost-regex-dev
       - build-essential
       - liblua5.1-0-dev
       - python-virtualenv

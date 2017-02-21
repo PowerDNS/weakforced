@@ -932,7 +932,7 @@ void pollThread()
       num_fds = sock_vec.size();
       // Only allocate a new pollfd array if it needs to be bigger
       if (num_fds > max_fd_size) {
-	if (fds)
+	if (fds!=NULL)
 	  delete[] fds;
 	fds = new struct pollfd [num_fds+fd_increase];
 	max_fd_size = num_fds+fd_increase;

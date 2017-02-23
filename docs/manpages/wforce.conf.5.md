@@ -90,7 +90,7 @@ cannot be called inside the allow/report/reset functions:
   port is not specified it defaults to 4501. Replaces the deprecated
   "addReportSink()". For example:
   
-		addReportSink("logstash", "192.168.1.23")
+		addNamedReportSink("logstash", "192.168.1.23")
 
 * webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
   specified IP address and port. The password is used to authenticate

@@ -70,7 +70,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("addReportSink", [](const std::string& address) {
-	ComboAddress ca(address, 4501);
+	ComboAddress ca;
+	try {
+	  ca = ComboAddress(address, 4501);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("addReportSink() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+	  return;
+	}
 	g_report_sinks.modify([ca](vector<shared_ptr<Sibling>>& v) {
 	    v.push_back(std::make_shared<Sibling>(ca));
 	  });
@@ -85,7 +92,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) {
 	vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
-	  v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	  try {
+	    v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	  }
+	  catch (const std::runtime_error& e) {
+	    errlog("setReportSinks() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
+	    return;
+	  }
+
 	}
 	g_report_sinks.setState(v);
 	errlog("setReportSinks() is deprecated, and will be removed in a future release. Use setNamedReportSinks() instead");
@@ -97,7 +111,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("addNamedReportSink", [](const std::string& sink_name, const std::string& address) {
-	ComboAddress ca(address, 4501);
+	ComboAddress ca;
+	try {
+	  ca = ComboAddress(address, 4501);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("addNamedReportSink() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", address, sink_name);
+	  return;
+	}
 	g_named_report_sinks.modify([sink_name, ca](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
 	    const auto& mp = m.find(sink_name);
 	    if (mp != m.end())
@@ -121,7 +142,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	g_named_report_sinks.modify([sink_name, parts](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
 	    vector<shared_ptr<Sibling>> v;
 	    for(const auto& p : parts) {
-	      v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	      try {
+		v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
+	      }
+	      catch (const std::runtime_error& e) {
+		errlog("setNamedReportSinks() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", p.second, sink_name);
+		return;
+	      }
 	    }
 	    const auto& mp = m.find(sink_name);
 	    if (mp != m.end())
@@ -140,7 +167,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   
   if (!allow_report) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
-	ComboAddress ca(address, 4001);
+	ComboAddress ca;
+	try {
+	  ca = ComboAddress(address, 4001);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("addSibling() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+	  return;
+	}
 	g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
       });
   }
@@ -163,7 +197,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
-	ComboAddress ca(address, 4001);
+	ComboAddress ca;
+	try {
+	  ca = ComboAddress(address, 4001);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("siblingListener() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+	  return;
+	}
 
 	auto launch = [ca]() {
 	  thread t1(receiveReplicationOperations, ca);
@@ -213,7 +254,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) {
 	if(client)
 	  return;
-	ComboAddress local(address);
+	ComboAddress local;
+	try {
+	  local = ComboAddress(address);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+	  return;
+	}
 	try {
 	  int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
 	  SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
@@ -240,8 +288,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("controlSocket", [client](const std::string& str) {
-	ComboAddress local(str, 5199);
-
+	ComboAddress local;
+	try {
+	  local = ComboAddress(str, 5199);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);
+	  return;
+	}
 	if(client) {
 	  g_serverControl = local;
 	  return;
@@ -551,7 +605,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("device_attrs", &LoginTuple::device_attrs);
 
   c_lua.registerFunction("tostring", &ComboAddress::toString);
-  c_lua.writeFunction("newCA", [](string address) { return ComboAddress(address); } );
+  c_lua.writeFunction("newCA", [](string address) {
+      try {
+	return ComboAddress(address);
+      }
+      catch (const std::runtime_error& e) {
+	errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+	return ComboAddress();
+      }
+    } );
 
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 

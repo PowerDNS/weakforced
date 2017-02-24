@@ -15,7 +15,7 @@ dp_access = {
    {protocol="https", device="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"},
    {protocol="http", device="Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 7.0; InfoPath.3; .NET CLR 3.1.40767; Trident/6.0; en-IN)"},
    {protocol="https", device="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"},
-   {protocol="imap", device='\\"name\\" \\"Mac OS X Mail\\" \\"version\\" \\"10.0 (3226)\\" \\"os\\" \\"Mac OS X\\" \\"os-version\\" \\"10.12 (16A323)\\" \\"vendor\\" \\"Apple Inc.\\"'}
+   {protocol="imap", device='\\"name\\" \\"Bad Guy Mailer\\" \\"version\\" \\"10.0 (3226)\\" \\"os\\" \\"Mac OS X\\" \\"os-version\\" \\"10.12 (16A323)\\" \\"vendor\\" \\"Bad Guy Inc.\\"'}
 }
 
 ip_access = {

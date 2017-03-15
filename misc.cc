@@ -186,7 +186,7 @@ int waitForData(int fd, int seconds, int useconds)
   return waitForRWData(fd, true, seconds, useconds);
 }
 
-int waitForRWData(int fd, bool waitForRead, int seconds, int useconds)
+int waitForRWData(int fd, bool waitForRead, int seconds, int useconds, bool* error, bool* disconnected)
 {
   int ret;
 
@@ -202,7 +202,15 @@ int waitForRWData(int fd, bool waitForRead, int seconds, int useconds)
   ret = poll(&pfd, 1, seconds * 1000 + useconds/1000);
   if ( ret == -1 )
     errno = ETIMEDOUT; // ???
-
+  else if (ret > 0) {
+    if (error && (pfd.revents & POLLERR)) {
+      *error = true;
+    }
+    if (disconnected && (pfd.revents & POLLHUP)) {
+      *disconnected = true;
+    }
+  }
+  
   return ret;
 }
 
@@ -652,7 +660,7 @@ Regex::Regex(const string &expr)
     throw std::runtime_error("Regular expression did not compile");
 }
 
-void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* source)
+void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* source, int itfIndex)
 {
   struct cmsghdr *cmsg = NULL;
 
@@ -671,7 +679,7 @@ void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* sour
     pkt = (struct in6_pktinfo *) CMSG_DATA(cmsg);
     memset(pkt, 0, sizeof(*pkt));
     pkt->ipi6_addr = source->sin6.sin6_addr;
-    msgh->msg_controllen = cmsg->cmsg_len; // makes valgrind happy and is slightly better style
+    pkt->ipi6_ifindex = itfIndex;
 #endif
   }
   else {
@@ -689,7 +697,7 @@ void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* sour
     pkt = (struct in_pktinfo *) CMSG_DATA(cmsg);
     memset(pkt, 0, sizeof(*pkt));
     pkt->ipi_spec_dst = source->sin4.sin_addr;
-    msgh->msg_controllen = cmsg->cmsg_len;
+    pkt->ipi_ifindex = itfIndex;
 #endif
 #ifdef IP_SENDSRCADDR
     struct in_addr *in;
@@ -704,7 +712,6 @@ void addCMsgSrcAddr(struct msghdr* msgh, void* cmsgbuf, const ComboAddress* sour
 
     in = (struct in_addr *) CMSG_DATA(cmsg);
     *in = source->sin4.sin_addr;
-    msgh->msg_controllen = cmsg->cmsg_len;
 #endif
   }
 }

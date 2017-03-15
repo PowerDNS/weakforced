@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <functional>
 #include <bitset>
+#include "wforce_exception.hh"
 #include "misc.hh"
 #include <sys/socket.h>
 #include <netdb.h>
@@ -64,18 +65,18 @@
 
 #define htobe16(x) BE_16(x)
 #define htole16(x) LE_16(x)
-#define be16toh(x) BE_IN16(x)
-#define le16toh(x) LE_IN16(x)
+#define be16toh(x) BE_IN16(&(x))
+#define le16toh(x) LE_IN16(&(x))
 
 #define htobe32(x) BE_32(x)
 #define htole32(x) LE_32(x)
-#define be32toh(x) BE_IN32(x)
-#define le32toh(x) LE_IN32(x)
+#define be32toh(x) BE_IN32(&(x))
+#define le32toh(x) LE_IN32(&(x))
 
 #define htobe64(x) BE_64(x)
 #define htole64(x) LE_64(x)
-#define be64toh(x) BE_IN64(x)
-#define le64toh(x) LE_IN64(x)
+#define be64toh(x) BE_IN64(&(x))
+#define le64toh(x) LE_IN64(&(x))
 
 #endif
 
@@ -198,7 +199,7 @@ union ComboAddress {
   };
 
   void setSockaddr(const struct sockaddr *sa, socklen_t salen) {
-    if (salen > sizeof(struct sockaddr_in6)) throw std::runtime_error("ComboAddress can't handle other than sockaddr_in or sockaddr_in6");
+    if (salen > sizeof(struct sockaddr_in6)) throw PDNSException("ComboAddress can't handle other than sockaddr_in or sockaddr_in6");
     memcpy(this, sa, salen);
   }
 
@@ -210,12 +211,21 @@ union ComboAddress {
     sin4.sin_port = 0;
     if(makeIPv4sockaddr(str, &sin4)) {
       sin6.sin6_family = AF_INET6;
-      if(makeIPv6sockaddr(str, &sin6) < 0) {
-	throw std::runtime_error("Unable to convert presentation address '"+ str +"'");
-      }
+      if(makeIPv6sockaddr(str, &sin6) < 0)
+	throw PDNSException("Unable to convert presentation address '"+ str +"'");
+      
     }
     if(!sin4.sin_port) // 'str' overrides port!
       sin4.sin_port=htons(port);
+  }
+
+  bool isIpv6() const
+  {
+    return sin6.sin6_family == AF_INET6;
+  }
+  bool isIpv4() const
+  {
+    return sin4.sin_family == AF_INET;
   }
 
   bool isMappedIPv4()  const
@@ -239,7 +249,7 @@ union ComboAddress {
   ComboAddress mapToIPv4() const
   {
     if(!isMappedIPv4())
-      throw std::runtime_error("ComboAddress can't map non-mapped IPv6 address back to IPv4");
+      throw PDNSException("ComboAddress can't map non-mapped IPv6 address back to IPv4");
     ComboAddress ret;
     ret.sin4.sin_family=AF_INET;
     ret.sin4.sin_port=sin4.sin_port;
@@ -266,24 +276,15 @@ union ComboAddress {
     else
       return "["+toString() + "]:" + std::to_string(ntohs(sin4.sin_port));
   }
-
-  bool isIpv6() const 
-  {
-    return sin6.sin6_family == AF_INET6;
-  }
-  bool isIpv4() const
-  {
-    return sin4.sin_family == AF_INET;
-  }
   
-  void truncate(unsigned int bits);
+  void truncate(unsigned int bits) noexcept;
 };
 
 /** This exception is thrown by the Netmask class and by extension by the NetmaskGroup class */
-class NetmaskException: public std::runtime_error 
+class NetmaskException: public PDNSException
 {
 public:
-  NetmaskException(const string &a) : std::runtime_error(a) {}
+  NetmaskException(const string &a) : PDNSException(a) {}
 };
 
 inline ComboAddress makeComboAddress(const string& str)
@@ -438,11 +439,34 @@ public:
   {
     return d_network;
   }
+  const ComboAddress getMaskedNetwork() const
+  {
+    ComboAddress result(d_network);
+    if(isIpv4()) {
+      result.sin4.sin_addr.s_addr = htonl(ntohl(result.sin4.sin_addr.s_addr) & d_mask);
+    }
+    else if(isIpv6()) {
+      size_t idx;
+      uint8_t bytes=d_bits/8;
+      uint8_t *us=(uint8_t*) &result.sin6.sin6_addr.s6_addr;
+      uint8_t bits= d_bits % 8;
+      uint8_t mask= (uint8_t) ~(0xFF>>bits);
+
+      if (bytes < sizeof(result.sin6.sin6_addr.s6_addr)) {
+        us[bytes] &= mask;
+      }
+
+      for(idx = bytes + 1; idx < sizeof(result.sin6.sin6_addr.s6_addr); ++idx) {
+        us[idx] = 0;
+      }
+    }
+    return result;
+  }
   int getBits() const
   {
     return d_bits;
   }
-  bool isIpv6() const 
+  bool isIpv6() const
   {
     return d_network.sin6.sin6_family == AF_INET6;
   }
@@ -486,7 +510,7 @@ private:
  * To erase something copy values to new tree sans the value you want to erase.
  *
  * Use swap if you need to move the tree to another NetmaskTree instance, it is WAY faster
- * than using copy ctor or assigment operator, since it moves the nodes and tree root to
+ * than using copy ctor or assignment operator, since it moves the nodes and tree root to
  * new home instead of actually recreating the tree.
  *
  * Please see NetmaskGroup for example of simple use case. Other usecases can be found
@@ -719,8 +743,12 @@ public:
         bits++;
       }
       if (node) {
-        for(auto it = _nodes.begin(); it != _nodes.end(); it++)
-           if (node->node4.get() == *it) _nodes.erase(it);
+        for(auto it = _nodes.begin(); it != _nodes.end(); ) {
+	  if (node->node4.get() == *it)
+	    it = _nodes.erase(it);
+	  else
+	    it++;
+	}
         node->node4.reset();
       }
     } else {
@@ -740,8 +768,12 @@ public:
         bits++;
       }
       if (node) {
-        for(auto it = _nodes.begin(); it != _nodes.end(); it++)
-           if (node->node6.get() == *it) _nodes.erase(it);
+        for(auto it = _nodes.begin(); it != _nodes.end(); ) {
+	  if (node->node6.get() == *it)
+	    it = _nodes.erase(it);
+	  else
+	    it++;
+	}
         node->node6.reset();
       }
     }
@@ -797,7 +829,9 @@ public:
 
   bool match(const ComboAddress *ip) const
   {
-    return tree.match(*ip);
+    const auto &ret = tree.lookup(*ip);
+    if(ret) return ret->second;
+    return false;
   }
 
   bool match(const ComboAddress& ip) const
@@ -806,15 +840,19 @@ public:
   }
 
   //! Add this string to the list of possible matches
-  void addMask(const std::string &ip)
+  void addMask(const std::string &ip, bool positive=true)
   {
-    addMask(Netmask(ip));
+    if(!ip.empty() && ip[0] == '!') {
+      addMask(Netmask(ip.substr(1)), false);
+    } else {
+      addMask(Netmask(ip), positive);
+    }
   }
 
   //! Add this Netmask to the list of possible matches
-  void addMask(const Netmask& nm)
+  void addMask(const Netmask& nm, bool positive=true)
   {
-    tree.insert(nm);
+    tree.insert(nm).second=positive;
   }
 
   void clear()
@@ -838,6 +876,8 @@ public:
     for(auto iter = tree.begin(); iter != tree.end(); ++iter) {
       if(iter != tree.begin())
         str <<", ";
+      if(!((*iter)->second))
+        str<<"!";
       str<<(*iter)->first.toString();
     }
     return str.str();
@@ -845,8 +885,9 @@ public:
 
   void toStringVector(std::vector<std::string>* vec) const
   {
-    for(auto iter = tree.begin(); iter != tree.end(); ++iter)
-      vec->push_back((*iter)->first.toString());
+    for(auto iter = tree.begin(); iter != tree.end(); ++iter) {
+      vec->push_back(((*iter)->second ? "" : "!") + (*iter)->first.toString());
+    }
   }
 
   void toMasks(const std::string &ips)
@@ -880,6 +921,11 @@ struct SComboAddress
 
 int SSocket(int family, int type, int flags);
 int SConnect(int sockfd, const ComboAddress& remote);
+/* tries to connect to remote for a maximum of timeout seconds.
+   sockfd should be set to non-blocking beforehand.
+   returns 0 on success (the socket is writable), throw a
+   runtime_error otherwise */
+int SConnectWithTimeout(int sockfd, const ComboAddress& remote, int timeout);
 int SBind(int sockfd, const ComboAddress& local);
 int SAccept(int sockfd, ComboAddress& remote);
 int SListen(int sockfd, int limit);
@@ -896,7 +942,8 @@ bool HarvestTimestamp(struct msghdr* msgh, struct timeval* tv);
 void fillMSGHdr(struct msghdr* msgh, struct iovec* iov, char* cbuf, size_t cbufsize, char* data, size_t datalen, ComboAddress* addr);
 ssize_t sendfromto(int sock, const char* data, size_t len, int flags, const ComboAddress& from, const ComboAddress& to);
 ssize_t sendMsgWithTimeout(int fd, const char* buffer, size_t len, int timeout, ComboAddress& dest, const ComboAddress& local, unsigned int localItf);
-
-#endif
+bool sendSizeAndMsgWithTimeout(int sock, uint16_t bufferLen, const char* buffer, int idleTimeout, const ComboAddress* dest, const ComboAddress* local, unsigned int localItf, int totalTimeout, int flags);
 
 extern template class NetmaskTree<bool>;
+
+#endif

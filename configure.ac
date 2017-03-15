@@ -13,7 +13,12 @@ PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 
 PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])])
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd], [AC_DEFINE([HAVE_LIBSYSTEMD], [1], [Define to 1 if you have libsystemd-dev])], [true])
 PKG_CHECK_MODULES([LIBHIREDIS], [libhiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have libhiredis-dev])], [true])
-PKG_CHECK_MODULES([LIBHIREDIS], [hiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have hiredis])], [true])
+AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
+  PKG_CHECK_MODULES([LIBHIREDIS], [hiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have hiredis])])
+])
+AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
+  AC_MSG_ERROR([libhiredis not found, libhiredis support is not optional])
+])
 PDNS_CHECK_YAMLCPP([AC_DEFINE([HAVE_YAMLCPP], [1], [Define to 1 if you have yaml-cpp])], [true])
 AS_IF([test "x$YAMLCPP_LIBS" == "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is not optional])

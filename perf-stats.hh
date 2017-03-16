@@ -28,3 +28,4 @@ void initPerfStats();
 void addWTWStat(unsigned int num_ms); // number of milliseconds
 void addWTRStat(unsigned int num_ms); // number of milliseconds
 void startStatsThread();
+std::string getPerfStatsString(); // return perf stats in a string

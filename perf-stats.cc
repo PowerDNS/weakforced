@@ -126,3 +126,12 @@ void startStatsThread()
   thread t(statsReportingThread);
   t.detach();
 }
+
+std::string getPerfStatsString()
+{
+  std::stringstream ss;
+  for (auto i=lookupPerfStat.begin(); i!=lookupPerfStat.end(); ++i) {
+    ss << i->second << "=" << getStat(i->first) << "\n";
+  }
+  return ss.str();
+}

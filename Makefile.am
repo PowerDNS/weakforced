@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 UAP_REGEX_FILE=regexes.yaml
 
-SUBDIRS=ext docs docker
+SUBDIRS=ext docs
 
 EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 

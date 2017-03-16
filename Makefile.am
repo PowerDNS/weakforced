@@ -86,7 +86,7 @@ noinst_HEADERS = \
 	device_parser.hh
 
 replication.pb.cc: replication.proto
-	$(AM_V_GEN)$(PROTOC) --cpp_out=./ $<
+	$(AM_V_GEN)$(PROTOC) -I $(top_srcdir) --cpp_out=./ $<
 
 nodist_wforce_SOURCES = replication.pb.cc replication.pb.h
 

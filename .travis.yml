@@ -57,7 +57,10 @@ script:
  - tar xvf wforce-$WF_VERSION.tar.gz
  - cd wforce-$WF_VERSION
  - autoreconf -i
- - ./configure
+ - cd ..
+ - mkdir build
+ - cd build
+ - ../wforce-$WF_VERSION/configure
  - make
 notifications:
   irc:

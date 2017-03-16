@@ -17,11 +17,11 @@ AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
   PKG_CHECK_MODULES([LIBHIREDIS], [hiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have hiredis])])
 ])
 AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
-  AC_MSG_ERROR([libhiredis not found, libhiredis support is not optional])
+  AC_MSG_ERROR([libhiredis not found, libhiredis support is mandatory])
 ])
 PDNS_CHECK_YAMLCPP([AC_DEFINE([HAVE_YAMLCPP], [1], [Define to 1 if you have yaml-cpp])], [true])
 AS_IF([test "x$YAMLCPP_LIBS" == "x"], [
-  AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is not optional])
+  AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is mandatory])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
 AC_PROG_LIBTOOL
@@ -34,13 +34,13 @@ BOOST_FOREACH
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)
 AS_IF([test "x$HAVE_WGET" == "x"], [
-  AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is not optional])
+  AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is mandatory])
 ])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 # Look for protobuf
 PDNS_WITH_PROTOBUF
 AS_IF([test "x$PROTOBUF_LIBS" == "x" -o "x$PROTOC" == "x"], [
-  AC_MSG_ERROR([Protobuf not found, protobuf support is not optional])
+  AC_MSG_ERROR([Protobuf not found, protobuf support is mandatory])
 ])
 # Setup variables for locally built libraries
 AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])
@@ -55,7 +55,7 @@ AS_IF([test "x$with_luajit" = "xno"], [
   PDNS_WITH_LUA
 ])
 AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
-  AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is not optional])
+  AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is mandatory])
 ])
 PDNS_CHECK_LUA_HPP
 # Need pandoc to build documentation

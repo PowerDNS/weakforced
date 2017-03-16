@@ -28,3 +28,6 @@ class WforceException: public std::runtime_error
 public:
   WforceException(const std::string &a) : std::runtime_error(a) {}
 };
+
+// This means we can use PDNS classes that emit PDNSException
+typedef WforceException PDNSException;

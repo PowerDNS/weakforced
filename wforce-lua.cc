@@ -74,7 +74,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  ca = ComboAddress(address, 4501);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("addReportSink() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	  return;
 	}
@@ -95,7 +95,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  try {
 	    v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
 	  }
-	  catch (const std::runtime_error& e) {
+	  catch (const WforceException& e) {
 	    errlog("setReportSinks() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
 	    return;
 	  }
@@ -115,7 +115,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  ca = ComboAddress(address, 4501);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("addNamedReportSink() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", address, sink_name);
 	  return;
 	}
@@ -145,7 +145,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	      try {
 		v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
 	      }
-	      catch (const std::runtime_error& e) {
+	      catch (const WforceException& e) {
 		errlog("setNamedReportSinks() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", p.second, sink_name);
 		return;
 	      }
@@ -171,7 +171,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  ca = ComboAddress(address, 4001);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("addSibling() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	  return;
 	}
@@ -201,7 +201,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  ca = ComboAddress(address, 4001);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("siblingListener() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	  return;
 	}
@@ -258,7 +258,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  local = ComboAddress(address);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	  return;
 	}
@@ -292,7 +292,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	try {
 	  local = ComboAddress(str, 5199);
 	}
-	catch (const std::runtime_error& e) {
+	catch (const WforceException& e) {
 	  errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);
 	  return;
 	}
@@ -609,7 +609,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       try {
 	return ComboAddress(address);
       }
-      catch (const std::runtime_error& e) {
+      catch (const WforceException& e) {
 	errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	return ComboAddress();
       }
@@ -617,8 +617,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 
-  c_lua.registerFunction("addMask", static_cast<void(NetmaskGroup::*)(const std::string&)>(&NetmaskGroup::addMask));
-  c_lua.registerFunction("match", static_cast<bool(NetmaskGroup::*)(const ComboAddress&) const>(&NetmaskGroup::match));
+  c_lua.registerFunction<void(NetmaskGroup::*)(const std::string&)>("addMask", [](NetmaskGroup& nmg, const std::string& mask) {
+      nmg.addMask(mask);
+    });
+  c_lua.registerFunction("match", (bool (NetmaskGroup::*)(const ComboAddress&) const)&NetmaskGroup::match);
+  g_lua.registerFunction("size", &NetmaskGroup::size);
+  g_lua.registerFunction("clear", &NetmaskGroup::clear);
 
   if (allow_report) {
     c_lua.writeFunction("setAllow", [&allow_func](allow_t func) { allow_func=func;});

@@ -19,7 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -45,16 +44,61 @@ int SSocket(int family, int type, int flags)
 int SConnect(int sockfd, const ComboAddress& remote)
 {
   int ret = connect(sockfd, (struct sockaddr*)&remote, remote.getSocklen());
-  if(ret < 0)
-    RuntimeError(boost::format("connecting socket to %s: %s") % remote.toStringWithPort() % strerror(errno));
+  if(ret < 0) {
+    int savederrno = errno;
+    RuntimeError(boost::format("connecting socket to %s: %s") % remote.toStringWithPort() % strerror(savederrno));
+  }
+  return ret;
+}
+
+int SConnectWithTimeout(int sockfd, const ComboAddress& remote, int timeout)
+{
+  int ret = connect(sockfd, (struct sockaddr*)&remote, remote.getSocklen());
+  if(ret < 0) {
+    int savederrno = errno;
+    if (savederrno == EINPROGRESS) {
+      /* we wait until the connection has been established */
+      bool error = false;
+      bool disconnected = false;
+      int res = waitForRWData(sockfd, false, timeout, 0, &error, &disconnected);
+      if (res == 1) {
+        if (error) {
+          savederrno = 0;
+          socklen_t errlen = sizeof(savederrno);
+          if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void *)&savederrno, &errlen) == 0) {
+            RuntimeError(boost::format("connecting to %s failed: %s") % remote.toStringWithPort() % string(strerror(savederrno)));
+          }
+          else {
+            RuntimeError(boost::format("connecting to %s failed") % remote.toStringWithPort());
+          }
+        }
+        if (disconnected) {
+          RuntimeError(boost::format("%s closed the connection") % remote.toStringWithPort());
+        }
+        return 0;
+      }
+      else if (res == 0) {
+        RuntimeError(boost::format("timeout while connecting to %s") % remote.toStringWithPort());
+      } else if (res < 0) {
+        savederrno = errno;
+        RuntimeError(boost::format("waiting to connect to %s: %s") % remote.toStringWithPort() % string(strerror(savederrno)));
+      }
+    }
+    else {
+      RuntimeError(boost::format("connecting to %s: %s") % remote.toStringWithPort() % string(strerror(savederrno)));
+    }
+  }
+
   return ret;
 }
 
 int SBind(int sockfd, const ComboAddress& local)
 {
   int ret = bind(sockfd, (struct sockaddr*)&local, local.getSocklen());
-  if(ret < 0)
-    RuntimeError(boost::format("binding socket to %s: %s") % local.toStringWithPort() % strerror(errno));
+  if(ret < 0) {
+    int savederrno = errno;
+    RuntimeError(boost::format("binding socket to %s: %s") % local.toStringWithPort() % strerror(savederrno));
+  }
   return ret;
 }
 
@@ -119,7 +163,6 @@ bool HarvestDestinationAddress(struct msghdr* msgh, ComboAddress* destination)
       return true;
     }
 #endif
-
 #if defined(IPV6_PKTINFO)
     if ((cmsg->cmsg_level == IPPROTO_IPV6) && (cmsg->cmsg_type == IPV6_PKTINFO)) {
         struct in6_pktinfo *i = (struct in6_pktinfo *) CMSG_DATA(cmsg);
@@ -158,7 +201,7 @@ ssize_t sendfromto(int sock, const char* data, size_t len, int flags, const Comb
   msgh.msg_namelen = to.getSocklen();
 
   if(from.sin4.sin_family) {
-    addCMsgSrcAddr(&msgh, cbuf, &from);
+    addCMsgSrcAddr(&msgh, cbuf, &from, 0);
   }
   else {
     msgh.msg_control=NULL;
@@ -185,7 +228,8 @@ void fillMSGHdr(struct msghdr* msgh, struct iovec* iov, char* cbuf, size_t cbufs
   msgh->msg_flags = 0;
 }
 
-void ComboAddress::truncate(unsigned int bits)
+// warning: various parts of PowerDNS assume 'truncate' will never throw
+void ComboAddress::truncate(unsigned int bits) noexcept
 {
   uint8_t* start;
   int len=4;
@@ -214,5 +258,147 @@ void ComboAddress::truncate(unsigned int bits)
   *place &= (~((1<<bitsleft)-1));
 }
 
+ssize_t sendMsgWithTimeout(int fd, const char* buffer, size_t len, int timeout, ComboAddress& dest, const ComboAddress& local, unsigned int localItf)
+{
+  struct msghdr msgh;
+  struct iovec iov;
+  char cbuf[256];
+  bool firstTry = true;
+  fillMSGHdr(&msgh, &iov, cbuf, sizeof(cbuf), const_cast<char*>(buffer), len, &dest);
+  addCMsgSrcAddr(&msgh, cbuf, &local, localItf);
+
+  do {
+    ssize_t written = sendmsg(fd, &msgh, 0);
+
+    if (written > 0)
+      return written;
+
+    if (errno == EAGAIN) {
+      if (firstTry) {
+        int res = waitForRWData(fd, false, timeout, 0);
+        if (res > 0) {
+          /* there is room available */
+          firstTry = false;
+        }
+        else if (res == 0) {
+          throw runtime_error("Timeout while waiting to write data");
+        } else {
+          throw runtime_error("Error while waiting for room to write data");
+        }
+      }
+      else {
+        throw runtime_error("Timeout while waiting to write data");
+      }
+    }
+    else {
+      unixDie("failed in write2WithTimeout");
+    }
+  }
+  while (firstTry);
+
+  return 0;
+}
+
 template class NetmaskTree<bool>;
 
+bool sendSizeAndMsgWithTimeout(int sock, uint16_t bufferLen, const char* buffer, int idleTimeout, const ComboAddress* dest, const ComboAddress* local, unsigned int localItf, int totalTimeout, int flags)
+{
+  uint16_t size = htons(bufferLen);
+  char cbuf[256];
+  struct msghdr msgh;
+  struct iovec iov[2];
+  int remainingTime = totalTimeout;
+  time_t start = 0;
+  if (totalTimeout) {
+    start = time(NULL);
+  }
+
+  /* Set up iov and msgh structures. */
+  memset(&msgh, 0, sizeof(struct msghdr));
+  msgh.msg_control = nullptr;
+  msgh.msg_controllen = 0;
+  if (dest) {
+    msgh.msg_name = reinterpret_cast<void*>(const_cast<ComboAddress*>(dest));
+    msgh.msg_namelen = dest->getSocklen();
+  }
+  else {
+    msgh.msg_name = nullptr;
+    msgh.msg_namelen = 0;
+  }
+
+  msgh.msg_flags = 0;
+
+  if (localItf != 0 && local) {
+    addCMsgSrcAddr(&msgh, cbuf, local, localItf);
+  }
+
+  iov[0].iov_base = &size;
+  iov[0].iov_len = sizeof(size);
+  iov[1].iov_base = reinterpret_cast<void*>(const_cast<char*>(buffer));
+  iov[1].iov_len = bufferLen;
+
+  size_t pos = 0;
+  size_t sent = 0;
+  size_t nbElements = sizeof(iov)/sizeof(*iov);
+  while (true) {
+    msgh.msg_iov = &iov[pos];
+    msgh.msg_iovlen = nbElements - pos;
+
+    ssize_t res = sendmsg(sock, &msgh, flags);
+    if (res > 0) {
+      size_t written = static_cast<size_t>(res);
+      sent += written;
+
+      if (sent == (sizeof(size) + bufferLen)) {
+        return true;
+      }
+      /* partial write, we need to keep only the (parts of) elements
+         that have not been written.
+      */
+      do {
+        if (written < iov[pos].iov_len) {
+          iov[pos].iov_len -= written;
+          written = 0;
+        }
+        else {
+          written -= iov[pos].iov_len;
+          iov[pos].iov_len = 0;
+          pos++;
+        }
+      }
+      while (written > 0 && pos < nbElements);
+    }
+    else if (res == -1) {
+      if (errno == EINTR) {
+        continue;
+      }
+      else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINPROGRESS) {
+        /* EINPROGRESS might happen with non blocking socket,
+           especially with TCP Fast Open */
+        int ret = waitForRWData(sock, false, (totalTimeout == 0 || idleTimeout <= remainingTime) ? idleTimeout : remainingTime, 0);
+        if (ret > 0) {
+          /* there is room available */
+        }
+        else if (ret == 0) {
+          throw runtime_error("Timeout while waiting to send data");
+        } else {
+          throw runtime_error("Error while waiting for room to send data");
+        }
+      }
+      else {
+        unixDie("failed in sendSizeAndMsgWithTimeout");
+      }
+    }
+    if (totalTimeout) {
+      time_t now = time(NULL);
+      int elapsed = now - start;
+      if (elapsed >= remainingTime) {
+        throw runtime_error("Timeout while sending data");
+      }
+      start = now;
+      remainingTime -= elapsed;
+    }
+  }
+
+  return false;
+}

@@ -58,6 +58,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #   include "misc/exception.hpp"
 #endif
 
+#ifdef __GNUC__
+#   define ATTR_UNUSED __attribute__((unused))
+#else
+#   define ATTR_UNUSED
+#endif
+
 /**
  * Defines a Lua context
  * A Lua context is used to interpret Lua code. Since everything in Lua is a variable (including functions),
@@ -163,10 +169,10 @@ public:
     class WrongTypeException : public std::runtime_error
     {
     public:
-        WrongTypeException(std::string luaType, const std::type_info& destination) :
-            std::runtime_error("Trying to cast a lua variable from \"" + luaType + "\" to \"" + destination.name() + "\""),
-            luaType(luaType),
-            destination(destination)
+        WrongTypeException(std::string luaType_, const std::type_info& destination_) :
+            std::runtime_error("Trying to cast a lua variable from \"" + luaType_ + "\" to \"" + destination_.name() + "\""),
+            luaType(luaType_),
+            destination(destination_)
         {
         }
         
@@ -420,12 +426,12 @@ public:
      * @tparam TVarType      Type of the member
      * @param name           Name of the member to register
      * @param readFunction   Function of type "TVarType (const TObject&)"
-     * @param writeFunction  Function of type "void (TObject&, const TVarType&)"
+     * @param writeFunction_  Function of type "void (TObject&, const TVarType&)"
      */
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMember(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMember(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction_)
     {
-        registerMemberImpl<TObject,TVarType>(name, std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl<TObject,TVarType>(name, std::move(readFunction), std::move(writeFunction_));
     }
 
     /**
@@ -434,13 +440,13 @@ public:
      * @tparam TMemberType   Pointer to member object representing the type
      * @param name           Name of the member to register
      * @param readFunction   Function of type "TVarType (const TObject&)"
-     * @param writeFunction  Function of type "void (TObject&, const TVarType&)"
+     * @param writeFunction_  Function of type "void (TObject&, const TVarType&)"
      */
     template<typename TMemberType, typename TReadFunction, typename TWriteFunction>
-    void registerMember(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMember(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction_)
     {
         static_assert(std::is_member_object_pointer<TMemberType>::value, "registerMember must take a member object pointer type as template parameter");
-        registerMemberImpl(tag<TMemberType>{}, name, std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl(tag<TMemberType>{}, name, std::move(readFunction), std::move(writeFunction_));
     }
 
     /**
@@ -477,12 +483,12 @@ public:
      * @tparam TObject       Type to register the member to
      * @tparam TVarType      Type of the member
      * @param readFunction   Function of type "TVarType (const TObject&, const std::string&)"
-     * @param writeFunction  Function of type "void (TObject&, const std::string&, const TVarType&)"
+     * @param writeFunction_  Function of type "void (TObject&, const std::string&, const TVarType&)"
      */
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMember(TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMember(TReadFunction readFunction, TWriteFunction writeFunction_)
     {
-        registerMemberImpl<TObject,TVarType>(std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl<TObject,TVarType>(std::move(readFunction), std::move(writeFunction_));
     }
 
     /**
@@ -490,13 +496,13 @@ public:
      * This is the version "registerMember<int (Foo::*)>(getter, setter)"
      * @tparam TMemberType   Pointer to member object representing the type
      * @param readFunction   Function of type "TVarType (const TObject&, const std::string&)"
-     * @param writeFunction  Function of type "void (TObject&, const std::string&, const TVarType&)"
+     * @param writeFunction_  Function of type "void (TObject&, const std::string&, const TVarType&)"
      */
     template<typename TMemberType, typename TReadFunction, typename TWriteFunction>
-    void registerMember(TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMember(TReadFunction readFunction, TWriteFunction writeFunction_)
     {
         static_assert(std::is_member_object_pointer<TMemberType>::value, "registerMember must take a member object pointer type as template parameter");
-        registerMemberImpl(tag<TMemberType>{}, std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl(tag<TMemberType>{}, std::move(readFunction), std::move(writeFunction_));
     }
 
     /**
@@ -560,7 +566,7 @@ public:
      * @sa writeVariable
      *
      * Readable types are all types accepted by writeVariable except nullptr, std::unique_ptr and function pointers
-     * Additionaly supported:
+     * Additionally supported:
      *  - LuaFunctionCaller<FunctionType>, which is an alternative to std::function
      *  - references to custom objects, in which case it will return the object in-place
      *
@@ -637,7 +643,7 @@ public:
     
     /**
      * Equivalent to writeVariable(varName, ..., std::function<TFunctionType>(data));
-     * This version is more effecient than writeVariable if you want to write functions
+     * This version is more efficient than writeVariable if you want to write functions
      */
     template<typename TFunctionType, typename... TData>
     void writeFunction(TData&&... data) noexcept {
@@ -674,7 +680,7 @@ private:
     /*                 PUSH OBJECT                    */
     /**************************************************/
     struct PushedObject {
-        PushedObject(lua_State* state, int num = 1) : state(state), num(num) {}
+        PushedObject(lua_State* state_, int num_ = 1) : state(state_), num(num_) {}
         ~PushedObject() { assert(lua_gettop(state) >= num); if (num >= 1) lua_pop(state, num); }
         
         PushedObject& operator=(const PushedObject&) = delete;
@@ -735,7 +741,7 @@ private:
     // equivalent of lua_settable with t[k]=n, where t is the value at the index in the template parameter, k is the second parameter, n is the last parameter, and n is pushed by the function in the first parameter
     // if there are more than 3 parameters, parameters 3 to n-1 are considered as sub-indices into the array
     // the dataPusher MUST push only one thing on the stack
-    // TTableIndex must be either LUA_REGISTERYINDEX, LUA_GLOBALSINDEX, LUA_ENVINDEX, or the position of the element on the stack
+    // TTableIndex must be either LUA_REGISTRYINDEX, LUA_GLOBALSINDEX, LUA_ENVINDEX, or the position of the element on the stack
     template<typename TDataType, typename TIndex, typename TData>
     static void setTable(lua_State* state, const PushedObject&, TIndex&& index, TData&& data) noexcept
     {
@@ -1041,7 +1047,7 @@ private:
     template<typename TFunctionType, typename TRetValue, typename TObject, typename... TOtherParams>
     void registerFunctionImpl(const std::string& functionName, TFunctionType function, tag<TObject>, tag<TRetValue (TOtherParams...)>)
     {
-        static_assert(std::is_class<TObject>::value || std::is_pointer<TObject>::value || std::is_union<TObject>::value , "registerFunction can only be used for a class or a pointer");
+        static_assert(std::is_class<TObject>::value || std::is_pointer<TObject>::value || std::is_union<TObject>::value , "registerFunction can only be used for a class a union or a pointer");
 
         checkTypeRegistration(mState, &typeid(TObject));
         setTable<TRetValue(TObject&, TOtherParams...)>(mState, Registry, &typeid(TObject), 0, functionName, std::move(function));
@@ -1126,29 +1132,29 @@ private:
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMemberImpl(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMemberImpl(const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction_)
     {
         registerMemberImpl<TObject,TVarType>(name, readFunction);
 
-        setTable<void (TObject&, TVarType)>(mState, Registry, &typeid(TObject), 4, name, [writeFunction](TObject& object, const TVarType& value) {
-            writeFunction(object, value);
+        setTable<void (TObject&, TVarType)>(mState, Registry, &typeid(TObject), 4, name, [writeFunction_](TObject& object, const TVarType& value) {
+            writeFunction_(object, value);
         });
         
-        setTable<void (TObject*, TVarType)>(mState, Registry, &typeid(TObject*), 4, name, [writeFunction](TObject* object, const TVarType& value) {
+        setTable<void (TObject*, TVarType)>(mState, Registry, &typeid(TObject*), 4, name, [writeFunction_](TObject* object, const TVarType& value) {
             assert(object);
-            writeFunction(*object, value);
+            writeFunction_(*object, value);
         });
         
-        setTable<void (std::shared_ptr<TObject>, TVarType)>(mState, Registry, &typeid(std::shared_ptr<TObject>), 4, name, [writeFunction](std::shared_ptr<TObject> object, const TVarType& value) {
+        setTable<void (std::shared_ptr<TObject>, TVarType)>(mState, Registry, &typeid(std::shared_ptr<TObject>), 4, name, [writeFunction_](std::shared_ptr<TObject> object, const TVarType& value) {
             assert(object);
-            writeFunction(*object, value);
+            writeFunction_(*object, value);
         });
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMemberImpl(tag<TVarType (TObject::*)>, const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMemberImpl(tag<TVarType (TObject::*)>, const std::string& name, TReadFunction readFunction, TWriteFunction writeFunction_)
     {
-        registerMemberImpl<TObject,TVarType>(name, std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl<TObject,TVarType>(name, std::move(readFunction), std::move(writeFunction_));
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction>
@@ -1192,29 +1198,29 @@ private:
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMemberImpl(TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMemberImpl(TReadFunction readFunction, TWriteFunction writeFunction_)
     {
         registerMemberImpl<TObject,TVarType>(readFunction);
 
-        setTable<void (TObject&, std::string, TVarType)>(mState, Registry, &typeid(TObject), 5, [writeFunction](TObject& object, const std::string& name, const TVarType& value) {
-            writeFunction(object, name, value);
+        setTable<void (TObject&, std::string, TVarType)>(mState, Registry, &typeid(TObject), 5, [writeFunction_](TObject& object, const std::string& name, const TVarType& value) {
+            writeFunction_(object, name, value);
         });
         
-        setTable<void (TObject*, std::string, TVarType)>(mState, Registry, &typeid(TObject*), 2, [writeFunction](TObject* object, const std::string& name, const TVarType& value) {
+        setTable<void (TObject*, std::string, TVarType)>(mState, Registry, &typeid(TObject*), 2, [writeFunction_](TObject* object, const std::string& name, const TVarType& value) {
             assert(object);
-            writeFunction(*object, name, value);
+            writeFunction_(*object, name, value);
         });
         
-        setTable<void (std::shared_ptr<TObject>, std::string, TVarType)>(mState, Registry, &typeid(std::shared_ptr<TObject>), 2, [writeFunction](const std::shared_ptr<TObject>& object, const std::string& name, const TVarType& value) {
+        setTable<void (std::shared_ptr<TObject>, std::string, TVarType)>(mState, Registry, &typeid(std::shared_ptr<TObject>), 2, [writeFunction_](const std::shared_ptr<TObject>& object, const std::string& name, const TVarType& value) {
             assert(object);
-            writeFunction(*object, name, value);
+            writeFunction_(*object, name, value);
         });
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction, typename TWriteFunction>
-    void registerMemberImpl(tag<TVarType (TObject::*)>, TReadFunction readFunction, TWriteFunction writeFunction)
+    void registerMemberImpl(tag<TVarType (TObject::*)>, TReadFunction readFunction, TWriteFunction writeFunction_)
     {
-        registerMemberImpl<TObject,TVarType>(std::move(readFunction), std::move(writeFunction));
+        registerMemberImpl<TObject,TVarType>(std::move(readFunction), std::move(writeFunction_));
     }
 
     template<typename TObject, typename TVarType, typename TReadFunction>
@@ -1304,7 +1310,7 @@ private:
             RealReturnType;
         
         // we push the parameters on the stack
-        auto inArguments = Pusher<std::tuple<TParameters...>>::push(state, std::make_tuple(std::forward<TParameters>(input)...));
+        auto inArguments = Pusher<std::tuple<TParameters...>>::push(state, std::forward_as_tuple((input)...));
 
         // 
         const int outArgumentsCount = std::tuple_size<RealReturnType>::value;
@@ -1339,10 +1345,13 @@ private:
                     // an exception_ptr was pushed on the stack
                     // rethrowing it with an additional ExecutionErrorException
                     try {
-                        std::rethrow_exception(readTopAndPop<std::exception_ptr>(state, std::move(errorCode)));
+                        if (const auto exp = readTopAndPop<std::exception_ptr>(state, std::move(errorCode))) {
+                            std::rethrow_exception(exp);
+                        }
                     } catch(...) {
                         std::throw_with_nested(ExecutionErrorException{"Exception thrown by a callback function called by Lua"});
                     }
+                    throw ExecutionErrorException{"Unknown Lua error"};
                 }
             }
         }
@@ -1630,13 +1639,13 @@ private:
     /**************************************************/
     /*                   UTILITIES                    */
     /**************************************************/
-    // structure that will ensure that a certain is stored somewhere in the registry
+    // structure that will ensure that a certain value is stored somewhere in the registry
     struct ValueInRegistry {
-        // this constructor will clone and hold the value at the top of the stack in the registry
-        ValueInRegistry(lua_State* lua) : lua{lua}
+        // this constructor will clone and hold the value at the specified index (or by default at the top of the stack) in the registry
+        ValueInRegistry(lua_State* lua_, int index=-1) : lua{lua_}
         {
             lua_pushlightuserdata(lua, this);
-            lua_pushvalue(lua, -2);
+            lua_pushvalue(lua, -1 + index);
             lua_settable(lua, LUA_REGISTRYINDEX);
         }
         
@@ -1702,11 +1711,11 @@ private:
 };
 
 /// @deprecated
-//static LuaContext::EmptyArray_t
-//    LuaEmptyArray {};
+static LuaContext::EmptyArray_t ATTR_UNUSED
+    LuaEmptyArray {};
 /// @deprecated
-//static LuaContext::Metatable_t
-//    LuaMetatable {};
+static LuaContext::Metatable_t ATTR_UNUSED
+    LuaMetatable {};
     
 /**************************************************/
 /*            PARTIAL IMPLEMENTATIONS             */
@@ -1756,10 +1765,18 @@ template<>
 struct LuaContext::PusherTotalMaxSize<> { static const int size = 0; };
 
 // implementation of PusherMinSize
-template<typename TFirst, typename... TTypes>
-struct LuaContext::PusherMinSize<TFirst, TTypes...> { static const int size = Pusher<typename std::decay<TFirst>::type>::minSize < PusherTotalMaxSize<TTypes...>::size ? Pusher<typename std::decay<TFirst>::type>::minSize : PusherMinSize<TTypes...>::size; };
-template<>
-struct LuaContext::PusherMinSize<> { static const int size = 0; };
+template<typename TFirst, typename TSecond, typename... TTypes>
+struct LuaContext::PusherMinSize<TFirst, TSecond, TTypes...> 
+{ 
+    static const int size = Pusher<typename std::decay<TFirst>::type>::minSize < Pusher<typename std::decay<TSecond>::type>::minSize 
+                            ? 
+                            PusherMinSize<typename std::decay<TFirst>::type, TTypes...>::size 
+                            : 
+                            PusherMinSize<typename std::decay<TSecond>::type, TTypes...>::size;
+};
+
+template<typename TFirst>
+struct LuaContext::PusherMinSize<TFirst> { static const int size = Pusher<typename std::decay<TFirst>::type>::minSize; };
 
 // implementation of PusherMaxSize
 template<typename TFirst, typename... TTypes>
@@ -1804,9 +1821,9 @@ private:
 
 private:
     friend LuaContext;
-    explicit LuaFunctionCaller(lua_State* state) :
-        valueHolder(std::make_shared<ValueInRegistry>(state)),
-        state(state)
+    explicit LuaFunctionCaller(lua_State* state_, int index) :
+        valueHolder(std::make_shared<ValueInRegistry>(state_, index)),
+        state(state_)
     {}
 };
 
@@ -1835,7 +1852,7 @@ struct LuaContext::Pusher<std::string> {
     static const int maxSize = 1;
 
     static PushedObject push(lua_State* state, const std::string& value) noexcept {
-        lua_pushstring(state, value.c_str());
+        lua_pushlstring(state, value.c_str(), value.length());
         return PushedObject{state, 1};
     }
 };
@@ -2126,11 +2143,11 @@ struct LuaContext::Pusher<TReturnType (TParameters...)>
         // since "fn" doesn't need to be destroyed, we simply push it on the stack
 
         // this is the cfunction that is the callback
-        const auto function = [](lua_State* state) -> int
+        const auto function = [](lua_State* state_) -> int
         {
             // the function object is an upvalue
-            const auto toCall = static_cast<TFunctionObject*>(lua_touserdata(state, lua_upvalueindex(1)));
-            return callback(state, toCall, lua_gettop(state)).release();
+            const auto toCall = static_cast<TFunctionObject*>(lua_touserdata(state_, lua_upvalueindex(1)));
+            return callback(state_, toCall, lua_gettop(state_)).release();
         };
 
         // we copy the function object onto the stack
@@ -2150,11 +2167,11 @@ struct LuaContext::Pusher<TReturnType (TParameters...)>
         // since "fn" doesn't need to be destroyed, we simply push it on the stack
 
         // this is the cfunction that is the callback
-        const auto function = [](lua_State* state) -> int
+        const auto function = [](lua_State* state_) -> int
         {
             // the function object is an upvalue
-            const auto toCall = reinterpret_cast<TReturnType (*)(TParameters...)>(lua_touserdata(state, lua_upvalueindex(1)));
-            return callback(state, toCall, lua_gettop(state)).release();
+            const auto toCall = reinterpret_cast<TReturnType (*)(TParameters...)>(lua_touserdata(state_, lua_upvalueindex(1)));
+            return callback(state_, toCall, lua_gettop(state_)).release();
         };
 
         // we copy the function object onto the stack
@@ -2307,7 +2324,7 @@ private:
             obj = Pusher<typename std::decay<TType>::type>::push(state, std::move(value));
         }
 
-        VariantWriter(lua_State* state, PushedObject& obj) : state(state), obj(obj) {}
+        VariantWriter(lua_State* state_, PushedObject& obj_) : state(state_), obj(obj_) {}
         lua_State* state;
         PushedObject& obj;
     };
@@ -2469,10 +2486,11 @@ struct LuaContext::Reader<std::string>
     static auto read(lua_State* state, int index)
         -> boost::optional<std::string>
     {
-        const auto val = lua_tostring(state, index);
+        size_t len;
+        const auto val = lua_tolstring(state, index, &len);
         if (val == 0)
             return boost::none;
-        return std::string(val);
+        return std::string(val, len);
     }
 };
 
@@ -2486,7 +2504,7 @@ struct LuaContext::Reader<
     static auto read(lua_State* state, int index)
         -> boost::optional<TType>
     {
-        if (!lua_isnumber(state, index) != 0 || fmod(lua_tonumber(state, index), 1.) != 0)
+        if (!lua_isnumber(state, index) || fmod(lua_tonumber(state, index), 1.) != 0)
             return boost::none;
         return static_cast<TType>(lua_tointeger(state, index));
     }
@@ -2504,7 +2522,7 @@ struct LuaContext::Reader<LuaContext::LuaFunctionCaller<TRetValue (TParameters..
     {
         if (lua_isfunction(state, index) == 0 && lua_isuserdata(state, index) == 0)
             return boost::none;
-        return ReturnType(state);
+        return ReturnType(state, index);
     }
 };
 

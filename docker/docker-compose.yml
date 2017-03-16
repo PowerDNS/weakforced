@@ -1,0 +1,30 @@
+version: '2'
+services:
+  logstash:
+    build: logstash
+    ports:
+      - "14501:4501/udp"
+    command: -f /etc/logstash/conf.d/
+    volumes:
+      - ./logstash/config:/etc/logstash/conf.d
+      - ./logstash/geoip:/etc/logstash/geoip
+      - ./logstash/templates:/tmp/templates
+    links:
+      - elasticsearch
+    depends_on:
+      - elasticsearch
+    networks:
+      - docker_elk
+  elasticsearch:
+    build: elasticsearch
+    volumes:
+      - ./elasticsearch/data-dir:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - docker_elk
+
+networks:
+  docker_elk:
+    driver: bridge

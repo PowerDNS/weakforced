@@ -68,6 +68,9 @@ AX_AVAILABLE_SYSTEMD
 AM_CONDITIONAL([HAVE_SYSTEMD], [ test x"$systemd" = "xy" ])
 # We need a working libcurl package
 LIBCURL_CHECK_CONFIG
+AS_IF([test "x$LIBCURL" = "x"], [
+  AC_MSG_ERROR([Libcurl not found, libcurl support is mandatory])
+])
 AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/json11/Makefile

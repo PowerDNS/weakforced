@@ -61,7 +61,7 @@ std::string MiniCurl::getURL(const std::string& url, const MiniCurlHeaders& head
     d_error_buf[0] = '\0';
 
     curl_easy_perform(d_curl);
-    std::string ret=d_data;
+    std::string ret=std::move(d_data);
     d_data.clear();
 
     clearCurlHeaders(header_list);

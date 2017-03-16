@@ -115,6 +115,16 @@ bool MiniCurl::postURL(const std::string& url,
 		       const MiniCurlHeaders& headers,
 		       std::string& error_msg)
 {
+  std::string ignore_res;
+  return postURL(url, post_body, headers, ignore_res, error_msg);
+}
+
+bool MiniCurl::postURL(const std::string& url,
+		       const std::string& post_body,
+		       const MiniCurlHeaders& headers,
+		       std::string& post_res,
+		       std::string& error_msg)
+{
   bool retval = false;
   
   if (d_curl) {
@@ -134,6 +144,7 @@ bool MiniCurl::postURL(const std::string& url,
     auto ret = curl_easy_perform(d_curl);
 
     clearCurlHeaders(header_list);
+    post_res = std::move(d_data);
     d_data.clear();
     
     if (ret != CURLE_OK) {

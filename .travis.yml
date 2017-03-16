@@ -47,6 +47,9 @@ script:
  - cd regression-tests
  - ./runtests
  - cd ..
+ - cd docker
+ - make
+ - cd ..
  - export WF_VERSION=`grep PACKAGE_VERSION Makefile | awk  '{ print $3}'`
  - git status
  - git status | grep -q clean

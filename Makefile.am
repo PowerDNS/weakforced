@@ -5,7 +5,7 @@ UAP_REGEX_FILE=regexes.yaml
 
 SUBDIRS=ext docs
 
-EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
+EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE) docker/Makefile.am
 
 CLEANFILES = replication.pb.cc replication.pb.h wforce.service $(UAP_REGEX_FILE)
 

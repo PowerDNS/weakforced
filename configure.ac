@@ -80,6 +80,7 @@ AC_CONFIG_FILES([Makefile
 	ext/json11/Makefile
 	ext/yahttp/Makefile
 	ext/yahttp/yahttp/Makefile
-	docs/Makefile])
+	docs/Makefile
+	docker/Makefile])
 	
 AC_OUTPUT

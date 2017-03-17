@@ -150,6 +150,27 @@ started with the -c option.
 		 custom1                        true
 		 custom2                        false
 
+* showPerfStats() - Returns information about performance
+  statistics. Stats beginning with WTW refer to the time that worker
+  threads waited in a queue before running. Stats beginning with WTR
+  refer to the time that worker threads took to run. Each stat is in a
+  bucket, where each bucket represents a time range in ms,
+  e.g. 0-1. A server that is not overloaded will have most stats in
+  the 0-1 buckets. For example:
+
+		> showPerfStats()
+		WTW_0_1=2939287
+		WTW_1_10=9722
+		WTW_10_100=4
+		WTW_100_1000=0
+		WTW_Slow=0
+		WTR_0_1=2939229
+		WTR_1_10=2837
+		WTR_10_100=131
+		WTR_100_1000=0
+		WTR_Slow=0
+
+
 * showVersion() - Returns the current version of the wforce
   server. For example:
 

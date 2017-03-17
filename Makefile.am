@@ -3,11 +3,16 @@ ACLOCAL_AMFLAGS = -I m4
 
 UAP_REGEX_FILE=regexes.yaml
 
-SUBDIRS=ext docs
+if WITH_DOCKER
+BUILD_DOCKER = docker
+endif
+SUBDIRS=ext docs $(BUILD_DOCKER)
 
-EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE) docker/Makefile.am
+EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 
 CLEANFILES = replication.pb.cc replication.pb.h wforce.service $(UAP_REGEX_FILE)
+distclean-local:
+	-rm -rf *.dSYM
 
 sysconf_DATA= wforce.conf wforce.conf.example $(UAP_REGEX_FILE)
 bin_PROGRAMS = wforce

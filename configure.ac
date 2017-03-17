@@ -75,6 +75,15 @@ LIBCURL_CHECK_CONFIG
 AS_IF([test "x$LIBCURL" = "x"], [
   AC_MSG_ERROR([Libcurl not found, libcurl support is required])
 ])
+# Do we want the docker subdirectories to be built?
+AC_ARG_ENABLE([docker],
+[  --enable-docker         Build and run docker images],
+[case "${enableval}" in
+  yes) docker=true ;;
+  no)  docker=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
+esac],[docker=false])
+AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
 AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/json11/Makefile

@@ -90,6 +90,7 @@ noinst_HEADERS = \
 	luastate.hh \
 	device_parser.hh
 
+BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) -I $(top_srcdir) --cpp_out=./ $<
 

@@ -17,11 +17,11 @@ AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
   PKG_CHECK_MODULES([LIBHIREDIS], [hiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have hiredis])])
 ])
 AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
-  AC_MSG_ERROR([libhiredis not found, libhiredis support is mandatory])
+  AC_MSG_ERROR([libhiredis not found, libhiredis support is required])
 ])
 PDNS_CHECK_YAMLCPP([AC_DEFINE([HAVE_YAMLCPP], [1], [Define to 1 if you have yaml-cpp])], [true])
 AS_IF([test "x$YAMLCPP_LIBS" == "x"], [
-  AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is mandatory])
+  AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
 AC_PROG_LIBTOOL
@@ -34,13 +34,17 @@ BOOST_FOREACH
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)
 AS_IF([test "x$HAVE_WGET" == "x"], [
-  AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is mandatory])
+  AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is required])
+])
+AC_CHECK_PROG(DOCKER, docker-compose, docker-compose)
+AS_IF([test "x$HAVE_WGET" == "x"], [
+  AC_MSG_ERROR([docker-compose not found, and is required])
 ])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 # Look for protobuf
 PDNS_WITH_PROTOBUF
 AS_IF([test "x$PROTOBUF_LIBS" == "x" -o "x$PROTOC" == "x"], [
-  AC_MSG_ERROR([Protobuf not found, protobuf support is mandatory])
+  AC_MSG_ERROR([Protobuf not found, protobuf support is required])
 ])
 # Setup variables for locally built libraries
 AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])
@@ -55,7 +59,7 @@ AS_IF([test "x$with_luajit" = "xno"], [
   PDNS_WITH_LUA
 ])
 AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
-  AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is mandatory])
+  AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is required])
 ])
 PDNS_CHECK_LUA_HPP
 # Need pandoc to build documentation
@@ -69,13 +73,23 @@ AM_CONDITIONAL([HAVE_SYSTEMD], [ test x"$systemd" = "xy" ])
 # We need a working libcurl package
 LIBCURL_CHECK_CONFIG
 AS_IF([test "x$LIBCURL" = "x"], [
-  AC_MSG_ERROR([Libcurl not found, libcurl support is mandatory])
+  AC_MSG_ERROR([Libcurl not found, libcurl support is required])
 ])
+# Do we want the docker subdirectories to be built?
+AC_ARG_ENABLE([docker],
+[  --enable-docker         Build and run docker images],
+[case "${enableval}" in
+  yes) docker=true ;;
+  no)  docker=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
+esac],[docker=false])
+AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
 AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/json11/Makefile
 	ext/yahttp/Makefile
 	ext/yahttp/yahttp/Makefile
-	docs/Makefile])
+	docs/Makefile
+	docker/Makefile])
 	
 AC_OUTPUT

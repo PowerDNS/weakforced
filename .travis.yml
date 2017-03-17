@@ -42,10 +42,13 @@ before_script:
  - cpanm --quiet --installdeps --notest Swagger2::Markdown
 script:
  - autoreconf -i
- - ./configure
+ - ./configure --enable-docker
  - make
  - cd regression-tests
  - ./runtests
+ - cd ..
+ - cd docker
+ - make
  - cd ..
  - export WF_VERSION=`grep PACKAGE_VERSION Makefile | awk  '{ print $3}'`
  - git status
@@ -54,8 +57,13 @@ script:
  - tar xvf wforce-$WF_VERSION.tar.gz
  - cd wforce-$WF_VERSION
  - autoreconf -i
- - ./configure
+ - cd ..
+ - mkdir build
+ - cd build
+ - ../wforce-$WF_VERSION/configure
  - make
+ - cd ..
+ - make distcheck
 notifications:
   irc:
     channels:

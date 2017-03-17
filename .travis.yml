@@ -42,7 +42,7 @@ before_script:
  - cpanm --quiet --installdeps --notest Swagger2::Markdown
 script:
  - autoreconf -i
- - ./configure
+ - ./configure --enable-docker
  - make
  - cd regression-tests
  - ./runtests

@@ -459,3 +459,47 @@ Address                             Sucesses  Failures     Note
 
 With this setup, several wforces are all kept in sync, and can be load
 balanced behind (for example) haproxy, which incidentally can also offer SSL.
+
+GeoIP Support
+-------------
+
+GeoIP support is provided using the legacy Maxmind APIs and
+Databases (i.e. for DBs ending in .dat not .mmdb).
+
+Three types of GeoIP lookup are supported:
+
+* Country lookups - Initialized with initGeoIPDB() and looked up
+    with lookupCountry()
+* ISP Lookups - Initialized with initGeoIPISPDB() and looked up with
+  lookupISP()
+* City Lookup - Initialized with initGeoIPCityDB() and looked up
+  with lookupCity()
+
+The Country and ISP lookups return a string, while lookupCity()
+returns a Lua map consisting of the following keys:
+* country_code
+* country_name
+* region
+* city
+* postal_code
+* continent_code
+* latitude
+* longitude
+
+For example:
+	local geoip_data = lookupCity(newCA("128.243.21.16"))
+	print(geoip_data.city)
+
+When a DB is initialized, wforce attempts to open both v4 and v6
+versions of the database. If either is not found an error is thrown,
+so make sure both ipv4 and v6 versions of each DB are
+installed.
+
+Additionally, when using the free/lite versions of the
+databases, you may see errors such as "initGeoIPCityDB(): Error
+initialising GeoIP (No geoip v6 city db available)". This is usually
+because the filenames for the "lite" DBs are not the same as the
+expected filenames for the full DBs, specifically all files must
+start with GeoIP rather than GeoLite. Creating symbolic links to the
+expected filenames will fix this problem, for example:
+	ln -s GeoLiteCityv6.dat GeoIPCityv6.dat

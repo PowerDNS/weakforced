@@ -29,6 +29,7 @@
 #include "twmap-wrapper.hh"
 #include "blacklist.hh"
 #include "luastate.hh"
+#include "perf-stats.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -677,6 +678,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
   else {
     c_lua.writeFunction("showCustomEndpoints", []() { });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showPerfStats", []() {
+	g_outputBuffer += getPerfStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showPerfStats", []() {
+      });
   }
   
   if (!allow_report) {

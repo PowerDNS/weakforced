@@ -37,7 +37,13 @@ public:
   MiniCurl& operator=(const MiniCurl&&) = delete;
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
   void setCurlOption(CURLoption option, ...);
-  bool postURL(const std::string& url, const std::string& post_body, const MiniCurlHeaders& headers,
+  bool postURL(const std::string& url, const std::string& post_body,
+	       const MiniCurlHeaders& headers,
+	       std::string& error_msg);
+  // This version returns the POST result in post_res
+  bool postURL(const std::string& url, const std::string& post_body,
+	       const MiniCurlHeaders& headers,
+	       std::string& post_res,
 	       std::string& error_msg);
 protected:
   void setCurlHeaders(const MiniCurlHeaders& headers, struct curl_slist** header_listp);

@@ -695,6 +695,8 @@ char* my_generator(const char* text, int state)
       "showNamedReportSinks()",
       "addNamedReportSink(",
       "setNamedReportSinks(",
+      "showPerfStats()",
+      "showStringStatsDB()",
       "showVersion()",
       "addWebHook(",
       "addCustomWebHook(",

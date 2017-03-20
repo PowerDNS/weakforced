@@ -248,15 +248,61 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
 #ifdef HAVE_GEOIP
   if (!allow_report) {
-    c_lua.writeFunction("initGeoIPDB", []() {
-	g_wfgeodb.initGeoIPDB();
-      });
+      c_lua.writeFunction("initGeoIPDB", []() {
+	  try {
+	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_COUNTRY|WFGeoIPDBType::GEOIP_COUNTRY_V6);
+	  }
+	  catch (const std::runtime_error& e) {
+	    errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.what());
+	  }
+	});
   }
   else {
     c_lua.writeFunction("initGeoIPDB", []() { });
   }
   c_lua.writeFunction("lookupCountry", [](ComboAddress address) {
       return g_wfgeodb.lookupCountry(address);
+    });
+  if (!allow_report) {
+      c_lua.writeFunction("initGeoIPCityDB", []() {
+	  try {
+	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_CITY|WFGeoIPDBType::GEOIP_CITY_V6);
+	  }
+	  catch (const std::runtime_error& e) {
+	    errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.what());
+	  }
+	});
+
+  }
+  else {
+    c_lua.writeFunction("initGeoIPCityDB", []() { });
+  }
+  c_lua.writeFunction("lookupCity", [](ComboAddress address) {
+      return g_wfgeodb.lookupCity(address);
+    });
+  c_lua.registerMember("country_code", &WFGeoIPRecord::country_code);
+  c_lua.registerMember("country_name", &WFGeoIPRecord::country_name);
+  c_lua.registerMember("region", &WFGeoIPRecord::region);
+  c_lua.registerMember("city", &WFGeoIPRecord::city);
+  c_lua.registerMember("postal_code", &WFGeoIPRecord::postal_code);
+  c_lua.registerMember("continent_code", &WFGeoIPRecord::continent_code);
+  c_lua.registerMember("latitude", &WFGeoIPRecord::latitude);
+  c_lua.registerMember("longitude", &WFGeoIPRecord::longitude);
+  if (!allow_report) {
+    c_lua.writeFunction("initGeoIPISPDB", []() {
+	try {
+	  g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_ISP|WFGeoIPDBType::GEOIP_ISP_V6);
+	}
+	catch (const std::runtime_error& e) {
+	  errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.what());
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("initGeoIPISPDB", []() { });
+  }
+  c_lua.writeFunction("lookupISP", [](ComboAddress address) {
+      return g_wfgeodb.lookupISP(address);
     });
 #endif // HAVE_GEOIP
 

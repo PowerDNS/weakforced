@@ -144,6 +144,21 @@ cannot be called inside the allow/report/reset functions:
   
 		initGeoIPDB()
 
+* initGeoIPCityDB() - Initializes the city-level IPv4 and IPv6 GeoIP
+  databases. If either of these databases is not installed, this
+  command will fail and wforce will not start. Ensure these databases
+  have the right names if you're using the free/lite DBs - you may
+  need to create symbolic links e.g. GeoIPCityv6.dat ->
+  GeoLiteCityv6.dat. For example: 
+  
+		initGeoIPCityDB()
+
+* initGeoIPISPDB() - Initializes the ISP-level IPv4 and IPv6 GeoIP
+  databases. If either of these databases is not installed, this
+  command will fail and wforce will not start. For example:
+  
+		initGeoIPISPDB()
+
 * newDNSResolver(\<resolver name\>) - Create a new DNS resolver object with the
   specified name. Note this does not return the resolver object - that
   is achieved with the getDNSResolver() function. For example:
@@ -266,6 +281,21 @@ configuration or within the allow/report/reset functions:
   ComboAddress object can be created with the newCA() function. For example:
   
 		my_country = lookupCountry(my_ca)
+
+* lookupISP(\<ComboAddress\>) - Returns the name of the ISP hosting
+  the IP address. A ComboAddress object can be created with the
+  newCA() function. For example:
+
+		local my_isp = lookupCountry(newCA("128.243.16.21"))
+
+* lookupCity(\<ComboAddress\>) - Returns a map containing information
+  about the IP address, such as the city name and latitude and
+  longitude. See GeoIPRecord below for the full list of fields. For
+  example:
+
+		local gip_record = lookupCity(lt.remote)
+		local my_city = gip_record.city
+		local my_latitude = gip_record.latitude
 
 * newCA(\<IP[:port]\>) - Create and return an object representing an IP
   address (v4 or v6) and optional port. The object is called a
@@ -527,6 +557,23 @@ configuration or within the allow/report/reset functions:
 		then
 			-- do something
 		end
+
+* GeoIPRecord - The type returned by the lookupCity() function. See
+  below for fields:
+
+* GeoIPRecord.country_code - The two-letter country code e.g. "US".
+
+* GeoIPRecord.country_name - The country name, e.g. "United States"
+
+* GeoIPRecord.region - The region, e.g. "CA"
+
+* GeoIPRecord.city - The city name, e.g. "Mountain View"
+
+* GeoIPRecord.postal_code - The postal code, e.g. "93102" or "BA216AS"
+
+* GeoIPRecord.latitude - The latitude, e.g. 37.386001586914
+
+* GeoIPRecord.longitude - The longitude, e.g. -122.08380126953
 
 * CustomFuncArgs - The only parameter to custom functions
   is a CustomFuncArgs table. This table contains the following fields:

@@ -75,8 +75,13 @@ newStringStatsDB("OneHourDB",600,6,field_map)
 -- You can reuse field_map or create a different one
 newStringStatsDB("24HourDB",3600, 24, field_map)
 
--- Only initialize the GeoIPDB if you need it
+-- Only initialize the GeoIPDB if you need it - this initializes the "country"
+-- GeoIP DBs (ipv4 and ipv6)
 initGeoIPDB()
+-- You can also initialize the "city" and "ISP" databases (ensure you have
+-- downloaded them, again you need both ipv4 and ipv6 DBs)
+-- initGeoIPCityDB()
+-- initGeoIPISPDB()
 
 -- The report function is used to store custom stats
 -- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
@@ -158,6 +163,11 @@ function allow(lt)
 	then
 		return -1, "country blocked", "country blocked", { remoteCountry="XX" }
 	end
+	-- You can also lookup ISP names:
+	  -- lookupISP(lt.remote)
+	-- And more detailed information like city/lat/long:
+	  -- gip_record = lookupCity(lt.remote)
+	  -- local my_city = gip_record.city
 
 	-- Example DNS lookups
 	dnames = resolv:lookupNameByAddr(lt.remote)

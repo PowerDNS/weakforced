@@ -1,0 +1,24 @@
+{       
+    "size": 0,
+    "aggs": {
+	"browser": {
+	    "terms": {
+		"field": "device_attrs.browser.family.keyword"  
+	    },
+	    "aggs": {
+		"os": {
+		    "terms": {
+			"field": "device_attrs.os.family.keyword"
+		    },
+		    "aggs": {
+			"device": {
+			    "terms": {
+				"field": "device_attrs.device.family.keyword"
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}

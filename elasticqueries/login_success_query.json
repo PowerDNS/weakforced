@@ -1,0 +1,111 @@
+{       
+    "size": 0,
+    "query": {
+	"constant_score": {
+	    "filter": {
+		"bool" : {
+		    "must": [
+			{
+			    "term": {
+				"login" : "user988"
+			    }
+			},
+			{
+			    "term": {
+				"success" : true
+			    }
+			},
+			{
+			    "range": {
+				"@timestamp": {
+				    "gt" : "now-6M"
+				}
+			    }
+			}
+		    ]
+		}
+	    }
+	}
+    },
+    "aggs": {
+	"browser": {
+	    "terms": {
+		"field": "device_attrs.browser.family.keyword"  
+	    },
+	    "aggs": {
+		"os": {
+		    "terms": {
+			"field": "device_attrs.os.family.keyword"
+		    },
+		    "aggs": {
+			"device": {
+			    "terms": {
+				"field": "device_attrs.device.family.keyword"
+			    }
+			}
+		    }
+		}
+	    }
+	},
+	"imapc": {
+	    "terms": {
+		"field": "device_attrs.imapc.family.keyword"  
+	    },
+	    "aggs": {
+		"os": {
+		    "terms": {
+			"field": "device_attrs.os.family.keyword"
+		    }
+		}
+	    }
+	},
+	"mobileapp": {
+            "terms": {
+                "field": "device_attrs.app.name.keyword"
+            },
+	    "aggs": {
+		"brand": {
+		    "terms": {
+			"field": "device_attrs.app.brand.keyword"
+		    },
+		    "aggs": {
+			"os": {
+			    "terms": {
+				"field": "device_attrs.os.family.keyword"
+			    },
+			    "aggs": {
+				"device": {
+				    "terms": {
+					"field": "device_attrs.device.family.keyword"
+				    }
+				}
+			    }
+			}
+		    }
+		}
+            }
+        },
+	"location": {
+	    "terms": {
+		"field": "geoip.continent_code.keyword"  
+	    },
+	    "aggs": {
+		"country": {
+		    "terms": {
+			"field": "geoip.country_code2.keyword"
+		    }
+		}
+	    }
+	},
+	"protocol": {
+	    "terms": {
+		"field": "protocol.keyword"
+	    }
+	},
+	"password": {
+	    "cardinality": {
+		"field": "pwhash.keyword"
+	    }
+	}
+    }
+}

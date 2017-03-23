@@ -481,6 +481,18 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg)
       device_attrs.insert(std::make_pair("os.major", ic.os.major));
       device_attrs.insert(std::make_pair("os.minor", ic.os.minor));
     }
+    else if (my_protocol.compare("mobileapi") == 0) {
+      OXMobileAppDeviceParser oxmad_parser;
+      OXMobileAppDevice oxmad = oxmad_parser.parse(my_device_id);
+      device_attrs.insert(std::make_pair("os.family", oxmad.os.family));
+      device_attrs.insert(std::make_pair("os.major", oxmad.os.major));
+      device_attrs.insert(std::make_pair("os.minor", oxmad.os.minor));
+      device_attrs.insert(std::make_pair("app.name", oxmad.app.name));
+      device_attrs.insert(std::make_pair("app.brand", oxmad.app.brand));
+      device_attrs.insert(std::make_pair("app.major", oxmad.app.major));
+      device_attrs.insert(std::make_pair("app.minor", oxmad.app.minor));
+      device_attrs.insert(std::make_pair("device.family", oxmad.device.family));
+    }
   }
 }
 

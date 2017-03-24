@@ -61,7 +61,7 @@ paths:
             $ref: "#/definitions/LoginTupleAllow"
       responses:
         "200":
-          description: “allow response"
+          description: "allow response"
           schema:
             type: object
             required:
@@ -115,12 +115,12 @@ paths:
             $ref: "#/definitions/Error"
   /?command=delBLEntry:
     post:
-      description: “Delete a blacklist entry for an IP and/or login“
-      operationId: “delBLEntry”
+      description: "Delete a blacklist entry for an IP and/or login"
+      operationId: "delBLEntry"
       produces:
         - "application/json"
       parameters:
-        - name: “delBLEntry”
+        - name: "delBLEntry"
           in: body
           description: "Provide IP and/or login"
           required: true
@@ -128,7 +128,7 @@ paths:
             $ref: "#/definitions/DelBLEntryParams"
       responses:
         "200":
-          description: “delBLEntry response"
+          description: "delBLEntry response"
           schema:
             type: object
             required:
@@ -144,12 +144,12 @@ paths:
             $ref: "#/definitions/Error"
   /?command=addBLEntry:
     post:
-      description: “Add a blacklist entry for an IP and/or login“
-      operationId: “addBLEntry”
+      description: "Add a blacklist entry for an IP and/or login"
+      operationId: "addBLEntry"
       produces:
         - "application/json"
       parameters:
-        - name: “addBLEntry”
+        - name: "addBLEntry"
           in: body
           description: "Provide IP and/or login"
           required: true
@@ -157,7 +157,7 @@ paths:
             $ref: "#/definitions/AddBLEntryParams"
       responses:
         "200":
-          description: “addBLEntry response"
+          description: "addBLEntry response"
           schema:
             type: object
             required:
@@ -386,7 +386,7 @@ definitions:
     example:
       ip: 127.0.0.1
       expire: 3600
-      reason: “Too many bad passwords”
+      reason: "Too many bad passwords"
   CustomError:
     required:
       - success

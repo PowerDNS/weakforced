@@ -27,7 +27,9 @@ dp_access = {
    {protocol="imap", device='\\"name\\" \\"com.android.email\\" \\"os\\" \\"android\\" \\"os-version\\" \\"6.0; 32.1.F.1.67\\" \\"vendor\\" \\"Sony\\" \\"x-android-device-model\\" \\"SO-01H\\" \\"x-android-mobile-net-operator\\" \\"NTT DOCOMO\\" \\"AGUID\\" \\"QHaFdAshRmaLYCPM0KVo7lwajhE\\"'},
    {protocol="imap", device='\\"name\\" \\"com.samsung.android.email.provider\\" \\"os\\" \\"android\\" \\"os-version\\" \\"6.0.1; MMB29K\\" \\"vendor\\" \\"samsung\\" \\"x-android-device-model\\" \\"SM-G925F\\" \\"x-android-mobile-net-operator\\" \\"Sonera\\" \\"AGUID\\" \\"X9I/elUUlMNosGZjexmq6mp1zuA\\"'},
    {protocol="imap", device='\\"name\\" \\"com.sonymobile.email\\" \\"os\\" \\"android\\" \\"os-version\\" \\"6.0.1; 32.2.A.5.11\\" \\"vendor\\" \\"Sony\\" \\"x-android-device-model\\" \\"SGP771\\" \\"AGUID\\" \\"cJwASIogV2kpgCa3kPG+77TgCZk\\"'},
-   {protocol="imap", device='\\"name\\" \\"eM Client for OX App Suite\\" \\"version\\" \\"6.0.28376.0\\" \\"GUID\\" \\"1\\"'}
+   {protocol="imap", device='\\"name\\" \\"eM Client for OX App Suite\\" \\"version\\" \\"6.0.28376.0\\" \\"GUID\\" \\"1\\"'},
+   {protocol="mobileapi", device='OpenXchange.iOS.Mail/1.0.3 (OS: 10.0.3; device: iPhone 7 Plus)'},
+   {protocol="mobileapi", device='OpenXchange.Android.Mail/1.0+1234 (OS: 7.0; device: Samsung/GT9700)'}
 }
 
 ip_access = {

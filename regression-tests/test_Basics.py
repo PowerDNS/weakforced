@@ -35,6 +35,9 @@ class TestBasics(ApiTestCase):
         r = self.allowFuncDeviceProtocol('foobar', '127.0.0.1', "12432", 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A', "http")
         j = r.json()
         self.assertRegexpMatches(json.dumps(j), "Mac OS X")
+        r = self.allowFuncDeviceProtocol('foobar', '127.0.0.1', "12432", 'OpenXchange.Android.Mail/1.0+1234 (OS: 7.0; device: Samsung/GT9700)', "mobileapi")
+        j = r.json()
+        self.assertRegexpMatches(json.dumps(j), "Android")
 
     def test_getDBStats(self):
         self.reportFunc('dbstats', '1.4.3.2', '1234', False); 

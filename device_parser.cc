@@ -63,3 +63,33 @@ IMAPClientID IMAPClientIDParser::parse(const std::string& clientid_str) const
   }
   return ic;
 }
+
+// OX Mobile App Parser
+// Format of device_id is: <brand>.<os>.<app name>/<app major version>.<app minor version>.<app patch version> ... (OS: <os maj>.<os.minor>; device: <device name>)
+// e.g. OpenXchange.iOS.Mail/1.0.3 (OS: 10.0.3; device: iPhone 7 Plus)
+// e.g. OpenXchange.Android.Mail/1.0+1234 (OS: 7.0; device: Samsung/GT9700)
+boost::regex ox_mob_app_expr{"^(.*?)\\.(.*?)\\.(.*?)/(\\d+)\\.(\\d+)"};
+boost::regex ox_mob_os_expr{"OS:\\s*(\\d+)\\.(\\d+)"};
+boost::regex ox_mob_device_expr{"device:\\s*([a-zA-Z0-9\\-\\._/ \\t]+)"};
+
+OXMobileAppDevice OXMobileAppDeviceParser::parse(const std::string& device_id) const
+{
+  boost::smatch what;
+  OXMobileAppDevice oxmad;
+
+  if (boost::regex_search(device_id, what, ox_mob_app_expr)) {
+    oxmad.app.brand = std::string(what[1].first, what[1].second);
+    oxmad.os.family = std::string(what[2].first, what[2].second);
+    oxmad.app.name = std::string(what[3].first, what[3].second);
+    oxmad.app.major = std::string(what[4].first, what[4].second);
+    oxmad.app.minor = std::string(what[5].first, what[5].second);
+  }
+  if (boost::regex_search(device_id, what, ox_mob_os_expr)) {
+    oxmad.os.major = std::string(what[1].first, what[1].second);
+    oxmad.os.minor = std::string(what[2].first, what[2].second);
+  }
+  if (boost::regex_search(device_id, what, ox_mob_device_expr)) {
+    oxmad.device.family = std::string(what[1].first, what[1].second);
+  }
+  return oxmad;
+}

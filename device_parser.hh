@@ -44,3 +44,29 @@ class IMAPClientIDParser {
 public:
   IMAPClientID parse(const std::string&) const;
 };
+
+// The following parser is specific to Open-Xchange Mobile Apps
+// Only invoked if "protocol" field is "mobileapi"
+struct OXMobileApp {
+  std::string major;
+  std::string minor;
+  std::string brand;
+  std::string name;
+
+  std::string toString() const { return brand + "/" + name + "/" + toVersionString(); }
+
+  std::string toVersionString() const {
+    return (major.empty() ? "0" : major) + "." + (minor.empty() ? "0" : minor);
+  }
+};
+
+struct OXMobileAppDevice {
+  Agent os;
+  Device device;
+  OXMobileApp app;
+};
+
+class OXMobileAppDeviceParser {
+public:
+  OXMobileAppDevice parse(const std::string&) const;
+};

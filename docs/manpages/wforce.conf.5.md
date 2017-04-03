@@ -535,12 +535,14 @@ configuration or within the allow/report/reset functions:
 * LoginTuple.device_attrs - Additional array of attributes about the
   device, which is parsed from the device_attrs string. The protocol
   string is used to determine how to parse device_id, so that MUST
-  also be present. For all devices, the following keys are set
+  also be present. For all protocols, the following keys are set
   wherever possible: os.family, os.major, os.minor. For http(s), the
-  following keys are set wherever possible: device.family,
+  following additional keys are set wherever possible: device.family,
   device.model, device.brand, browser.family, browser.major,
-  browser.minor. For imap(s), the following keys are set wherever
-  possible: imapc.family, imapc.major, imapc.minor. For example:
+  browser.minor. For imap(s), the following additional keys are set
+  wherever possible: imapc.family, imapc.major, imapc.minor. For
+  mobileapi, the following additional keys are set: app.name,
+  app.brand, app.major, app.minor, device.family. For example:
 
 		if (lt.device_attrs["os.family"] == "Mac OS X")
 		then
@@ -548,10 +550,11 @@ configuration or within the allow/report/reset functions:
 		end
 
 * LoginTuple.protocol - A string representing the protocol that was
-  used to access mail, i.e. http, https, imap, imaps, pop, pops
-  etc. LoginTuple.protocol MUST be set in order to parse device_id
-  into device_attrs, however currently only http(s) and imap(s) are
-  used to process device_id. For example:
+  used to access mail, i.e. http, https, imap, imaps, pop, pops,
+  mobileapi etc. LoginTuple.protocol MUST be set in order to parse
+  device_id into device_attrs, however currently only http(s), imap(s)
+  and mobileapi are recognized protocols when parsing device_id. For
+  example:
 
 		if (lt.protocol == "http")
 		then

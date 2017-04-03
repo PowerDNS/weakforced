@@ -838,7 +838,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
       errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
       resp.status=401;
       std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << "Unauthorized" << "}";
+      ss << "{\"status\":\"failure\", \"reason\":" << "\"Unauthorized\"" << "}";
       resp.body=ss.str();
       resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
     }

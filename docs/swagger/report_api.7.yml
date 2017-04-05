@@ -1,0 +1,243 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Dovecot Anti-Abuse Shield Report API"
+  description: "An API to retrieve and modify Anti-Abuse Shield report information"
+  contact:
+    name: "Dovecot Oy"
+  license:
+    name: "GPL2"
+    url: http://github.com/PowerDNS/weakforced/master/LICENSE
+host: "doesnotexist.dovecot.fi"
+basePath: "/v1"
+schemes:
+  - "http"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /logins:
+    post:
+      description: "Retrieve information about logins matching the supplied criteria"
+      operationId: "getLogins"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "QueryParams"
+          in: body
+          description: "Query Parameters for retrieval commands"
+          required: true
+          schema:
+            $ref: "#/definitions/QueryParams"
+      responses:
+        "200":
+          description: "logins reponse"
+          schema:
+            $ref: "#/definitions/LoginsResponse"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /devices:
+    post:
+      description: "Retrieve information about devices matching the supplied criteria"
+      operationId: "getDevices"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "QueryParams"
+          in: body
+          description: "Query Parameters for retrieval commands"
+          required: true
+          schema:
+            $ref: "#/definitions/QueryParams"
+      responses:
+        "200":
+          description: "devices reponse"
+          schema:
+            $ref: "#/definitions/DevicesResponse"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /logins/confirm:
+    post:
+      description: "Confirm that a login is valid or invalid"
+      operationId: "confirmLogin"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "ConfirmLoginParams"
+          in: body
+          description: "Confirm Login parameters"
+          required: true
+          schema:
+            $ref: "#/definitions/ConfirmLoginParams"
+      responses:
+        "200":
+          description: login confirmed
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+definitions:
+  ConfirmLoginParams:
+    type: object
+    required:
+      - id
+      - confirm
+    properties:
+      id:
+        description: "The ID of the login to confirm"
+        type: string
+      confirm:
+        description: "Boolean: true to confirm valid login, false to confirm invalid login"
+        type: boolean
+      confirmDevice:
+        description: "Whether to consider the device used for this login also be valid (or invalid)"
+        type: boolean
+        default: false
+      logoutSession:
+        description: "Instruct the server to attempt to logout any session still associated with this login"
+        type: boolean
+        default: false
+  QueryParams:
+    type: object
+    properties:
+      login:
+        description: "Return information matching this login name (ANDed with IP and device if supplied)"
+        type: string
+      ip:
+        description: "Return information matching this IP address (v4 or v6). (ANDed with login and device if supplied)"
+        type: string
+      device:
+        $ref: "#/definitions/DeviceObject"
+      max_num:
+        description: "Specify the maximum number of results to return (defaults to 100)"
+        type: integer
+        default: 100
+      max_age:
+        description: "Specify the maximum age of results to return (based on the login time). Using elasticsearch date math, e.g. 1d, 3M, or 12h. Defaults to 1w (one week)"
+        type: string
+        default: 1w
+    example:
+      ip: 243.22.12.98
+      login: fred@foobar.com
+      max_num: 20
+      max_age: 1w
+  ErrorResponse:
+    type: object
+    required:
+      - error_msg
+      - error_code
+    properties:
+      error_code:
+        type: integer
+        format: int32
+      error_msg:
+        type: string
+    example:
+      error_code: 3
+      error_msg: "Could not parse max_age (-3dMwY)"
+  LoginsResponse:
+    type: object
+    properties:
+      query:
+        $ref: "#/definitions/QueryParams"
+      response:
+        type: array
+        items:
+          $ref: "#/definitions/LoginObject"
+  LoginObject:
+    type: object
+    properties:
+      login:
+        description: "The login name used to login"
+        type: string
+      ip:
+        description: "The IP address used to login"
+        type: string
+      country_name:
+        description: "The name of the country associated with the IP address"
+        type: string
+      country_code:
+        description: "The 2-digit country code associated with the IP address"
+        type: string
+      login_datetime:
+        description: "The date, time and timezone of the login"
+        type: string
+      device_id:
+        description: "The string that the login device used to identify itself (could be empty)"
+        type: string
+      protocol:
+        description: "The protocol used to login"
+        type: string
+      id:
+        description: "A unique ID for the login"
+        type: string
+    required:
+      - login_datetime
+      - login
+      - ip
+      - id
+  DevicesResponse:
+    type: object
+    properties:
+      query:
+        $ref: "#/definitions/QueryParams"
+      response:
+        type: array
+        items:
+          $ref: "#/definitions/DeviceObject"
+  DeviceObject:
+    type: object
+    properties:
+      app.name:
+        description: "The name of the (mobile) app used to login"
+        type: string
+      app.brand:
+        description: "The brand of the (mobile) app used to login"
+        type: string
+      app.major:
+        description: "The major version of the (mobile) app used to login"
+        type: string
+      app.minor:
+        description: "The minor version of the (mobile) app used to login"
+        type: string
+      imapc.family:
+        description: "The family of IMAP client used to login"
+        type: string
+      imapc.major:
+        description: "The major version of the IMAP client used to login"
+        type: string
+      imapc.minor:
+        description: "The minor version of the IMAP client used to login"
+        type: string 
+      browser.family:
+        description: "The browser family of the device used to login"
+        type: string 
+      browser.major:
+        description: "The major version of the browser used to login"
+        type: string
+      browser.minor:
+        description: "The minor version of the browser of the device used to login"
+        type: string
+      os.family:
+        description: "The OS family of the device used to login"
+        type: string 
+      os.major:
+        description: "The major version of the OS of the device used to login"
+        type: string
+      os.minor:
+        description: "The minor version of the OS of the device used to login"
+        type: string
+      device.family:
+        description: "The family of the device used to login"
+        type: string
+      device.model:
+        description: "The model of the device used to login"
+        type: string
+      device.brand:
+        description: "The brand of device used to login"
+        type: string

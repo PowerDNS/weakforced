@@ -300,13 +300,12 @@ definitions:
         type: string
         enum:
           - http
-          - https
           - imap
-          - imaps
-          - pop
-          - pops
+          - pop3
           - smtp
-          - smtps
+          - mobileapi
+      tls:
+        type: boolean
       device_id:
         type: string
       attrs:

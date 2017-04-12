@@ -39,6 +39,7 @@
 #include "perf-stats.hh"
 #include "luastate.hh"
 #include "webhook.hh"
+#include "lock.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -717,7 +718,8 @@ char* my_generator(const char* text, int state)
       "blacklistPersistReplicated()",
       "blacklistIP",
       "blacklistLogin",
-      "blacklistIPLogin"
+      "blacklistIPLogin",
+      "reloadGeoIPDBs()"
       };
   static int s_counter=0;
   int counter=0;
@@ -881,6 +883,8 @@ try
   argc-=optind;
   argv+=optind;
 
+  g_singleThreaded = false;
+  
   if (!g_cmdLine.beClient) {
     checkUaRegexFile(g_cmdLine.regexes);
     vinfolog("Will read UserAgent regexes from %s", g_cmdLine.regexes);

@@ -420,6 +420,22 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   else {
     c_lua.writeFunction("initGeoIPDB", []() { });
   }
+  if (!allow_report) {
+    c_lua.writeFunction("reloadGeoIPDBs", []() {
+	try {
+	  g_wfgeodb.reload();
+	}
+	catch (const WforceException& e) {
+	  boost::format fmt("%s (%s)\n");
+	  errlog("reloadGeoIPDBs(): Error reloading GeoIP (%s)", e.what());
+	  g_outputBuffer += (fmt % "reloadGeoIPDBs(): Error reloading GeoIP" % e.what()).str();
+	}
+	g_outputBuffer += "reloadGeoIPDBs() successful\n";
+      });
+  }
+  else {
+    c_lua.writeFunction("reloadGeoIPDBs", []() { });
+  }
   c_lua.writeFunction("lookupCountry", [](ComboAddress address) {
       return g_wfgeodb.lookupCountry(address);
     });

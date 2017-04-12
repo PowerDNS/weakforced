@@ -35,6 +35,8 @@
 #include "sodcrypto.hh"
 #include "blacklist.hh"
 #include "perf-stats.hh"
+#include "lock.hh"
+
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
@@ -607,7 +609,8 @@ char* my_generator(const char* text, int state)
       "setAllow",
       "makeKey",
       "setKey",
-      "testCrypto"
+      "testCrypto",
+      "reloadGeoIPDBs()"
       };
   static int s_counter=0;
   int counter=0;
@@ -766,7 +769,8 @@ try
   argc-=optind;
   argv+=optind;
 
-
+  g_singleThreaded = false;
+  
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
     setupLua(true, false, g_lua, g_allow, g_report, g_reset, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);

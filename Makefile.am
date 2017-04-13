@@ -41,6 +41,8 @@ wforce_SOURCES = \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
 	luastate.hh \
+	lock.hh \
+	pdnsexception.hh \
 	device_parser.hh device_parser.cc \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
@@ -88,7 +90,9 @@ noinst_HEADERS = \
 	wforce_exception.hh \
 	wforce_ns.hh \
 	luastate.hh \
-	device_parser.hh
+	device_parser.hh \
+	lock.hh \
+	pdnsexception.hh
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto

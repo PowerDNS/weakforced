@@ -75,11 +75,48 @@ GeoIP* WFGeoIPDB::openGeoIPDB(GeoIPDBTypes db_type, const std::string& name)
   return gip;
 }
 
+void WFGeoIPDB::reload()
+{
+  WriteLock wl(&gi_rwlock);
+
+  if (gi_v4) {
+    GeoIP_delete(gi_v4);
+    gi_v4 = NULL;
+    gi_v4 = openGeoIPDB(GEOIP_COUNTRY_EDITION, "v4 country");
+  }
+  if (gi_v6) {
+    GeoIP_delete(gi_v6);
+    gi_v6 = NULL;
+    gi_v6 = openGeoIPDB(GEOIP_COUNTRY_EDITION_V6, "v6 country");
+  }
+  if (gi_city_v4) {
+    GeoIP_delete(gi_city_v4);
+    gi_city_v4 = NULL;
+    gi_city_v4 = openGeoIPDB(GEOIP_CITY_EDITION_REV1, "v4 city");
+  }
+  if (gi_city_v6) {
+    GeoIP_delete(gi_city_v6);
+    gi_city_v6 = NULL;
+    gi_city_v6 = openGeoIPDB(GEOIP_CITY_EDITION_REV1_V6, "v6 city");
+  }
+  if (gi_isp_v4) {
+    GeoIP_delete(gi_isp_v4);
+    gi_isp_v4 = NULL;
+    gi_isp_v4 = openGeoIPDB(GEOIP_ISP_EDITION, "v4 isp");
+  }
+  if (gi_isp_v6) {
+    GeoIP_delete(gi_isp_v6);
+    gi_isp_v6 = NULL;
+    gi_isp_v6 = openGeoIPDB(GEOIP_ISP_EDITION_V6, "v4 isp");
+  }
+}
+
 std::string WFGeoIPDB::lookupCountry(const ComboAddress& address) const
 {
   GeoIPLookup gl;
   const char* retstr=NULL;
   std::string ret="";
+  ReadLock rl(&gi_rwlock);
 
   if (address.sin4.sin_family == AF_INET && gi_v4 != NULL) {
     retstr = GeoIP_country_code_by_ipnum_gl(gi_v4, ntohl(address.sin4.sin_addr.s_addr), &gl);
@@ -97,6 +134,7 @@ std::string WFGeoIPDB::lookupISP(const ComboAddress& address) const
   GeoIPLookup gl;
   const char* retstr=NULL;
   std::string ret="";
+  ReadLock rl(&gi_rwlock);
 
   if (address.sin4.sin_family == AF_INET && gi_isp_v4 != NULL) {
     retstr = GeoIP_name_by_ipnum_gl(gi_isp_v4, ntohl(address.sin4.sin_addr.s_addr), &gl);
@@ -113,6 +151,7 @@ WFGeoIPRecord WFGeoIPDB::lookupCity(const ComboAddress& address) const
 {
   GeoIPRecord* gir=NULL;
   WFGeoIPRecord ret_wfgir = {};
+  ReadLock rl(&gi_rwlock);
 
   if (address.sin4.sin_family == AF_INET && gi_city_v4 != NULL) {
     gir = GeoIP_record_by_ipnum(gi_city_v4, ntohl(address.sin4.sin_addr.s_addr));

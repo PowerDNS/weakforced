@@ -23,6 +23,8 @@ wforce_SOURCES = \
 	perf-stats.cc perf-stats.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
+	lock.hh \
+	pdnsexception.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
 	ext/incbin/incbin.h \
@@ -57,6 +59,8 @@ noinst_HEADERS = \
 	blacklist.hh \
 	wforce-geoip.hh \
 	wforce.hh
+	lock.hh \
+	pdnsexception.hh
 
 if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify

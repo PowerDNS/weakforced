@@ -70,6 +70,7 @@ class ApiTestCase(unittest.TestCase):
         payload['attrs'] = attrs
         payload['device_id'] = device_id
         payload['protocol'] = protocol
+        payload['tls'] = false
         if not replica:
             return self.session.post(
                 self.url("/?command=allow"),

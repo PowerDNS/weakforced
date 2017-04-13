@@ -536,10 +536,10 @@ configuration or within the allow/report/reset functions:
   device, which is parsed from the device_attrs string. The protocol
   string is used to determine how to parse device_id, so that MUST
   also be present. For all protocols, the following keys are set
-  wherever possible: os.family, os.major, os.minor. For http(s), the
+  wherever possible: os.family, os.major, os.minor. For http, the
   following additional keys are set wherever possible: device.family,
   device.model, device.brand, browser.family, browser.major,
-  browser.minor. For imap(s), the following additional keys are set
+  browser.minor. For imap, the following additional keys are set
   wherever possible: imapc.family, imapc.major, imapc.minor. For
   mobileapi, the following additional keys are set: app.name,
   app.brand, app.major, app.minor, device.family. For example:
@@ -550,16 +550,20 @@ configuration or within the allow/report/reset functions:
 		end
 
 * LoginTuple.protocol - A string representing the protocol that was
-  used to access mail, i.e. http, https, imap, imaps, pop, pops,
-  mobileapi etc. LoginTuple.protocol MUST be set in order to parse
-  device_id into device_attrs, however currently only http(s), imap(s)
-  and mobileapi are recognized protocols when parsing device_id. For
+  used to access mail, i.e. http, imap, pop3, mobileapi
+  etc. LoginTuple.protocol MUST be set in order to parse
+  device_id into device_attrs, however currently only http, imap  and
+  mobileapi are recognized protocols when parsing device_id. For
   example:
 
 		if (lt.protocol == "http")
 		then
 			-- do something
 		end
+
+* LoginTuple.tls - A boolean representing whether the login session
+  used TLS or not. If the client is using TLS offload proxies then it
+  may be set to false.
 
 * GeoIPRecord - The type returned by the lookupCity() function. See
   below for fields:

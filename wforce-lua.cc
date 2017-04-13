@@ -664,6 +664,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("attrs", &LoginTuple::attrs);
   c_lua.registerMember("attrs_mv", &LoginTuple::attrs_mv);
   c_lua.registerMember("protocol", &LoginTuple::protocol);
+  c_lua.registerMember("tls", &LoginTuple::tls);
   c_lua.registerMember("device_id", &LoginTuple::device_id);
   c_lua.registerMember("device_attrs", &LoginTuple::device_attrs);
 

@@ -410,6 +410,7 @@ Json LoginTuple::to_json() const
     {"device_id", device_id},
     {"device_attrs", jattrs_dev},
     {"protocol", protocol},
+    {"tls", tls},
     {"attrs", jattrs},
     {"policy_reject", policy_reject}};
 }
@@ -431,6 +432,7 @@ void LoginTuple::from_json(const Json& msg)
   setDeviceAttrs(msg);
   device_id=msg["device_id"].string_value();
   protocol=msg["protocol"].string_value();
+  tls=msg["tls"].bool_value();
   policy_reject=msg["policy_reject"].bool_value();
 }
 

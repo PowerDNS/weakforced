@@ -117,7 +117,7 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   else {
     mch.insert(std::make_pair("Content-Type", "application/json"));
   }
-  mch.insert(std::make_pair("Transfer-Encoding", "chunked"));
+  
   mch.insert(std::make_pair("X-Wforce-HookID", std::to_string(hook->getID())));
   if (hook->hasConfigKey("secret"))
     mch.insert(std::make_pair("X-Wforce-Signature",

@@ -456,8 +456,8 @@ public:
   // asynchronously run the hook with the supplied data (must be in json format)
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
 protected:
-  std::weak_ptr<CurlConnection> getConnection(unsigned int hook_id);
-  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id);
+  std::weak_ptr<CurlConnection> getConnection(std::shared_ptr<const WebHook> hook);
+  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id, unsigned int num_connections);
   static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
   static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
 private:

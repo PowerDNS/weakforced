@@ -8,12 +8,12 @@ wrk.path = "/?command=report"
 
 dp_access = {
    {protocol="http", device="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A"},
-   {protocol="https", device="Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25"},
-   {protocol="https", device="Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"},
+   {protocol="http", device="Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25"},
+   {protocol="http", device="Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"},
    {protocol="http", device="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.124 Safari/537.36"},
-   {protocol="https", device="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"},
+   {protocol="http", device="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"},
    {protocol="http", device="Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 7.0; InfoPath.3; .NET CLR 3.1.40767; Trident/6.0; en-IN)"},
-   {protocol="https", device="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"},
+   {protocol="http", device="Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"},
    {protocol="imap", device='\\"name\\" \\"iPhone Mail\\" \\"version\\" \\"14D27\\" \\"os\\" \\"iOS\\" \\"os-version\\" \\"10.2.1 (14D27)\\"'},
    {protocol="imap", device='\\"name\\" \\"iPad Mail\\" \\"version\\" \\"14D27\\" \\"os\\" \\"iOS\\" \\"os-version\\" \\"10.2.1 (14D27)\\"'},
    {protocol="imap", device='\\"name\\" \\"Mac OS X Mail\\" \\"version\\" \\"10.2 (3259)\\" \\"os\\" \\"Mac OS X\\" \\"os-version\\" \\"10.12.3 (16D32)\\" \\"vendor\\" \\"Apple Inc.\\"'},

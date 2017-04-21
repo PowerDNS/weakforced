@@ -33,6 +33,7 @@
 #include "sstuff.hh"
 #include "replication.hh"
 #include "webhook.hh"
+#include "wforce-webserver.hh"
 #include "wforce_exception.hh"
 #include "ext/json11/json11.hpp"
 #include <boost/multi_index_container.hpp>
@@ -61,6 +62,7 @@ struct ClientState
 extern std::mutex g_luamutex;
 extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
+extern WforceWebserver g_webserver;
 
 void receiveReports(ComboAddress local);
 void receiveReplicationOperations(ComboAddress local);
@@ -87,7 +89,6 @@ extern std::string g_key; // in theory needs locking
 struct dnsheader;
 
 void controlThread(int fd, ComboAddress local);
-void dnsdistWebserverThread(int sock, const ComboAddress& local, const string& password);
 bool getMsgLen(int fd, uint16_t* len);
 bool putMsgLen(int fd, uint16_t len);
 void* tcpAcceptorThread(void* p);

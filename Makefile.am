@@ -21,7 +21,7 @@ wforce_SOURCES = \
 	dns_lookup.cc dns_lookup.hh \
 	wforce.cc wforce.hh \
 	wforce-lua.cc \
-	wforce-web.cc \
+	wforce-web.cc wforce-web.hh\
 	wforce-geoip.cc wforce-geoip.hh \
 	twmap.cc twmap.hh \
 	twmap-wrapper.cc twmap-wrapper.hh \
@@ -44,6 +44,7 @@ wforce_SOURCES = \
 	lock.hh \
 	pdnsexception.hh \
 	device_parser.hh device_parser.cc \
+	wforce-webserver.cc wforce-webserver.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
@@ -92,7 +93,9 @@ noinst_HEADERS = \
 	luastate.hh \
 	device_parser.hh \
 	lock.hh \
-	pdnsexception.hh
+	pdnsexception.hh \
+	wforce-webserver.hh \
+	wforce-web.hh
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto

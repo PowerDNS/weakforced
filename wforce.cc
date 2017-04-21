@@ -40,6 +40,7 @@
 #include "luastate.hh"
 #include "webhook.hh"
 #include "lock.hh"
+#include "wforce-web.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -56,12 +57,12 @@ bool g_verbose=false;
 struct WForceStats g_stats;
 bool g_console;
 
-GlobalStateHolder<NetmaskGroup> g_ACL;
 string g_outputBuffer;
 
 WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
+WforceWebserver g_webserver;
 
 std::string g_configDir; // where the config files are located
 std::unique_ptr<UserAgentParser> g_ua_parser_p;
@@ -931,13 +932,13 @@ try
     vinfolog("Running in the foreground");
   }
 
-  for(auto& t : todo)
-    t();
-
-  auto acl = g_ACL.getCopy();
+  // register all the webserver commands
+  registerWebserverCommands();
+  
+  auto acl = g_webserver.getACL();
   for(auto& addr : {"127.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "169.254.0.0/16", "192.168.0.0/16", "172.16.0.0/12", "::1/128", "fc00::/7", "fe80::/10"})
     acl.addMask(addr);
-  g_ACL.setState(acl);
+  g_webserver.setACL(acl);
 
   vector<string> vec;
   std::string acls;
@@ -961,6 +962,10 @@ try
     errlog("Could not load persistent DB entries, please fix configuration or check redis availability. Exiting.");
     exit(1);
   }
+
+  // start the threads created by lua setup. Includes the webserver accept thread
+  for(auto& t : todo)
+    t();
   
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");

@@ -30,6 +30,7 @@
 #include "blacklist.hh"
 #include "luastate.hh"
 #include "perf-stats.hh"
+#include "wforce-web.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -62,7 +63,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   
   if (!allow_report) {
     c_lua.writeFunction("addACL", [](const std::string& domain) {
-	g_ACL.modify([domain](NetmaskGroup& nmg) { nmg.addMask(domain); });
+	g_webserver.addACL(domain);
       });
   }
   else { // empty function for allow/report - this stops parsing errors or weirdness
@@ -227,7 +228,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	for(const auto& p : parts) {
 	  nmg.addMask(p.second);
 	}
-	g_ACL.setState(nmg);
+	g_webserver.setACL(nmg);
       });
   }
   else {
@@ -238,7 +239,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showACL", []() {
 	vector<string> vec;
 
-	g_ACL.getCopy().toStringVector(&vec);
+	g_webserver.getACL().toStringVector(&vec);
 
 	for(const auto& s : vec)
 	  g_outputBuffer+=s+"\n";
@@ -269,7 +270,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  SBind(sock, local);
 	  SListen(sock, 1024);
 	  auto launch=[sock, local, password]() {
-	    thread t(dnsdistWebserverThread, sock, local, password);
+	    thread t(WforceWebserver::start, sock, local, password, &g_webserver);
 	    t.detach();
 	  };
 	  if(g_launchWork) 
@@ -389,7 +390,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) {
 	// the number of threads used to process allow/report commands
-	g_num_worker_threads = numThreads;
+	g_webserver.setNumWorkerThreads(numThreads);
       });
   }
   else {
@@ -724,6 +725,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       cobj.c_func = func;
       cobj.c_reportSink = reportSink;
       custom_func_map.insert(std::make_pair(f_name, cobj));
+      // register a webserver command
+      g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
       if (!allow_report && !client) {
 	noticelog("Registering custom endpoint [%s]", f_name);
       }

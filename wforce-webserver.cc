@@ -192,43 +192,44 @@ void WforceWebserver::connectionThread(int id, std::shared_ptr<WFConnection> wfc
       resp.body=ss.str();
       resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
     }
+    else {
 
-    // set the defaults in case we don't find a command
-    resp.status = 404;
-    resp.body = "Command not found";
+      // set the defaults in case we don't find a command
+      resp.status = 404;
+      resp.body = "Command not found";
     
-    if (req.method=="GET") {
-      const auto& f = wws->d_get_map.find(command);
-      if (f != wws->d_get_map.end()) {
-	f->second(req, resp, command);
+      if (req.method=="GET") {
+	const auto& f = wws->d_get_map.find(command);
+	if (f != wws->d_get_map.end()) {
+	  f->second(req, resp, command);
+	}
+      }
+      else if (req.method=="DELETE") {
+	const auto& f = wws->d_delete_map.find(command);
+	if (f != wws->d_delete_map.end()) {
+	  f->second(req, resp, command);
+	}
+      }
+      else if ((command != "") && (ctype.compare("application/json") != 0)) {
+	errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
+	resp.status = 415;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
+	resp.body=ss.str();
+      }
+      else if (req.method=="POST") {
+	const auto& f = wws->d_post_map.find(command);
+	if (f != wws->d_post_map.end()) {
+	  f->second(req, resp, command);
+	}
+      }
+      else if (req.method=="PUT") {
+	const auto& f = wws->d_put_map.find(command);
+	if (f != wws->d_put_map.end()) {
+	  f->second(req, resp, command);
+	}
       }
     }
-    else if (req.method=="DELETE") {
-      const auto& f = wws->d_delete_map.find(command);
-      if (f != wws->d_delete_map.end()) {
-	f->second(req, resp, command);
-      }
-    }
-    else if ((command != "") && (ctype.compare("application/json") != 0)) {
-      errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
-      resp.status = 415;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
-      resp.body=ss.str();
-    }
-    else if (req.method=="POST") {
-      const auto& f = wws->d_post_map.find(command);
-      if (f != wws->d_post_map.end()) {
-	f->second(req, resp, command);
-      }
-    }
-    else if (req.method=="PUT") {
-      const auto& f = wws->d_put_map.find(command);
-      if (f != wws->d_put_map.end()) {
-	f->second(req, resp, command);
-      }
-    }
-
     if(!callback.empty()) {
       resp.body = callback + "(" + resp.body + ");";
     }

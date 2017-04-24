@@ -135,3 +135,13 @@ std::string getPerfStatsString()
   }
   return ss.str();
 }
+
+using namespace json11;
+Json perfStatsToJson()
+{
+  Json::object jattrs;
+  for (auto i=lookupPerfStat.begin(); i!=lookupPerfStat.end(); ++i) {
+    jattrs.insert(std::make_pair(i->second, getStat(i->first)));
+  }
+  return jattrs;
+}

@@ -51,26 +51,6 @@ static int uptimeOfProcess()
   return time(0) - start;
 }
 
-bool compareAuthorization(YaHTTP::Request& req, const string &expected_password)
-{
-  // validate password
-  YaHTTP::strstr_map_t::iterator header = req.headers.find("authorization");
-  bool auth_ok = false;
-  if (header != req.headers.end() && toLower(header->second).find("basic ") == 0) {
-    string cookie = header->second.substr(6);
-
-    string plain;
-    B64Decode(cookie, plain);
-
-    vector<string> cparts;
-    stringtok(cparts, plain, ":");
-
-    // this gets rid of terminating zeros
-    auth_ok = (cparts.size()==2 && (0==strcmp(cparts[1].c_str(), expected_password.c_str())));
-  }
-  return auth_ok;
-}
-
 std::string LtAttrsToString(const LoginTuple& lt)
 {
   std::ostringstream os;
@@ -274,7 +254,17 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
     resp.body=R"({"status":"ok"})";
 }
 
-void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseAddBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseAddDelBLEntryCmd(req, resp, true);
+}
+
+void parseDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseAddDelBLEntryCmd(req, resp, false);
+}
+
+void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   Json msg;
@@ -353,7 +343,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }
 }
 
-void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   Json msg;
@@ -429,7 +419,7 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
 
 enum AllowReturnFields { allowRetStatus=0, allowRetMsg=1, allowRetLogMsg=2, allowRetAttrs=3 };
 
-void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   Json msg;
@@ -539,7 +529,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   }  
 }
 
-void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   struct rusage ru;
@@ -559,7 +549,7 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   resp.body=my_json.dump();
 }
 
-void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   Json::array my_entries;
@@ -578,7 +568,7 @@ void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
   resp.body = ret_json.dump();  
 }
 
-void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp)
+void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
   Json msg;
@@ -732,284 +722,21 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }  
 }
 
-struct WFConnection {
-  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
-  {
-    fd = sock;
-    remote = ca;
-    password = pass;
-    closeConnection = false;
-    inConnectionThread = false;
-  }
-  bool inConnectionThread;
-  bool closeConnection;
-  int fd;
-  Socket s;
-  ComboAddress remote;
-  std::string password;
-  std::chrono::time_point<std::chrono::steady_clock> q_entry_time;
-};
-
-typedef std::vector<std::shared_ptr<WFConnection>> WFCArray;
-static WFCArray sock_vec;
-static std::mutex sock_vec_mutx;
-
-static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
+void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
-  using namespace json11;
-  string line;
-  string request;
-  YaHTTP::Request req;
-  bool keepalive = false;
-  bool closeConnection=true;
-  bool validRequest = true;
-
-  if (!wfc) 
-    return;
-
-  auto start_time = std::chrono::steady_clock::now();
-  auto wait_time = start_time - wfc->q_entry_time;
-  auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
-  addWTWStat(i_millis.count());
-
-  vinfolog("Webserver handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
-
-  YaHTTP::AsyncRequestLoader yarl;
-  yarl.initialize(&req);
-  int timeout = 5; // XXX make this configurable
-  wfc->s.setNonBlocking();
-  bool complete=false;
-  try {
-    while(!complete) {
-      int bytes;
-      char buf[1024];
-      bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
-      if (bytes > 0) {
-	string data(buf, bytes);
-	complete = yarl.feed(data);
-      } else {
-	// read error OR EOF
-	validRequest = false;
-	break;
-      }
-    }
-    yarl.finalize();
-  } catch (YaHTTP::ParseError &e) {
-    // request stays incomplete
-    infolog("Unparseable HTTP request from %s", wfc->remote.toStringWithPort());
-    validRequest = false;
-  } catch (NetworkError& e) {
-    warnlog("Network error in web server: %s", e.what());
-    validRequest = false;
-  }
-
-  if (validRequest) {
-    string conn_header = req.headers["Connection"];
-    if (conn_header.compare("keep-alive") == 0)
-      keepalive = true;
-
-    if (conn_header.compare("close") == 0)
-      closeConnection = true;
-    else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
-      closeConnection = false;
-
-    string command=req.getvars["command"];
-
-    string callback;
-
-    if(req.getvars.count("callback")) {
-      callback=req.getvars["callback"];
-      req.getvars.erase("callback");
-    }
-
-    req.getvars.erase("_"); // jQuery cache buster
-
-    YaHTTP::Response resp;
-    resp.headers["Content-Type"] = "application/json";
-    if (closeConnection)
-      resp.headers["Connection"] = "close";
-    else if (keepalive == true)
-      resp.headers["Connection"] = "keep-alive";
-    resp.version = req.version;
-    resp.url = req.url;
-
-    string ctype = req.headers["Content-Type"];
-    if (!compareAuthorization(req, wfc->password)) {
-      errlog("HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
-      resp.status=401;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << "\"Unauthorized\"" << "}";
-      resp.body=ss.str();
-      resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
-    }
-    else if (command=="ping" && req.method=="GET") {
-      resp.status = 200;
-      resp.body=R"({"status":"ok"})";
-    }
-    else if(command=="stats") {
-      parseStatsCmd(req, resp);
-    }
-    else if(command=="getBL") {
-      parseGetBLCmd(req, resp);
-    }
-    else if ((command != "") && (ctype.compare("application/json") != 0)) {
-      errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
-      resp.status = 415;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
-      resp.body=ss.str();
-    }
-    else if (command=="reset" && req.method=="POST") {
-      parseResetCmd(req, resp);
-    }
-    else if(command=="report" && req.method=="POST") {
-      parseReportCmd(req, resp);
-    }
-    else if(command=="allow" && req.method=="POST") {
-      parseAllowCmd(req, resp);
-    }
-    else if (command=="addBLEntry" && req.method=="POST") {
-      parseAddDelBLEntryCmd(req, resp, true);
-    }
-    else if (command=="delBLEntry" && req.method=="POST") {
-      parseAddDelBLEntryCmd(req, resp, false);
-    }
-    else if(command=="getDBStats" && req.method=="POST") {
-      parseGetStatsCmd(req, resp);
-    }
-    else {
-      for (const auto& i : g_custom_func_map) {
-	if (command.compare(i.first) == 0 && req.method=="POST") {
-	  parseCustomCmd(req, resp, command);
-	}
-      }
-      
-      // cerr<<"404 for: "<<resp.url.path<<endl;
-      resp.status=404;
-    }
-
-    if(!callback.empty()) {
-      resp.body = callback + "(" + resp.body + ");";
-    }
-
-    std::ostringstream ofs;
-    ofs << resp;
-    string done;
-    done=ofs.str();
-    writen2(wfc->fd, done.c_str(), done.size());
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(sock_vec_mutx);
-    if (closeConnection) {
-      wfc->closeConnection = true;
-    }
-    wfc->inConnectionThread = false;
-    auto end_time = std::chrono::steady_clock::now();
-    auto run_time = end_time - start_time;
-    auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
-    addWTRStat(i_millis.count());
-    return;
-  }
+  resp.status = 200;
+  resp.body = R"({"status":"ok"})";
 }
 
-unsigned int g_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
-
-#include "poll.h"
-
-void pollThread()
+void registerWebserverCommands()
 {
-  ctpl::thread_pool p(g_num_worker_threads, 5000);
-  const int fd_increase = 50; // somewhat arbitrary
-  struct pollfd* fds=NULL;
-  int max_fd_size = -1;
-
-  for (;;) {
-    // parse the array of sockets and create a pollfd array
-    int num_fds=0;
-    {
-      std::lock_guard<std::mutex> lock(sock_vec_mutx);
-      num_fds = sock_vec.size();
-      // Only allocate a new pollfd array if it needs to be bigger
-      if (num_fds > max_fd_size) {
-	if (fds!=NULL)
-	  delete[] fds;
-	fds = new struct pollfd [num_fds+fd_increase];
-	max_fd_size = num_fds+fd_increase;
-      }
-      if (!fds) {
-	errlog("Cannot allocate memory in pollThread()");
-	exit(-1);
-      }
-      int j=0;
-      // we want to keep the symmetry between pollfds and sock_vec in terms of number and order of items
-      // so rather than remove sockets which are not being processed we just don't set the POLLIN flag for them
-      for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end(); ++i, j++) {
-	fds[j].fd = (*i)->fd;
-	fds[j].events = 0;
-	if (!((*i)->inConnectionThread)) {
-	  fds[j].events |= POLLIN;
-	}
-      }
-    }
-
-    // poll with shortish timeout - XXX make timeout configurable
-    int res = poll(fds, num_fds, 5);
-
-    if (res < 0) {
-      warnlog("poll() system call returned error (%d)", errno);
-    }
-    else {
-      std::lock_guard<std::mutex> lock(sock_vec_mutx);
-      for (int i=0; i<num_fds; i++) {
-	// set close flag for connections that need closing
-	if (fds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
-	  sock_vec[i]->closeConnection = true;
-	}
-	// process any connections that have activity
-	else if (fds[i].revents & POLLIN) {
-	  sock_vec[i]->inConnectionThread = true;
-	  sock_vec[i]->q_entry_time = std::chrono::steady_clock::now();
-	  p.push(connectionThread, sock_vec[i]);
-	}
-      }
-      // now erase any connections that are done with
-      for (WFCArray::iterator i = sock_vec.begin(); i != sock_vec.end();) {
-	if ((*i)->closeConnection == true) {
-	  // this will implicitly close the socket through the Socket class destructor
-	  i = sock_vec.erase(i);
-	}
-	else
-	  ++i;
-      }
-    }
-  }
-}
-
-void dnsdistWebserverThread(int sock, const ComboAddress& local, const std::string& password)
-{
-  warnlog("Webserver launched on %s", local.toStringWithPort());
-  auto localACL=g_ACL.getLocal();
-
-  // spin up a thread to do the polling on the connections accepted by this thread
-  thread t1(pollThread);
-  t1.detach();
-
-  for(;;) {
-    try {
-      ComboAddress remote(local);
-      int fd = SAccept(sock, remote);
-      if(!localACL->match(remote)) {
-	close(fd);
-	continue;
-      }
-      {
-	std::lock_guard<std::mutex> lock(sock_vec_mutx);
-	sock_vec.push_back(std::make_shared<WFConnection>(fd, remote, password));
-      }
-    }
-    catch(std::exception& e) {
-      errlog("Had an error accepting new webserver connection: %s", e.what());
-    }
-  }
+  g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, parseAddBLEntryCmd);
+  g_webserver.registerFunc("delBLEntry", HTTPVerb::POST, parseDelBLEntryCmd);
+  g_webserver.registerFunc("reset", HTTPVerb::POST, parseResetCmd);
+  g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  g_webserver.registerFunc("allow", HTTPVerb::POST, parseAllowCmd);
+  g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
+  g_webserver.registerFunc("getBL", HTTPVerb::GET, parseGetBLCmd);
+  g_webserver.registerFunc("getDBStats", HTTPVerb::POST, parseGetStatsCmd);
+  g_webserver.registerFunc("ping", HTTPVerb::GET, parsePingCmd);
 }

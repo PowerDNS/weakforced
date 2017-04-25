@@ -4,6 +4,7 @@ services:
     build: logstash
     ports:
       - "14501:4501/udp"
+      - "18080:8080/tcp"
     command: -f /etc/logstash/conf.d/
     volumes:
       - ./logstash/config:/etc/logstash/conf.d

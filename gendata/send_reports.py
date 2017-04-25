@@ -14,8 +14,8 @@ WEBPORT = '8084'
 APIKEY = 'super'
 
 cmd1 = ("../wforce -C ./wforce_elastic.conf -R ../regexes.yaml").split()
-wrksuccesscmd = ("wrk -c 10 -d 60 -t 1 -s ./gen_success_reports.lua -R 50 http://127.0.0.1:8084").split()
-wrkfailcmd = ("wrk -c 10 -d 30 -t 1 -s ./gen_fail_reports.lua -R 50 http://127.0.0.1:8084").split()
+wrksuccesscmd = ("wrk -c 10 -d 60 -t 2 -s ./gen_success_reports.lua -R 60 http://127.0.0.1:8084").split()
+wrkfailcmd = ("wrk -c 10 -d 30 -t 2 -s ./gen_fail_reports.lua -R 30 http://127.0.0.1:8084").split()
 
 # Now run wforce and the tests.
 print "Launching wforce..."

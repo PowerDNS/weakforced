@@ -47,7 +47,7 @@ void WebHookRunner::setMaxConns(unsigned int max_conns)
 // synchronously run the ping command for the hook
 bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg)
 {
-  auto cc = getConnection(hook->getID()); // this will only return once it has a connection
+  auto cc = getConnection(hook); // this will only return once it has a connection
 
   if (auto ccs = cc.lock())
     return _runHook("ping", hook, std::string(), ccs);
@@ -59,24 +59,36 @@ bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string er
 void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data)
 {
   std::string err_msg;
-  
+
   if (!hook->validateConfig(err_msg)) {
     errlog("runHook: Error validating configuration of webhook id=%d for event (%s) [%s]", hook->getID(), event_name, err_msg);
   }
   else {
-    auto cc = getConnection(hook->getID());
+    auto cc = getConnection(hook);
     if (auto ccs = cc.lock())
       p.push(_runHookThread, event_name, hook, hook_data, ccs);
   }
 }
 
-std::weak_ptr<CurlConnection> WebHookRunner::getConnection(unsigned int hook_id)
+std::weak_ptr<CurlConnection> WebHookRunner::getConnection(std::shared_ptr<const WebHook> hook)
 {
+  int hook_id = hook->getID();
+  unsigned int num_conns = max_hook_conns;
+
+  if (hook->hasConfigKey("num_conns")) {
+    try {
+      num_conns = abs(std::stoi(hook->getConfigKey("num_conns")));
+    }
+    catch (const std::out_of_range& oor) {
+      errlog("Webhook config key num_conns is not an integer value (%s) for WebHook (%s)", hook->getConfigKey("num_conns"), hook->getName());
+    }
+  }
+ 
   std::lock_guard<std::mutex> lock(conn_mutex);
-  return (_getConnection(hook_id));
+  return (_getConnection(hook_id, num_conns));
 }
 
-std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id)
+std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id, unsigned int num_connections)
 { 
   auto ci = conns.find(hook_id);
   if (ci != conns.end()) { 
@@ -87,12 +99,12 @@ std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id
   else {
     std::vector<std::shared_ptr<CurlConnection>> vec;
     
-    for (unsigned int i=0; i< max_hook_conns; i++) {
+    for (unsigned int i=0; i< num_connections; i++) {
       std::shared_ptr<CurlConnection> cc = std::make_shared<CurlConnection>();
       vec.push_back(cc);
     }
     conns.insert(std::make_pair(hook_id, vec));
-    return (_getConnection(hook_id));
+    return (_getConnection(hook_id, num_connections));
   }
 }
 
@@ -117,7 +129,7 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   else {
     mch.insert(std::make_pair("Content-Type", "application/json"));
   }
-  mch.insert(std::make_pair("Transfer-Encoding", "chunked"));
+  
   mch.insert(std::make_pair("X-Wforce-HookID", std::to_string(hook->getID())));
   if (hook->hasConfigKey("secret"))
     mch.insert(std::make_pair("X-Wforce-Signature",

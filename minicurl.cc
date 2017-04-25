@@ -126,13 +126,14 @@ bool MiniCurl::postURL(const std::string& url,
 		       std::string& error_msg)
 {
   bool retval = false;
-  
+
   if (d_curl) {
     std::stringstream ss(post_body);
     struct curl_slist* header_list = NULL;
     
     curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(d_curl, CURLOPT_POST, 1);
+    curl_easy_setopt(d_curl, CURLOPT_POSTFIELDSIZE, post_body.length());
     curl_easy_setopt(d_curl, CURLOPT_READFUNCTION, read_callback);
     curl_easy_setopt(d_curl, CURLOPT_READDATA, &ss);
     curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);

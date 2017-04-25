@@ -1,0 +1,47 @@
+{ 
+    "template" : "logstash-wforce*",
+    "settings" : { "index.refresh_interval" : "60s" },
+    "mappings" : {
+        "_default_" : {
+            "_all" : { "enabled" : false },
+            "dynamic_templates" :
+	    [
+		{
+		    "minor_fields" : {
+			"match" : "*minor",
+			"mapping" : { "type" : "integer", "index" : true }
+		    }
+		},
+		{
+		    "major_fields" : {
+			"match" : "*major",
+			"mapping" : { "type" : "integer", "index" : true }
+		    }
+		},
+		{
+		    "string_fields" : {
+			"match_mapping_type" : "string",
+			"mapping" : { "type" : "keyword", "index" : true }
+		    }
+		}
+	    ],
+            "properties" : {
+                "@timestamp": { "type": "date", "include_in_all": false },
+		"@version": { "type": "keyword", "include_in_all": false },
+		"geoip"  : {
+		    "dynamic": true,
+		    "properties" : {
+			"ip": { "type": "ip" },
+			"location" : { "type" : "geo_point" },
+			"latitude" : { "type" : "half_float" },
+			"longitude" : { "type" : "half_float" }
+		    }
+		},
+		"policy_reject": { "type": "boolean" },
+		"success": { "type": "boolean"},
+		"tls": { "type": "boolean" },
+		"t": { "type": "float" }
+            }
+        }
+    }
+}

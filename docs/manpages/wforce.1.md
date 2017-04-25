@@ -170,6 +170,11 @@ started with the -c option.
 		WTR_100_1000=0
 		WTR_Slow=0
 
+* reloadGeoIPDBs() - Reload all GeoIP DBs that have been
+initialized. For example:
+
+		> reloadGeoIPDBs
+		reloadGeoIPDBs() successful
 
 * showVersion() - Returns the current version of the wforce
   server. For example:

@@ -35,6 +35,7 @@
 #include "webhook.hh"
 #include "wforce-webserver.hh"
 #include "wforce_exception.hh"
+#include "login_tuple.hh"
 #include "ext/json11/json11.hpp"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
@@ -94,39 +95,6 @@ bool putMsgLen(int fd, uint16_t len);
 void* tcpAcceptorThread(void* p);
 double getDoubleTime();
 
-struct LoginTuple
-{
-  double t;
-  ComboAddress remote;
-  string login;
-  string pwhash;
-  string device_id;
-  std::map<std::string, std::string> device_attrs;
-  string protocol;
-  bool tls;
-  bool success;
-  std::map<std::string, std::string> attrs; // additional attributes
-  std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
-  bool policy_reject;
-  Json to_json() const;
-  std::string serialize() const;
-  void from_json(const Json& msg);
-  void unserialize(const std::string& src);
-  void setLtAttrs(const json11::Json& msg);
-  void setDeviceAttrs(const json11::Json& msg);
-
-  bool operator<(const LoginTuple& r) const
-  {
-    if(std::tie(t, login, pwhash, success) < std::tie(r.t, r.login, r.pwhash, r.success))
-      return true;
-    ComboAddress cal(remote);
-    ComboAddress car(r.remote);
-    cal.sin4.sin_port=0;
-    car.sin4.sin_port=0;
-    return cal < car;
-  }
-};
-
 typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
 
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
@@ -137,3 +105,4 @@ void sendNamedReportSink(const std::string& msg);
 extern WebHookRunner g_webhook_runner;
 extern WebHookDB g_webhook_db;
 extern WebHookDB g_custom_webhook_db;
+extern std::shared_ptr<UserAgentParser> g_ua_parser_p;

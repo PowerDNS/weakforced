@@ -46,6 +46,7 @@ wforce_SOURCES = \
 	device_parser.hh device_parser.cc \
 	wforce-webserver.cc wforce-webserver.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
+	login_tuple.cc login_tuple.hh \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
         ext/murmur3.h \
@@ -95,7 +96,8 @@ noinst_HEADERS = \
 	lock.hh \
 	pdnsexception.hh \
 	wforce-webserver.hh \
-	wforce-web.hh
+	wforce-web.hh \
+	login_tuple.hh
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto

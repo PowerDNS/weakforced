@@ -14,8 +14,8 @@ WEBPORT = '8084'
 APIKEY = 'super'
 
 cmd1 = ("../wforce -C ./wforce_elastic.conf -R ../regexes.yaml").split()
-wrksuccesscmd = ("wrk -c 10 -d 60 -t 2 -s ./gen_success_reports.lua -R 60 http://127.0.0.1:8084").split()
-wrkfailcmd = ("wrk -c 10 -d 30 -t 2 -s ./gen_fail_reports.lua -R 30 http://127.0.0.1:8084").split()
+wrksuccesscmd = ("wrk -c 2 -d 60 -t 2 -s ./gen_success_reports.lua -R 30 http://127.0.0.1:8084").split()
+wrkfailcmd = ("wrk -c 2 -d 60 -t 2 -s ./gen_fail_reports.lua -R 20 http://127.0.0.1:8084").split()
 
 # Now run wforce and the tests.
 print "Launching wforce..."
@@ -42,8 +42,10 @@ if not available:
 print "Sending Reports..."
 wrkproc = subprocess.Popen(wrksuccesscmd, close_fds=True)
 wrkproc.wait()
+time.sleep(10)
 wrkproc = subprocess.Popen(wrkfailcmd, close_fds=True)
 wrkproc.wait()
+time.sleep(10)
 print "Done sending reports..."
 proc1.terminate()
 proc1.wait()

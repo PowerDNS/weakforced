@@ -359,7 +359,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     try {
       LoginTuple lt;
 
-      lt.from_json(msg);
+      lt.from_json(msg, g_ua_parser_p);
 
       // canonicalize the login - e.g. turn "foo" into "foo@foobar.com" and bar into "bar@barfoo.com"
       if (!canonicalizeLogin(lt.login, resp))
@@ -439,7 +439,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     std::string ret_msg;
 
     try {
-      lt.from_json(msg);
+      lt.from_json(msg, g_ua_parser_p);
       lt.t=getDoubleTime();
     }
     catch(...) {

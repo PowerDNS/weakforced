@@ -193,6 +193,21 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/Error"
+  /?command=stats:
+    get:
+      description: "Get server stats"
+      operationId: "stats"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "stats response"
+          schema:
+            $ref: "#definitions/statsResponse"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /?command=getBL:
     get:
       description: "Get the list of all blacklisted IPs and/or Logins"
@@ -467,3 +482,44 @@ definitions:
     example:
       countLogins: 239
       diffPassword: 10
+  statsResponse:
+    type: object
+    properties:
+      allows:
+        type: integer
+      denieds:
+        type: integer
+      sys-msec:
+        type: integer
+      user-msec:
+        type: integer
+      perfstats:
+        type: object
+        description: Latency buckets for worker thread wait (WTW) and run (WTR)
+        properties:
+          WTW_0_1:
+            type: integer
+          WTW_1_10:
+            type: integer
+          WTW_10_100:
+            type: integer
+          WTW_100_1000:
+            type: integer
+          WTW_Slow:
+            type: integer
+          WTR_0_1:
+            type: integer
+          WTR_1_10:
+            type: integer
+          WTR_10_100:
+            type: integer
+          WTR_100_1000:
+            type: integer
+          WTR_Slow:
+            type: integer
+    example:
+      allows: 120321
+      denieds: 20201
+      sys-msec: 97211221
+      user-msec: 292910108
+      perfstats: {}

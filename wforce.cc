@@ -716,10 +716,10 @@ try
       }
       break;
     case 'd':
-	g_cmdLine.beDaemon=true;
+      g_cmdLine.beDaemon=true;
       break;
     case 's':
-	g_cmdLine.underSystemd=true;
+      g_cmdLine.underSystemd=true;
       break;
     case 'e':
       g_cmdLine.command=optarg;
@@ -843,8 +843,25 @@ try
   }
   _exit(EXIT_SUCCESS);
 
-}
-catch(std::exception &e)
-{
-  errlog("Fatal error: %s", e.what());
-}
+ }
+catch(const LuaContext::ExecutionErrorException& e) {
+  try {
+    errlog("Fatal Lua error: %s", e.what());
+    std::rethrow_if_nested(e);
+  }
+  catch(const std::exception& e) {
+    errlog("Details: %s", e.what());
+  }
+  catch(WforceException &ae)
+    {
+      errlog("Fatal wforce error: %s", ae.reason);
+    }
+  _exit(EXIT_FAILURE);
+ }
+ catch(std::exception &e) {
+   errlog("Fatal error: %s", e.what());
+ }
+ catch(WforceException &ae) {
+   errlog("Fatal wforce error: %s", ae.reason);
+   _exit(EXIT_FAILURE);
+ }

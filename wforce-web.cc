@@ -388,13 +388,33 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
       std::stringstream ss;
+      try {
+	std::rethrow_if_nested(e);
+	ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Lua function [%s] exception: %s", command, e.what());
+      }
+      catch (const std::exception& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << ne.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.what());
+      }
+      catch (const WforceException& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << ne.reason << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.reason);
+      }
+    }
+    catch(const std::exception& e) {
+      resp.status=500;
+      std::stringstream ss;
       ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
       resp.body=ss.str();
-      errlog("Lua report function exception: %s", e.what());
-    }
-    catch(...) {
-      resp.status=500;
-      resp.body=R"({"status":"failure"})";
+      errlog("Exception in command [%s] exception: %s", command, e.what());
     }
   }
 }
@@ -443,10 +463,10 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       lt.t=getDoubleTime();
     }
     catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
-	return;
-      }
+      resp.status=500;
+      resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
+      return;
+    }
 
     if (!canonicalizeLogin(lt.login, resp))
       return;
@@ -498,13 +518,12 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	// generate webhook events
 	Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
 	std::string hook_data = jobj.dump();
-	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {	
+	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
 	  if (auto hs = h.lock()) {
 	    if (allow_filter(hs, status))
 	      g_webhook_runner.runHook("allow", hs, hook_data);
 	  }
 	}
-    
 	resp.status=200;
 	resp.body=msg.dump();
 	return;
@@ -512,21 +531,43 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       catch(LuaContext::ExecutionErrorException& e) {
 	resp.status=500;
 	std::stringstream ss;
+	try {
+	  std::rethrow_if_nested(e);
+	  ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+	  resp.body=ss.str();
+	  errlog("Lua function [%s] exception: %s", command, e.what());
+	  return;
+	}
+	catch (const std::exception& ne) {
+	  resp.status=500;
+	  std::stringstream ss;
+	  ss << "{\"status\":\"failure\", \"reason\":\"" << ne.what() << "\"}";
+	  resp.body=ss.str();
+	  errlog("Exception in command [%s] exception: %s", command, ne.what());
+	  return;
+	}
+	catch (const WforceException& ne) {
+	  resp.status=500;
+	  std::stringstream ss;
+	  ss << "{\"status\":\"failure\", \"reason\":\"" << ne.reason << "\"}";
+	  resp.body=ss.str();
+	  errlog("Exception in command [%s] exception: %s", command, ne.reason);
+	  return;
+	}
+      }
+      catch(const std::exception& e) {
+	resp.status=500;
+	std::stringstream ss;
 	ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
 	resp.body=ss.str();
-	errlog("Lua allow function exception: %s", e.what());
-	return;
-      }
-      catch(...) {
-	resp.status=500;
-	resp.body=R"({"status":"failure"})";
+	errlog("Exception in command [%s] exception: %s", command, e.what());
 	return;
       }
     }
     msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", Json::object{}}};
     resp.status=200;
     resp.body=msg.dump();
-  }  
+  }
 }
 
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -711,13 +752,33 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
       std::stringstream ss;
+      try {
+	std::rethrow_if_nested(e);
+	ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Lua custom function [%s] exception: %s", command, e.what());
+      }
+      catch (const std::exception& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.what());
+      }
+      catch (const WforceException& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.reason);
+      }
+    }
+    catch(const std::exception& e) {
+      resp.status=500;
+      std::stringstream ss;
       ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
       resp.body=ss.str();
-      errlog("Lua custom function [%s] exception: %s", command, e.what());
-    }
-    catch(...) {
-      resp.status=500;
-      resp.body=R"({"success":false})";
+      errlog("Exception in command [%s] exception: %s", command, e.what());
     }
   }  
 }

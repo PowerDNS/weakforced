@@ -285,7 +285,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   else {
-    c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) { });
+    c_lua.writeFunction("webserver", [](const std::string& address, const std::string& password) { });
   }
 
   if (!allow_report) {
@@ -324,7 +324,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   else {
-    c_lua.writeFunction("controlSocket", [client](const std::string& str) { });
+    c_lua.writeFunction("controlSocket", [](const std::string& str) { });
   }
 
   if (!allow_report) {

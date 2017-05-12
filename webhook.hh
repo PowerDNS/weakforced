@@ -168,11 +168,11 @@ public:
 
     if (validEventName(event_name)) {
       for (auto& i : event_names) {
-	return i.second;
+	if (i.first.compare(event_name) == 0)
+	  return i.second;
       }
     }
-    else
-      return null_config;
+    return null_config;
   }
   const WHConfigMap& getConfigKeys() const
   {

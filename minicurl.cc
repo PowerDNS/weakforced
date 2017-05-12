@@ -70,12 +70,13 @@ std::string MiniCurl::getURL(const std::string& url, const MiniCurlHeaders& head
   return std::string();
 }
 
-void MiniCurl::setCurlOption(CURLoption option, ...)
+void MiniCurl::setCurlOption(int option, ...)
 {
   if (d_curl) {
     va_list args;
+
     va_start(args, option);
-    (void) curl_easy_setopt(d_curl, option, args);
+    (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), args);
     va_end(args);
   }
 }

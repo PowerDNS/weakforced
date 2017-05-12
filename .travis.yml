@@ -1,30 +1,62 @@
 language: cpp
 sudo: required
 dist: trusty
-compiler:
-  - gcc
 services:
   - redis-server
-addons:
-  apt:
-    packages:
-      - libboost-dev
-      - libboost-date-time-dev
-      - libboost-regex-dev
-      - build-essential
-      - liblua5.1-0-dev
-      - python-virtualenv
-      - python-bottle
-      - libgeoip-dev
-      - geoip-database
-      - cpanminus
-      - libprotobuf-dev
-      - protobuf-compiler
-      - libhiredis-dev
-      - libcurl4-openssl-dev
-      - redis-server
-      - libyaml-cpp-dev
-      - wget
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          packages:
+            - libboost-dev
+            - libboost-date-time-dev
+            - libboost-regex-dev
+            - build-essential
+            - liblua5.1-0-dev
+            - python-virtualenv
+            - python-bottle
+            - libgeoip-dev
+            - geoip-database
+            - cpanminus
+            - libprotobuf-dev
+            - protobuf-compiler
+            - libhiredis-dev
+            - libcurl4-openssl-dev
+            - redis-server
+            - libyaml-cpp-dev
+            - wget
+      env:
+        - MYCXX=g++
+        - MYCC=gcc
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+            - libboost-dev
+            - libboost-date-time-dev
+            - libboost-regex-dev
+            - build-essential
+            - liblua5.1-0-dev
+            - python-virtualenv
+            - python-bottle
+            - libgeoip-dev
+            - geoip-database
+            - cpanminus
+            - libprotobuf-dev
+            - protobuf-compiler
+            - libhiredis-dev
+            - libcurl4-openssl-dev
+            - redis-server
+            - libyaml-cpp-dev
+            - wget
+      env:
+        - MYCXX=clang++-4.0
+        - MYCC=clang-4.0
 before_script:
  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
@@ -46,7 +78,7 @@ before_script:
  - sudo gunzip /usr/share/GeoIP/GeoIPCity.dat.gz
 script:
  - autoreconf -i
- - ./configure --enable-docker
+ - ./configure --enable-docker CC=$MYCC CXX=$MYCXX
  - make
  - cd regression-tests
  - ./runtests
@@ -64,7 +96,7 @@ script:
  - cd ..
  - mkdir build
  - cd build
- - ../wforce-$WF_VERSION/configure
+ - ../wforce-$WF_VERSION/configure CC=$MYCC CXX=$MYCXX
  - make
  - cd ..
  - make distcheck

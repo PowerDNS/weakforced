@@ -36,7 +36,7 @@ public:
   MiniCurl& operator=(const MiniCurl&) = delete;
   MiniCurl& operator=(const MiniCurl&&) = delete;
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
-  void setCurlOption(CURLoption option, ...);
+  void setCurlOption(int option, ...);
   bool postURL(const std::string& url, const std::string& post_body,
 	       const MiniCurlHeaders& headers,
 	       std::string& error_msg);

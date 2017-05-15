@@ -285,7 +285,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   else {
-    c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) { });
+    c_lua.writeFunction("webserver", [](const std::string& address, const std::string& password) { });
   }
 
   if (!allow_report) {
@@ -324,7 +324,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   else {
-    c_lua.writeFunction("controlSocket", [client](const std::string& str) { });
+    c_lua.writeFunction("controlSocket", [](const std::string& str) { });
   }
 
   if (!allow_report) {
@@ -414,7 +414,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_COUNTRY|WFGeoIPDBType::GEOIP_COUNTRY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.what());
+	    errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.reason);
 	  }
 	});
   }
@@ -428,8 +428,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	}
 	catch (const WforceException& e) {
 	  boost::format fmt("%s (%s)\n");
-	  errlog("reloadGeoIPDBs(): Error reloading GeoIP (%s)", e.what());
-	  g_outputBuffer += (fmt % "reloadGeoIPDBs(): Error reloading GeoIP" % e.what()).str();
+	  errlog("reloadGeoIPDBs(): Error reloading GeoIP (%s)", e.reason);
+	  g_outputBuffer += (fmt % "reloadGeoIPDBs(): Error reloading GeoIP" % e.reason).str();
 	}
 	g_outputBuffer += "reloadGeoIPDBs() successful\n";
       });
@@ -446,7 +446,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_CITY|WFGeoIPDBType::GEOIP_CITY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.what());
+	    errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.reason);
 	  }
 	});
 
@@ -471,7 +471,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_ISP|WFGeoIPDBType::GEOIP_ISP_V6);
 	}
 	catch (const WforceException& e) {
-	  errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.what());
+	  errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.reason);
 	}
       });
   }

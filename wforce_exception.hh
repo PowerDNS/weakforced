@@ -23,10 +23,15 @@
 #include <stdexcept>
 #include <string>
 
-class WforceException: public std::runtime_error 
+using std::string;
+
+class WforceException
 {
 public:
-  WforceException(const std::string &a) : std::runtime_error(a) {}
+  WforceException(){reason="Unspecified";};
+  WforceException(string r){reason=r;};
+  
+  string reason; //! Print this to tell the user what went wrong
 };
 
 // This means we can use PDNS classes that emit PDNSException

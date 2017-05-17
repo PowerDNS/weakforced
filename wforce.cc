@@ -752,7 +752,9 @@ try
   argv+=optind;
 
   g_singleThreaded = false;
-  chdir(g_configDir.c_str());
+  if (chdir(g_configDir.c_str()) != 0) {
+    warnlog("Could not change working directory to %s (%s)", g_configDir, strerror(errno));
+  }
   
   if (!g_cmdLine.beClient) {
     checkUaRegexFile(g_cmdLine.regexes);

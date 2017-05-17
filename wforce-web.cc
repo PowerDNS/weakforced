@@ -416,6 +416,13 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       resp.body=ss.str();
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
+    catch(const WforceException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.reason);
+    }
   }
 }
 
@@ -462,10 +469,19 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       lt.from_json(msg, g_ua_parser_p);
       lt.t=getDoubleTime();
     }
-    catch(...) {
+    catch(const std::exception& e) {
       resp.status=500;
-      resp.body=R"({"status":"failure", "reason":"Could not parse input"})";
-      return;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.what());
+    }
+    catch(const WforceException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
 
     if (!canonicalizeLogin(lt.login, resp))
@@ -562,6 +578,13 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	resp.body=ss.str();
 	errlog("Exception in command [%s] exception: %s", command, e.what());
 	return;
+      }
+      catch(const WforceException& e) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, e.reason);
       }
     }
     msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", Json::object{}}};

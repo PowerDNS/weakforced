@@ -196,7 +196,7 @@ void WforceWebserver::connectionThread(int id, std::shared_ptr<WFConnection> wfc
 
       // set the defaults in case we don't find a command
       resp.status = 404;
-      resp.body = "Command not found";
+      resp.body = R"({"status":"failure", "reason":"Command not found"})";
     
       if (req.method=="GET") {
 	const auto& f = wws->d_get_map.find(command);

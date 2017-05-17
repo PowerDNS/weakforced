@@ -25,7 +25,6 @@
 #include "dolog.hh"
 #include "hmac.hh"
 #include "base64.hh"
-#include "wforce.hh"
 
 using namespace boost::posix_time;
 

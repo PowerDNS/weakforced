@@ -1,0 +1,697 @@
+/*
+ * This file is part of PowerDNS or weakforced.
+ * Copyright -- PowerDNS.COM B.V. and its contributors
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of version 2 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * In addition, for the avoidance of any doubt, permission is granted to
+ * link this program with OpenSSL and to (re)distribute the binaries
+ * produced as the result of such linking.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include "config.h"
+#include "trackalert.hh"
+#include "sstuff.hh"
+#include "misc.hh"
+#include <netinet/tcp.h>
+#include <limits>
+#include "dolog.hh"
+#include <readline/readline.h>
+#include <readline/history.h>
+#include "base64.hh"
+#include <fstream>
+#include "ext/json11/json11.hpp"
+#include <unistd.h>
+#include <sys/stat.h>
+#include "sodcrypto.hh"
+#include "blacklist.hh"
+#include "perf-stats.hh"
+#include "luastate.hh"
+#include "webhook.hh"
+#include "lock.hh"
+#include "trackalert-web.hh"
+
+#include <getopt.h>
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+#include "ext/ctpl.h"
+#include "device_parser.hh"
+#include "wforce_ns.hh"
+
+using std::atomic;
+using std::thread;
+bool g_verbose=false;
+
+struct TrackalertStats g_stats;
+bool g_console;
+
+string g_outputBuffer;
+
+WebHookRunner g_webhook_runner;
+WebHookDB g_webhook_db;
+WebHookDB g_custom_webhook_db;
+WforceWebserver g_webserver;
+
+std::string g_configDir; // where the config files are located
+bool g_configurationDone = false;
+
+bool getMsgLen(int fd, uint16_t* len)
+try
+{
+  uint16_t raw;
+  int ret = readn2(fd, &raw, 2);
+  if(ret != 2)
+    return false;
+  *len = ntohs(raw);
+  return true;
+}
+catch(...) {
+   return false;
+}
+
+bool putMsgLen(int fd, uint16_t len)
+try
+{
+  uint16_t raw = htons(len);
+  int ret = writen2(fd, &raw, 2);
+  return ret==2;
+}
+catch(...) {
+  return false;
+}
+
+std::mutex g_luamutex;
+LuaContext g_lua;
+int g_num_luastates=NUM_LUA_STATES;
+std::shared_ptr<LuaMultiThread> g_luamultip;
+
+static void daemonize(void)
+{
+  if(fork())
+    _exit(0); // bye bye
+  
+  setsid(); 
+
+  int i=open("/dev/null",O_RDWR); /* open stdin */
+  if(i < 0) 
+    ; // L<<Logger::Critical<<"Unable to open /dev/null: "<<stringerror()<<endl;
+  else {
+    dup2(i,0); /* stdin */
+    dup2(i,1); /* stderr */
+    dup2(i,2); /* stderr */
+    close(i);
+  }
+}
+
+ComboAddress g_serverControl{"127.0.0.1:4005"};
+
+double getDoubleTime()
+{						
+  struct timeval now;
+  gettimeofday(&now, 0);
+  return 1.0*now.tv_sec + now.tv_usec/1000000.0;
+}
+
+void backgroundScheduler()
+{
+  for (;;) {
+    // XXX - TODO
+    // read the configured schedule for the background scheduler thread
+    // then sleep for appropriate time
+    // then run the background thread
+    sleep(1);
+  }
+}
+
+void startBackgroundSchedulerThread()
+{
+  // Start a new thread
+  thread t(backgroundScheduler);
+  t.detach();
+}
+
+
+string g_key;
+
+void controlClientThread(int fd, ComboAddress client)
+try
+{
+  SodiumNonce theirs, ours, readingNonce, writingNonce;
+  ours.init();
+  readn2(fd, (char*)theirs.value, sizeof(theirs.value));
+  writen2(fd, (char*)ours.value, sizeof(ours.value));
+  readingNonce.merge(ours, theirs);
+  writingNonce.merge(theirs, ours);
+  
+  for(;;) {
+    uint16_t len;
+    if(!getMsgLen(fd, &len))
+      break;
+    char msg[len];
+    readn2(fd, msg, len);
+    
+    string line(msg, len);
+    try {
+      line = sodDecryptSym(line, g_key, readingNonce);
+    }
+    catch (std::runtime_error& e) {
+      errlog("Could not decrypt client command: %s", e.what());
+      continue;
+    }
+    //cerr<<"Have decrypted line: "<<line<<endl;
+    string response;
+    try {
+      std::lock_guard<std::mutex> lock(g_luamutex);
+      g_outputBuffer.clear();
+      auto ret=g_lua.executeCode<
+	boost::optional<
+	  boost::variant<
+	    string
+	    >
+	  >
+	>(line);
+
+      // execute the supplied lua code for all the allow/report lua states
+      for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
+	it->lua_contextp->executeCode<	
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+      }
+
+      if(ret) {
+	if (const auto strValue = boost::get<string>(&*ret)) {
+	  response=*strValue;
+	}
+      }
+      else
+	response=g_outputBuffer;
+
+
+    }
+    catch(const LuaContext::WrongTypeException& e) {
+      response = "Command returned an object we can't print: " +std::string(e.what()) + "\n";
+      // tried to return something we don't understand
+    }
+    catch(const LuaContext::ExecutionErrorException& e) {
+      response = "Error: " + string(e.what()) + ": ";
+      try {
+        std::rethrow_if_nested(e);
+      } catch(const std::exception& e) {
+        // e is the exception that was thrown from inside the lambda
+        response+= string(e.what());
+      }
+    }
+    catch(const LuaContext::SyntaxErrorException& e) {
+      response = "Error: " + string(e.what()) + ": ";
+    }
+    response = sodEncryptSym(response, g_key, writingNonce);
+    putMsgLen(fd, response.length());
+    writen2(fd, response.c_str(), (uint16_t)response.length());
+  }
+  infolog("Closed control connection from %s", client.toStringWithPort());
+  close(fd);
+  fd=-1;
+}
+catch(std::exception& e)
+{
+  errlog("Got an exception in client connection from %s: %s", client.toStringWithPort(), e.what());
+  if(fd >= 0)
+    close(fd);
+}
+
+
+void controlThread(int fd, ComboAddress local)
+try
+{
+  ComboAddress client;
+  int sock;
+  warnlog("Accepting control connections on %s", local.toStringWithPort());
+  while((sock=SAccept(fd, client)) >= 0) {
+    infolog("Got control connection from %s", client.toStringWithPort());
+    thread t(controlClientThread, sock, client);
+    t.detach();
+  }
+}
+catch(std::exception& e) 
+{
+  close(fd);
+  errlog("Control connection died: %s", e.what());
+}
+
+void doClient(ComboAddress server, const std::string& command)
+{
+  cout<<"Connecting to "<<server.toStringWithPort()<<endl;
+  int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
+  SConnect(fd, server);
+
+  SodiumNonce theirs, ours, readingNonce, writingNonce;
+  ours.init();
+
+  writen2(fd, (const char*)ours.value, sizeof(ours.value));
+  readn2(fd, (char*)theirs.value, sizeof(theirs.value));
+  readingNonce.merge(ours, theirs);
+  writingNonce.merge(theirs, ours);
+  
+  if(!command.empty()) {
+    string response;
+    string msg=sodEncryptSym(command, g_key, writingNonce);
+    putMsgLen(fd, msg.length());
+    writen2(fd, msg);
+    uint16_t len;
+    getMsgLen(fd, &len);
+    char resp[len];
+    readn2(fd, resp, len);
+    msg.assign(resp, len);
+    msg=sodDecryptSym(msg, g_key, readingNonce);
+    cout<<msg<<endl;
+    close(fd);
+    return; 
+  }
+
+  set<string> dupper;
+  {
+    ifstream history(".history");
+    string line;
+    while(getline(history, line))
+      add_history(line.c_str());
+  }
+  ofstream history(".history", std::ios_base::app);
+  string lastline;
+  for(;;) {
+    char* sline = readline("> ");
+    rl_bind_key('\t',rl_complete);
+    if(!sline)
+      break;
+
+    string line(sline);
+    if(!line.empty() && line != lastline) {
+      add_history(sline);
+      history << sline <<endl;
+      history.flush();
+    }
+    lastline=line;
+    free(sline);
+    
+    if(line=="quit")
+      break;
+
+    string response;
+    string msg=sodEncryptSym(line, g_key, writingNonce);
+    putMsgLen(fd, msg.length());
+    writen2(fd, msg);
+    uint16_t len;
+    getMsgLen(fd, &len);
+    char resp[len];
+    readn2(fd, resp, len);
+    msg.assign(resp, len);
+    msg=sodDecryptSym(msg, g_key, readingNonce);
+    cout<<msg<<endl;
+  }
+}
+
+void doConsole()
+{
+  set<string> dupper;
+  {
+    ifstream history(".history");
+    string line;
+    while(getline(history, line))
+      add_history(line.c_str());
+  }
+  ofstream history(".history", std::ios_base::app);
+  string lastline;
+  for(;;) {
+    char* sline = readline("> ");
+    rl_bind_key('\t',rl_complete);
+    if(!sline)
+      break;
+
+    string line(sline);
+    if(!line.empty() && line != lastline) {
+      add_history(sline);
+      history << sline <<endl;
+      history.flush();
+    }
+    lastline=line;
+    free(sline);
+    
+    if(line=="quit")
+      break;
+
+    string response;
+    try {
+      // execute the supplied lua code for all the allow/report lua states
+      {
+	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+	  std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
+	  it->lua_contextp->executeCode<	
+	    boost::optional<
+	      boost::variant<
+		string
+		>
+	      >
+	    >(line);
+	}
+      }
+      {
+	std::lock_guard<std::mutex> lock(g_luamutex);
+	g_outputBuffer.clear();
+	auto ret=g_lua.executeCode<
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
+	if(ret) {
+	  if (const auto strValue = boost::get<string>(&*ret)) {
+	    cout<<*strValue<<endl;
+	  }
+	}
+	else 
+	  cout << g_outputBuffer;
+      }
+    }
+    catch(const LuaContext::ExecutionErrorException& e) {
+      std::cerr << e.what() << ": ";
+      try {
+        std::rethrow_if_nested(e);
+      } catch(const std::exception& e) {
+        // e is the exception that was thrown from inside the lambda
+        std::cerr << e.what() << std::endl;      
+      }
+    }
+    catch(const std::exception& e) {
+      // e is the exception that was thrown from inside the lambda
+      std::cerr << e.what() << std::endl;      
+    }
+  }
+}
+
+
+SodiumNonce g_sodnonce;
+std::mutex sod_mutx;
+
+void defaultReportTuple(const LoginTuple& lp)
+{
+  // do nothing: we expect Lua function to be registered if something custom is needed
+}
+
+void defaultBackground()
+{
+  // do nothing: we expect Lua function to be registered if something custom is needed
+}
+
+report_t g_report{defaultReportTuple};
+background_t g_background{defaultBackground};
+
+/**** CARGO CULT CODE AHEAD ****/
+extern "C" {
+char* my_generator(const char* text, int state)
+{
+  string t(text);
+  vector<string> words {"addACL",
+      "setACL",
+      "showACL()",
+      "shutdown()",
+      "webserver",
+      "controlSocket",
+      "stats()",
+      "newCA",
+      "newNetmaskGroup",
+      "makeKey",
+      "setKey",
+      "testCrypto",
+      "showWebHooks()",
+      "showCustomWebHooks()",
+      "showPerfStats()",
+      "showVersion()",
+      "addWebHook(",
+      "addCustomWebHook(",
+      "setNumWebHookThreads("
+      };
+  static int s_counter=0;
+  int counter=0;
+  if(!state)
+    s_counter=0;
+
+  for(auto w : words) {
+    if(boost::starts_with(w, t) && counter++ == s_counter)  {
+      s_counter++;
+      return strdup(w.c_str());
+    }
+  }
+  return 0;
+}
+
+static char** my_completion( const char * text , int start,  int end)
+{
+  char **matches=0;
+  if (start == 0)
+    matches = rl_completion_matches ((char*)text, &my_generator);
+  else
+    rl_bind_key('\t',rl_abort);
+ 
+  if(!matches)
+    rl_bind_key('\t', rl_abort);
+  return matches;
+}
+}
+
+std::string findDefaultConfigFile()
+{
+  std::string configFile = string(SYSCONFDIR) + "/wforce/trackalert.conf";
+  struct stat statbuf;
+
+  if (stat(configFile.c_str(), &statbuf) != 0) {
+    g_configDir = string(SYSCONFDIR);
+    configFile = string(SYSCONFDIR) + "/trackalert.conf";
+  }
+  else
+    g_configDir = string(SYSCONFDIR) + "/wforce";
+  return configFile;
+}
+
+struct 
+{
+  bool beDaemon{false};
+  bool underSystemd{false};
+  bool beClient{false};
+  string command;
+  string config;
+} g_cmdLine;
+
+std::string getDirectoryPath(const std::string& filename)
+{
+  size_t found = filename.find_last_of("/\\");
+  return filename.substr(0, found);
+}
+
+int main(int argc, char** argv)
+try
+{
+  rl_attempted_completion_function = my_completion;
+  rl_completion_append_character = 0;
+
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGCHLD, SIG_IGN);
+  openlog("trackalert", LOG_PID, LOG_DAEMON);
+  g_console=true;
+
+#ifdef HAVE_LIBSODIUM
+  if (sodium_init() == -1) {
+    cerr<<"Unable to initialize crypto library"<<endl;
+    exit(EXIT_FAILURE);
+  }
+  g_sodnonce.init();
+#endif
+  g_cmdLine.config = findDefaultConfigFile();
+  struct option longopts[]={ 
+    {"config", required_argument, 0, 'C'},
+    {"regexes", required_argument, 0, 'R'},
+    {"execute", required_argument, 0, 'e'},
+    {"client", optional_argument, 0, 'c'},
+    {"systemd",  optional_argument, 0, 's'},
+    {"daemon", optional_argument, 0, 'd'},
+    {"help", 0, 0, 'h'}, 
+    {0,0,0,0} 
+  };
+  int longindex=0;
+  for(;;) {
+    int c=getopt_long(argc, argv, ":hsdc:e:C:R:v", longopts, &longindex);
+    if(c==-1)
+      break;
+    switch(c) {
+    case 'C':
+      g_cmdLine.config=optarg;
+      g_configDir = getDirectoryPath(g_cmdLine.config);
+      break;
+    case 'c':
+      g_cmdLine.beClient=true;
+      if (optarg) {
+	g_cmdLine.config=optarg;
+	g_configDir = getDirectoryPath(g_cmdLine.config);
+      }
+      break;
+    case ':':
+      switch (optopt) {
+      case 'c':
+	g_cmdLine.beClient=true;
+	break;
+      default:
+	cout << "Option '-" << (char)optopt << "' requires an argument\n";
+	exit(1);
+	break;
+      }
+      break;
+    case 'd':
+      g_cmdLine.beDaemon=true;
+      break;
+    case 's':
+      g_cmdLine.underSystemd=true;
+      break;
+    case 'e':
+      g_cmdLine.command=optarg;
+      break;
+    case 'h':
+      cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
+      cout<<"[-h,--help] [-l,--local addr]\n";
+      cout<<"\n";
+      cout<<"-C,--config file      Load configuration from 'file'\n";
+      cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
+      cout<<"-s,                   Operate under systemd control.\n";
+      cout<<"-d,--daemon           Operate as a daemon\n";
+      cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
+      cout<<"-h,--help             Display this helpful message\n";
+      cout<<"\n";
+      exit(EXIT_SUCCESS);
+      break;
+    case 'v':
+      g_verbose=true;
+      break;
+    case '?':
+    default:
+      cout << "Option '-" << (char)optopt << "' is invalid: ignored\n";
+    }
+  }
+  argc-=optind;
+  argv+=optind;
+
+  g_singleThreaded = false;
+  chdir(g_configDir.c_str());
+  
+  if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
+    setupLua(true, false, g_lua, g_report, g_background, g_cmdLine.config);
+    doClient(g_serverControl, g_cmdLine.command);
+    exit(EXIT_SUCCESS);
+  }
+
+  // this sets up the global lua state used for config and setup
+  auto todo=setupLua(false, false, g_lua, g_report, g_background, g_cmdLine.config);
+
+  // now we setup the allow/report lua states
+  g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
+  
+  for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
+    // first setup defaults in case the config doesn't specify anything
+    it->report_func = g_report;
+    it->background_func = g_background;
+    setupLua(false, true, *(it->lua_contextp),
+	     it->report_func,
+	     it->background_func,
+	     g_cmdLine.config);
+  }
+
+  if(g_cmdLine.beDaemon) {
+    g_console=false;
+    daemonize();
+  }
+  else if (g_cmdLine.underSystemd) {
+    g_console=false;
+  }
+  else {
+    vinfolog("Running in the foreground");
+  }
+
+  // register all the webserver commands
+  registerWebserverCommands();
+  
+  auto acl = g_webserver.getACL();
+  for(auto& addr : {"127.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "169.254.0.0/16", "192.168.0.0/16", "172.16.0.0/12", "::1/128", "fc00::/7", "fe80::/10"})
+    acl.addMask(addr);
+  g_webserver.setACL(acl);
+
+  vector<string> vec;
+  std::string acls;
+  acl.toStringVector(&vec);
+  for(const auto& s : vec) {
+    if (!acls.empty())
+      acls += ", ";
+    acls += s;
+  }
+  noticelog("ACL allowing queries from: %s", acls.c_str());
+
+  // setup blacklist_db purge thread
+  startBackgroundSchedulerThread();
+
+  // start the performance stats thread
+  startStatsThread();
+
+  // start the threads created by lua setup. Includes the webserver accept thread
+  for(auto& t : todo)
+    t();
+  
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify(0, "READY=1");
+#endif
+
+  g_configurationDone = true;
+  
+  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd)) {
+    doConsole();
+  } 
+  else {
+    while (true)
+      pause();
+  }
+  _exit(EXIT_SUCCESS);
+
+ }
+catch(const LuaContext::ExecutionErrorException& e) {
+  try {
+    errlog("Fatal Lua error: %s", e.what());
+    std::rethrow_if_nested(e);
+  }
+  catch(const std::exception& e) {
+    errlog("Details: %s", e.what());
+  }
+  catch(WforceException &ae)
+    {
+      errlog("Fatal wforce error: %s", ae.reason);
+    }
+  _exit(EXIT_FAILURE);
+ }
+ catch(std::exception &e) {
+   errlog("Fatal error: %s", e.what());
+ }
+ catch(WforceException &ae) {
+   errlog("Fatal wforce error: %s", ae.reason);
+   _exit(EXIT_FAILURE);
+ }

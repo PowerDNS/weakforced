@@ -38,6 +38,7 @@
 #include "twmap-wrapper.hh"
 #include "perf-stats.hh"
 #include "luastate.hh"
+#include "login_tuple.hh"
 #include "webhook.hh"
 
 using std::thread;
@@ -51,45 +52,6 @@ static int uptimeOfProcess()
   return time(0) - start;
 }
 
-std::string LtAttrsToString(const LoginTuple& lt)
-{
-  std::ostringstream os;
-  os << "attrs={";
-  for (auto i= lt.attrs.begin(); i!=lt.attrs.end(); ++i) {
-    os << i->first << "="<< "\"" << i->second << "\"";
-    if (i != --(lt.attrs.end()))
-      os << ", ";
-  }
-  for (auto i = lt.attrs_mv.begin(); i!=lt.attrs_mv.end(); ++i) {
-    if (i == lt.attrs_mv.begin())
-      os << ", ";
-    os << i->first << "=[";
-    std::vector<std::string> vec = i->second;
-    for (auto j = vec.begin(); j!=vec.end(); ++j) {
-      os << "\"" << *j << "\"";
-      if (j != --(vec.end()))
-	os << ", ";
-    }
-    os << "]";
-    if (i != --(lt.attrs_mv.end()))
-      os << ", ";
-  }
-  os << "} ";
-  return os.str();
-}
-
-std::string DeviceAttrsToString(const LoginTuple& lt)
-{
-  std::ostringstream os;
-  os << "device_attrs={";
-  for (auto i= lt.device_attrs.begin(); i!=lt.device_attrs.end(); ++i) {
-    os << i->first << "="<< "\"" << i->second << "\"";
-    if (i != --(lt.device_attrs.end()))
-      os << ", ";
-  }
-  os << "} ";
-  return os.str();
-}
 
 void reportLog(const LoginTuple& lt)
 {

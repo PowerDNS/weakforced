@@ -61,3 +61,6 @@ struct LoginTuple
 private:
   void setDeviceAttrs(const json11::Json& msg, const std::shared_ptr<UserAgentParser> uap);
 };
+
+std::string LtAttrsToString(const LoginTuple& lt);
+std::string DeviceAttrsToString(const LoginTuple& lt);

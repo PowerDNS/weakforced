@@ -292,7 +292,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("controlSocket", [client](const std::string& str) {
 	ComboAddress local;
 	try {
-	  local = ComboAddress(str, 5199);
+	  local = ComboAddress(str, 4004);
 	}
 	catch (const WforceException& e) {
 	  errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);

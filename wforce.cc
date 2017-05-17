@@ -115,7 +115,7 @@ static void daemonize(void)
   }
 }
 
-ComboAddress g_serverControl{"127.0.0.1:5199"};
+ComboAddress g_serverControl{"127.0.0.1:4004"};
 
 double getDoubleTime()
 {						

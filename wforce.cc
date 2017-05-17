@@ -694,6 +694,7 @@ try
     switch(c) {
     case 'C':
       g_cmdLine.config=optarg;
+      g_configDir = getDirectoryPath(g_cmdLine.config);
       break;
     case 'R':
       g_cmdLine.regexes=optarg;
@@ -702,6 +703,7 @@ try
       g_cmdLine.beClient=true;
       if (optarg) {
 	g_cmdLine.config=optarg;
+	g_configDir = getDirectoryPath(g_cmdLine.config);
       }
       break;
     case ':':
@@ -750,6 +752,7 @@ try
   argv+=optind;
 
   g_singleThreaded = false;
+  chdir(g_configDir.c_str());
   
   if (!g_cmdLine.beClient) {
     checkUaRegexFile(g_cmdLine.regexes);

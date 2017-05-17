@@ -115,6 +115,13 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       resp.body=ss.str();
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
+    catch(const WforceException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.reason);
+    }
   }
 }
 

@@ -727,7 +727,7 @@ try
       g_cmdLine.command=optarg;
       break;
     case 'h':
-      cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
+      cout<<"Syntax: wforce [-C,--config file] [-R,--regexes file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";

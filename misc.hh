@@ -523,5 +523,8 @@ int closesocket(int fd);
 bool setCloseOnExec(int sock);
 
 unsigned int pdns_stou(const std::string& str, size_t * idx = 0, int base = 10);
+
+std::string getDirectoryPath(const std::string& filename);
+
 #endif
 

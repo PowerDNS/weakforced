@@ -292,7 +292,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("controlSocket", [client](const std::string& str) {
 	ComboAddress local;
 	try {
-	  local = ComboAddress(str, 5199);
+	  local = ComboAddress(str, 4004);
 	}
 	catch (const WforceException& e) {
 	  errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);
@@ -868,10 +868,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   if (!allow_report) {
     c_lua.writeFunction("setKey", [](const std::string& key) {
-	if(B64Decode(key, g_key) < 0) {
+	string newkey;
+	if(B64Decode(key, newkey) < 0) {
 	  g_outputBuffer=string("Unable to decode ")+key+" as Base64";
 	  errlog("%s", g_outputBuffer);
 	}
+	else
+	  g_key = newkey;
       });
   }
   else {

@@ -68,7 +68,6 @@ wforce_LDADD = \
 
 noinst_HEADERS = \
 	base64.hh \
-	dns.hh \
 	dns_lookup.hh \
 	dolog.hh \
 	iputils.hh \

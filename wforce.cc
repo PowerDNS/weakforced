@@ -115,7 +115,7 @@ static void daemonize(void)
   }
 }
 
-ComboAddress g_serverControl{"127.0.0.1:5199"};
+ComboAddress g_serverControl{"127.0.0.1:4004"};
 
 double getDoubleTime()
 {						
@@ -694,6 +694,7 @@ try
     switch(c) {
     case 'C':
       g_cmdLine.config=optarg;
+      g_configDir = getDirectoryPath(g_cmdLine.config);
       break;
     case 'R':
       g_cmdLine.regexes=optarg;
@@ -702,6 +703,7 @@ try
       g_cmdLine.beClient=true;
       if (optarg) {
 	g_cmdLine.config=optarg;
+	g_configDir = getDirectoryPath(g_cmdLine.config);
       }
       break;
     case ':':
@@ -725,7 +727,7 @@ try
       g_cmdLine.command=optarg;
       break;
     case 'h':
-      cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
+      cout<<"Syntax: wforce [-C,--config file] [-R,--regexes file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
       cout<<"[-h,--help] [-l,--local addr]\n";
       cout<<"\n";
       cout<<"-C,--config file      Load configuration from 'file'\n";
@@ -750,6 +752,9 @@ try
   argv+=optind;
 
   g_singleThreaded = false;
+  if (chdir(g_configDir.c_str()) != 0) {
+    warnlog("Could not change working directory to %s (%s)", g_configDir, strerror(errno));
+  }
   
   if (!g_cmdLine.beClient) {
     checkUaRegexFile(g_cmdLine.regexes);

@@ -855,3 +855,9 @@ unsigned int pdns_stou(const std::string& str, size_t * idx, int base)
   }
   return static_cast<unsigned int>(result);
 }
+
+std::string getDirectoryPath(const std::string& filename)
+{
+  size_t found = filename.find_last_of("/\\");
+  return filename.substr(0, found);
+}

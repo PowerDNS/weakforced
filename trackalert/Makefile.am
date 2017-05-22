@@ -26,13 +26,14 @@ trackalert_SOURCES = \
 	wforce_exception.hh \
 	sholder.hh \
 	sodcrypto.cc sodcrypto.hh \
-	luastate.hh \
+	trackalert-luastate.hh \
 	lock.hh \
 	pdnsexception.hh \
 	device_parser.hh device_parser.cc \
 	wforce-webserver.cc wforce-webserver.hh \
 	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
 	login_tuple.cc login_tuple.hh \
+	wforce-geoip.cc wforce-geoip.hh \
 	ext/incbin/incbin.h \
 	ext/murmur3.cc \
         ext/murmur3.h \
@@ -52,7 +53,7 @@ trackalert_LDADD = \
 	$(LUA_LIBS) $(YAHTTP_LIBS) $(libsodium_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
-	$(YAMLCPP_LIBS)
+	$(YAMLCPP_LIBS) $(GEOIP_LIBS)
 
 noinst_HEADERS = \
 	base64.hh \
@@ -71,13 +72,14 @@ noinst_HEADERS = \
 	hmac.hh \
 	wforce_exception.hh \
 	wforce_ns.hh \
-	luastate.hh \
+	trackalert-luastate.hh \
 	device_parser.hh \
 	lock.hh \
 	pdnsexception.hh \
 	wforce-webserver.hh \
 	trackalert-web.hh \
-	login_tuple.hh
+	login_tuple.hh \
+	wforce-geoip.hh
 
 if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify

@@ -38,6 +38,6 @@ clean_geoip:
 clean_docker:
 	docker-compose down
 
-clean: clean_docker clean_geoip clean_elastic
+clean: clean_docker clean_geoip
 
 all: build_image start

@@ -103,7 +103,7 @@ script:
  - make
  - cd ..
  - make distcheck
- - ./trigger__policy_build.sh
+ - ./trigger_policy_build.sh
 notifications:
   irc:
     channels:

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Build the weakforced-policy repo
 export GIT_COMMIT=`git show --oneline -s`
 

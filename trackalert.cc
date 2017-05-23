@@ -35,7 +35,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "sodcrypto.hh"
-#include "blacklist.hh"
 #include "perf-stats.hh"
 #include "trackalert-luastate.hh"
 #include "webhook.hh"
@@ -644,7 +643,7 @@ try
   }
   noticelog("ACL allowing queries from: %s", acls.c_str());
 
-  // setup blacklist_db purge thread
+  // start background scheduler thread
   startBackgroundSchedulerThread();
 
   // start the performance stats thread

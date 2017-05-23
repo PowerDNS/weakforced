@@ -180,11 +180,23 @@ template<typename T> TWStatsMemberP createInstance() { return wforce::make_uniqu
 typedef std::map<std::string, TWStatsMemberP(*)()> map_type;
 
 // The idea here is that the type mechanism is extensible, e.g. could add a bloom filter etc.
-// This is instantiated in twmap.cc
 // XXX Should make this dynamically extensible
-struct TWStatsTypeMap
+class TWStatsTypeMap
 {
+public:
   map_type type_map;
+  static TWStatsTypeMap& getInstance()
+  {
+    // this is thread-safe in C++11
+    static TWStatsTypeMap myInstance;
+    return myInstance;
+  }
+  TWStatsTypeMap(const TWStatsTypeMap& src) = delete; // copy construct
+  TWStatsTypeMap(TWStatsTypeMap&&) = delete; // move construct
+  TWStatsTypeMap& operator=(const TWStatsTypeMap& rhs) = delete; // copy assign
+  TWStatsTypeMap& operator=(TWStatsTypeMap &&) = delete; // move assign
+  
+protected:
   TWStatsTypeMap()
   {
     type_map["int"] = &createInstance<TWStatsMemberInt>;
@@ -192,8 +204,6 @@ struct TWStatsTypeMap
     type_map["countmin"] = &createInstance<TWStatsMemberCountMin>;
   }
 };
-
-extern TWStatsTypeMap g_field_types;
 
 // this class is not protected by mutexes because it sits behind TWStatsDB which has a mutex
 // controlling all access
@@ -205,8 +215,10 @@ public:
     start_time = st;
     window_size = ws;
     last_cleaned = 0;
-    auto it = g_field_types.type_map.find(field_type);
-    if (it != g_field_types.type_map.end()) {
+    auto& field_types = TWStatsTypeMap::getInstance();
+    
+    auto it = field_types.type_map.find(field_type);
+    if (it != field_types.type_map.end()) {
       for (int i=0; i< num_windows; i++) {
 	stats_array.push_back(std::pair<std::time_t, TWStatsMemberP>((std::time_t)0, it->second()));
       }
@@ -471,8 +483,9 @@ private:
 template <typename T>
 bool TWStatsDB<T>::setFields(const FieldMap& fields)
 {
+  auto& field_types = TWStatsTypeMap::getInstance();
   for (auto f : fields) {
-    if (g_field_types.type_map.find(f.second) == g_field_types.type_map.end()) {
+    if (field_types.type_map.find(f.second) == field_types.type_map.end()) {
       return false;
     }
   }
@@ -545,8 +558,9 @@ bool TWStatsDB<T>::_find_create_key_field(const T& key, const std::string& field
     return false;
 
   // Now we get the field type from the registered field types map
-  auto mytype = g_field_types.type_map.find(myfield->second);
-  if (mytype == g_field_types.type_map.end())
+  auto& field_types = TWStatsTypeMap::getInstance();
+  auto mytype = field_types.type_map.find(myfield->second);
+  if (mytype == field_types.type_map.end())
     return false;
 
   // otherwise look to see if the key and field name have been already inserted

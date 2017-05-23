@@ -23,7 +23,7 @@ trackalert_SOURCES = \
 	perf-stats.cc perf-stats.hh \
 	webhook.cc webhook.hh \
 	minicurl.cc minicurl.hh \
-	twmap.hh twmap.cc \
+	twmap.hh \
 	hmac.hh hmac.cc \
 	wforce_exception.hh \
 	sholder.hh \

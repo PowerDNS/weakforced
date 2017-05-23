@@ -3,6 +3,9 @@ sudo: required
 dist: trusty
 services:
   - redis-server
+env:
+  global:
+    - secure: chPYEImsxltrhw/k3DTYTI0oaQwnJSqFc7wqNcJwJaZSPCaHh5KWOPSxNtqwvLsvLBDFKiicsVfTLcectLRnt1jV7zjDQev5/GmCIstKuU6vpG5EXezRJADkSJEli9OTt9wjuHPJhibUCihvmv6WW87BcEUA1936J1EDzfZWKDLc6I5xiLYHxE2JGf6/tKrJ2G7NXYkriPvo0986kekMwcovGeaQkNEHMYn5TcDkKR79Mmz8Pd50+SfV55jZo6a7qOxr3kLAUSQ6CMb5wUkzKO6qL3OB+CwohXmqMQlvsOn9VBdNT/O6R+5MLCFzgt46phAQAonI+OBSmMiEg3KeNSaZ+g007mWKYRlMK4ZvaooyHVoT0RqtvICDADKYjB2Iea5ajZFBGhXrW/+u1WKEPNc2txZKE/xndgMf2s0R7NYWSEcJrdVBYtgxYy0OPKdDi4Va75oZ5eFMWBlUHCOSEILiNDmCKH4RPOw2zrdL72zbb9OLLys2NuM0MsMtnsKWXnVQ9CRXyzm8iZtvG7ZExG5ePO3OzwFB02nB4cLM9cClw5/0ofvG8kQ44IwANUS3M9TwKnoHm6hUZqhSnEtdeUye5ebMMCVv+ZdM/LX02/Hso3MqoJfx0IdpnYbgvRCy8zJWxEdwJn2pC4BoQawJx8OgNSx9cjCuy6AH93q2zcQ=
 matrix:
   include:
     - compiler: gcc
@@ -29,7 +32,6 @@ matrix:
       env:
         - MYCXX=g++
         - MYCC=gcc
-        - secure: "chPYEImsxltrhw/k3DTYTI0oaQwnJSqFc7wqNcJwJaZSPCaHh5KWOPSxNtqwvLsvLBDFKiicsVfTLcectLRnt1jV7zjDQev5/GmCIstKuU6vpG5EXezRJADkSJEli9OTt9wjuHPJhibUCihvmv6WW87BcEUA1936J1EDzfZWKDLc6I5xiLYHxE2JGf6/tKrJ2G7NXYkriPvo0986kekMwcovGeaQkNEHMYn5TcDkKR79Mmz8Pd50+SfV55jZo6a7qOxr3kLAUSQ6CMb5wUkzKO6qL3OB+CwohXmqMQlvsOn9VBdNT/O6R+5MLCFzgt46phAQAonI+OBSmMiEg3KeNSaZ+g007mWKYRlMK4ZvaooyHVoT0RqtvICDADKYjB2Iea5ajZFBGhXrW/+u1WKEPNc2txZKE/xndgMf2s0R7NYWSEcJrdVBYtgxYy0OPKdDi4Va75oZ5eFMWBlUHCOSEILiNDmCKH4RPOw2zrdL72zbb9OLLys2NuM0MsMtnsKWXnVQ9CRXyzm8iZtvG7ZExG5ePO3OzwFB02nB4cLM9cClw5/0ofvG8kQ44IwANUS3M9TwKnoHm6hUZqhSnEtdeUye5ebMMCVv+ZdM/LX02/Hso3MqoJfx0IdpnYbgvRCy8zJWxEdwJn2pC4BoQawJx8OgNSx9cjCuy6AH93q2zcQ="
     - compiler: clang
       addons:
         apt:
@@ -58,8 +60,7 @@ matrix:
       env:
         - MYCXX=clang++-4.0
         - MYCC=clang-4.0
-        - secure: "chPYEImsxltrhw/k3DTYTI0oaQwnJSqFc7wqNcJwJaZSPCaHh5KWOPSxNtqwvLsvLBDFKiicsVfTLcectLRnt1jV7zjDQev5/GmCIstKuU6vpG5EXezRJADkSJEli9OTt9wjuHPJhibUCihvmv6WW87BcEUA1936J1EDzfZWKDLc6I5xiLYHxE2JGf6/tKrJ2G7NXYkriPvo0986kekMwcovGeaQkNEHMYn5TcDkKR79Mmz8Pd50+SfV55jZo6a7qOxr3kLAUSQ6CMb5wUkzKO6qL3OB+CwohXmqMQlvsOn9VBdNT/O6R+5MLCFzgt46phAQAonI+OBSmMiEg3KeNSaZ+g007mWKYRlMK4ZvaooyHVoT0RqtvICDADKYjB2Iea5ajZFBGhXrW/+u1WKEPNc2txZKE/xndgMf2s0R7NYWSEcJrdVBYtgxYy0OPKdDi4Va75oZ5eFMWBlUHCOSEILiNDmCKH4RPOw2zrdL72zbb9OLLys2NuM0MsMtnsKWXnVQ9CRXyzm8iZtvG7ZExG5ePO3OzwFB02nB4cLM9cClw5/0ofvG8kQ44IwANUS3M9TwKnoHm6hUZqhSnEtdeUye5ebMMCVv+ZdM/LX02/Hso3MqoJfx0IdpnYbgvRCy8zJWxEdwJn2pC4BoQawJx8OgNSx9cjCuy6AH93q2zcQ="
- before_script:
+before_script:
  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
  - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium

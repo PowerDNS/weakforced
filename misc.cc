@@ -859,5 +859,8 @@ unsigned int pdns_stou(const std::string& str, size_t * idx, int base)
 std::string getDirectoryPath(const std::string& filename)
 {
   size_t found = filename.find_last_of("/\\");
-  return filename.substr(0, found);
+  if (found != string::npos)
+    return filename.substr(0, found);
+  else
+    return ".";
 }

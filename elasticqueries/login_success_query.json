@@ -7,7 +7,7 @@
 		    "must": [
 			{
 			    "term": {
-				"login" : "user988"
+				"login" : "user900"
 			    }
 			},
 			{
@@ -30,17 +30,17 @@
     "aggs": {
 	"browser": {
 	    "terms": {
-		"field": "device_attrs.browser.family.keyword"  
+		"field": "device_attrs.browser.family"  
 	    },
 	    "aggs": {
 		"os": {
 		    "terms": {
-			"field": "device_attrs.os.family.keyword"
+			"field": "device_attrs.os.family"
 		    },
 		    "aggs": {
 			"device": {
 			    "terms": {
-				"field": "device_attrs.device.family.keyword"
+				"field": "device_attrs.device.family"
 			    }
 			}
 		    }
@@ -49,34 +49,34 @@
 	},
 	"imapc": {
 	    "terms": {
-		"field": "device_attrs.imapc.family.keyword"  
+		"field": "device_attrs.imapc.family"  
 	    },
 	    "aggs": {
 		"os": {
 		    "terms": {
-			"field": "device_attrs.os.family.keyword"
+			"field": "device_attrs.os.family"
 		    }
 		}
 	    }
 	},
 	"mobileapp": {
             "terms": {
-                "field": "device_attrs.app.name.keyword"
+                "field": "device_attrs.app.name"
             },
 	    "aggs": {
 		"brand": {
 		    "terms": {
-			"field": "device_attrs.app.brand.keyword"
+			"field": "device_attrs.app.brand"
 		    },
 		    "aggs": {
 			"os": {
 			    "terms": {
-				"field": "device_attrs.os.family.keyword"
+				"field": "device_attrs.os.family"
 			    },
 			    "aggs": {
 				"device": {
 				    "terms": {
-					"field": "device_attrs.device.family.keyword"
+					"field": "device_attrs.device.family"
 				    }
 				}
 			    }
@@ -87,24 +87,24 @@
         },
 	"location": {
 	    "terms": {
-		"field": "geoip.continent_code.keyword"  
-	    },
-	    "aggs": {
-		"country": {
-		    "terms": {
-			"field": "geoip.country_code2.keyword"
-		    }
-		}
+		"field": "geoip.country_code2"  
 	    }
 	},
 	"protocol": {
 	    "terms": {
-		"field": "protocol.keyword"
+		"field": "protocol"
+	    },
+	    "aggs": {
+		"tls": {
+		    "terms": {
+			"field": "tls"
+		    }
+		}
 	    }
 	},
 	"password": {
 	    "cardinality": {
-		"field": "pwhash.keyword"
+		"field": "pwhash"
 	    }
 	}
     }

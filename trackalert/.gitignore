@@ -1,0 +1,76 @@
+.deps
+.dirstamp
+.history
+
+/.tags*
+/aclocal.m4
+/autom4te.cache
+/compile
+/config.guess
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config.sub
+/configure
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+Makefile
+Makefile.in
+/missing
+/stamp-h1
+/trackalert
+/*.service
+/regexes.yaml
+
+*.libs/
+*.DSYM/
+*~
+
+libtool.m4
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+lt~obsolete.m4
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Compressed files
+*.gz
+*.bz2
+
+# Other
+.DS_Store
+
+# Protobuf files
+*.pb.h
+*.pb.cc

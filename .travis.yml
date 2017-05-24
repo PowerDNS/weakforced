@@ -3,6 +3,9 @@ sudo: required
 dist: trusty
 services:
   - redis-server
+env:
+  global:
+    - secure: chPYEImsxltrhw/k3DTYTI0oaQwnJSqFc7wqNcJwJaZSPCaHh5KWOPSxNtqwvLsvLBDFKiicsVfTLcectLRnt1jV7zjDQev5/GmCIstKuU6vpG5EXezRJADkSJEli9OTt9wjuHPJhibUCihvmv6WW87BcEUA1936J1EDzfZWKDLc6I5xiLYHxE2JGf6/tKrJ2G7NXYkriPvo0986kekMwcovGeaQkNEHMYn5TcDkKR79Mmz8Pd50+SfV55jZo6a7qOxr3kLAUSQ6CMb5wUkzKO6qL3OB+CwohXmqMQlvsOn9VBdNT/O6R+5MLCFzgt46phAQAonI+OBSmMiEg3KeNSaZ+g007mWKYRlMK4ZvaooyHVoT0RqtvICDADKYjB2Iea5ajZFBGhXrW/+u1WKEPNc2txZKE/xndgMf2s0R7NYWSEcJrdVBYtgxYy0OPKdDi4Va75oZ5eFMWBlUHCOSEILiNDmCKH4RPOw2zrdL72zbb9OLLys2NuM0MsMtnsKWXnVQ9CRXyzm8iZtvG7ZExG5ePO3OzwFB02nB4cLM9cClw5/0ofvG8kQ44IwANUS3M9TwKnoHm6hUZqhSnEtdeUye5ebMMCVv+ZdM/LX02/Hso3MqoJfx0IdpnYbgvRCy8zJWxEdwJn2pC4BoQawJx8OgNSx9cjCuy6AH93q2zcQ=
 matrix:
   include:
     - compiler: gcc
@@ -66,7 +69,7 @@ before_script:
  - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
  - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
  - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
- - echo "deb http://cz.archive.ubuntu.com/ubuntu xenial main universe" | sudo tee -a /etc/apt/sources.list
+ - echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" | sudo tee -a /etc/apt/sources.list
  - sudo apt update -qq
  - sudo apt install libgetdns-dev -y
  - dig @208.67.222.222 a.root-servers.net
@@ -100,6 +103,7 @@ script:
  - make
  - cd ..
  - make distcheck
+ - ./trigger_policy_build.sh
 notifications:
   irc:
     channels:

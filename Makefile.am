@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I pdns $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
 
 UAP_REGEX_FILE=regexes.yaml
@@ -6,7 +6,7 @@ UAP_REGEX_FILE=regexes.yaml
 if WITH_DOCKER
 BUILD_DOCKER = docker
 endif
-SUBDIRS=ext docs $(BUILD_DOCKER)
+SUBDIRS=ext docs trackalert $(BUILD_DOCKER)
 
 EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 

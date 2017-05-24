@@ -90,6 +90,11 @@ AC_CONFIG_FILES([Makefile
 	ext/yahttp/Makefile
 	ext/yahttp/yahttp/Makefile
 	docs/Makefile
-	docker/Makefile])
+	docker/Makefile
+	trackalert/ext/Makefile
+	trackalert/ext/json11/Makefile
+	trackalert/ext/yahttp/Makefile
+	trackalert/ext/yahttp/yahttp/Makefile
+	trackalert/Makefile])
 	
 AC_OUTPUT

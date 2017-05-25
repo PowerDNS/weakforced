@@ -2,6 +2,7 @@ import requests
 import socket
 import time
 import json
+import mmap
 from test_helper import ApiTestCase
 
 class TestBasics(ApiTestCase):

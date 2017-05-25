@@ -91,6 +91,12 @@ setting. The following configuration keys can be used for all events:
 
 		config_key["num_conns"] = 20
 
+* basic-auth - Adds an Authorization header to Webhooks, for servers
+  which expect Basic Authentication. The username and password are
+  provided as "user:pass". For example
+
+		config_key["basic-auth"] = "wforce:super"
+
 The following configuration keys are custom to specific events:
 
 * allow_filter - Filters allow webhooks based on the allow response

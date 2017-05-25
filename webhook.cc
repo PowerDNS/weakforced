@@ -138,6 +138,10 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   std::string b64_hash_id = Base64Encode(calculateHash(to_simple_string(t)+std::to_string(hook->getID())+event_name, HashAlgo::SHA256));
   mch.insert(std::make_pair("X-Wforce-Delivery", b64_hash_id));
 
+  if (hook->hasConfigKey("basic-auth")) {
+    mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(hook->getConfigKey("basic-auth"))));
+  }
+  
   vdebuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
 	   hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
 

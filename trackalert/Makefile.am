@@ -1,7 +1,5 @@
-AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(libsodium_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(EXT_CFLAGS) $(libsodium_CFLAGS) $(JSON11_CFLAGS) $(LIBHIREDIS_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 ACLOCAL_AMFLAGS = -I m4
-
-SUBDIRS=ext
 
 EXTRA_DIST= trackalert.conf README.md trackalert.service.in
 
@@ -33,18 +31,9 @@ trackalert_SOURCES = \
 	pdnsexception.hh \
 	device_parser.hh device_parser.cc \
 	wforce-webserver.cc wforce-webserver.hh \
-	sstuff.hh ext/luawrapper/include/LuaContext.hpp \
+	sstuff.hh \
 	login_tuple.cc login_tuple.hh \
-	wforce-geoip.cc wforce-geoip.hh \
-	ext/incbin/incbin.h \
-	ext/murmur3.cc \
-        ext/murmur3.h \
-	ext/count_min_sketch.cpp \
-	ext/ctpl.h \
-	ext/hyperloglog.hpp \
-	ext/count_min_sketch.hpp \
-	ext/uap-cpp/UaParser.h \
-	ext/uap-cpp/UaParser.cpp
+	wforce-geoip.cc wforce-geoip.hh
 
 trackalert_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -52,7 +41,7 @@ trackalert_LDFLAGS = \
 
 trackalert_LDADD = \
 	-lreadline -ltermcap \
-	$(LUA_LIBS) $(YAHTTP_LIBS) $(libsodium_LIBS) \
+	$(LUA_LIBS) $(YAHTTP_LIBS) $(EXT_LIBS) $(libsodium_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
 	$(YAMLCPP_LIBS) $(GEOIP_LIBS)

@@ -51,6 +51,8 @@ AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])
 AC_SUBST([YAHTTP_LIBS], ['-L$(top_builddir)/ext/yahttp/yahttp -lyahttp'])
 AC_SUBST([JSON11_CFLAGS], ['-I$(top_srcdir)/ext/json11'])
 AC_SUBST([JSON11_LIBS], ['-L$(top_builddir)/ext/json11 -ljson11'])
+AC_SUBST([EXT_CFLAGS], ['-I$(top_srcdir)/ext'])
+AC_SUBST([EXT_LIBS], ['-L$(top_builddir)/ext/ext -lext'])
 # We need libcrypto for hash functions
 PDNS_CHECK_LIBCRYPTO
 # Check for LuaJIT first then Lua
@@ -86,15 +88,12 @@ esac],[docker=false])
 AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
 AC_CONFIG_FILES([Makefile
 	ext/Makefile
+	ext/ext/Makefile
 	ext/json11/Makefile
 	ext/yahttp/Makefile
 	ext/yahttp/yahttp/Makefile
 	docs/Makefile
 	docker/Makefile
-	trackalert/ext/Makefile
-	trackalert/ext/json11/Makefile
-	trackalert/ext/yahttp/Makefile
-	trackalert/ext/yahttp/yahttp/Makefile
 	trackalert/Makefile])
 	
 AC_OUTPUT

@@ -277,12 +277,12 @@ protected:
   mutable std::atomic<unsigned int> num_success;
   mutable std::atomic<unsigned int> num_failed;
   mutable std::mutex mutex;
-  const WHEventTypes event_names = { { "report", {{ "url" }, {"secret"}}},
-				     { "allow", {{ "url" }, {"secret", "allow_filter"}}},
-				     { "reset", {{ "url" }, {"secret"}}},
-				     { "addbl", {{ "url" }, {"secret"}}},
-				     { "delbl", {{ "url" }, {"secret"}}},
-				     { "expirebl", {{ "url" }, {"secret"}}}};
+  const WHEventTypes event_names = { { "report", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "allow", {{ "url" }, {"secret", "allow_filter", "basic-auth"}}},
+				     { "reset", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "addbl", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "delbl", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "expirebl", {{ "url" }, {"secret", "basic-auth"}}}};
   const std::string name;
 };
 

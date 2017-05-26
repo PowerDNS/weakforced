@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import signal
 
 WEBPORT = '8084'
 APIKEY = 'super'
@@ -28,6 +29,7 @@ cmd1 = ("../wforce -C ./wforce1.conf -R ../regexes.yaml").split()
 cmd2 = ("../wforce -C ./wforce2.conf -R ../regexes.yaml").split()
 webcmd = ("/usr/bin/python ./webhook_server.py").split()
 udpsinkcmd = ("/usr/bin/python ./udp_sink.py").split()
+ta_cmd = ("../trackalert/trackalert -C ./trackalert.conf").split()
 
 # Now run wforce and the tests.
 print "Launching wforce (1 and 2)..."
@@ -39,6 +41,23 @@ webproc = subprocess.Popen(webcmd, close_fds=True)
 webpid = webproc.pid
 udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
 udppid = udpproc.pid
+taproc = subprocess.Popen(ta_cmd, close_fds=True)
+tapid = taproc.pid
+
+def sighandler(signum, frame):
+    proc1.terminate()
+    proc1.wait()
+    proc2.terminate()
+    proc2.wait()
+    webproc.terminate()
+    webproc.wait()
+    udpproc.terminate()
+    udpproc.wait()
+    taproc.terminate()
+    taproc.wait()
+    subprocess.call(["/bin/stty", "sane"])
+
+signal.signal(signal.SIGINT, sighandler)
 
 print "Waiting for webserver port to become available..."
 available = False
@@ -60,6 +79,9 @@ if not available:
     webproc.wait()
     udpproc.terminate()
     udpproc.wait()
+    taproc.terminate()
+    taproc.wait()
+    subprocess.call(["/bin/stty", "sane"])
     sys.exit(2)
 
 print "Running tests..."
@@ -85,6 +107,8 @@ finally:
     webproc.wait()
     udpproc.terminate()
     udpproc.wait()
+    taproc.terminate()
+    taproc.wait()
 
 subprocess.call(["/bin/stty", "sane"])
     

@@ -20,6 +20,9 @@ class ApiTestCase(unittest.TestCase):
         self.server2_url = 'http://%s:%s/' % (self.server_address, self.server2_port)
         self.server3_port = 8086
         self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
+        self.ta_server_port = 8090
+        self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
+        
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))
         #self.session.keep_alive = False
@@ -112,6 +115,18 @@ class ApiTestCase(unittest.TestCase):
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})            
 
+    def taReportFuncAttrs(self, login, remote, pwhash, success, attrs):
+        payload = dict()
+        payload['login'] = login
+        payload['remote'] = remote
+        payload['pwhash'] = pwhash
+        payload['success'] = success
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.ta_url("/?command=report"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+        
     def resetFunc(self, login, ip):
         return self.resetFuncInternal(login, ip, False)
 
@@ -254,7 +269,10 @@ class ApiTestCase(unittest.TestCase):
 
     def url3(self, relative_url):
         return urlparse.urljoin(self.server3_url, relative_url)
-        
+
+    def ta_url(self, relative_url):
+        return urlparse.urljoin(self.ta_server_url, relative_url)
+    
     def assert_success_json(self, result):
         try:
             result.raise_for_status()

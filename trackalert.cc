@@ -31,7 +31,7 @@
 #include <readline/history.h>
 #include "base64.hh"
 #include <fstream>
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include <unistd.h>
 #include <sys/stat.h>
 #include "sodcrypto.hh"

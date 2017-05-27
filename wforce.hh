@@ -36,7 +36,7 @@
 #include "wforce-webserver.hh"
 #include "wforce_exception.hh"
 #include "login_tuple.hh"
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>

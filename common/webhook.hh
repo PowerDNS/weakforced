@@ -23,7 +23,7 @@
 #pragma once
 #include <mutex>
 #include <curl/curl.h>
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include "ext/ctpl.h"
 #include "dolog.hh"
 #include "minicurl.hh"

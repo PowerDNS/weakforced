@@ -25,7 +25,7 @@
 #include "dolog.hh"
 #include "perf-stats.hh"
 #include "base64.hh"
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 
 using std::thread;
 

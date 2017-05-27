@@ -23,7 +23,7 @@
 #include "trackalert-web.hh"
 #include "wforce-webserver.hh"
 #include "trackalert.hh"
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include "ext/incbin/incbin.h"
 #include "dolog.hh"
 #include <chrono>

@@ -23,7 +23,7 @@
 #pragma once
 #include "misc.hh"
 #include "iputils.hh"
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include "device_parser.hh"
 
 using namespace json11;

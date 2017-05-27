@@ -25,7 +25,7 @@
 #include "misc.hh"
 #include <mutex>
 #include <thread>
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 #include "login_tuple.hh"
 
 typedef std::function<void(const LoginTuple&)> report_t;

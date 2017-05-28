@@ -49,7 +49,7 @@ static vector<std::function<void(void)>>* g_launchWork;
 vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 					   LuaContext& c_lua,  
 					   report_t& report_func,
-					   background_t& background_func,
+					   bg_func_map_t* bg_func_map,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -265,10 +265,32 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (multi_lua) {
-    c_lua.writeFunction("setBackground", [&background_func](background_t func) { background_func=func;});
+    c_lua.writeFunction("setBackground", [bg_func_map](const std::string& func_name, background_t func) {
+	bg_func_map->insert(std::make_pair(func_name, func));
+      });
   }
   else {
-    c_lua.writeFunction("setBackground", [](background_t func) { });
+    c_lua.writeFunction("setBackground",  [bg_func_map](const std::string& func_name, background_t func) { });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setNumSchedulerThreads", [](int numThreads) {
+	g_bg_schedulerp->setNumThreads(numThreads);
+      });
+  }
+  else {
+    c_lua.writeFunction("setNumSchedulerThreads", [](int numThreads) { });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("scheduleBackgroundFunc", [bg_func_map](const std::string& cron_str, const std::string& func_name) {
+	g_bg_schedulerp->cron(cron_str, [func_name] {
+	    g_luamultip->background(func_name);
+	  });
+      });
+  }
+  else {
+    c_lua.writeFunction("scheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
   }
 
   if (!multi_lua) {

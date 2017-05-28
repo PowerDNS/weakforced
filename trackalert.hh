@@ -35,10 +35,10 @@
 #include "wforce_exception.hh"
 #include "login_tuple.hh"
 #include "json11.hpp"
+#include "ext/scheduler/Scheduler.h"
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-
 struct TrackalertStats
 {
   using stat_t=std::atomic<uint64_t>;
@@ -79,3 +79,8 @@ extern WebHookDB g_webhook_db;
 extern WebHookDB g_custom_webhook_db;
 
 extern bool g_configurationDone;
+
+#define NUM_SCHEDULER_THREADS 4
+extern int g_num_scheduler_threads;
+extern std::shared_ptr<Bosma::Scheduler> g_bg_schedulerp;
+

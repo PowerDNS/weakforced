@@ -32,14 +32,15 @@ typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;
 typedef std::function<void()> background_t;
 extern background_t g_background;
+typedef std::unordered_map<std::string, background_t> bg_func_map_t;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, report_t& report_func, background_t& background_func, const std::string& config);
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, report_t& report_func, bg_func_map_t* bg_func_map, const std::string& config);
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
   std::shared_ptr<std::mutex> lua_mutexp;
   report_t report_func;
-  background_t background_func;
+  bg_func_map_t bg_func_map;
 };
 
 #define NUM_LUA_STATES 6
@@ -69,21 +70,23 @@ public:
   std::vector<LuaThreadContext>::iterator end() { return lua_cv.end(); }
 
   void report(const LoginTuple& lt) {
-    auto lt_context = getLuaState();
+    auto& lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
     // call the report function
     lt_context.report_func(lt);
   }
 
-  void background() {
-    auto lt_context = getLuaState();
+  void background(const std::string& func_name) {
+    auto& lt_context = getLuaState();
     // lock the lua state mutex
     std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
     // call the background function
-    lt_context.background_func();
+    auto fn = lt_context.bg_func_map.find(func_name);
+    if (fn != lt_context.bg_func_map.end())
+      fn->second();
   }
-  
+
 protected:
   LuaThreadContext& getLuaState()
   {

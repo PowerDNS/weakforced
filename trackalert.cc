@@ -66,6 +66,10 @@ WforceWebserver g_webserver;
 std::string g_configDir; // where the config files are located
 bool g_configurationDone = false;
 
+// The Scheduler class should be thread-safe
+std::shared_ptr<Bosma::Scheduler> g_bg_schedulerp;
+int g_num_scheduler_threads = NUM_SCHEDULER_THREADS;
+
 bool getMsgLen(int fd, uint16_t* len)
 try
 {
@@ -122,25 +126,6 @@ double getDoubleTime()
   gettimeofday(&now, 0);
   return 1.0*now.tv_sec + now.tv_usec/1000000.0;
 }
-
-void backgroundScheduler()
-{
-  for (;;) {
-    // XXX - TODO
-    // read the configured schedule for the background scheduler thread
-    // then sleep for appropriate time
-    // then run the background thread
-    sleep(1);
-  }
-}
-
-void startBackgroundSchedulerThread()
-{
-  // Start a new thread
-  thread t(backgroundScheduler);
-  t.detach();
-}
-
 
 string g_key;
 
@@ -588,18 +573,22 @@ try
   argv+=optind;
 
   g_singleThreaded = false;
+
+  // start background scheduler
+  g_bg_schedulerp = std::make_shared<Bosma::Scheduler>(g_num_scheduler_threads);
+  
   if (chdir(g_configDir.c_str()) != 0) {
     warnlog("Could not change working directory to %s (%s)", g_configDir, strerror(errno));
   }
   
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, false, g_lua, g_report, g_background, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_report, nullptr, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
   // this sets up the global lua state used for config and setup
-  auto todo=setupLua(false, false, g_lua, g_report, g_background, g_cmdLine.config);
+  auto todo=setupLua(false, false, g_lua, g_report, nullptr, g_cmdLine.config);
 
   // now we setup the allow/report lua states
   g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
@@ -607,10 +596,9 @@ try
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
     // first setup defaults in case the config doesn't specify anything
     it->report_func = g_report;
-    it->background_func = g_background;
     setupLua(false, true, *(it->lua_contextp),
 	     it->report_func,
-	     it->background_func,
+	     &(it->bg_func_map),
 	     g_cmdLine.config);
   }
 
@@ -642,9 +630,6 @@ try
     acls += s;
   }
   noticelog("ACL allowing queries from: %s", acls.c_str());
-
-  // start background scheduler thread
-  startBackgroundSchedulerThread();
 
   // start the performance stats thread
   startStatsThread();

@@ -1,5 +1,7 @@
 Weakforced
 ----------
+[![Build Status](https://travis-ci.org/PowerDNS/weakforced.svg?branch=master)](https://travis-ci.org/PowerDNS/weakforced)
+
 The goal of 'wforce' is to detect brute forcing of passwords across many
 servers, services and instances.  In order to support the real world, brute
 force detection policy can be tailored to deal with "bulk, but legitimate"

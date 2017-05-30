@@ -13,7 +13,7 @@ quite there yet, although it certainly scales to support up to ten
 million users, if not more. The limiting factor is number of logins
 per second at peak.
 
-wforce is a project by Dovecot and Open-Xchange. For historical
+Wforce is a project by Dovecot, PowerDNS and Open-Xchange. For historical
 reasons, it lives in the PowerDNS github tree. If you have any questions, email
 neil.cook@open-xchange.com.
 
@@ -21,8 +21,8 @@ Here is how it works:
  * Report successful logins via JSON http-api
  * Report unsuccessful logins via JSON http-api
  * Query if a login should be allowed to proceed, should be delayed, or ignored via http-api
-
-Runtime console for querying the status of logins, IP addresses, subnets.
+ * API for querying the status of logins, IP addresses etc.
+ * Runtime console for server introspection
 
 wforce is aimed to receive message from services like:
 
@@ -55,7 +55,7 @@ $ make
 
 This requires recent versions of libtool, automake and autoconf to be
 installed.  Secondly, we require (versions tagged up to 1.0.0):
- * Recent g++ (4.8)
+ * Recent g++ (5.0+)
  * Boost 1.40+
  * Lua 5.1+ development libraries (or LuaJIT if you configure --with-luajit)
  * Getdns development libraries (if you want to use the DNS lookup functionality)
@@ -80,12 +80,16 @@ Add --with-luajit to the end of the configure line if you want to use LuaJIT.
 Policies
 --------
 
-There is a sensible default policy in wforce.conf (running without
+There is a sensible, if very simple, default policy in wforce.conf (running without
 this means *no* policy), and extensive support for crafting your own policies using
-the insanely great Lua scripting language. Note that although there is
-a single Lua configuration file, the report and allow functions run in
-different lua states from the rest of the configuration, thus you
-cannot share state.
+the insanely great Lua scripting language.
+
+Note that although there is
+a single Lua configuration file, the canonicalize, reset, report and allow functions run in
+different lua states from the rest of the configuration. This mostly
+"just works", but may lead to unexpectd behaviour such as running Lua
+commands at the server Lua prompt, and getting multiple answers
+(because Lua commands are passed to all Lua states).
 
 Sample:
 
@@ -127,8 +131,8 @@ end
 
 Many more metrics are available to base decisions on. Some example
 code is in [wforce.conf](wforce.conf), and more extensive examples are
-in [wforce.conf.example](wforce.conf.example). For full documentation,
-use "man wforce.conf".
+in [wforce.conf.example](wforce.conf.example). For full
+[documentation](docs/manpages), use "man wforce.conf".
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
@@ -248,17 +252,35 @@ To get some stats, try:
 40 reports, 8 allow-queries, 40 entries in database
 ```
 
+The [wforce manpage](docs/manpages/wforce.1.md) describes the
+command-line options and all the possible console commands in more detail.
+
 Spec
 ----
-We report 4 mandatory fields plus one optional field in the LoginTuple
+Wforce accepts reports with 4 mandatory fields plus multiple optional
+fields.
 
+Mandatory:
  * login (string): the user name or number or whatever
  * remote (ip address): the address the user arrived on
  * pwhash (string): a highly truncated hash of the password used
  * success (boolean): was the login a success or not?
- * attrs (json object): additional information about the login. For example, attributes from a user database.
 
-All are rather clear, but pwhash deserves some clarification. In order to
+Optional:
+ * policy_reject (boolean) -  If the login was not successful only because of a policy-based reject from wforce (i.e. the username and password were correct).
+ * attrs (json object): additional information about the login. For
+ example, attributes from a user database.
+ * device_id (string) - A string that represents the device that the user
+   logged in from. For HTTP this would typically be the User-Agent
+   string, and for IMAP it would be the IMAP client ID command string.
+ * protocol (string) - A string representing the protocol used to login,
+ e.g. "http", "imap", "pop3".
+ * tls (boolean) - Whether or not the login was secured with TLS.
+
+The entire HTTP API is [documented](docs/swagger/wforce_api.7.yml)
+using the excellent OpenAPI (swagger) specification. 
+
+The pwhash field deserves some clarification. In order to
 distinguish actual brute forcing of a password, and repeated incorrect but
 identical login attempts, we need some marker that tells us if passwords are
 different.
@@ -372,8 +394,9 @@ addWebHook(events, config_keys)
 
 The above will call the webhook at the specified url, for every report
 and allow command received, with the body of the POST containing the
-original json data sent to wforce. For more information use "man
-wforce.conf" and "man wforce_webhook".
+original json data sent to wforce. For more information use ["man
+wforce.conf"](docs/manpages/wforce.conf.5.md) and
+["man wforce_webhook"](docs/manpages/wforce_webhook.5.md).
 
 Custom WebHooks
 ----------------

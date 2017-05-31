@@ -11,7 +11,11 @@ matrix:
     - compiler: gcc
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
+            - gcc-5
+            - g++-5
             - libboost-dev
             - libboost-date-time-dev
             - libboost-regex-dev
@@ -30,8 +34,8 @@ matrix:
             - libyaml-cpp-dev
             - wget
       env:
-        - MYCXX=g++
-        - MYCC=gcc
+        - MYCXX=g++-5
+        - MYCC=gcc-5
     - compiler: clang
       addons:
         apt:
@@ -39,6 +43,8 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-trusty-4.0
           packages:
+            - gcc-5
+            - g++-5
             - clang-4.0
             - libboost-dev
             - libboost-date-time-dev

@@ -25,7 +25,7 @@
 #include "misc.hh"
 #include <mutex>
 #include <thread>
-#include "ext/json11/json11.hpp"
+#include "json11.hpp"
 
 struct CustomFuncArgs {
   std::map<std::string, std::string> attrs; // additional attributes

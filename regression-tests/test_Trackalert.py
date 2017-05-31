@@ -38,3 +38,14 @@ class TestTrackalert(ApiTestCase):
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
+
+    def test_trackalertBackgroundFuncs(self):
+        time.sleep(61)
+        logfile = open('/tmp/trackalert.log', 'r')
+        s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        for mystring in [ 'background1', 'background2' ]:
+            regex = re.escape(mystring)
+            result = re.search(regex, s);
+            self.assertNotEquals(result, None)
+        s.close()
+        logfile.close()

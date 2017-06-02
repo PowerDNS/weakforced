@@ -518,14 +518,14 @@ try
       break;
     switch(c) {
     case 'C':
-      g_cmdLine.config=optarg;
-      g_configDir = getDirectoryPath(g_cmdLine.config);
+      g_cmdLine.config=getFileFromPath(optarg);
+      g_configDir = getDirectoryPath(optarg);
       break;
     case 'c':
       g_cmdLine.beClient=true;
       if (optarg) {
-	g_cmdLine.config=optarg;
-	g_configDir = getDirectoryPath(g_cmdLine.config);
+	g_cmdLine.config=getFileFromPath(optarg);
+	g_configDir = getDirectoryPath(optarg);
       }
       break;
     case ':':

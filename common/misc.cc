@@ -864,3 +864,12 @@ std::string getDirectoryPath(const std::string& filename)
   else
     return ".";
 }
+
+std::string getFileFromPath(const std::string& filename)
+{
+  size_t found = filename.find_last_of("/\\");
+  if (found != string::npos)
+    return filename.substr(++found, string::npos);
+  else
+    return filename;
+}

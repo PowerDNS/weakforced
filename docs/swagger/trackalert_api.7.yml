@@ -1,0 +1,166 @@
+swagger: "2.0"
+info:
+  version: “1.3.0”
+  title: "Dovecot Anti-Abuse Shield (Trackalert)"
+  description: "An API to the Dovecot Anti-Abuse Shield trackalert daemon to prevent brute-force and abuse of mail systems"
+  contact:
+    name: "Dovecot Oy"
+  license:
+    name: "GPL2"
+    url: http://github.com/PowerDNS/weakforced/master/LICENSE
+host: "doesnotexist.dovecot.fi"
+basePath: "/"
+schemes:
+  - "http"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /?command=report:
+    post:
+      description: "Creates a new report about a login (successful or unsuccessful)"
+      operationId: "report"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "LoginTupleReport"
+          in: body
+          description: "Login Tuple for report command"
+          required: true
+          schema:
+            $ref: "#/definitions/LoginTupleReport"
+      responses:
+        "200":
+          description: "report response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=stats:
+    get:
+      description: "Get server stats"
+      operationId: "stats"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "stats response"
+          schema:
+            $ref: "#definitions/statsResponse"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+definitions:
+  LoginTupleReport:
+    required:
+      - login
+      - remote
+      - pwhash
+      - success
+    example:
+      login: joe.bloggs
+      remote: 192.168.1.2
+      pwhash: cc04
+      success: true
+    properties:
+      login:
+        type: string
+      remote:
+        type: string
+      pwhash:
+        type: string
+      success:
+        type: boolean
+      policy_reject:
+        type: boolean
+      protocol:
+        type: string
+        enum:
+          - http
+          - imap
+          - pop3
+          - smtp
+          - mobileapi
+      tls:
+        type: boolean
+      device_id:
+        type: string
+      device_attrs:
+        $ref: "#/definitions/LTAttrs"
+      attrs:
+        $ref: "#/definitions/LTAttrs" 
+  LTAttrs:
+    type: object
+    properties:
+      attr_name_single_value:
+        type: string
+      attr_name multi_value:
+          type: array
+          items:
+            type: string
+    example:
+      attr1: value1
+      attr2: value2
+      attr3: [ value3, value4 ]
+  Error:
+    required:
+      - status
+      - reason
+    properties:
+      status:
+        type: string
+      reason:
+        type: string
+    example:
+      status: failure
+      reason: Unauthorized
+  statsResponse:
+    type: object
+    properties:
+      reports:
+        type: integer
+      sys-msec:
+        type: integer
+      user-msec:
+        type: integer
+      perfstats:
+        type: object
+        description: Latency buckets for worker thread wait (WTW) and run (WTR)
+        properties:
+          WTW_0_1:
+            type: integer
+          WTW_1_10:
+            type: integer
+          WTW_10_100:
+            type: integer
+          WTW_100_1000:
+            type: integer
+          WTW_Slow:
+            type: integer
+          WTR_0_1:
+            type: integer
+          WTR_1_10:
+            type: integer
+          WTR_10_100:
+            type: integer
+          WTR_100_1000:
+            type: integer
+          WTR_Slow:
+            type: integer
+    example:
+      allows: 120321
+      denieds: 20201
+      sys-msec: 97211221
+      user-msec: 292910108
+      perfstats: {}

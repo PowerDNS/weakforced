@@ -403,7 +403,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 
   if (!multi_lua) {
     c_lua.writeFunction("showVersion", []() {
-	g_outputBuffer = "wforce " + std::string(VERSION) + "\n";
+	g_outputBuffer = "trackalert " + std::string(VERSION) + "\n";
       });
   }
   else {

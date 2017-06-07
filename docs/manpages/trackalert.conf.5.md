@@ -313,7 +313,7 @@ configuration or within the allow/report/reset functions:
   name given in setBackground() is used, *not* the actual function
   name). Note that cron ranges are not currently supported - if you
   want to schedule the same function to run for example on two
-  different days of the week, then you would use two difference calls
+  different days of the week, then you would use two different calls
   to this function to achieve that. For example:
 
 		scheduleBackgroundFunc("0 0 1 * *", "mybg")

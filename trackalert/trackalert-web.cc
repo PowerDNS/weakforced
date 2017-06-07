@@ -44,6 +44,12 @@
 
 std::atomic<int> numReportThreads(TRACKALERT_NUM_REPORT_THREADS);
 
+static int uptimeOfProcess()
+{
+  static time_t start=time(0);
+  return time(0) - start;
+}
+
 void setNumReportThreads(int numThreads)
 {
   numReportThreads = numThreads;
@@ -138,7 +144,27 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }
 }
 
+void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  struct rusage ru;
+  getrusage(RUSAGE_SELF, &ru);
+
+  resp.status=200;
+  Json my_json = Json::object {
+    { "reports", (int)g_stats.reports },
+    { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
+    { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
+    { "uptime", uptimeOfProcess()},
+    { "perfstats", perfStatsToJson()}
+  };
+
+  resp.status=200;
+  resp.body=my_json.dump();
+}
+
 void registerWebserverCommands()
 {
   g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
 }

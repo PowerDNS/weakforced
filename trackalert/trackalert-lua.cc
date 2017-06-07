@@ -29,6 +29,7 @@
 #include "trackalert-luastate.hh"
 #include "perf-stats.hh"
 #include "wforce-webserver.hh"
+#include "trackalert-web.hh"
 #include <fstream>
 
 #ifdef HAVE_GEOIP
@@ -197,6 +198,17 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) { });    
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("setNumReportThreads", [](int numThreads) {
+	// the number of threads used to process allow/report commands
+	setNumReportThreads(numThreads);
+      });
+  }
+  else {
+    c_lua.writeFunction("setNumReportThreads", [](int numThreads) { });    
+  }
+
+  
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
       os << msg << ": ";

@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem/path.hpp>
 #include "iputils.hh"
 
 bool g_singleThreaded;
@@ -858,9 +859,13 @@ unsigned int pdns_stou(const std::string& str, size_t * idx, int base)
 
 std::string getDirectoryPath(const std::string& filename)
 {
-  size_t found = filename.find_last_of("/\\");
-  if (found != string::npos)
-    return filename.substr(0, found);
-  else
-    return ".";
+  boost::filesystem::path my_path(filename);
+  boost::filesystem::path branch_path = my_path.branch_path();
+  return branch_path.empty() ? "." : branch_path.string();
+}
+
+std::string getFileFromPath(const std::string& filename)
+{
+  boost::filesystem::path my_path(filename);
+  return my_path.leaf().string();
 }

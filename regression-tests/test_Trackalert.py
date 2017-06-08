@@ -9,6 +9,10 @@ from test_helper import ApiTestCase
 
 class TestTrackalert(ApiTestCase):
 
+    def test_auth_stats(self):
+        r = self.session.get(self.ta_url("/?command=stats"))
+        self.assertEquals(r.status_code, requests.codes.ok)
+    
     def test_wforceToTrackalert(self):
         self.writeCmdToConsole("addWebHook(ta_events, tack)")
         r = self.reportFunc('wforce2trackalert', '1.4.3.2', '1234', False); 

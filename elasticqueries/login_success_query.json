@@ -106,6 +106,14 @@
 	    "cardinality": {
 		"field": "pwhash"
 	    }
+	},
+	"range": {
+	    "date_range": {
+		"field": "@timestamp",
+		"ranges": [
+		    { "to": "now-1w" }
+		]
+	    }
 	}
     }
 }

@@ -1,7 +1,7 @@
 AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(EXT_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 
 noinst_LTLIBRARIES=libweakforce.la
-libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS)
+libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS)
 libweakforce_la_SOURCES= \
 	base64.hh \
 	dns_lookup.cc dns_lookup.hh \

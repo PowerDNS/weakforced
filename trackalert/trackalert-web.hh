@@ -22,4 +22,7 @@
 
 #include "yahttp/yahttp.hpp"
 
+#define TRACKALERT_NUM_REPORT_THREADS 6
+
+void setNumReportThreads(int numThreads);
 void registerWebserverCommands();

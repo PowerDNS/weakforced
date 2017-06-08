@@ -13,6 +13,7 @@ class TestBasics(ApiTestCase):
 
     def test_auth_stats(self):
         r = self.session.get(self.url("/?command=stats"))
+        self.assertEquals(r.status_code, requests.codes.ok)
 
     def test_ping(self):
         r = self.pingFunc()

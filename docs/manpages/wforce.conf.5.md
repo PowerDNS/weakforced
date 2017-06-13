@@ -458,6 +458,13 @@ configuration or within the allow/report/reset functions:
   
 		infoLog("Logging is very important", { logging=1, foo=bar })
 
+* vinfoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level the
+  specified string, adding "key=value" strings to the log for all the
+  kvs specified in the key-value map, but only if wforce was started
+  with the (undocumented) -v flag (for verbose). For example:
+  
+		vinfoLog("Logging is very important", { logging=1, foo=bar })
+
 * warnLog(\<log string\>, \<key-value map\>) - Log at LOG_WARN level the
   specified string, adding "key=value" strings to the log for all the
   kvs specified in the key-value map. For example:
@@ -469,6 +476,13 @@ configuration or within the allow/report/reset functions:
   kvs specified in the key-value map. For example:
   
 		errorLog("Logging is very important", { logging=1, foo=bar })
+
+* debugLog(\<log string\>, \<key-value map\>) - Log at LOG_DEBUG level the
+  specified string, adding "key=value" strings to the log for all the
+  kvs specified in the key-value map, but only if wforce was started
+  with the (undocumented) -v flag (for verbose). For example:
+  
+		debugLog("This will only log if wforce is started with -v", { logging=1, foo=bar })
 
 * blacklistIP(\<ip\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified IP for expiry seconds, with the specified reason. IP

@@ -131,6 +131,28 @@ cannot be called inside the report or background functions:
 
 		setBackground("mybg", backgroundFunc)
 
+* setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
+  Create a new custom REST endpoint with the given name, which when
+  invoked will call the supplied custom lua function. This allows
+  admins to arbitrarily extend the trackalert REST API with new REST
+  endpoints. Admins can create as many custom endpoints as they
+  require. Custom endpoints can only be accessed via a POST method,
+  and all arguments are passed as key-value pairs of a top-level
+  "attrs" json object (these will be split into two tables - one for
+  single-valued attrs, and the other for multi-valued attrs - see
+  CustomFuncArgs below). Return information is passed with a
+  boolean "success" and "r_attrs" json object containing return
+  key-value pairs. For example:
+
+		function custom(args)
+		  for k,v in pairs(args.attrs) do
+		    infoLog("custom func argument attrs", { key=k, value=v });
+		  end
+		  -- return consists of a boolean, followed by { key-value pairs }
+		  return true, { key=value }
+		end
+		setCustomEndpoint("custom", custom)
+
 # GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 
@@ -332,6 +354,31 @@ configuration or within the allow/report/reset functions:
 
 		scheduleBackgroundFunc("0 0 1 * *", "mybg")
 		scheduleBackgroundFunc("0 0 6 * *", "mybg")
+
+* CustomFuncArgs - The only parameter to custom functions
+  is a CustomFuncArgs table. This table contains the following fields:
+
+* CustomFuncArgs.attrs - Array of (single valued) attributes supplied
+  by the caller. For example:
+
+		 for k, v in pairs(args.attrs) do
+			 if (k == "xxx")
+			 then
+				 -- do something
+			 end
+		 end
+
+* CustomFuncArgs.attrs_mv - Array of (multi-valued)
+  attributes supplied by the caller. For example:
+
+		 for k, v in pairs(args.attrs_mv) do
+			 for i, vi in ipairs(v) do
+				 if ((k == "xxx") and (vi == "yyy"))
+				 then
+					 -- do something
+				 end
+			 end
+		 end
 
 # FILES
 */etc/trackalert.conf*

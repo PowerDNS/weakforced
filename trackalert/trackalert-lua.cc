@@ -51,6 +51,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 					   LuaContext& c_lua,  
 					   report_t& report_func,
 					   bg_func_map_t* bg_func_map,
+					   CustomFuncMap& custom_func_map,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -326,6 +327,33 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("scheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
   }
 
+  c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
+  c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
+
+  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, multi_lua, client](const std::string& f_name, custom_func_t func) {
+      CustomFuncMapObject cobj;
+      cobj.c_func = func;
+      custom_func_map.insert(std::make_pair(f_name, cobj));
+      if (!multi_lua && !client) {
+	// register a webserver command
+	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
+	noticelog("Registering custom endpoint [%s]", f_name);
+      }
+    });
+
+  if (!multi_lua) {
+    c_lua.writeFunction("showCustomEndpoints", []() {
+	boost::format fmt("%-30.30s \n");
+	g_outputBuffer = (fmt % "Custom Endpoint").str();
+	for (const auto& i : g_custom_func_map) {
+	  g_outputBuffer += (fmt % i.first).str();
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomEndpoints", []() { });
+  }
+  
   if (!multi_lua) {
     c_lua.writeFunction("showPerfStats", []() {
 	g_outputBuffer += getPerfStatsString();

@@ -26,3 +26,4 @@
 
 void setNumReportThreads(int numThreads);
 void registerWebserverCommands();
+void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);

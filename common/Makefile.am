@@ -6,7 +6,7 @@ libweakforce_la_SOURCES= \
 	base64.hh \
 	dns_lookup.cc dns_lookup.hh \
 	wforce-geoip.cc wforce-geoip.hh \
-	twmap.hh \
+	twmap.hh customfunc.hh\
 	dolog.hh wforce_ns.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \
@@ -36,6 +36,7 @@ noinst_HEADERS = \
 	sodcrypto.hh \
 	sstuff.hh \
 	twmap.hh \
+	customfunc.hh \
 	wforce-geoip.hh \
 	perf-stats.hh \
 	webhook.hh \

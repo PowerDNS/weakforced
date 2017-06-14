@@ -62,6 +62,7 @@ WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
+CustomFuncMap g_custom_func_map;
 
 std::string g_configDir; // where the config files are located
 bool g_configurationDone = false;
@@ -582,13 +583,13 @@ try
   }
   
   if(g_cmdLine.beClient || !g_cmdLine.command.empty()) {
-    setupLua(true, false, g_lua, g_report, nullptr, g_cmdLine.config);
+    setupLua(true, false, g_lua, g_report, nullptr, g_custom_func_map, g_cmdLine.config);
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
 
   // this sets up the global lua state used for config and setup
-  auto todo=setupLua(false, false, g_lua, g_report, nullptr, g_cmdLine.config);
+  auto todo=setupLua(false, false, g_lua, g_report, nullptr, g_custom_func_map, g_cmdLine.config);
 
   // now we setup the allow/report lua states
   g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
@@ -599,6 +600,7 @@ try
     setupLua(false, true, *(it->lua_contextp),
 	     it->report_func,
 	     &(it->bg_func_map),
+	     it->custom_func_map,
 	     g_cmdLine.config);
   }
 

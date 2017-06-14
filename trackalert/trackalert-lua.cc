@@ -208,6 +208,27 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("setNumReportThreads", [](int numThreads) { });    
   }
 
+  c_lua.writeFunction("debugLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+      if (g_verbose) {
+	std::ostringstream os;
+	os << msg << ": ";
+	for (const auto& i : kvs) {
+	  os << i.first << "="<< "\"" << i.second << "\"" << " ";
+	}
+	debuglog(os.str().c_str());
+      }
+    });
+    
+  c_lua.writeFunction("vinfoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
+      if (g_verbose) {
+	std::ostringstream os;
+	os << msg << ": ";
+	for (const auto& i : kvs) {
+	  os << i.first << "="<< "\"" << i.second << "\"" << " ";
+	}
+	infolog(os.str().c_str());
+      }
+    });
   
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;

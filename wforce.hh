@@ -95,8 +95,6 @@ bool putMsgLen(int fd, uint16_t len);
 void* tcpAcceptorThread(void* p);
 double getDoubleTime();
 
-typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
-
 extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 extern GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>> g_named_report_sinks;
 void sendReportSink(const LoginTuple& lt);

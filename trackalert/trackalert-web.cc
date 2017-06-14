@@ -163,6 +163,85 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   resp.body=my_json.dump();
 }
 
+enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
+
+void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+  KeyValVector ret_attrs;
+
+  msg=Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"success\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    CustomFuncArgs cfa;
+    bool status = false;
+    
+    try {
+      cfa.setAttrs(msg);
+    }
+    catch(...) {
+      resp.status=500;
+      resp.body=R"({"success":false, "reason":"Could not parse input"})";
+      return;
+    }
+
+    try {
+      CustomFuncReturn cr;
+      {
+	cr=g_luamultip->custom_func(command, cfa);
+      }
+      status = std::get<customRetStatus>(cr);
+      KeyValVector ret_attrs = std::get<customRetAttrs>(cr);
+      Json::object jattrs;
+      for (auto& i : ret_attrs) {
+	jattrs.insert(make_pair(i.first, Json(i.second)));
+      }
+      msg=Json::object{{"success", status}, {"r_attrs", jattrs}};
+
+      resp.status=200;
+      resp.body=msg.dump();
+    }
+    catch(LuaContext::ExecutionErrorException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      try {
+	std::rethrow_if_nested(e);
+	ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Lua custom function [%s] exception: %s", command, e.what());
+      }
+      catch (const std::exception& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.what());
+      }
+      catch (const WforceException& ne) {
+	resp.status=500;
+	std::stringstream ss;
+	ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
+	resp.body=ss.str();
+	errlog("Exception in command [%s] exception: %s", command, ne.reason);
+      }
+    }
+    catch(const std::exception& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.what());
+    }
+  }  
+}
+
 void registerWebserverCommands()
 {
   g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);

@@ -27,6 +27,14 @@
 #include <thread>
 #include "json11.hpp"
 #include "login_tuple.hh"
+#include "customfunc.hh"
+
+struct CustomFuncMapObject {
+  custom_func_t c_func;
+};
+
+typedef std::map<std::string, CustomFuncMapObject> CustomFuncMap;
+extern CustomFuncMap g_custom_func_map;
 
 typedef std::function<void(const LoginTuple&)> report_t;
 extern report_t g_report;
@@ -34,13 +42,14 @@ typedef std::function<void()> background_t;
 extern background_t g_background;
 typedef std::unordered_map<std::string, background_t> bg_func_map_t;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, report_t& report_func, bg_func_map_t* bg_func_map, const std::string& config);
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, report_t& report_func, bg_func_map_t* bg_func_map, CustomFuncMap& custom_func_map, const std::string& config);
 
 struct LuaThreadContext {
   std::shared_ptr<LuaContext> lua_contextp;
   std::shared_ptr<std::mutex> lua_mutexp;
   report_t report_func;
   bg_func_map_t bg_func_map;
+  CustomFuncMap custom_func_map;
 };
 
 #define NUM_LUA_STATES 6
@@ -87,6 +96,19 @@ public:
       fn->second();
   }
 
+  CustomFuncReturn custom_func(const std::string& command, const CustomFuncArgs& cfa) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    // call the custom function
+    for (const auto& i : lt_context.custom_func_map) {
+      if (command.compare(i.first) == 0) {
+	return i.second.c_func(cfa);
+      }
+    }
+    return CustomFuncReturn(false, KeyValVector{});
+  }
+  
 protected:
   LuaThreadContext& getLuaState()
   {

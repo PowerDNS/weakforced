@@ -36,6 +36,7 @@
 #include "base64.hh"
 #include "blacklist.hh"
 #include "twmap-wrapper.hh"
+#include "customfunc.hh"
 #include "perf-stats.hh"
 #include "luastate.hh"
 #include "login_tuple.hh"
@@ -719,8 +720,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
 	cr=g_luamultip->custom_func(command, cfa, reportSink);
       }
       status = std::get<customRetStatus>(cr);
-      KeyValVector log_attrs = std::get<customRetAttrs>(cr);
-      ret_attrs = std::move(log_attrs);
+      ret_attrs = std::get<customRetAttrs>(cr);
       Json::object jattrs;
       for (auto& i : ret_attrs) {
 	jattrs.insert(make_pair(i.first, Json(i.second)));

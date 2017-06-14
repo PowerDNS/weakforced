@@ -26,43 +26,10 @@
 #include <mutex>
 #include <thread>
 #include "json11.hpp"
-
-struct CustomFuncArgs {
-  std::map<std::string, std::string> attrs; // additional attributes
-  std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
-
-  void setAttrs(const json11::Json& msg) {
-    LoginTuple lt;
-    lt.setLtAttrs(msg);
-    attrs = std::move(lt.attrs);
-    attrs_mv = std::move(lt.attrs_mv);
-  }
-
-  Json to_json() const
-  {
-    using namespace json11;
-    Json::object jattrs;
-
-    for (auto& i : attrs_mv) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
-    }
-    for (auto& i : attrs) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
-    }
-    return Json::object{
-      {"attrs", jattrs},
-	};
-  }
-
-  std::string serialize() const
-  {
-    Json msg=to_json();
-    return msg.dump();
-  }
-};
+#include "login_tuple.hh"
+#include "customfunc.hh"
 
 typedef std::tuple<int, std::string, std::string, KeyValVector> AllowReturn;
-typedef std::tuple<bool, KeyValVector> CustomFuncReturn;
 
 typedef std::function<AllowReturn(const LoginTuple&)> allow_t;
 extern allow_t g_allow;
@@ -71,7 +38,6 @@ extern report_t g_report;
 typedef std::function<bool(const std::string&, const std::string&, const ComboAddress&)> reset_t;
 extern reset_t g_reset;
 typedef std::function<std::string(const std::string&)> canonicalize_t;
-typedef std::function<CustomFuncReturn(const CustomFuncArgs&)> custom_func_t;
 
 struct CustomFuncMapObject {
   custom_func_t c_func;

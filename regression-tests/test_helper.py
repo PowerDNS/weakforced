@@ -158,6 +158,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def trackalertCustomFunc(self, login):
+        attrs = dict()
+        attrs['login'] = login
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.ta_url("/?command=custom"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+    
     def pingFunc(self):
         return self.session.get(self.url("/?command=ping"))
 

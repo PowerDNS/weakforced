@@ -53,3 +53,8 @@ class TestTrackalert(ApiTestCase):
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
+
+    def test_trackalertCustomFunc(self):
+        r = self.trackalertCustomFunc("custom1")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['login'], 'custom1')

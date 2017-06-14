@@ -747,9 +747,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       cobj.c_func = func;
       cobj.c_reportSink = reportSink;
       custom_func_map.insert(std::make_pair(f_name, cobj));
-      // register a webserver command
-      g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
       if (!allow_report && !client) {
+	// register a webserver command
+	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
 	noticelog("Registering custom endpoint [%s]", f_name);
       }
     });

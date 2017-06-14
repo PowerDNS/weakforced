@@ -72,8 +72,6 @@ bool putMsgLen(int fd, uint16_t len);
 void* tcpAcceptorThread(void* p);
 double getDoubleTime();
 
-typedef std::vector<std::pair<std::string, std::string>> KeyValVector;
-
 extern WebHookRunner g_webhook_runner;
 extern WebHookDB g_webhook_db;
 extern WebHookDB g_custom_webhook_db;

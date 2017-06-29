@@ -31,7 +31,7 @@
 
 struct GetDNSContext {
   getdns_context* context_ctx;
-  std::shared_ptr<std::mutex> context_mutex;
+  std::mutex context_mutex;
 };
 
 struct AsyncThreadUserData {
@@ -46,6 +46,8 @@ class WFResolver {
 public:
   WFResolver();
   ~WFResolver();
+  WFResolver(const WFResolver&) = delete;
+  WFResolver& operator=(const WFResolver&) = delete;
   void add_resolver(const std::string& address, int port);
   void set_request_timeout(uint64_t timeout);
   void set_num_contexts(unsigned int nc);
@@ -55,19 +57,19 @@ public:
 protected:
   void init_dns_contexts();
   bool create_dns_context(getdns_context **context);
-  bool get_dns_context(GetDNSContext& ret_ctx);
+  bool get_dns_context(std::shared_ptr<GetDNSContext>* ret_ctx);
   std::vector<std::string> do_lookup_address_by_name(getdns_context *context, const std::string& name, size_t num_retries);  
   std::vector<std::string> do_lookup_name_by_address(getdns_context *context, getdns_dict* addr_dict, size_t num_retries=0);
   std::vector<std::string> do_lookup_address_by_name_async(getdns_context *context, const std::string& name, size_t num_retries);  
   std::vector<std::string> do_lookup_name_by_address_async(getdns_context *context, getdns_dict* addr_dict, size_t num_retries=0);
 private:
   getdns_list* resolver_list;
-  uint64_t req_timeout;
-  std::shared_ptr<std::mutex> mutxp;
+  std::atomic<uint64_t> req_timeout;
+  std::mutex mutx;
   unsigned int num_contexts;
-  std::shared_ptr<std::vector<GetDNSContext>> contextsp;
-  std::shared_ptr<unsigned int> context_indexp;
+  std::vector<std::shared_ptr<GetDNSContext>> contexts;
+  std::atomic<unsigned int> context_index;
 };
 
 extern std::mutex resolv_mutx;
-extern std::map<std::string, WFResolver> resolvMap;
+extern std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;

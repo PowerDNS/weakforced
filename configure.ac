@@ -54,9 +54,9 @@ AC_SUBST([YAHTTP_LIBS], ['-L$(abs_top_builddir)/ext/yahttp/yahttp -lyahttp'])
 AC_SUBST([JSON11_CFLAGS], ['-I$(top_srcdir)/ext/json11'])
 AC_SUBST([JSON11_LIBS], ['-L$(abs_top_builddir)/ext/json11 -ljson11'])
 AC_SUBST([EXT_CFLAGS], ['-I$(top_srcdir)/ext'])
-AC_SUBST([EXT_LIBS], ['-L$(abs_top_builddir)/ext/ext -lext'])
+AC_SUBST([EXT_LIBS], ['$(abs_top_builddir)/ext/ext/libext.la'])
 AC_SUBST([WFORCE_CFLAGS], ['-I$(top_srcdir)'/common])
-AC_SUBST([WFORCE_LIBS], ['-L$(abs_top_builddir)/common -lweakforce'])
+AC_SUBST([WFORCE_LIBS], ['$(abs_top_builddir)/common/libweakforce.la'])
 # We need libcrypto for hash functions
 PDNS_CHECK_LIBCRYPTO
 # Check for LuaJIT first then Lua

@@ -319,7 +319,21 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   if (!multi_lua) {
     c_lua.writeFunction("scheduleBackgroundFunc", [bg_func_map](const std::string& cron_str, const std::string& func_name) {
 	g_bg_schedulerp->cron(cron_str, [func_name] {
-	    g_luamultip->background(func_name);
+	    try {
+	      g_luamultip->background(func_name);
+	    }
+	    catch(LuaContext::ExecutionErrorException& e) {
+	      try {
+		std::rethrow_if_nested(e);
+		errlog("Lua background function [%s] exception: %s", func_name, e.what());
+	      }
+	      catch (const std::exception& ne) {
+		errlog("Exception in background function [%s] exception: %s", func_name, ne.what());
+	      }
+	      catch (const WforceException& ne) {
+		errlog("Exception in background function [%s] exception: %s", func_name, ne.reason);
+	      }
+	    }
 	  });
       });
   }

@@ -42,6 +42,9 @@ wforce_LDADD = \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
 	$(YAMLCPP_LIBS)
 
+EXTRA_wforce_DEPENDENCIES = \
+	$(EXT_LIBS) $(WFORCE_LIBS)
+
 noinst_HEADERS = \
 	blacklist.hh \
 	wforce.hh \

@@ -89,7 +89,7 @@ cannot be called inside the report or background functions:
   thread uses a separate Lua Context, the number of which is set with
   setNumLuaStates(). Defaults to 4 if not specified. For example:
   
-		setNumSiblingThreads(2)
+		setNumSchedulerThreads(2)
 
 * setNumWebHookThreads(\<num threads\>) - Set the number of threads in
   the pool used to send webhook events. Defaults to 4 if not
@@ -130,6 +130,18 @@ cannot be called inside the report or background functions:
   scheduleBackgroundFunc() function.
 
 		setBackground("mybg", backgroundFunc)
+
+* scheduleBackgroundFunc(\<cron string\>, \<background function
+  name\>) - Tells trackalert to run the specified function according
+  to the given cron schedule (note the
+  name given in setBackground() is used, *not* the actual function
+  name). Note that cron ranges are not currently supported - if you
+  want to schedule the same function to run for example on two
+  different days of the week, then you would use two different calls
+  to this function to achieve that. For example:
+
+		scheduleBackgroundFunc("0 0 1 * *", "mybg")
+		scheduleBackgroundFunc("0 0 6 * *", "mybg")
 
 * setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
   Create a new custom REST endpoint with the given name, which when
@@ -342,18 +354,6 @@ configuration or within the allow/report/reset functions:
 * GeoIPRecord.latitude - The latitude, e.g. 37.386001586914
 
 * GeoIPRecord.longitude - The longitude, e.g. -122.08380126953
-
-* scheduleBackgroundFunc(\<cron string\>, \<background function
-  name\>) - Tells trackalert to run the specified function according
-  to the given cron schedule (note the
-  name given in setBackground() is used, *not* the actual function
-  name). Note that cron ranges are not currently supported - if you
-  want to schedule the same function to run for example on two
-  different days of the week, then you would use two different calls
-  to this function to achieve that. For example:
-
-		scheduleBackgroundFunc("0 0 1 * *", "mybg")
-		scheduleBackgroundFunc("0 0 6 * *", "mybg")
 
 * CustomFuncArgs - The only parameter to custom functions
   is a CustomFuncArgs table. This table contains the following fields:

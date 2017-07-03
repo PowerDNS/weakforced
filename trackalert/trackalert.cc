@@ -428,6 +428,8 @@ char* my_generator(const char* text, int state)
       "showCustomWebHooks()",
       "showPerfStats()",
       "showVersion()",
+      "showCustomEndpoints()",
+      "setCustomEndpoint(",
       "addWebHook(",
       "addCustomWebHook(",
       "setNumWebHookThreads("

@@ -26,6 +26,9 @@ trackalert_LDADD = \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
 	$(YAMLCPP_LIBS) $(GEOIP_LIBS)
 
+EXTRA_trackalert_DEPENDENCIES = \
+	$(EXT_LIBS) $(WFORCE_LIBS)
+
 noinst_HEADERS = \
 	trackalert.hh \
 	trackalert-luastate.hh \

@@ -487,7 +487,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("newDNSResolver", [](const std::string& name) { 
 	std::lock_guard<std::mutex> lock(resolv_mutx);
-	resolvMap.insert(std::make_pair(name, WFResolver()));
+	resolvMap.insert(std::make_pair(name, std::make_shared<WFResolver>()));
       });
   }
   else {
@@ -502,27 +502,27 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       if (it != resolvMap.end())
 	return it->second; // copy
       else
-	return WFResolver(); // copy
+	return std::make_shared<WFResolver>(); // copy
   });
   c_lua.registerFunction("lookupAddrByName", &WFResolver::lookup_address_by_name);
   c_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);
   c_lua.registerFunction("lookupRBL", &WFResolver::lookupRBL);
   // The following "show.." functions are mainly for regression tests
   if (!allow_report) {
-    c_lua.writeFunction("showAddrByName", [](WFResolver resolv, string name) {
-	std::vector<std::string> retvec = resolv.lookup_address_by_name(name, 1);
+    c_lua.writeFunction("showAddrByName", [](std::shared_ptr<WFResolver> resolvp, string name) {
+	std::vector<std::string> retvec = resolvp->lookup_address_by_name(name, 1);
 	boost::format fmt("%s %s\n");
 	for (const auto s : retvec) {
 	  g_outputBuffer += (fmt % name % s).str();
 	}
       });
   } else {
-    c_lua.writeFunction("showAddrByName", [](WFResolver resolv, string name) { });
+    c_lua.writeFunction("showAddrByName", [](std::shared_ptr<WFResolver> resolvp, string name) { });
   }
   
   if (!allow_report) {
-    c_lua.writeFunction("showNameByAddr", [](WFResolver resolv, ComboAddress address) {
-	std::vector<std::string> retvec = resolv.lookup_name_by_address(address, 1);
+    c_lua.writeFunction("showNameByAddr", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address) {
+	std::vector<std::string> retvec = resolvp->lookup_name_by_address(address, 1);
 	boost::format fmt("%s %s\n");
 	for (const auto s : retvec) {
 	  g_outputBuffer += (fmt % address.toString() % s).str();
@@ -530,12 +530,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   else {
-    c_lua.writeFunction("showNameByAddr", [](WFResolver resolv, ComboAddress address) { });
+    c_lua.writeFunction("showNameByAddr", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address) { });
   }
   
   if (!allow_report) {
-    c_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) {
-	std::vector<std::string> retvec = resolv.lookupRBL(address, rblname, 1);
+    c_lua.writeFunction("showRBL", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address, string rblname) {
+	std::vector<std::string> retvec = resolvp->lookupRBL(address, rblname, 1);
 	boost::format fmt("%s\n");
 	for (const auto s : retvec) {
 	  g_outputBuffer += (fmt % s).str();
@@ -543,7 +543,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });	
   }
   else {
-    c_lua.writeFunction("showRBL", [](WFResolver resolv, ComboAddress address, string rblname) { });    
+    c_lua.writeFunction("showRBL", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address, string rblname) { });    
   }
 #endif // HAVE_GETDNS
 

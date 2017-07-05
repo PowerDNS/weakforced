@@ -127,11 +127,11 @@ cannot be called inside the report or background functions:
 * setBackground(\<name\>, \<lua function\> - The setBackground
   function registers a background function with a given name. The name
   is used when scheduling the function using the
-  scheduleBackgroundFunc() function.
+  xxxScheduleBackgroundFunc() functions.
 
 		setBackground("mybg", backgroundFunc)
 
-* scheduleBackgroundFunc(\<cron string\>, \<background function
+* cronScheduleBackgroundFunc(\<cron string\>, \<background function
   name\>) - Tells trackalert to run the specified function according
   to the given cron schedule (note the
   name given in setBackground() is used, *not* the actual function
@@ -140,8 +140,19 @@ cannot be called inside the report or background functions:
   different days of the week, then you would use two different calls
   to this function to achieve that. For example:
 
-		scheduleBackgroundFunc("0 0 1 * *", "mybg")
-		scheduleBackgroundFunc("0 0 6 * *", "mybg")
+		cronScheduleBackgroundFunc("0 0 1 * *", "mybg")
+		cronScheduleBackgroundFunc("0 0 6 * *", "mybg")
+
+* intervalScheduleBackgroundFunc(\<duration string\>, \<background
+  function name\>) - Tells trackalert to run the specified function
+  at the interval given in duration string. The duration string is of
+  the format h[h][:mm][:ss], so for example "10" would indicate an
+  interval of 10 hours, "00:00:01" would indicate an interval of 1
+  second, and "5:01" would indicate an interval of 5 hours and 1
+  minute. For example:
+
+		intervalScheduleBackgroundFunc("00:30:00", "mybg") 
+		intervalScheduleBackgroundFunc("24", "mybg") 
 
 * setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
   Create a new custom REST endpoint with the given name, which when

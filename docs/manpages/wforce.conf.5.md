@@ -217,6 +217,14 @@ cannot be called inside the allow/report/reset functions:
   
 		blacklistPersistReplicated()
 
+* blacklistPersistConnectTimeout(<timeout secs>) - Set the connect
+  timeout for connecting to the persistent redis DB. If the timeout is
+  exceeded during connection at startup then wforce will exit,
+  otherwise during normal operation if the timeout is exceeded, an
+  error will be logged. For example:
+
+		blacklistPersistConnectTimeout(2)
+
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
   
@@ -452,7 +460,7 @@ configuration or within the allow/report/reset functions:
   
 		statsdb:twReset(lt.login)
 
-* infoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level the
+* infoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level t<he
   specified string, adding "key=value" strings to the log for all the
   kvs specified in the key-value map. For example:
   

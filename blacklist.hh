@@ -55,7 +55,7 @@ enum BLType { IP_BL=0, LOGIN_BL=1, IP_LOGIN_BL=2, NONE_BL=999 };
 
 class BlackListDB {
 public:  
-  BlackListDB() { redis_context = NULL; redis_port = 6379; }
+  BlackListDB() { redis_context = NULL; redis_port = 6379; redis_timeout=1; }
   BlackListDB(const BlackListDB&) = delete;
 
   void addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason);
@@ -93,6 +93,8 @@ public:
   std::vector<BlackListEntry> getIPEntries();
   std::vector<BlackListEntry> getLoginEntries();
   std::vector<BlackListEntry> getIPLoginEntries();
+
+  void setConnectTimeout(int timeout);
 private:
   struct TimeTag{};
   struct KeyTag{};
@@ -121,6 +123,7 @@ private:
   std::string redis_server;
   unsigned int redis_port;
   redisContext* redis_context;
+  std::atomic<int> redis_timeout;
   
   void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason);
   bool _checkEntry(const std::string& key, const blacklist_t& blacklist);

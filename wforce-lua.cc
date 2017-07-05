@@ -672,10 +672,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	g_bl_db.makePersistent(ip, port);
       });
     c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
+    c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) { g_bl_db.setConnectTimeout(timeout_secs); });
   }
   else {
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
+    c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
   }
   
   c_lua.registerMember("t", &LoginTuple::t);

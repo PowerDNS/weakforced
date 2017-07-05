@@ -415,13 +415,21 @@ void BlackListDB::expireEntryLog(BLType blt, const std::string& key)
   noticelog(os.str().c_str());
 }
 
+void BlackListDB::setConnectTimeout(int timeout)
+{
+  redis_timeout = timeout; // atomic
+}
+
 bool BlackListDB::checkSetupContext()
 {
   if (redis_context == NULL || redis_context->err) {
     if (redis_context)
       redisFree(redis_context);
     // something went wrong previously, try again
-    redis_context = redisConnect(redis_server.c_str(), redis_port);
+    struct timeval tv;
+    tv.tv_sec = redis_timeout;
+    tv.tv_usec = 0;
+    redis_context = redisConnectWithTimeout(redis_server.c_str(), redis_port, tv);
     if (redis_context == NULL || redis_context->err) {
       if (redis_context) {
 	redisFree(redis_context);
@@ -577,7 +585,9 @@ bool BlackListDB::loadPersistEntries()
     }
     else {
       retval = false;
-      errlog("Could not connect to configured persistent redis DB (%s:%d)", redis_server, redis_port);
+      std::string myerr = "Error - could not connect to configured persistent redis DB (" + redis_server + ":" + std::to_string(redis_port);
+      errlog(myerr.c_str());
+      throw WforceException(myerr);
     }
     if (retval == true)
       warnlog("Loaded %d blacklist entries from persistent redis DB", num_entries);

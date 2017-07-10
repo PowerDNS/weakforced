@@ -31,6 +31,7 @@
 #include "wforce-webserver.hh"
 #include "trackalert-web.hh"
 #include <fstream>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
@@ -317,7 +318,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("scheduleBackgroundFunc", [bg_func_map](const std::string& cron_str, const std::string& func_name) {
+    c_lua.writeFunction("cronScheduleBackgroundFunc", [bg_func_map](const std::string& cron_str, const std::string& func_name) {
 	g_bg_schedulerp->cron(cron_str, [func_name] {
 	    try {
 	      g_luamultip->background(func_name);
@@ -338,9 +339,55 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       });
   }
   else {
-    c_lua.writeFunction("scheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
+    c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("intervalScheduleBackgroundFunc", [bg_func_map](const std::string& duration_str, const std::string& func_name) {
+	std::stringstream ss(duration_str);
+	boost::posix_time::time_duration td;
+	if (ss >> td) {
+	  g_bg_schedulerp->interval(std::chrono::seconds(td.total_seconds()), [func_name] {
+	      try {
+		g_luamultip->background(func_name);
+	      }
+	      catch(LuaContext::ExecutionErrorException& e) {
+		try {
+		  std::rethrow_if_nested(e);
+		  errlog("Lua background function [%s] exception: %s", func_name, e.what());
+		}
+		catch (const std::exception& ne) {
+		  errlog("Exception in background function [%s] exception: %s", func_name, ne.what());
+		}
+		catch (const WforceException& ne) {
+		  errlog("Exception in background function [%s] exception: %s", func_name, ne.reason);
+		}
+	      }
+	    });
+	}
+	else {
+	  std::string errmsg = "Cannot parse duration string: " + duration_str;
+	  errlog(errmsg.c_str());
+	  throw WforceException(errmsg);
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("intervalScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
+  }
+
+  c_lua.writeFunction("durationToSeconds", [](const std::string& duration_str) {
+      std::stringstream ss(duration_str);
+	boost::posix_time::time_duration td;
+	if (ss >> td) {
+	  return td.total_seconds();
+	}
+	else {
+	  errlog("Cannot parse duration string: %s",duration_str);
+	  return 0;
+	}
+    });
+  
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
   c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
 

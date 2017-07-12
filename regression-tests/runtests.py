@@ -30,6 +30,7 @@ cmd2 = ("../wforce -C ./wforce2.conf -R ../regexes.yaml").split()
 webcmd = ("/usr/bin/python ./webhook_server.py").split()
 udpsinkcmd = ("/usr/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -C ./trackalert.conf").split()
+report_cmd = (".venv/bin/python ../report_api/runreport.py").split()
 
 # Now run wforce and the tests.
 print "Launching wforce (1 and 2)..."
@@ -43,6 +44,8 @@ udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
 udppid = udpproc.pid
 taproc = subprocess.Popen(ta_cmd, close_fds=True)
 tapid = taproc.pid
+reportproc = subprocess.Popen(report_cmd, close_fds=True)
+reportpid = reportproc.pid
 
 def sighandler(signum, frame):
     proc1.terminate()
@@ -55,6 +58,8 @@ def sighandler(signum, frame):
     udpproc.wait()
     taproc.terminate()
     taproc.wait()
+    reportproc.terminate()
+    reportproc.wait()
     subprocess.call(["/bin/stty", "sane"])
 
 signal.signal(signal.SIGINT, sighandler)
@@ -109,6 +114,8 @@ finally:
     udpproc.wait()
     taproc.terminate()
     taproc.wait()
+    reportproc.terminate()
+    reportproc.wait()
 
 subprocess.call(["/bin/stty", "sane"])
     

@@ -54,7 +54,7 @@ paths:
             $ref: "#/definitions/QueryParams"
       responses:
         "200":
-          description: "devices reponse"
+          description: "devices response"
           schema:
             $ref: "#/definitions/DevicesResponse"
         default:
@@ -94,14 +94,6 @@ definitions:
       confirm:
         description: "Boolean: true to confirm valid login, false to confirm invalid login"
         type: boolean
-      confirmDevice:
-        description: "Whether to consider the device used for this login also be valid (or invalid)"
-        type: boolean
-        default: false
-      logoutSession:
-        description: "Instruct the server to attempt to logout any session still associated with this login"
-        type: boolean
-        default: false
   QueryParams:
     type: object
     properties:
@@ -130,15 +122,10 @@ definitions:
     type: object
     required:
       - error_msg
-      - error_code
     properties:
-      error_code:
-        type: integer
-        format: int32
       error_msg:
         type: string
     example:
-      error_code: 3
       error_msg: "Could not parse max_age (-3dMwY)"
   LoginsResponse:
     type: object
@@ -165,11 +152,13 @@ definitions:
         description: "The 2-digit country code associated with the IP address"
         type: string
       login_datetime:
-        description: "The date, time and timezone of the login"
+        description: "The date, time and timezone of the login in ISO-8601 format"
         type: string
       device_id:
         description: "The string that the login device used to identify itself (could be empty)"
         type: string
+      device_attrs:
+        $ref: "#/definitions/DeviceObject"
       protocol:
         description: "The protocol used to login"
         type: string

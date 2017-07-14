@@ -154,16 +154,6 @@ try
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
     try {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      g_outputBuffer.clear();
-      auto ret=g_lua.executeCode<
-	boost::optional<
-	  boost::variant<
-	    string
-	    >
-	  >
-	>(line);
-
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
 	std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
@@ -175,16 +165,25 @@ try
 	    >
 	  >(line);
       }
+      {
+	std::lock_guard<std::mutex> lock(g_luamutex);
+	g_outputBuffer.clear();
+	auto ret=g_lua.executeCode<
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
 
-      if(ret) {
-	if (const auto strValue = boost::get<string>(&*ret)) {
-	  response=*strValue;
+	if(ret) {
+	  if (const auto strValue = boost::get<string>(&*ret)) {
+	    response=*strValue;
+	  }
 	}
+	else
+	  response=g_outputBuffer;
       }
-      else
-	response=g_outputBuffer;
-
-
     }
     catch(const LuaContext::WrongTypeException& e) {
       response = "Command returned an object we can't print: " +std::string(e.what()) + "\n";

@@ -156,8 +156,8 @@ try
     try {
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-	std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
-	it->lua_contextp->executeCode<	
+	std::lock_guard<std::mutex> lock((*it)->lua_mutex);
+	(*it)->lua_context.executeCode<	
 	  boost::optional<
 	    boost::variant<
 	      string
@@ -340,8 +340,8 @@ void doConsole()
       // execute the supplied lua code for all the allow/report lua states
       {
 	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-	  std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
-	  it->lua_contextp->executeCode<	
+	  std::lock_guard<std::mutex> lock((*it)->lua_mutex);
+	  (*it)->lua_context.executeCode<	
 	    boost::optional<
 	      boost::variant<
 		string
@@ -775,16 +775,16 @@ try
   
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
     // first setup defaults in case the config doesn't specify anything
-    it->allow_func = g_allow;
-    it->report_func = g_report;
-    it->reset_func = g_reset;
-    it->canon_func = g_canon;
-    setupLua(false, true, *(it->lua_contextp),
-	     it->allow_func,
-	     it->report_func,
-	     it->reset_func,
-	     it->canon_func,
-	     it->custom_func_map,
+    (*it)->allow_func = g_allow;
+    (*it)->report_func = g_report;
+    (*it)->reset_func = g_reset;
+    (*it)->canon_func = g_canon;
+    setupLua(false, true, (*it)->lua_context,
+	     (*it)->allow_func,
+	     (*it)->report_func,
+	     (*it)->reset_func,
+	     (*it)->canon_func,
+	     (*it)->custom_func_map,
 	     g_cmdLine.config);
   }
 

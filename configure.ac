@@ -13,14 +13,14 @@ PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 
 PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])])
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd], [AC_DEFINE([HAVE_LIBSYSTEMD], [1], [Define to 1 if you have libsystemd-dev])], [true])
 PKG_CHECK_MODULES([LIBHIREDIS], [libhiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have libhiredis-dev])], [true])
-AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
+AS_IF([test "x$LIBHIREDIS_LIBS" = "x"], [
   PKG_CHECK_MODULES([LIBHIREDIS], [hiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have hiredis])])
 ])
-AS_IF([test "x$LIBHIREDIS_LIBS" == "x"], [
+AS_IF([test "x$LIBHIREDIS_LIBS" = "x"], [
   AC_MSG_ERROR([libhiredis not found, libhiredis support is required])
 ])
 PDNS_CHECK_YAMLCPP([AC_DEFINE([HAVE_YAMLCPP], [1], [Define to 1 if you have yaml-cpp])], [true])
-AS_IF([test "x$YAMLCPP_LIBS" == "x"], [
+AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
@@ -35,17 +35,17 @@ BOOST_FILESYSTEM
 # Check for dependent programs
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)
-AS_IF([test "x$HAVE_WGET" == "x"], [
+AS_IF([test "x$HAVE_WGET" = "x"], [
   AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is required])
 ])
 AC_CHECK_PROG(DOCKER, docker-compose, docker-compose)
-AS_IF([test "x$HAVE_WGET" == "x"], [
+AS_IF([test "x$HAVE_WGET" = "x"], [
   AC_MSG_ERROR([docker-compose not found, and is required])
 ])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 # Look for protobuf
 PDNS_WITH_PROTOBUF
-AS_IF([test "x$PROTOBUF_LIBS" == "x" -o "x$PROTOC" == "x"], [
+AS_IF([test "x$PROTOBUF_LIBS" = "x" -o "x$PROTOC" = "x"], [
   AC_MSG_ERROR([Protobuf not found, protobuf support is required])
 ])
 # Setup variables for locally built libraries

@@ -44,7 +44,7 @@ std::map<std::string, WFResolver> resolvMap;
 WFResolver::WFResolver(): num_contexts(NUM_GETDNS_CONTEXTS)
 { 
   resolver_list = getdns_list_create(); 
-  req_timeout = DNS_REQUEST_TIMEOUT;
+  req_timeoutp = std::make_shared<uint64_t>(DNS_REQUEST_TIMEOUT);
   mutxp = std::make_shared<std::mutex>();
   contextsp = std::make_shared<std::vector<GetDNSContext>>();
   context_indexp = std::make_shared<unsigned int>(0);
@@ -56,7 +56,7 @@ WFResolver::~WFResolver()
 
 void WFResolver::set_request_timeout(uint64_t timeout)
 {
-  req_timeout = timeout;
+  *req_timeoutp = timeout;
 }
 
 void WFResolver::set_num_contexts(unsigned int nc)
@@ -108,7 +108,7 @@ bool WFResolver::create_dns_context(getdns_context **context)
       (getdns_context_set_resolution_type(*context, GETDNS_RESOLUTION_STUB)) ||
       (getdns_context_set_namespaces(*context, (size_t)1, &d_namespace)) ||
       (getdns_context_set_dns_transport(*context, GETDNS_TRANSPORT_UDP_FIRST_AND_FALL_BACK_TO_TCP)) ||
-      (getdns_context_set_timeout(*context, req_timeout)))
+      (getdns_context_set_timeout(*context, *req_timeoutp)))
     return false;
 
   if (*context && resolver_list) {

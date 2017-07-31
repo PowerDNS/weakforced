@@ -718,6 +718,11 @@ struct WFConnection {
     closeConnection = false;
     inConnectionThread = false;
   }
+  ~WFConnection()
+  {
+    if (g_verbose)
+      infolog("~WFConnection(): Destroying wfc fd=%d", fd);
+  }
   bool inConnectionThread;
   bool closeConnection;
   int fd;
@@ -776,7 +781,7 @@ static void connectionThread(int id, std::shared_ptr<WFConnection> wfc)
     infolog("Unparseable HTTP request from %s", wfc->remote.toStringWithPort());
     validRequest = false;
   } catch (NetworkError& e) {
-    warnlog("Network error in web server: %s", e.what());
+    warnlog("Network error in web server on fd=%d: %s", wfc->fd, e.what());
     validRequest = false;
   }
 

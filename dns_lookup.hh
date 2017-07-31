@@ -62,7 +62,7 @@ protected:
   std::vector<std::string> do_lookup_name_by_address_async(getdns_context *context, getdns_dict* addr_dict, size_t num_retries=0);
 private:
   getdns_list* resolver_list;
-  uint64_t req_timeout;
+  std::shared_ptr<uint64_t> req_timeoutp;
   std::shared_ptr<std::mutex> mutxp;
   unsigned int num_contexts;
   std::shared_ptr<std::vector<GetDNSContext>> contextsp;

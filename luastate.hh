@@ -50,8 +50,8 @@ extern CustomFuncMap g_custom_func_map;
 vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, const std::string& config);
 
 struct LuaThreadContext {
-  std::shared_ptr<LuaContext> lua_contextp;
-  std::shared_ptr<std::mutex> lua_mutexp;
+  LuaContext lua_context;
+  std::mutex lua_mutex;
   allow_t allow_func;
   report_t report_func;
   reset_t reset_func;
@@ -74,55 +74,55 @@ public:
 					 state_index(0)
   {
     for (unsigned int i=0; i<num_states; i++) {
-      LuaThreadContext ltc;
-      ltc.lua_contextp = std::make_shared<LuaContext>();
-      ltc.lua_mutexp = std::make_shared<std::mutex>();
-      lua_cv.push_back(ltc);
+      lua_cv.push_back(std::make_shared<LuaThreadContext>());
     }	
   }
 
+  LuaMultiThread(const LuaMultiThread&) = delete;
+  LuaMultiThread& operator=(const LuaMultiThread&) = delete;
+
   // these are used to setup the allow and report function pointers
-  std::vector<LuaThreadContext>::iterator begin() { return lua_cv.begin(); }
-  std::vector<LuaThreadContext>::iterator end() { return lua_cv.end(); }
+  std::vector<std::shared_ptr<LuaThreadContext>>::iterator begin() { return lua_cv.begin(); }
+  std::vector<std::shared_ptr<LuaThreadContext>>::iterator end() { return lua_cv.end(); }
 
   bool reset(const std::string& type, const std::string& login_value, const ComboAddress& ca_value) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
-    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
     // call the reset function
-    return lt_context.reset_func(type, login_value, ca_value);
+    return lt_context->reset_func(type, login_value, ca_value);
   }
 
   AllowReturn allow(const LoginTuple& lt) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
-    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
     // call the allow function
-    return lt_context.allow_func(lt);
+    return lt_context->allow_func(lt);
   }
 
   void report(const LoginTuple& lt) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
-    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
     // call the report function
-    lt_context.report_func(lt);
+    lt_context->report_func(lt);
   }
 
   std::string canonicalize(const std::string& login) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
-    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
     // call the canonicalize function
-    return lt_context.canon_func(login);
+    return lt_context->canon_func(login);
   }
 
   CustomFuncReturn custom_func(const std::string& command, const CustomFuncArgs& cfa, bool& reportSinkReturn) {
     auto lt_context = getLuaState();
     // lock the lua state mutex
-    std::lock_guard<std::mutex> lock(*(lt_context.lua_mutexp));
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
     // call the custom function
-    for (const auto& i : lt_context.custom_func_map) {
+    for (const auto& i : lt_context->custom_func_map) {
       if (command.compare(i.first) == 0) {
 	reportSinkReturn = i.second.c_reportSink;
 	return i.second.c_func(cfa);
@@ -132,7 +132,7 @@ public:
   }
   
 protected:
-  LuaThreadContext& getLuaState()
+  std::shared_ptr<LuaThreadContext> getLuaState()
   {
     std::lock_guard<std::mutex> lock(mutx);
     if (state_index >= num_states)
@@ -140,7 +140,7 @@ protected:
     return lua_cv[state_index++];
   }
 private:
-  std::vector<LuaThreadContext> lua_cv;
+  std::vector<std::shared_ptr<LuaThreadContext>> lua_cv;
   unsigned int num_states;
   unsigned int state_index;
   std::mutex mutx;

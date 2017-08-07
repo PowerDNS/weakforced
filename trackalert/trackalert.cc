@@ -158,20 +158,10 @@ try
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
     try {
-      std::lock_guard<std::mutex> lock(g_luamutex);
-      g_outputBuffer.clear();
-      auto ret=g_lua.executeCode<
-	boost::optional<
-	  boost::variant<
-	    string
-	    >
-	  >
-	>(line);
-
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-	std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
-	it->lua_contextp->executeCode<	
+	std::lock_guard<std::mutex> lock((*it)->lua_mutex);
+      (*it)->lua_context.executeCode<	
 	  boost::optional<
 	    boost::variant<
 	      string
@@ -179,16 +169,25 @@ try
 	    >
 	  >(line);
       }
+      {
+	std::lock_guard<std::mutex> lock(g_luamutex);
+	g_outputBuffer.clear();
+	auto ret=g_lua.executeCode<
+	  boost::optional<
+	    boost::variant<
+	      string
+	      >
+	    >
+	  >(line);
 
-      if(ret) {
-	if (const auto strValue = boost::get<string>(&*ret)) {
-	  response=*strValue;
+	if(ret) {
+	  if (const auto strValue = boost::get<string>(&*ret)) {
+	    response=*strValue;
+	  }
 	}
+	else
+	  response=g_outputBuffer;
       }
-      else
-	response=g_outputBuffer;
-
-
     }
     catch(const LuaContext::WrongTypeException& e) {
       response = "Command returned an object we can't print: " +std::string(e.what()) + "\n";
@@ -345,8 +344,8 @@ void doConsole()
       // execute the supplied lua code for all the allow/report lua states
       {
 	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
-	  std::lock_guard<std::mutex> lock(*(it->lua_mutexp));
-	  it->lua_contextp->executeCode<	
+	  std::lock_guard<std::mutex> lock((*it)->lua_mutex);
+	(*it)->lua_context.executeCode<	
 	    boost::optional<
 	      boost::variant<
 		string
@@ -598,12 +597,12 @@ try
   
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
     // first setup defaults in case the config doesn't specify anything
-    it->report_func = g_report;
-    setupLua(false, true, *(it->lua_contextp),
-	     it->report_func,
-	     &(it->bg_func_map),
-	     it->custom_func_map,
-	     g_cmdLine.config);
+    (*it)->report_func = g_report;
+    setupLua(false, true, (*it)->lua_context,
+      (*it)->report_func,
+      &((*it)->bg_func_map),
+      (*it)->custom_func_map,
+      g_cmdLine.config);
   }
 
   if(g_cmdLine.beDaemon) {

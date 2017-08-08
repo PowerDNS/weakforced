@@ -23,6 +23,7 @@
 #pragma once
 #include <time.h>
 #include "misc.hh"
+#include "lock.hh"
 #include "iputils.hh"
 #include <atomic>
 #include <mutex>
@@ -122,7 +123,7 @@ private:
   blacklist_t ip_blacklist;
   blacklist_t login_blacklist;
   blacklist_t ip_login_blacklist;
-  mutable std::mutex mutx;
+  mutable pthread_rwlock_t bl_rwlock = PTHREAD_RWLOCK_INITIALIZER;
   bool persist=false;
   bool persist_replicated=false;
   std::string redis_server;

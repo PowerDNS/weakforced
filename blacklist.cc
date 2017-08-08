@@ -70,7 +70,7 @@ void BlackListDB::addEntry(const ComboAddress& ca, const std::string& login, tim
 
 void BlackListDB::addEntryInternal(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason, bool replicate)
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  WriteLock wl(&bl_rwlock);
 
   switch (bl_type) {
   case IP_BL:
@@ -140,7 +140,7 @@ void BlackListDB::_addEntry(const std::string& key, time_t seconds, blacklist_t&
 
 bool BlackListDB::checkEntry(const ComboAddress& ca) const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock wl(&bl_rwlock);
   return ipbl_netmask.match(ca);
 }
 
@@ -156,7 +156,7 @@ bool BlackListDB::checkEntry(const ComboAddress& ca, const std::string& login) c
 
 bool BlackListDB::_checkEntry(const std::string& key, const blacklist_t& blacklist) const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
   
   auto& keyindex = blacklist.get<KeyTag>();
   auto kit = keyindex.find(key);
@@ -170,7 +170,7 @@ bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret) const
 {
   Netmask nm;
   {
-    std::lock_guard<std::mutex> lock(mutx);
+    ReadLock wl(&bl_rwlock);
     ipbl_netmask.lookup(ca, &nm);
   }
   return _getEntry(nm.toString(), ip_blacklist, ret);
@@ -188,7 +188,7 @@ bool BlackListDB::getEntry(const ComboAddress& ca, const std::string& login, Bla
 
 bool BlackListDB::_getEntry(const std::string& key, const blacklist_t& blacklist, BlackListEntry& ret_ble) const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
 
   auto& keyindex = blacklist.get<KeyTag>();
   auto kit = keyindex.find(key);
@@ -228,7 +228,7 @@ void BlackListDB::deleteEntry(const ComboAddress& ca, const std::string& login)
 
 void BlackListDB::deleteEntryInternal(const std::string& key, BLType bl_type, bool replicate)
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  WriteLock wl(&bl_rwlock);
 
   switch (bl_type) {
   case IP_BL:
@@ -329,7 +329,7 @@ inline time_t my_to_time_t(boost::posix_time::ptime pt)
 
 time_t BlackListDB::_getExpiration(const std::string& key, const blacklist_t& blacklist) const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
 
   auto& keyindex = blacklist.get<KeyTag>();
   auto kit = keyindex.find(key);
@@ -356,7 +356,7 @@ void BlackListDB::purgeEntries()
 
 void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_type)
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  WriteLock wl(&bl_rwlock);
   boost::system_time now = boost::get_system_time();
   
   auto& timeindex = blacklist.get<TimeTag>();
@@ -381,7 +381,7 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_ty
 
 std::vector<BlackListEntry> BlackListDB::getIPEntries() const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
   std::vector<BlackListEntry> ret;
 
   auto& seqindex = ip_blacklist.get<SeqTag>();  
@@ -392,7 +392,7 @@ std::vector<BlackListEntry> BlackListDB::getIPEntries() const
 
 std::vector<BlackListEntry> BlackListDB::getLoginEntries() const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
   std::vector<BlackListEntry> ret;
 
   auto& seqindex = login_blacklist.get<SeqTag>();  
@@ -403,7 +403,7 @@ std::vector<BlackListEntry> BlackListDB::getLoginEntries() const
 
 std::vector<BlackListEntry> BlackListDB::getIPLoginEntries() const
 {
-  std::lock_guard<std::mutex> lock(mutx);
+  ReadLock rl(&bl_rwlock);
   std::vector<BlackListEntry> ret;
 
   auto& seqindex = ip_login_blacklist.get<SeqTag>();  
@@ -525,7 +525,7 @@ bool BlackListDB::deletePersistEntry(const std::string& key, BLType bl_type, bla
 bool BlackListDB::loadPersistEntries()
 {
   bool retval = true;
-  std::lock_guard<std::mutex> lock(mutx);
+  WriteLock wl(&bl_rwlock);
   
   if (persist != false) {
     unsigned int num_entries = 0;

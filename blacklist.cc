@@ -39,9 +39,17 @@ std::string BlackListDB::ipLoginStr(const ComboAddress& ca, const std::string& l
   return ca.toString() + ":" + login;
 }
 
+void BlackListDB::addEntry(const Netmask& nm, time_t seconds, const std::string& reason)
+{
+  std::string key = nm.toStringNetwork();
+
+  addEntryInternal(key, seconds, IP_BL, reason, true);
+  addEntryLog(IP_BL, key, seconds, reason);
+}
+
 void BlackListDB::addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason)
 {
-  std::string key = ca.toString();
+  std::string key = Netmask(ca).toStringNetwork();
   
   addEntryInternal(key, seconds, IP_BL, reason, true);
   addEntryLog(IP_BL, key, seconds, reason);
@@ -67,6 +75,7 @@ void BlackListDB::addEntryInternal(const std::string& key, time_t seconds, BLTyp
   switch (bl_type) {
   case IP_BL:
     _addEntry(key, seconds, ip_blacklist, reason);
+    ipbl_netmask.addMask(key);
     addEntryLog(IP_BL, key, seconds, reason);
     if (persist && ((replicate == true) || ((replicate == false) && persist_replicated)))
       addPersistEntry(key, seconds, IP_BL, reason);
@@ -131,7 +140,8 @@ void BlackListDB::_addEntry(const std::string& key, time_t seconds, blacklist_t&
 
 bool BlackListDB::checkEntry(const ComboAddress& ca)
 {
-  return _checkEntry(ca.toString(), ip_blacklist);
+  std::lock_guard<std::mutex> lock(mutx);
+  return ipbl_netmask.match(ca);
 }
 
 bool BlackListDB::checkEntry(const std::string& login)
@@ -158,7 +168,12 @@ bool BlackListDB::_checkEntry(const std::string& key, const blacklist_t& blackli
 
 bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret)
 {
-  return _getEntry(ca.toString(), ip_blacklist, ret);
+  Netmask nm;
+  {
+    std::lock_guard<std::mutex> lock(mutx);
+    ipbl_netmask.lookup(ca, &nm);
+  }
+  return _getEntry(nm.toString(), ip_blacklist, ret);
 } 
 
 bool BlackListDB::getEntry(const std::string& login, BlackListEntry& ret)
@@ -185,9 +200,16 @@ bool BlackListDB::_getEntry(const std::string& key, blacklist_t& blacklist, Blac
   return false;
 }
 
+void BlackListDB::deleteEntry(const Netmask& nm)
+{
+  std::string key = nm.toStringNetwork();
+
+  deleteEntryInternal(key, IP_BL, true);
+}
+
 void BlackListDB::deleteEntry(const ComboAddress& ca)
 {
-  std::string key = ca.toString();
+  std::string key = Netmask(ca).toStringNetwork();
 
   deleteEntryInternal(key, IP_BL, true);
 }
@@ -212,6 +234,7 @@ void BlackListDB::deleteEntryInternal(const std::string& key, BLType bl_type, bo
   case IP_BL:
     deleteEntryLog(IP_BL, key);
     _deleteEntry(key, ip_blacklist);
+    ipbl_netmask.deleteMask(key);
     if (persist && ((replicate == true) || ((replicate == false) && persist_replicated))) {
       deletePersistEntry(key, bl_type, ip_blacklist);
     }
@@ -277,7 +300,9 @@ bool BlackListDB::_deleteEntry(const std::string& key, blacklist_t& blacklist)
 
 time_t BlackListDB::getExpiration(const ComboAddress& ca)
 {
-  return _getExpiration(ca.toString(), ip_blacklist);
+  Netmask nm;
+  ipbl_netmask.lookup(ca, &nm);
+  return _getExpiration(nm.toString(), ip_blacklist);
 }
 
 time_t BlackListDB::getExpiration(const std::string& login)
@@ -345,6 +370,8 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_ty
 	  g_webhook_runner.runHook("expirebl", hs, hook_data);
       }
       expireEntryLog(blt, tit->key);
+      if (bl_type == IP_BL)
+	ipbl_netmask.deleteMask(tit->key);
       tit = timeindex.erase(tit);
     }
     else
@@ -555,6 +582,7 @@ bool BlackListDB::loadPersistEntries()
 		    switch (bl_type) {
 		    case IP_BL:
 		      _addEntry(bl_key, bl_seconds, ip_blacklist, bl_reason);
+		      ipbl_netmask.addMask(bl_key);
 		      ++num_entries;
 		      break;
 		    case LOGIN_BL:

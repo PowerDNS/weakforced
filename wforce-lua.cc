@@ -655,6 +655,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       errlog(os.str().c_str());
     });
 
+    c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
+      g_bl_db.addEntry(nm, seconds, reason);
+    });
+  
   c_lua.writeFunction("blacklistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
       g_bl_db.addEntry(ca, seconds, reason);
     });
@@ -704,6 +708,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       }
     } );
 
+  c_lua.writeFunction("newNetmask", [](string address) {
+      try {
+	return Netmask(address);
+      }
+      catch (const WforceException& e) {
+	errlog("newNetmask() error parsing netmask [%s]. Use x.x.x.x/y notation.", address);
+	return Netmask();
+      }
+    } );
+  
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 
   c_lua.registerFunction<void(NetmaskGroup::*)(const std::string&)>("addMask", [](NetmaskGroup& nmg, const std::string& mask) {

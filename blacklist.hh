@@ -58,6 +58,7 @@ public:
   BlackListDB() { redis_context = NULL; redis_port = 6379; redis_timeout=1; }
   BlackListDB(const BlackListDB&) = delete;
 
+  void addEntry(const Netmask& nm, time_t seconds, const std::string& reason);
   void addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason);
   void addEntry(const std::string& login, time_t seconds, const std::string& reason);
   void addEntry(const ComboAddress& ca, const std::string& login, time_t seconds, const std::string& reason);
@@ -70,6 +71,7 @@ public:
   bool getEntry(const std::string& login, BlackListEntry& ret);
   bool getEntry(const ComboAddress& ca, const std::string& login, BlackListEntry& ret);
 
+  void deleteEntry(const Netmask& nm);
   void deleteEntry(const ComboAddress& ca);
   void deleteEntry(const std::string& login);
   void deleteEntry(const ComboAddress& ca, const std::string& login);
@@ -86,10 +88,12 @@ public:
   bool loadPersistEntries();
 
   void purgeEntries();
+
   static void purgeEntriesThread(BlackListDB* bl_db)
   {
     bl_db->purgeEntries();
   }
+
   std::vector<BlackListEntry> getIPEntries();
   std::vector<BlackListEntry> getLoginEntries();
   std::vector<BlackListEntry> getIPLoginEntries();
@@ -114,6 +118,7 @@ private:
 
   const char* bl_names[4] = { "ip_bl", "login_bl", "ip_login_bl", NULL };
   const char* key_names[4] = { "ip", "login", "ip_login", NULL };
+  NetmaskGroup ipbl_netmask;
   blacklist_t ip_blacklist;
   blacklist_t login_blacklist;
   blacklist_t ip_login_blacklist;

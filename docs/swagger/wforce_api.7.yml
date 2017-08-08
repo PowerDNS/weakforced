@@ -399,7 +399,7 @@ definitions:
         type: string
     example:
       ip: 127.0.0.1
-      expire: 3600
+      expire_secs: 3600
       reason: "Too many bad passwords"
   CustomError:
     required:

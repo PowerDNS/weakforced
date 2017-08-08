@@ -34,7 +34,7 @@
 
 BlackListDB g_bl_db;
 
-std::string BlackListDB::ipLoginStr(const ComboAddress& ca, const std::string& login)
+std::string BlackListDB::ipLoginStr(const ComboAddress& ca, const std::string& login) const
 {
   return ca.toString() + ":" + login;
 }
@@ -138,23 +138,23 @@ void BlackListDB::_addEntry(const std::string& key, time_t seconds, blacklist_t&
   blacklist.insert(bl);
 }
 
-bool BlackListDB::checkEntry(const ComboAddress& ca)
+bool BlackListDB::checkEntry(const ComboAddress& ca) const
 {
   std::lock_guard<std::mutex> lock(mutx);
   return ipbl_netmask.match(ca);
 }
 
-bool BlackListDB::checkEntry(const std::string& login)
+bool BlackListDB::checkEntry(const std::string& login) const
 {
   return _checkEntry(login, login_blacklist);
 }
 
-bool BlackListDB::checkEntry(const ComboAddress& ca, const std::string& login)
+bool BlackListDB::checkEntry(const ComboAddress& ca, const std::string& login) const
 {
   return _checkEntry(ipLoginStr(ca, login), ip_login_blacklist);
 }
 
-bool BlackListDB::_checkEntry(const std::string& key, const blacklist_t& blacklist)
+bool BlackListDB::_checkEntry(const std::string& key, const blacklist_t& blacklist) const
 {
   std::lock_guard<std::mutex> lock(mutx);
   
@@ -166,7 +166,7 @@ bool BlackListDB::_checkEntry(const std::string& key, const blacklist_t& blackli
   return false;
 }
 
-bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret)
+bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret) const
 {
   Netmask nm;
   {
@@ -176,17 +176,17 @@ bool BlackListDB::getEntry(const ComboAddress& ca, BlackListEntry& ret)
   return _getEntry(nm.toString(), ip_blacklist, ret);
 } 
 
-bool BlackListDB::getEntry(const std::string& login, BlackListEntry& ret)
+bool BlackListDB::getEntry(const std::string& login, BlackListEntry& ret) const
 {
   return _getEntry(login, login_blacklist, ret);
 } 
 
-bool BlackListDB::getEntry(const ComboAddress& ca, const std::string& login, BlackListEntry& ret)
+bool BlackListDB::getEntry(const ComboAddress& ca, const std::string& login, BlackListEntry& ret) const
 {
   return _getEntry(ipLoginStr(ca, login), ip_login_blacklist, ret);
 } 
 
-bool BlackListDB::_getEntry(const std::string& key, blacklist_t& blacklist, BlackListEntry& ret_ble)
+bool BlackListDB::_getEntry(const std::string& key, const blacklist_t& blacklist, BlackListEntry& ret_ble) const
 {
   std::lock_guard<std::mutex> lock(mutx);
 
@@ -298,19 +298,19 @@ bool BlackListDB::_deleteEntry(const std::string& key, blacklist_t& blacklist)
   return false;  
 }
 
-time_t BlackListDB::getExpiration(const ComboAddress& ca)
+time_t BlackListDB::getExpiration(const ComboAddress& ca) const
 {
   Netmask nm;
   ipbl_netmask.lookup(ca, &nm);
   return _getExpiration(nm.toString(), ip_blacklist);
 }
 
-time_t BlackListDB::getExpiration(const std::string& login)
+time_t BlackListDB::getExpiration(const std::string& login) const
 {
   return _getExpiration(login, login_blacklist);
 }
 
-time_t BlackListDB::getExpiration(const ComboAddress& ca, const std::string& login)
+time_t BlackListDB::getExpiration(const ComboAddress& ca, const std::string& login) const
 {
   return _getExpiration(ipLoginStr(ca, login), ip_login_blacklist);
 }
@@ -327,7 +327,7 @@ inline time_t my_to_time_t(boost::posix_time::ptime pt)
 #define TO_TIME_T boost::posix_time::to_time_t
 #endif
 
-time_t BlackListDB::_getExpiration(const std::string& key, blacklist_t& blacklist)
+time_t BlackListDB::_getExpiration(const std::string& key, const blacklist_t& blacklist) const
 {
   std::lock_guard<std::mutex> lock(mutx);
 
@@ -379,7 +379,7 @@ void BlackListDB::_purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_ty
   }
 }
 
-std::vector<BlackListEntry> BlackListDB::getIPEntries()
+std::vector<BlackListEntry> BlackListDB::getIPEntries() const
 {
   std::lock_guard<std::mutex> lock(mutx);
   std::vector<BlackListEntry> ret;
@@ -390,7 +390,7 @@ std::vector<BlackListEntry> BlackListDB::getIPEntries()
   return ret;
 }
 
-std::vector<BlackListEntry> BlackListDB::getLoginEntries()
+std::vector<BlackListEntry> BlackListDB::getLoginEntries() const
 {
   std::lock_guard<std::mutex> lock(mutx);
   std::vector<BlackListEntry> ret;
@@ -401,7 +401,7 @@ std::vector<BlackListEntry> BlackListDB::getLoginEntries()
   return ret;
 }
 
-std::vector<BlackListEntry> BlackListDB::getIPLoginEntries()
+std::vector<BlackListEntry> BlackListDB::getIPLoginEntries() const
 {
   std::lock_guard<std::mutex> lock(mutx);
   std::vector<BlackListEntry> ret;
@@ -412,7 +412,7 @@ std::vector<BlackListEntry> BlackListDB::getIPLoginEntries()
   return ret;
 }
 
-void BlackListDB::addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason)
+void BlackListDB::addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason) const
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
@@ -422,7 +422,7 @@ void BlackListDB::addEntryLog(BLType blt, const std::string& key, time_t seconds
   noticelog(os.str().c_str());
 }
 
-void BlackListDB::deleteEntryLog(BLType blt, const std::string& key)
+void BlackListDB::deleteEntryLog(BLType blt, const std::string& key) const
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
@@ -432,7 +432,7 @@ void BlackListDB::deleteEntryLog(BLType blt, const std::string& key)
   noticelog(os.str().c_str());
 }
 
-void BlackListDB::expireEntryLog(BLType blt, const std::string& key)
+void BlackListDB::expireEntryLog(BLType blt, const std::string& key) const
 {
   std::ostringstream os;
   std::string bl_name = string(bl_names[blt]);
@@ -623,7 +623,7 @@ bool BlackListDB::loadPersistEntries()
   return retval;
 }
 
-BLType BlackListDB::BLNameToType(const std::string& bl_name)
+BLType BlackListDB::BLNameToType(const std::string& bl_name) const
 {
   for (unsigned int i=0; key_names[i]!=NULL; i++) {
     if (bl_name.compare(key_names[i]) == 0)
@@ -632,7 +632,7 @@ BLType BlackListDB::BLNameToType(const std::string& bl_name)
   return NONE_BL;
 }
 
-std::string BlackListDB::BLTypeToName(BLType bl_type)
+std::string BlackListDB::BLTypeToName(BLType bl_type) const
 {
   return std::string(bl_names[bl_type]);
 }

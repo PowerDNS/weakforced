@@ -561,7 +561,10 @@ private:
   };
 
 public:
-  NetmaskTree() noexcept {
+  NetmaskTree() noexcept : d_cleanup_tree(false) {
+  }
+
+  NetmaskTree(bool cleanup) noexcept : d_cleanup_tree(cleanup) {
   }
 
   NetmaskTree(const NetmaskTree& rhs) {
@@ -741,12 +744,12 @@ public:
   }
   
   //<! Removes key from TreeMap. This optionally cleans up the tree.
-  void erase(const key_type& key, bool cleanup=false) {
+  void erase(const key_type& key) {
     TreeNode *node = root.get();
 
     // no tree, no value
     if ( node == nullptr ) return;
-    
+
     // exact same thing as above, except
     if (key.getNetwork().sin4.sin_family == AF_INET) {
       std::bitset<32> addr(be32toh(key.getNetwork().sin4.sin_addr.s_addr));
@@ -768,7 +771,7 @@ public:
 	    it++;
 	}
         node->node4.reset();
-	if (cleanup) cleanup_tree(node);
+	if (d_cleanup_tree) cleanup_tree(node);
       }
     } else {
       uint64_t* addr = (uint64_t*)key.getNetwork().sin6.sin6_addr.s6_addr;
@@ -794,7 +797,7 @@ public:
 	    it++;
 	}
         node->node6.reset();
-	if (cleanup) cleanup_tree(node);
+	if (d_cleanup_tree) cleanup_tree(node);
       }
     }
   }
@@ -837,6 +840,7 @@ public:
 private:
   std::unique_ptr<TreeNode> root; //<! Root of our tree
   std::vector<node_type*> _nodes; //<! Container for actual values
+  bool d_cleanup_tree; //<! Whether or not to cleanup the tree on erase
 };
 
 /** This class represents a group of supplemental Netmask classes. An IP address matchs
@@ -845,8 +849,15 @@ private:
 class NetmaskGroup
 {
 public:
-  //! If this IP address is matched by any of the classes within
+  //! By default, initialise the tree to cleanup
+  NetmaskGroup() noexcept : tree(true) {
+  }
 
+  //! This allows control over whether to cleanup or not
+  NetmaskGroup(bool cleanup) noexcept : tree(cleanup) {
+  }
+
+  //! If this IP address is matched by any of the classes within
   bool match(const ComboAddress *ip) const
   {
     const auto &ret = tree.lookup(*ip);
@@ -863,7 +874,7 @@ public:
   {
     const auto &ret = tree.lookup(*ip);
     if (ret) {
-      if (nmp) *nmp = ret->first;
+      if (nmp != nullptr) *nmp = ret->first;
       return ret->second;
     }
     return false;
@@ -893,11 +904,12 @@ public:
   //! Delete this Netmask from the list of possible matches
   void deleteMask(const Netmask& nm)
   {
-    tree.erase(nm, true);
+    tree.erase(nm);
   }
 
   void deleteMask(const std::string& ip)
   {
+    // This will not delete anything if ip is empty which is fine
     if (!ip.empty())
       deleteMask(Netmask(ip));
   }

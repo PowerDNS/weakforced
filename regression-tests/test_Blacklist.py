@@ -8,6 +8,47 @@ from test_helper import ApiTestCase
 
 class TestBlacklist(ApiTestCase):
 
+    def test_NetmaskBlacklist(self):
+        r = self.allowFunc('goodie', '193.168.72.14', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        r = self.addBLEntryNetmask("193.168.0.0/16", 10, "test blacklist")
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+
+        r = self.addBLEntryNetmask("2002:503:ba3e::/64", 10, "test blacklist")
+        j = r.json()
+        self.assertEquals(j['status'], 'ok')
+        
+        r = self.allowFunc('goodie', '193.168.72.14', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        r.close()
+
+        r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        r.close()
+
+        time.sleep(11);
+
+        r = self.allowFunc('goodie', '193.168.72.14', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+        
+        r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()        
+    
     def test_IPBlacklist(self):
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()

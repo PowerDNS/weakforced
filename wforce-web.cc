@@ -153,16 +153,24 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
   else {
     bool haveIP=false;
     bool haveLogin=false;
+    bool haveNetmask=false;
     unsigned int bl_seconds=0;
     std::string bl_reason;
     std::string en_login;
     ComboAddress en_ca;
+    Netmask en_nm;
 
     try {
       if (!msg["ip"].is_null()) {
 	string myip = msg["ip"].string_value();
 	en_ca = ComboAddress(myip);
+	en_nm = Netmask(myip);
 	haveIP = true;
+      }
+      if (!msg["netmask"].is_null()) {
+	string mynm = msg["netmask"].string_value();
+	en_nm = Netmask(mynm);
+	haveNetmask = true;
       }
       if (!msg["login"].is_null()) {
 	en_login = msg["login"].string_value();
@@ -196,11 +204,11 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
 	else
 	  g_bl_db.deleteEntry(en_login);
       }
-      else if (haveIP) {
+      else if (haveIP || haveNetmask) {
 	if (addCmd)
-	  g_bl_db.addEntry(en_ca, bl_seconds, bl_reason);
+	  g_bl_db.addEntry(en_nm, bl_seconds, bl_reason);
 	else
-	  g_bl_db.deleteEntry(en_ca);
+	  g_bl_db.deleteEntry(en_nm);
       }
     }
     catch (std::runtime_error& e) {

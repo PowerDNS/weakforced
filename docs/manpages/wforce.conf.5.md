@@ -316,6 +316,11 @@ configuration or within the allow/report/reset functions:
   
 		mystr = my_ca:tostring()
 
+* newNetmask(\<IP[/mask]\>) - Create and return an object representing
+a Netmask. For example:
+
+		my_nm = newNetmask("8.0.0.0/8")
+
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
   efficiently match IPs/subnets agagainst a range. For example:
 
@@ -491,6 +496,12 @@ configuration or within the allow/report/reset functions:
   with the (undocumented) -v flag (for verbose). For example:
   
 		debugLog("This will only log if wforce is started with -v", { logging=1, foo=bar })
+
+* blacklistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Blacklist the
+  specified netmask for expiry seconds, with the specified reason. Netmask
+  address must be a Netmask object, e.g. created with newNetmask(). For example:
+  
+		blacklistIP(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
 
 * blacklistIP(\<ip\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified IP for expiry seconds, with the specified reason. IP

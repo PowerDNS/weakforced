@@ -581,6 +581,7 @@ char* my_generator(const char* text, int state)
       "setNumWebHookThreads(",
       "blacklistPersistDB(",
       "blacklistPersistReplicated()",
+      "blacklistNetmask",
       "blacklistIP",
       "blacklistLogin",
       "blacklistIPLogin",

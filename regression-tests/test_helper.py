@@ -201,6 +201,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def addBLEntryNetmask(self, netmask, expire_secs, reason):
+        payload = dict()
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+    
     def addBLEntryIPPersist(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip

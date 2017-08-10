@@ -530,9 +530,9 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	std::string hook_data = jobj.dump();
 	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
 	  if (auto hs = h.lock()) {
-	    if (hs->hasConfigKey("ox_protect")) {
+	    if (hs->hasConfigKey("ox-protect")) {
 	      hook_data = genProtectHookData(jobj["request"],
-					     hs->getConfigKey("ox_protect"));
+					     hs->getConfigKey("ox-protect"));
 	    }
 	    if (allow_filter(hs, status))
 	      g_webhook_runner.runHook("allow", hs, hook_data);

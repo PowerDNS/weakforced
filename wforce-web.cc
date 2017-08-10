@@ -41,8 +41,12 @@
 #include "luastate.hh"
 #include "login_tuple.hh"
 #include "webhook.hh"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/date_time/gregorian/gregorian.hpp"
 
 using std::thread;
+using namespace boost::posix_time;
+using namespace boost::gregorian;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, vector<shared_ptr<Sibling>>>>> g_named_report_sinks;
@@ -397,6 +401,25 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }
 }
 
+std::string genProtectHookData(const Json& lt, const std::string& msg)
+{
+  Json::object jobj;
+
+  double dtime = lt["t"].number_value();
+  unsigned int isecs = (int)dtime;
+  unsigned int iusecs = (dtime - isecs) * 1000000;
+  
+  ptime t(date(1970,Jan,01), seconds(isecs)+microsec(iusecs));
+  jobj.insert(std::make_pair("timestamp", to_iso_extended_string(t)+"Z"));
+
+  jobj.insert(std::make_pair("user", lt["login"].string_value()));
+  jobj.insert(std::make_pair("device", lt["device_id"].string_value()));
+  jobj.insert(std::make_pair("ip", lt["remote"].string_value()));
+  jobj.insert(std::make_pair("message", msg));
+
+  return Json(jobj).dump();
+}
+
 bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
 {
   bool retval = false;
@@ -507,6 +530,10 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	std::string hook_data = jobj.dump();
 	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
 	  if (auto hs = h.lock()) {
+	    if (hs->hasConfigKey("ox_protect")) {
+	      hook_data = genProtectHookData(jobj["request"],
+					     hs->getConfigKey("ox_protect"));
+	    }
 	    if (allow_filter(hs, status))
 	      g_webhook_runner.runHook("allow", hs, hook_data);
 	  }

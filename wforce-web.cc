@@ -401,6 +401,8 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }
 }
 
+#define OX_PROTECT_NOTIFY 0
+
 std::string genProtectHookData(const Json& lt, const std::string& msg)
 {
   Json::object jobj;
@@ -416,6 +418,8 @@ std::string genProtectHookData(const Json& lt, const std::string& msg)
   jobj.insert(std::make_pair("device", lt["device_id"].string_value()));
   jobj.insert(std::make_pair("ip", lt["remote"].string_value()));
   jobj.insert(std::make_pair("message", msg));
+  jobj.insert(std::make_pair("code", OX_PROTECT_NOTIFY));
+  jobj.insert(std::make_pair("application", "wforce"));
 
   return Json(jobj).dump();
 }

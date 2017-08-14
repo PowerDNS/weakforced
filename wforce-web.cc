@@ -76,10 +76,12 @@ void reportLog(const LoginTuple& lt)
   }
 }
 
+bool g_allowlog_verbose = false;
+
 void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const std::vector<pair<std::string, std::string>>& kvs) 
 {
   std::ostringstream os;
-  if ((retval != 0) || ((retval == 0) && (g_verbose))) {
+  if ((retval != 0) || g_allowlog_verbose) {
     os << "allowLog " << msg << ": ";
     os << "allow=\"" << retval << "\" ";
     os << "remote=\"" << lt.remote.toString() << "\" ";
@@ -94,12 +96,16 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
     }
     os << "}";
   }
-  // only log at notice if login was rejected or tarpitted
-  if ((retval == 0) && g_verbose) {
+  if ((retval == 0) && (!g_allowlog_verbose)) {
+    // do not log if retval == 0 and not verbose
+  }
+  else if ((retval == 0) && g_allowlog_verbose) {
     infolog(os.str().c_str());
   }
-  else
+  else {
+    // only log at notice if login was rejected or tarpitted
     noticelog(os.str().c_str());
+  }
 }
 
 void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, json11::Json::array& my_entries)

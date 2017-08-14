@@ -91,7 +91,7 @@ before_script:
  - sudo gunzip /usr/share/GeoIP/GeoIPCity.dat.gz
 script:
  - autoreconf -i
- - ./configure --enable-docker CC=$MYCC CXX=$MYCXX
+ - ./configure --enable-docker --enable-trackalert CC=$MYCC CXX=$MYCXX
  - make
  - cd regression-tests
  - ./runtests
@@ -109,7 +109,7 @@ script:
  - cd ..
  - mkdir build
  - cd build
- - ../wforce-$WF_VERSION/configure CC=$MYCC CXX=$MYCXX
+ - ../wforce-$WF_VERSION/configure --enable-trackalert CC=$MYCC CXX=$MYCXX
  - make
  - cd ..
  - make distcheck

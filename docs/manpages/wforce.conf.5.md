@@ -279,6 +279,13 @@ cannot be called inside the allow/report/reset functions:
 		-- report sinks
 		-- setCustomEndpoint("custom", true, custom)
 
+* setVerboseAllowLog() - When logging allow requests, for performance
+  reaons, allow requests returning 0 will not be logged by default. In
+  order to log allow requests returning 0, use this function. For
+  example:
+
+		setVerboseAllowLog()
+
 # GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 

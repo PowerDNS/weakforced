@@ -6,7 +6,10 @@ UAP_REGEX_FILE=regexes.yaml
 if WITH_DOCKER
 BUILD_DOCKER = docker
 endif
-SUBDIRS=ext docs common trackalert $(BUILD_DOCKER)
+if WITH_TRACKALERT
+BUILD_TRACKALERT = trackalert
+endif
+SUBDIRS=ext docs common $(BUILD_TRACKALERT) $(BUILD_DOCKER)
 
 EXTRA_DIST= wforce.conf README.md wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 

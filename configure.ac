@@ -90,6 +90,14 @@ AC_ARG_ENABLE([docker],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
 esac],[docker=false])
 AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
+AC_ARG_ENABLE([trackalert],
+[  --enable-trackalert         Build trackalert],
+[case "${enableval}" in
+  yes) trackalert=true ;;
+  no)  trackalert=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-trackalert]) ;;
+esac],[trackalert=false])
+AM_CONDITIONAL([WITH_TRACKALERT], [test x$trackalert = xtrue])
 AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/ext/Makefile

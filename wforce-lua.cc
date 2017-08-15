@@ -655,7 +655,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       errlog(os.str().c_str());
     });
 
-    c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
+  if (!allow_report) {
+    c_lua.writeFunction("setVerboseAllowLog()", []() {
+	g_allowlog_verbose = true;
+      });
+  }
+  else {
+    c_lua.writeFunction("setVerboseAllowLog()", []() { });
+  }
+
+  c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
       g_bl_db.addEntry(nm, seconds, reason);
     });
   

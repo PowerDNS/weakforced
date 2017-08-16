@@ -561,13 +561,13 @@ private:
   };
 
 public:
-  NetmaskTree() noexcept : d_cleanup_tree(false) {
+  NetmaskTree() noexcept : NetmaskTree(false) {
   }
 
   NetmaskTree(bool cleanup) noexcept : d_cleanup_tree(cleanup) {
   }
 
-  NetmaskTree(const NetmaskTree& rhs) {
+  NetmaskTree(const NetmaskTree& rhs) : d_cleanup_tree(rhs.d_cleanup_tree) {
     // it is easier to copy the nodes than tree.
     // also acts as handy compactor
     for(auto const& node: rhs._nodes)
@@ -850,7 +850,7 @@ class NetmaskGroup
 {
 public:
   //! By default, initialise the tree to cleanup
-  NetmaskGroup() noexcept : tree(true) {
+  NetmaskGroup() noexcept : NetmaskGroup(true) {
   }
 
   //! This allows control over whether to cleanup or not

@@ -1,6 +1,6 @@
 { 
     "template" : "logstash-wforce*",
-    "settings" : { "index.refresh_interval" : "60s" },
+    "settings" : { "index.refresh_interval" : "5s" },
     "mappings" : {
         "_default_" : {
             "_all" : { "enabled" : false },

@@ -10,6 +10,15 @@ DAEMON = os.environ.get('DAEMON', 'authoritative')
 
 
 class ApiTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """On inherited classes, run our `setUp` method"""
+        if cls is not ApiTestCase and cls.setUp is not ApiTestCase.setUp:
+            orig_setUp = cls.setUp
+            def setUpOverride(self, *args, **kwargs):
+                ApiTestCase.setUp(self)
+                return orig_setUp(self, *args, **kwargs)
+            cls.setUp = setUpOverride
 
     def setUp(self):
         # TODO: config
@@ -22,6 +31,9 @@ class ApiTestCase(unittest.TestCase):
         self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
+
+        self.report_server_port = 5000
+        self.report_server_url = 'http://%s:%s' % (self.server_address, self.report_server_port)
         
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))
@@ -86,24 +98,29 @@ class ApiTestCase(unittest.TestCase):
                 headers={'Content-Type': 'application/json'})
 
     def reportFunc(self, login, remote, pwhash, success):
-        return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, False)
+        return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, "", "", False)
 
     def reportFuncReplica(self, login, remote, pwhash, success):
-        return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, True)
+        return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, "", "", True)
     
     def reportFuncAttrs(self, login, remote, pwhash, success, attrs):
-        return self.reportFuncAttrsInternal(login, remote, pwhash, success, attrs, False)
+        return self.reportFuncAttrsInternal(login, remote, pwhash, success, attrs, "", "", False)
+
+    def reportFuncDeviceProtocol(self, login, remote, pwhash, success, device_id, protocol):
+        return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, device_id, protocol, False)
 
     def reportFuncAttrsReplica(self, login, remote, pwhash, success, attrs):
-        return self.reportFuncAttrsInternal(login, remote, pwhash, success, attrs, True)
+        return self.reportFuncAttrsInternal(login, remote, pwhash, success, attrs, "", "", True)
 
-    def reportFuncAttrsInternal(self, login, remote, pwhash, success, attrs, replica):
+    def reportFuncAttrsInternal(self, login, remote, pwhash, success, attrs, device_id, protocol, replica):
         payload = dict()
         payload['login'] = login
         payload['remote'] = remote
         payload['pwhash'] = pwhash
         payload['success'] = success
         payload['attrs'] = attrs
+        payload['device_id'] = device_id
+        payload['protocol'] = protocol
         if not replica:
             return self.session.post(
                 self.url("/?command=report"),
@@ -280,6 +297,12 @@ class ApiTestCase(unittest.TestCase):
             self.url("/?command=getDBStats"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
+
+    def reportAPI(self, path, attrs):
+        return self.session.post(
+            self.report_url(path),
+            data=json.dumps(attrs),
+            headers={'Content-Type': 'application/json'}, auth=('foo', 'secret'))
     
     def url(self, relative_url):
         return urlparse.urljoin(self.server1_url, relative_url)
@@ -292,6 +315,9 @@ class ApiTestCase(unittest.TestCase):
 
     def ta_url(self, relative_url):
         return urlparse.urljoin(self.ta_server_url, relative_url)
+
+    def report_url(self, relative_url):
+        return urlparse.urljoin(self.report_server_url, relative_url)
     
     def assert_success_json(self, result):
         try:

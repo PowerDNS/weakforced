@@ -354,13 +354,12 @@ definitions:
         type: string
         enum:
           - http
-          - https
           - imap
-          - imaps
           - pop
-          - pops
           - smtp
-          - smtps
+          - mobileapi
+      tls:
+        type: boolean
       device_id:
         type: string
       attrs:
@@ -370,6 +369,8 @@ definitions:
       remote: 192.168.1.2
       pwhash: cc04
       success: true
+      protocol: http
+      tls: true
       attrs: { "foo":"bar" }
   ResetStatsParams:
     properties:

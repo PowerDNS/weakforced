@@ -3,7 +3,7 @@
  * Copyright -- PowerDNS.COM B.V. and its contributors
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of version 2 of the GNU General Public License as
+ * it under the terms of version 3 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * In addition, for the avoidance of any doubt, permission is granted to

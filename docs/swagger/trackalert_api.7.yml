@@ -6,8 +6,8 @@ info:
   contact:
     name: "Dovecot Oy"
   license:
-    name: "GPL2"
-    url: http://github.com/PowerDNS/weakforced/master/LICENSE
+    name: "GPL3"
+    url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
 host: "doesnotexist.dovecot.fi"
 basePath: "/"
 schemes:

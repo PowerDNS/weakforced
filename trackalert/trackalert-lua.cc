@@ -272,7 +272,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   c_lua.registerMember("device_id", &LoginTuple::device_id);
   c_lua.registerMember("device_attrs", &LoginTuple::device_attrs);
 
-  c_lua.registerFunction("tostring", &ComboAddress::toString);
+  c_lua.registerFunction<string(ComboAddress::*)()>("tostring", [](const ComboAddress& ca) { return ca.toString(); });
+
   c_lua.writeFunction("newCA", [](string address) {
       try {
 	return ComboAddress(address);
@@ -380,11 +381,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       std::stringstream ss(duration_str);
 	boost::posix_time::time_duration td;
 	if (ss >> td) {
-	  return td.total_seconds();
+	  return (long)td.total_seconds();
 	}
 	else {
 	  errlog("Cannot parse duration string: %s",duration_str);
-	  return 0;
+	  return (long)0;
 	}
     });
   

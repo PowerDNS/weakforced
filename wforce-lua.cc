@@ -706,7 +706,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("device_id", &LoginTuple::device_id);
   c_lua.registerMember("device_attrs", &LoginTuple::device_attrs);
 
-  c_lua.registerFunction("tostring", &ComboAddress::toString);
+  c_lua.registerFunction<string(ComboAddress::*)()>("tostring", [](const ComboAddress& ca) { return ca.toString(); });
+
   c_lua.writeFunction("newCA", [](string address) {
       try {
 	return ComboAddress(address);

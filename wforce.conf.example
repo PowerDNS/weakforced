@@ -86,30 +86,30 @@ initGeoIPDB()
 -- The report function is used to store custom stats
 -- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function report(lt)
-        local sdb = getStringStatsDB("OneHourDB")
-        local sdb_day = getStringStatsDB("24HourDB")
-        local cur_ct = lookupCountry(lt.remote)
-
-	-- A note on keys: You can use strings or ComboAddresses.
-	-- You can specify a separate ipv4 and v6 netmasks for the DB, which will be used for all ComboAddress keys, thus allowing aggregation of IP stats
-	-- Example for IPv4 addresses: sdb:twSetv4Prefix(24) 
-	-- Example for IPv6 addresses: sdb:twSetv6Prefix(64)
-	-- twAdd() is the generic way to add things to the stats bucket. For integers it does addition
-	sdb:twAdd(lt.login, "countLogins", 1)
-	sdb:twAdd(lt.remote, "countLogins", 1)
-	sdb:twAdd(lt.login, "diffPasswords", lt.pwhash)
-	sdb:twAdd(lt.login, "diffIPs", lt.remote)
-	sdb_day:twAdd(lt.login, "countryCount", cur_ct)
-
-	-- look for things in device_attrs
-	if (not ((lt.device_attrs["os.family"] == "") or
-		  (lt.device_attrs["os.family"] == nil)))
-	then
-	   -- store the os family
-	   sdb:twAdd(lt.login, "osCount", lt.device_attrs["os.family"])
-	end
-
-	-- twSub() can be used for the integer type. It does what you expect
+   local sdb = getStringStatsDB("OneHourDB")
+   local sdb_day = getStringStatsDB("24HourDB")
+   local cur_ct = lookupCountry(lt.remote)
+   
+   -- A note on keys: You can use strings or ComboAddresses.
+   -- You can specify a separate ipv4 and v6 netmasks for the DB, which will be used for all ComboAddress keys, thus allowing aggregation of IP stats
+   -- Example for IPv4 addresses: sdb:twSetv4Prefix(24)
+   -- Example for IPv6 addresses: sdb:twSetv6Prefix(64)
+   -- twAdd() is the generic way to add things to the stats bucket. For integers it does addition
+   sdb:twAdd(lt.login, "countLogins", 1)
+   sdb:twAdd(lt.remote, "countLogins", 1)
+   sdb:twAdd(lt.login, "diffPasswords", lt.pwhash)
+   sdb:twAdd(lt.login, "diffIPs", lt.remote)
+   sdb_day:twAdd(lt.login, "countryCount", cur_ct)
+   
+   -- look for things in device_attrs
+   if (not ((lt.device_attrs["os.family"] == "") or
+             (lt.device_attrs["os.family"] == nil)))
+   then
+      -- store the os family
+      sdb:twAdd(lt.login, "osCount", lt.device_attrs["os.family"])
+   end
+   
+   -- twSub() can be used for the integer type. It does what you expect
 end
 
 -- initialise some DNS lookup objects
@@ -124,114 +124,114 @@ rblresolv:addResolver("127.0.0.1", 5353)
 
 -- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function allow(lt)
-	local sdb = getStringStatsDB("OneHourDB")
-	local sdb_day = getStringStatsDB("24HourDB")
-	local resolv = getDNSResolver("Resolv")
-	local rblresolv = getDNSResolver("RBLResolv")
+   local sdb = getStringStatsDB("OneHourDB")
+   local sdb_day = getStringStatsDB("24HourDB")
+   local resolv = getDNSResolver("Resolv")
+   local rblresolv = getDNSResolver("RBLResolv")
+   
+   -- look for things in device_attrs
+   if (lt.device_attrs["os.family"] == "iOS")
+   then
+      -- do something special for iOS
+   end
+   
+   if (bulkRetrievers:match(lt.remote))
+   then
+      -- Must return 4 args - <return value>, <return msg>, <log msg>, <log key values>
+      return 0, "bulkRetrievers", "bulkRetrievers", { bulkRetrievers=1 }
+   end
+   
+   -- check optional attrs for things that indicate badness
+   for k, v in pairs(lt.attrs) do
+      if ((k == "accountStatus") and (v == "blocked"))
+      then
+         return -1, "account blocked", "account blocked", { accountStatus="blocked" }
+      end
+   end
+   -- attrs can be multi-valued, in which case they will appear in attrs_mv automagically
+   for k, v in pairs(lt.attrs_mv) do
+      for i, vi in ipairs(v) do
+         if ((k == "countryList") and (vi == "Blockmestan"))
+         then
+            return -1, "blocked country list", "blocked country list", { countryList="Blockmestan" }
+         end
+      end
+   end
+   
+   -- Example GeoIP lookup
+   if (lookupCountry(lt.remote) == "XX")
+   then
+      return -1, "country blocked", "country blocked", { remoteCountry="XX" }
+   end
+   -- You can also lookup ISP names:
+   -- lookupISP(lt.remote)
+   -- And more detailed information like city/lat/long:
+   -- gip_record = lookupCity(lt.remote)
+   -- local my_city = gip_record.city
 
-	-- look for things in device_attrs
-	if (lt.device_attrs["os.family"] == "iOS")
-	then
-	  -- do something special for iOS
-	end
-
-	if (bulkRetrievers:match(lt.remote))
-	then
-		-- Must return 4 args - <return value>, <return msg>, <log msg>, <log key values>
-		return 0, "bulkRetrievers", "bulkRetrievers", { bulkRetrievers=1 }
-	end
-
-	-- check optional attrs for things that indicate badness
-        for k, v in pairs(lt.attrs) do
-             if ((k == "accountStatus") and (v == "blocked"))
-             then
-		return -1, "account blocked", "account blocked", { accountStatus="blocked" }
-             end
-        end
-	-- attrs can be multi-valued, in which case they will appear in attrs_mv automagically
-        for k, v in pairs(lt.attrs_mv) do
-             for i, vi in ipairs(v) do
-                  if ((k == "countryList") and (vi == "Blockmestan"))
-                  then
-			return -1, "blocked country list", "blocked country list", { countryList="Blockmestan" }
-                  end
-              end
-        end
-	
-	-- Example GeoIP lookup
-	if (lookupCountry(lt.remote) == "XX")
-	then
-		return -1, "country blocked", "country blocked", { remoteCountry="XX" }
-	end
-	-- You can also lookup ISP names:
-	  -- lookupISP(lt.remote)
-	-- And more detailed information like city/lat/long:
-	  -- gip_record = lookupCity(lt.remote)
-	  -- local my_city = gip_record.city
-
-	-- Example DNS lookups
-	local dnames = resolv:lookupNameByAddr(lt.remote)
-	for i, dname in ipairs(dnames) do
-	    if (string.match(dname, "XXX"))
-	    then
-		return -1, "Reverse IP", "Reverse IP", { ptrContains="XXX" }
-	    end
-	end
-
-	dnames = rblresolv:lookupRBL(lt.remote, "sbl.spamhaus.org")
-	for i, dname in ipairs(dnames) do
-	    if (string.match(dname, "127.0.0.2"))
-	    then
-		-- tarpit the connection
-	    	return 5, "RBL", "RBL", { spamhaus=1 }
-	    end
-	end
-
-	-- twGet() returns the "sum" of all the values over all the time windows. 
-	-- For integer and countmin types, this is just a sum. For HLL, it's a union.
-	if (sdb:twGet(lt.login, "diffPasswords") > 90)
-	then
-		-- blacklist the login for 300 seconds
-		blackistLogin(lt.login, 300, "too many different incorrect password attempts")
-		return -1, "too many different password attempts for this account", "diffPasswords", { diffPasswords=90 }
-	end
-
-	-- If user is logging in from multiple IPs and we haven't seen this country in the last 24 hours then reject
-	local cur_ct = lookupCountry(lt.remote)
-	if ((sdb:twGet(lt.login, "diffIPs") > 5) and (sdb_day.twGet(lt.login, "countryCount", cur_ct) < 2))
-	then
-		return -1, "Too many IPs and countries", "diffIPs", { diffIPs=5, countryCount24Hrs=1, country=cur_ct }
-	end
-
-	-- We also have:
-	--		 twGetCurrent() which returns the value for the current window 
-	--		 twGetWindows() which returns a table with all window values - the first item in the list is the "current" window. The last is the "oldest" window.
-
-	-- return must have these 4 arguments
-	return 0, "allowed", "allowed", {}
+   -- Example DNS lookups
+   local dnames = resolv:lookupNameByAddr(lt.remote)
+   for i, dname in ipairs(dnames) do
+      if (string.match(dname, "XXX"))
+      then
+         return -1, "Reverse IP", "Reverse IP", { ptrContains="XXX" }
+      end
+   end
+   
+   dnames = rblresolv:lookupRBL(lt.remote, "sbl.spamhaus.org")
+   for i, dname in ipairs(dnames) do
+      if (string.match(dname, "127.0.0.2"))
+      then
+         -- tarpit the connection
+         return 5, "RBL", "RBL", { spamhaus=1 }
+      end
+   end
+   
+   -- twGet() returns the "sum" of all the values over all the time windows. 
+   -- For integer and countmin types, this is just a sum. For HLL, it's a union.
+   if (sdb:twGet(lt.login, "diffPasswords") > 90)
+   then
+      -- blacklist the login for 300 seconds
+      blackistLogin(lt.login, 300, "too many different incorrect password attempts")
+      return -1, "too many different password attempts for this account", "diffPasswords", { diffPasswords=90 }
+   end
+   
+   -- If user is logging in from multiple IPs and we haven't seen this country in the last 24 hours then reject
+   local cur_ct = lookupCountry(lt.remote)
+   if ((sdb:twGet(lt.login, "diffIPs") > 5) and (sdb_day.twGet(lt.login, "countryCount", cur_ct) < 2))
+   then
+      return -1, "Too many IPs and countries", "diffIPs", { diffIPs=5, countryCount24Hrs=1, country=cur_ct }
+   end
+   
+   -- We also have:
+   --		 twGetCurrent() which returns the value for the current window 
+   --		 twGetWindows() which returns a table with all window values - the first item in the list is the "current" window. The last is the "oldest" window.
+   
+   -- return must have these 4 arguments
+   return 0, "allowed", "allowed", {}
 end
 
 -- Use this function to reset stats if needed for particular IPs, logins or both
 function reset(type, login, ip)
-	 local sdb = getStringStatsDB("OneHourDB")
-	 local sdb_day = getStringStatsDB("24HourDB")
-	 if (string.find(type, "ip"))
-	 then
-		sdb:twReset(ip)
-		-- if you set a non-default prefix for IP addresses, then reset will not necessarily do what you expect
-		-- for example if v4Prefix==24 and you reset an IP address it will reset the stats for all IPs in that range
-	 end
-	 if (string.find(type, "login"))
-	 then
-		-- we do not actually set any login-only keys
-		sdb:twReset(login)
-		sdb_day:twReset(login)
-	 end
-	 if (string.find(type, "ip") and string.find(type, "login"))
-	 then
-		-- we do not set any compound keys in this policy
-	 end
-	 return true
+   local sdb = getStringStatsDB("OneHourDB")
+   local sdb_day = getStringStatsDB("24HourDB")
+   if (string.find(type, "ip"))
+   then
+      sdb:twReset(ip)
+      -- if you set a non-default prefix for IP addresses, then reset will not necessarily do what you expect
+      -- for example if v4Prefix==24 and you reset an IP address it will reset the stats for all IPs in that range
+   end
+   if (string.find(type, "login"))
+   then
+      -- we do not actually set any login-only keys
+      sdb:twReset(login)
+      sdb_day:twReset(login)
+   end
+   if (string.find(type, "ip") and string.find(type, "login"))
+   then
+      -- we do not set any compound keys in this policy
+   end
+   return true
 end
 
 setReport(report)
@@ -242,9 +242,9 @@ function custom(args)
    for k,v in pairs(args.attrs) do
       infoLog("custom func argument attrs", { key=k, value=v });
    end
-
+   
    runCustomWebHook("mycustomhook", "{ \"foo\":\"bar\" }")
-
+   
    -- return consists of a boolean, followed by { key-value pairs }
    return true, { key=value }
 end

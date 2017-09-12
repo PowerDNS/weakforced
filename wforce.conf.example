@@ -29,10 +29,10 @@ setNumSiblingThreads(2)
 setNumWebHookThreads(2)
 
 -- Register a webhook for "report" events
-config_keys={}
+local config_keys={}
 config_keys["url"] = "http://localhost:8080/webhook/regression"
 config_keys["secret"] = "verysecretcode"
-events = { "report" }
+local events = { "report" }
 addWebHook(events, config_keys)
 
 -- Register a custom webhook for custom events
@@ -43,7 +43,7 @@ config_keys["secret"] = "verysecretcustomcode"
 -- config_keys["content-type"] = "text/plain"
 addCustomWebHook("mycustomhook", config_keys)
 
-bulkRetrievers = newNetmaskGroup()
+local bulkRetrievers = newNetmaskGroup()
 bulkRetrievers:addMask("130.161.0.0/16")
 bulkRetrievers:addMask("145.132.0.0/16")
 
@@ -52,7 +52,7 @@ bulkRetrievers:addMask("145.132.0.0/16")
 --			 "int" - simple counter
 --			 "hll" - cardinality (count how many different things you put in the bucket)
 --			 "countmin" - like a multi-valued bloom filter. Counts how many of each type there are.
-field_map = {}
+local field_map = {}
 field_map["countLogins"] = "int"
 field_map["diffPasswords"] = "hll"
 field_map["diffIPs"] = "hll"
@@ -86,9 +86,9 @@ initGeoIPDB()
 -- The report function is used to store custom stats
 -- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function report(lt)
-	sdb = getStringStatsDB("OneHourDB")
-	sdb_day = getStringStatsDB("24HourDB")
-	cur_ct = lookupCountry(lt.remote) 
+        local sdb = getStringStatsDB("OneHourDB")
+        local sdb_day = getStringStatsDB("24HourDB")
+        local cur_ct = lookupCountry(lt.remote)
 
 	-- A note on keys: You can use strings or ComboAddresses.
 	-- You can specify a separate ipv4 and v6 netmasks for the DB, which will be used for all ComboAddress keys, thus allowing aggregation of IP stats
@@ -114,9 +114,9 @@ end
 
 -- initialise some DNS lookup objects
 newDNSResolver("Resolv")
-resolv = getDNSResolver("Resolv")
+local resolv = getDNSResolver("Resolv")
 newDNSResolver("RBLResolv")
-rblresolv = getDNSResolver("RBLResolv")
+local rblresolv = getDNSResolver("RBLResolv")
 
 -- Configure some resolvers for it to use
 resolv:addResolver("8.8.8.8", 53)
@@ -124,10 +124,10 @@ rblresolv:addResolver("127.0.0.1", 5353)
 
 -- The allow and report functions cannot access any lua variables defined outside, hence the get... functions
 function allow(lt)
-	sdb = getStringStatsDB("OneHourDB")
-	sdb_day = getStringStatsDB("24HourDB")
-	resolv = getDNSResolver("Resolv")
-	rblresolv = getDNSResolver("RBLResolv")
+	local sdb = getStringStatsDB("OneHourDB")
+	local sdb_day = getStringStatsDB("24HourDB")
+	local resolv = getDNSResolver("Resolv")
+	local rblresolv = getDNSResolver("RBLResolv")
 
 	-- look for things in device_attrs
 	if (lt.device_attrs["os.family"] == "iOS")
@@ -170,7 +170,7 @@ function allow(lt)
 	  -- local my_city = gip_record.city
 
 	-- Example DNS lookups
-	dnames = resolv:lookupNameByAddr(lt.remote)
+	local dnames = resolv:lookupNameByAddr(lt.remote)
 	for i, dname in ipairs(dnames) do
 	    if (string.match(dname, "XXX"))
 	    then
@@ -197,7 +197,7 @@ function allow(lt)
 	end
 
 	-- If user is logging in from multiple IPs and we haven't seen this country in the last 24 hours then reject
-	cur_ct = lookupCountry(lt.remote) 
+	local cur_ct = lookupCountry(lt.remote)
 	if ((sdb:twGet(lt.login, "diffIPs") > 5) and (sdb_day.twGet(lt.login, "countryCount", cur_ct) < 2))
 	then
 		return -1, "Too many IPs and countries", "diffIPs", { diffIPs=5, countryCount24Hrs=1, country=cur_ct }
@@ -213,8 +213,8 @@ end
 
 -- Use this function to reset stats if needed for particular IPs, logins or both
 function reset(type, login, ip)
-	 sdb = getStringStatsDB("OneHourDB")
-	 sdb_day = getStringStatsDB("24HourDB")
+	 local sdb = getStringStatsDB("OneHourDB")
+	 local sdb_day = getStringStatsDB("24HourDB")
 	 if (string.find(type, "ip"))
 	 then
 		sdb:twReset(ip)

@@ -93,3 +93,23 @@ OXMobileAppDevice OXMobileAppDeviceParser::parse(const std::string& device_id) c
   }
   return oxmad;
 }
+
+bool DeviceCache::readFromCache(const std::string& device_id, std::map<std::string, std::string>& retattrs) const
+{
+  ReadLock rl(&d_rwlock);
+
+  auto i = d_devicemap.find(device_id);
+
+  if (i != d_devicemap.end()) {
+    retattrs = i->second; // copy
+    return true;
+  }
+  return false;
+}
+
+void DeviceCache::addToCache(const std::string& device_id, const std::map<std::string, std::string> device_attrs)
+{
+  WriteLock wl(&d_rwlock);
+
+  d_devicemap.emplace(std::make_pair(device_id, std::move(device_attrs)));
+}

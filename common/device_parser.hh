@@ -24,7 +24,7 @@
 
 #include "ext/uap-cpp/UaParser.h"
 #include "lock.hh"
-#include <map>
+#include <unordered_map>
 
 struct IMAPClient : Generic {
   std::string major;
@@ -79,5 +79,5 @@ public:
   void addToCache(const std::string&, const std::map<std::string, std::string>);
 private:
   mutable pthread_rwlock_t d_rwlock = PTHREAD_RWLOCK_INITIALIZER;
-  std::map<std::string, std::map<std::string, std::string>> d_devicemap;
+  std::unordered_map<std::string, std::map<std::string, std::string>> d_devicemap;
 };

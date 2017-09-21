@@ -8,9 +8,12 @@ import mmap
 from test_helper import ApiTestCase
 
 class TestReportAPI(ApiTestCase):
-
+    setup_done = False
+    
     def setUp(self):
-        self.writeCmdToConsole("addWebHook({'report'}, ls_ck)")
+        if not self.setup_done:
+            self.writeCmdToConsole("addWebHook({'report'}, ls_ck)")
+            self.setup_done = True
 
     def test_logins(self):
         r = self.reportFunc('report_api_test', '127.0.0.1', "1234", False)

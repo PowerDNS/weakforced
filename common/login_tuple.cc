@@ -23,6 +23,8 @@
 #include "login_tuple.hh"
 #include "json11.hpp"
 
+static DeviceCache dcache;
+
 Json LoginTuple::to_json() const 
 {
   using namespace json11;
@@ -84,6 +86,7 @@ void LoginTuple::unserialize(const std::string& str)
 
 void LoginTuple::setDeviceAttrs(const json11::Json& msg, const std::shared_ptr<UserAgentParser> uap)
 {
+  std::map<std::string, std::string> cached_attrs;
   json11::Json jattrs = msg["device_attrs"];
   if (jattrs.is_object()) {
     auto attrs_obj = jattrs.object_items();
@@ -93,6 +96,9 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg, const std::shared_ptr<U
 	device_attrs.insert(std::make_pair(attr_name, it->second.string_value()));
       }
     }
+  }
+  else if (dcache.readFromCache(msg["device_id"].string_value(), cached_attrs)) {
+    device_attrs = std::move(cached_attrs);
   }
   else if (uap != nullptr) {  // client didn't supply, we will parse device_id ourselves
     std::string my_device_id=msg["device_id"].string_value();
@@ -135,6 +141,7 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg, const std::shared_ptr<U
       device_attrs.insert(std::make_pair("app.minor", oxmad.app.minor));
       device_attrs.insert(std::make_pair("device.family", oxmad.device.family));
     }
+    dcache.addToCache(my_device_id, device_attrs);
   }
 }
 

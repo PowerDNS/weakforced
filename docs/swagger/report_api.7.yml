@@ -81,6 +81,19 @@ paths:
           description: "Unexpected error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /devices/forget:
+    post:
+      description: "Forget a particular device"
+      operationId: "forgetDevice"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "ForgetDeviceParams"
+          in: body
+          description: "Forget Device Parameters"
+          required: true
+          schema:
+            $ref: "#/definitions/QueryParams"
 definitions:
   ConfirmLoginParams:
     type: object
@@ -178,7 +191,7 @@ definitions:
       response:
         type: array
         items:
-          $ref: "#/definitions/DeviceObject"
+          $ref: "#/definitions/LoginObject"
   DeviceObject:
     type: object
     properties:

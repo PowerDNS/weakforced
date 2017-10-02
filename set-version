@@ -16,9 +16,15 @@ then
   read -r -p "Do you want to tag this release in git? [y/N] " response
   if [[ $response =~ ^([yY])$ ]]
   then
+    SIGN=""
+    read -r -p "Do you want to sign the tag? [y/N] " response
+    if [[ $response =~ ^([yY])$ ]]
+    then
+      SIGN="--sign"
+    fi
     git add -u 
     git commit -m "Set version $VERSION and tagged as v$VERSION"
-    git tag -a v$VERSION -m "v$VERSION"
+    git tag -a v$VERSION -m "v$VERSION" $SIGN
     echo "Tagged this commit as v$VERSION"
   fi
 fi

@@ -203,7 +203,7 @@ paths:
         "200":
           description: "stats response"
           schema:
-            $ref: "#definitions/statsResponse"
+            $ref: "#/definitions/statsResponse"
         default:
           description: unexpected error
           schema:

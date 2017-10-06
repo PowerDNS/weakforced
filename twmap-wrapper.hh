@@ -40,6 +40,7 @@ public:
 
   void enableReplication();
   void disableReplication();
+  bool getReplicationStatus();
   std::string getDBName();
   bool setFields(const std::vector<pair<std::string, std::string>>& fmvec);
   bool setFields(const FieldMap& fm);

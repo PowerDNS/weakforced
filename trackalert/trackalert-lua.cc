@@ -279,7 +279,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 	return ComboAddress(address);
       }
       catch (const WforceException& e) {
-	errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+        boost::format fmt("%s (%s)\n");
+        g_outputBuffer += (fmt % "newCA(): error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+        errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
 	return ComboAddress();
       }
     } );
@@ -558,7 +560,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_COUNTRY|WFGeoIPDBType::GEOIP_COUNTRY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.reason);
+            boost::format fmt("%s (%s)\n");
+            errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.reason);
+            g_outputBuffer += (fmt % "initGeoIPDB(): Error loading GeoIP" % e.reason).str();
 	  }
 	});
   }
@@ -590,7 +594,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_CITY|WFGeoIPDBType::GEOIP_CITY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.reason);
+            boost::format fmt("%s (%s)\n");
+            errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.reason);
+            g_outputBuffer += (fmt % "initGeoIPCityDB(): Error loading GeoIP" % e.reason).str();
 	  }
 	});
 
@@ -615,7 +621,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 	  g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_ISP|WFGeoIPDBType::GEOIP_ISP_V6);
 	}
 	catch (const WforceException& e) {
-	  errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.reason);
+          boost::format fmt("%s (%s)\n");
+          errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.reason);
+          g_outputBuffer += (fmt % "initGeoIPISPDB(): Error loading GeoIP" % e.reason).str();
 	}
       });
   }

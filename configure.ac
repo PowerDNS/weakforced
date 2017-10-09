@@ -38,10 +38,6 @@ AC_CHECK_PROG(HAVE_WGET, wget, wget)
 AS_IF([test "x$HAVE_WGET" = "x"], [
   AC_MSG_ERROR([wget not found, wget needed for downloading regexes.yaml and is required])
 ])
-AC_CHECK_PROG(DOCKER, docker-compose, docker-compose)
-AS_IF([test "x$HAVE_WGET" = "x"], [
-  AC_MSG_ERROR([docker-compose not found, and is required])
-])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 # Look for protobuf
 PDNS_WITH_PROTOBUF
@@ -90,6 +86,10 @@ AC_ARG_ENABLE([docker],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
 esac],[docker=false])
 AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
+AC_CHECK_PROG(DOCKER, docker-compose, docker-compose)
+AS_IF([test x$docker = xtrue -a "x$DOCKER" = "x"], [
+    AC_MSG_ERROR([docker-compose not found, and is required])
+])
 AC_ARG_ENABLE([trackalert],
 [  --enable-trackalert         Build trackalert],
 [case "${enableval}" in

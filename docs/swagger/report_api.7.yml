@@ -94,6 +94,13 @@ paths:
           required: true
           schema:
             $ref: "#/definitions/QueryParams"
+      responses:
+        "200":
+          description: device forgotten
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
   ConfirmLoginParams:
     type: object

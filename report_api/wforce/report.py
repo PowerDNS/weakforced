@@ -38,6 +38,7 @@ device_unique_attrs = app.config['DEVICE_UNIQUE_ATTRS']
 
 def constructSearchTerms(j):
     query = []
+    query.append({'term': { "success": True }})
     if 'login' in j:
         query.append({'term': { "login": j['login'] }})
     if 'ip' in j:

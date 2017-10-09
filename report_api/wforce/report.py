@@ -34,6 +34,7 @@ handler.setLevel(app.config['LOG_LEVEL'])
 formatter = logging.Formatter(app.config['LOG_FORMAT'])
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
+device_unique_attrs = app.config['DEVICE_UNIQUE_ATTRS']
 
 def constructSearchTerms(j):
     query = []
@@ -75,32 +76,44 @@ def queryElastic(login_query, client_ip):
         return None
     return response
 
+def filterDeviceAttrs(device_attrs):
+    ret_attrs = {}
+    for attr in device_attrs:
+        if attr in device_unique_attrs:
+            if device_attrs[attr] != "" and device_attrs[attr] != "Other":
+                ret_attrs[attr] = device_attrs[attr]
+    return ret_attrs
+
+def getLoginObject(doc):
+    login_obj = {}
+    login_obj['id'] = doc['_id'] + "@" + doc['_index']
+    source = doc['_source']
+    if 'device_attrs' in source:
+        login_obj['device_attrs'] = filterDeviceAttrs(source['device_attrs'])
+    if 'device_id' in source:
+        login_obj['device_id'] = source['device_id']
+    if 'login' in source:
+        login_obj['login'] = source['login']
+    if 'remote' in source:
+        login_obj['ip'] = source['remote']
+    if 'protocol' in source:
+        login_obj['protocol'] = source['protocol']
+    if 'geoip' in source:
+        if 'country_code2' in source['geoip']:
+            login_obj['country_code'] = source['geoip']['country_code2']
+        if 'country_name' in source['geoip']:
+            login_obj['country_name'] = source['geoip']['country_name']
+    if 't' in source:
+        login_obj['login_datetime'] = datetime.fromtimestamp(source['t'], pytz.utc).isoformat()
+    return login_obj
+
 def makeLoginsResponse(es_response):
     if es_response is None:
         return None
     response = []
     if 'hits' in es_response and 'hits' in es_response['hits']:
         for doc in es_response['hits']['hits']:
-            login_obj = {}
-            login_obj['id'] = doc['_id'] + "@" + doc['_index']
-            source = doc['_source']
-            if 'device_attrs' in source:
-                login_obj['device_attrs'] = source['device_attrs']
-            if 'device_id' in source:
-                login_obj['device_id'] = source['device_id']
-            if 'login' in source:
-                login_obj['login'] = source['login']
-            if 'remote' in source:
-                login_obj['ip'] = source['remote']
-            if 'protocol' in source:
-                login_obj['protocol'] = source['protocol']
-            if 'geoip' in source:
-                if 'country_code2' in source['geoip']:
-                    login_obj['country_code'] = source['geoip']['country_code2']
-                if 'country_name' in source['geoip']:
-                    login_obj['country_name'] = source['geoip']['country_name']
-            if 't' in source:
-                login_obj['login_datetime'] = datetime.fromtimestamp(source['t'], pytz.utc).isoformat()
+            login_obj = getLoginObject(doc)
             response.append(login_obj)
     return response
 
@@ -108,22 +121,26 @@ def makeDevicesResponse(es_response):
     if es_response is None:
         return None
     response = []
-    tracking_response = []
     if 'hits' in es_response and 'hits' in es_response['hits']:
         for doc in es_response['hits']['hits']:
-            device_obj = {}
             source = doc['_source']
+            login_obj = getLoginObject(doc)
             if 'device_attrs' in source:
                 dup = False
-                if 'device_id' in source:
-                    for device_id in tracking_response:
-                        if device_id == source['device_id']:
-                            dup = True
+                for (i, device) in enumerate(response):
+                    dup = True
+                    for attr in device_unique_attrs:
+                        if not ((attr not in device['device_attrs'] and attr not in source['device_attrs']) or (attr in device['device_attrs'] and attr in source['device_attrs'] and device['device_attrs'][attr] == source['device_attrs'][attr])):
+                            dup = False
+                            break
+                    if dup == True:
+                        if datetime.fromtimestamp(source['t'], pytz.utc).isoformat() > device['login_datetime']:
+                            response[i] = login_obj
+                        break
                 if dup == False:
-                    device_obj = source['device_attrs']
-                    response.append(device_obj)
-            if 'device_id' in source:
-                tracking_response.append(source['device_id'])
+                    response.append(login_obj)
+            else:
+                response.append(login_obj)
     return response
 
 def getClientIP(environ):

@@ -17,6 +17,8 @@ global_query = {
             "filter": {
                 "bool": {
                     "must": [
+                    ],
+                    "must_not": [
                     ]
                 }
             }
@@ -36,7 +38,7 @@ handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 device_unique_attrs = app.config['DEVICE_UNIQUE_ATTRS']
 
-def constructSearchTerms(j):
+def constructMustSearchTerms(j):
     query = []
     query.append({'term': { "success": True }})
     if 'login' in j:
@@ -48,9 +50,16 @@ def constructSearchTerms(j):
             query.append({'term': { dattr: j['device'][dattr] }})
     return query
 
+def constructMustNotSearchTerms(j):
+    query = []
+    query.append({'term': { "user_confirmation": "bad" }})
+    query.append({'term': { "user_confirmation": "forget" }})
+    return query
+
 def constructQuery(j, query):
     my_query = copy.deepcopy(query)
-    my_query['query']['constant_score']['filter']['bool']['must'].extend(constructSearchTerms(j))
+    my_query['query']['constant_score']['filter']['bool']['must'].extend(constructMustSearchTerms(j))
+    my_query['query']['constant_score']['filter']['bool']['must_not'].extend(constructMustNotSearchTerms(j))
 
     max_age = "1w"
     if 'max_age' in j:

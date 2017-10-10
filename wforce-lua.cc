@@ -77,13 +77,18 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  ca = ComboAddress(address, 4501);
 	}
 	catch (const WforceException& e) {
-	  errlog("addReportSink() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          boost::format fmt("%s (%s)\n");
+          errlog("addReportSink() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          g_outputBuffer += (fmt % "addReportSink(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+
 	  return;
 	}
 	g_report_sinks.modify([ca](vector<shared_ptr<Sibling>>& v) {
 	    v.push_back(std::make_shared<Sibling>(ca));
 	  });
-	errlog("addReportSinks() is deprecated, and will be removed in a future release. Use addNamedReportSink() instead");
+        const std::string notice = "addReportSinks() is deprecated, and will be removed in a future release. Use addNamedReportSink() instead";
+        errlog(notice.c_str());
+        g_outputBuffer += notice + "\n";
       });
   }
   else {
@@ -98,13 +103,17 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
 	  }
 	  catch (const WforceException& e) {
-	    errlog("setReportSinks() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
+            boost::format fmt("%s (%s)\n");
+            errlog("setReportSinks() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
+            g_outputBuffer += (fmt % "setReportSinks(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 	    return;
 	  }
 
 	}
 	g_report_sinks.setState(v);
-	errlog("setReportSinks() is deprecated, and will be removed in a future release. Use setNamedReportSinks() instead");
+        const std::string notice = "setReportSinks() is deprecated, and will be removed in a future release. Use setNamedReportSinks() instead";
+        errlog(notice.c_str());
+        g_outputBuffer += notice + "\n";
       });
   }
   else {
@@ -118,7 +127,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  ca = ComboAddress(address, 4501);
 	}
 	catch (const WforceException& e) {
-	  errlog("addNamedReportSink() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", address, sink_name);
+          boost::format fmt("%s (%s)\n");
+          errlog("addNamedReportSink() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", address, sink_name);
+          g_outputBuffer += (fmt % "addNamedReportSink(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 	  return;
 	}
 	g_named_report_sinks.modify([sink_name, ca](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
@@ -148,7 +159,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 		v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4501)));
 	      }
 	      catch (const WforceException& e) {
-		errlog("setNamedReportSinks() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", p.second, sink_name);
+                boost::format fmt("%s (%s)\n");
+                errlog("setNamedReportSinks() error parsing address/port [%s] for report sink [%s]. Make sure to use IP addresses not hostnames", p.second, sink_name);
+                g_outputBuffer += (fmt % "setNamedReportSinks(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 		return;
 	      }
 	    }
@@ -174,7 +187,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  ca = ComboAddress(address, 4001);
 	}
 	catch (const WforceException& e) {
-	  errlog("addSibling() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          boost::format fmt("%s (%s)\n");
+          errlog("addSibling() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          g_outputBuffer += (fmt % "addSibling(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 	  return;
 	}
 	g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
@@ -188,7 +203,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
 	vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
-	  v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
+          try {
+            v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
+          }
+          catch (const WforceException& e) {
+            boost::format fmt("%s [%s] %s (%s)\n");
+            errlog("setSiblings() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
+            g_outputBuffer += (fmt % "setSiblings(): Error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+          }
 	}
 	g_siblings.setState(v);
       });
@@ -204,7 +226,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  ca = ComboAddress(address, 4001);
 	}
 	catch (const WforceException& e) {
-	  errlog("siblingListener() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          boost::format fmt("%s (%s)\n");
+          errlog("siblingListener() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          g_outputBuffer += (fmt % "siblingListener(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 	  return;
 	}
 
@@ -261,8 +285,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  local = ComboAddress(address);
 	}
 	catch (const WforceException& e) {
-	  errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
-	  return;
+          errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+          return;
 	}
 	try {
 	  int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
@@ -414,7 +438,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_COUNTRY|WFGeoIPDBType::GEOIP_COUNTRY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.reason);
+            boost::format fmt("%s (%s)\n");
+            errlog("initGeoIPDB(): Error initialising GeoIP (%s)", e.reason);
+            g_outputBuffer += (fmt % "initGeoIPDB(): Error loading GeoIP" % e.reason).str();
 	  }
 	});
   }
@@ -446,7 +472,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_CITY|WFGeoIPDBType::GEOIP_CITY_V6);
 	  }
 	  catch (const WforceException& e) {
-	    errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.reason);
+            boost::format fmt("%s (%s)\n");
+            errlog("initGeoIPCityDB(): Error initialising GeoIP (%s)", e.reason);
+            g_outputBuffer += (fmt % "initGeoIPCityDB(): Error loading GeoIP" % e.reason).str();
 	  }
 	});
 
@@ -471,7 +499,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	  g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_ISP|WFGeoIPDBType::GEOIP_ISP_V6);
 	}
 	catch (const WforceException& e) {
-	  errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.reason);
+          boost::format fmt("%s (%s)\n");
+          errlog("initGeoIPISPDB(): Error initialising GeoIP (%s)", e.reason);
+          g_outputBuffer += (fmt % "initGeoIPISPDB(): Error loading GeoIP" % e.reason).str();
 	}
       });
   }
@@ -573,17 +603,17 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("showStringStatsDB", []() {
 	std::lock_guard<std::mutex> lock(dbMap_mutx);
-	boost::format fmt("%-20.20d %-11.11d %-9d %-9d %-16.16s %-s\n");
-	g_outputBuffer= (fmt % "DB Name" % "Win Size/No" % "Max Size" % "Cur Size" % "Field Name" % "Field Type").str();
+	boost::format fmt("%-20.20d %-5.5s %-11.11d %-9d %-9d %-16.16s %-s\n");
+	g_outputBuffer= (fmt % "DB Name" % "Repl?" % "Win Size/No" % "Max Size" % "Cur Size" % "Field Name" % "Type").str();
 	for (auto& i : dbMap) {
 	  const FieldMap fields = i.second.getFields();
 	  for (auto f=fields.begin(); f!=fields.end(); ++f) {
 	    if (f == fields.begin()) {
 	      std::string win = std::to_string(i.second.windowSize()) + "/" + std::to_string(i.second.numWindows());
-	      g_outputBuffer += (fmt % i.first % win % i.second.get_max_size() % i.second.get_size() % f->first % f->second).str();
+	      g_outputBuffer += (fmt % i.first % (i.second.getReplicationStatus() ? "yes" : "no") % win % i.second.get_max_size() % i.second.get_size() % f->first % f->second).str();
 	    }
 	    else {
-	      g_outputBuffer += (fmt % "" % "" % "" % "" % f->first % f->second).str();
+	      g_outputBuffer += (fmt % "" % "" % "" % "" % "" % f->first % f->second).str();
 	    }
 	  }
 	}
@@ -713,8 +743,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	return ComboAddress(address);
       }
       catch (const WforceException& e) {
-	errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
-	return ComboAddress();
+        boost::format fmt("%s (%s)\n");
+        g_outputBuffer += (fmt % "newCA(): error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+        errlog("newCA() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
+        return ComboAddress();
       }
     } );
 
@@ -723,8 +755,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 	return Netmask(address);
       }
       catch (const WforceException& e) {
-	errlog("newNetmask() error parsing netmask [%s]. Use x.x.x.x/y notation.", address);
-	return Netmask();
+        boost::format fmt("%s (%s)\n");
+        g_outputBuffer += (fmt % "newNetmask(): error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+        errlog("newNetmask() error parsing netmask [%s]. Use x.x.x.x/y notation.", address);
+        return Netmask();
       }
     } );
   

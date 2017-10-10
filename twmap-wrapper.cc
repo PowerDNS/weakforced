@@ -52,6 +52,11 @@ void TWStringStatsDBWrapper::disableReplication()
   *replicated = false;
 }
 
+bool TWStringStatsDBWrapper::getReplicationStatus()
+{
+  return *replicated;
+}
+
 std::string TWStringStatsDBWrapper::getDBName()
 {
   return sdbp->getDBName();

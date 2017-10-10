@@ -107,13 +107,16 @@ started with the -c option.
 		192.168.1.30:4501                   25        0
 
 * showStringStatsDB() - Returns information about configured stats
-  databases. For example:
+  databases. This includes the DB Name, whether it is configured for
+  replication, the size and number of windows, the maximum size, the
+  current size, and finally all the configured fields and their
+  types. For example:
 
 		> showStringStatsDB()
-		DB Name              Win Size/No Max Size  Cur Size  Field Name       Field Type
-		MyDB1                1/15        524288    0         countLogins      int
+		DB Name        Repl? Win Size/No Max Size  Cur Size  Field Name       Type
+		MyDB1          yes   1/15        524288    0         countLogins      int
 		                                                     diffPasswords    hll
-		MyDB2                600/6       5000      2093      diffIPs          hll
+		MyDB2          no    600/6       5000      2093      diffIPs          hll
 
 * showACL() - Returns the configured ACLs for the wforce server.
 

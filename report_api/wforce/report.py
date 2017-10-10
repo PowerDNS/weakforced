@@ -9,6 +9,7 @@ from datetime import datetime
 import logging
 import logging.handlers
 from logging.handlers import SysLogHandler
+import json
 
 global_query = {
     "size": 0,
@@ -23,6 +24,14 @@ global_query = {
                 }
             }
         }
+    }
+}
+
+update_script = {
+    "lang": "painless",
+    "source": "ctx._source.user_confirmation = params.user_confirmation",
+    "params": {
+        "user_confirmation": "forget"
     }
 }
 
@@ -47,7 +56,7 @@ def constructMustSearchTerms(j):
         query.append({'term': { "remote": j['ip'] }})
     if 'device' in j:
         for dattr in j['device']:
-            query.append({'term': { dattr: j['device'][dattr] }})
+            query.append({'term': { "device_attrs."+dattr: j['device'][dattr] }})
     return query
 
 def constructMustNotSearchTerms(j):
@@ -86,6 +95,28 @@ def queryElastic(login_query, client_ip):
         return None
     return response
 
+def updateElastic(index, id, user_confirmation, client_ip):
+    try:
+        response = elastic.update(index=index,doc_type="wforce_report",id=id, body={ 'doc': { 'user_confirmation': user_confirmation }},refresh=True)
+    except elasticsearch.TransportError as err:
+        app.logger.error("Elasticsearch update exception (%s) trying to update doc id=%s in index=%s remote_ip=%s", err.error, id, index, client_ip)
+        return None
+    except elasticsearch.ElasticsearchException:
+        app.logger.error("Elasticsearch exception trying to update doc id=%s in index=%s remote_ip=%s", id, index, client_ip)
+        return None
+    return response
+
+def updateByQueryElastic(es_body, client_ip):
+    try:
+        response = elastic.update_by_query(index=app.config['ELASTICSEARCH_INDEX'],doc_type="wforce_report",conflicts="proceed", body=es_body,refresh=True)
+    except elasticsearch.TransportError as err:
+        app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)
+        return None
+    except elasticsearch.ElasticsearchException:
+        app.logger.error("Elasticsearch exception: remote_ip=%s", client_ip)
+        return None
+    return response
+
 def filterDeviceAttrs(device_attrs):
     ret_attrs = {}
     for attr in device_attrs:
@@ -113,6 +144,13 @@ def getLoginObject(doc):
             login_obj['country_code'] = source['geoip']['country_code2']
         if 'country_name' in source['geoip']:
             login_obj['country_name'] = source['geoip']['country_name']
+        if 'city_name' in source['geoip']:
+            login_obj['city_name'] = source['geoip']['city_name']
+        if 'region_name' in source['geoip']:
+            login_obj['region_name'] = source['geoip']['region_name']
+        if 'location' in source['geoip']:
+            login_obj['location'] = source['geoip']['location']
+
     if 't' in source:
         login_obj['login_datetime'] = datetime.fromtimestamp(source['t'], pytz.utc).isoformat()
     return login_obj
@@ -140,11 +178,11 @@ def makeDevicesResponse(es_response):
                 for (i, device) in enumerate(response):
                     dup = True
                     for attr in device_unique_attrs:
-                        if not ((attr not in device['device_attrs'] and attr not in source['device_attrs']) or (attr in device['device_attrs'] and attr in source['device_attrs'] and device['device_attrs'][attr] == source['device_attrs'][attr])):
+                        if not ((attr not in device['device_attrs'] and attr not in login_obj['device_attrs']) or (attr in device['device_attrs'] and attr in login_obj['device_attrs'] and device['device_attrs'][attr] == login_obj['device_attrs'][attr])):
                             dup = False
                             break
                     if dup == True:
-                        if datetime.fromtimestamp(source['t'], pytz.utc).isoformat() > device['login_datetime']:
+                        if login_obj['login_datetime'] > device['login_datetime']:
                             response[i] = login_obj
                         break
                 if dup == False:
@@ -167,7 +205,7 @@ def logins():
         return make_response(jsonify({'error_msg': 'Invalid query parameters'}), 400)
     if not 'login' in request.json:
         return make_response(jsonify({'error_msg': 'Invalid query parameters - must supply login'}), 400)  
-    my_query = constructQuery(request.json, global_query)        
+    my_query = constructQuery(request.json, global_query)
     es_response = queryElastic(my_query, client_ip)
     response = makeLoginsResponse(es_response)
     
@@ -223,13 +261,8 @@ def confirm():
     id = id_index[0]
     index = id_index[1]
 
-    try:
-        response = elastic.update(index=index,doc_type="wforce_report",id=id, body={ 'doc': { 'user_confirmation': user_confirmation }},refresh=True)
-    except elasticsearch.TransportError as err:
-        app.logger.error("Elasticsearch update exception (%s) trying to update doc id=%s in index=%s remote_ip=%s", err.error, id, index, client_ip)
-        return make_response(jsonify({'error_msg': 'Elasticsearch update failed: %s'% err.error}), 500)
-    except elasticsearch.ElasticsearchException:
-        app.logger.error("Elasticsearch exception trying to update doc id=%s in index=%s remote_ip=%s", id, index, client_ip)
+    response = updateElastic(index, id, user_confirmation, client_ip)
+    if response == None:
         return make_response(jsonify({'error_msg': 'Elasticsearch update failed'}), 500)
 
     if response['result'] == "updated" or response['result'] == "noop":
@@ -238,7 +271,27 @@ def confirm():
     else:
         app.logger.error("Elasticsearch failed trying to update doc id=%s in index=%s remote_ip=%s", id, index, client_ip)
         return make_response(jsonify({'error_msg': 'Elasticsearch update failed'}), 500)
-        
+
+@app.route('/devices/forget', methods=['POST'])
+@auth.login_required
+def forget():
+    client_ip = getClientIP(request.environ)
+    if not request.json:
+        return make_response(jsonify({'error_msg': 'Invalid query parameters'}), 400)
+    if not 'login' in request.json or not 'device' in request.json:
+        return make_response(jsonify({'error_msg': 'Invalid query parameters - must supply login and device'}), 400)
+
+    my_query = constructQuery(request.json, global_query)
+    my_query['script'] = update_script
+
+    response = updateByQueryElastic(my_query, client_ip)
+
+    if response == None:
+        return make_response(jsonify({'error_msg': 'Elasticsearch update_by_query failed'}), 500)
+
+    app.logger.debug("Successfully updated device %s for user %s with user confirmation=forget remote_ip=%s", json.dumps(request.json['device']), request.json['login'], client_ip)
+    return make_response(jsonify(), 200)
+
 @auth.get_password
 def get_password(username):
     if 'AUTH_PASSWORD' in app.config:

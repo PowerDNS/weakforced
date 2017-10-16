@@ -81,6 +81,26 @@ paths:
           description: "Unexpected error"
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /devices/forget:
+    post:
+      description: "Forget a particular device"
+      operationId: "forgetDevice"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "ForgetDeviceParams"
+          in: body
+          description: "Forget Device Parameters"
+          required: true
+          schema:
+            $ref: "#/definitions/QueryParams"
+      responses:
+        "200":
+          description: device forgotten
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/ErrorResponse"
 definitions:
   ConfirmLoginParams:
     type: object
@@ -151,6 +171,15 @@ definitions:
       country_code:
         description: "The 2-digit country code associated with the IP address"
         type: string
+      city_name:
+        description: "The name of the city associated with the IP address"
+        type: string
+      region_name:
+        description: "The name of the region associated with the IP address"
+        type: string
+      location:
+        description: "The longitude and latitude of the IP addresss [long, lat]"
+        type: string
       login_datetime:
         description: "The date, time and timezone of the login in ISO-8601 format"
         type: string
@@ -178,7 +207,7 @@ definitions:
       response:
         type: array
         items:
-          $ref: "#/definitions/DeviceObject"
+          $ref: "#/definitions/LoginObject"
   DeviceObject:
     type: object
     properties:

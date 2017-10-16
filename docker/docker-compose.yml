@@ -8,7 +8,7 @@ services:
     command: -f /etc/logstash/conf.d/
     volumes:
       - ./logstash/config:/etc/logstash/conf.d
-      - ./logstash/geoip:/etc/logstash/geoip
+      - ./logstash/geoip:/usr/share/logstash/geoip
       - ./logstash/templates:/tmp/templates
     links:
       - elasticsearch
@@ -19,7 +19,7 @@ services:
   elasticsearch:
     build: elasticsearch
     volumes:
-      - ./elasticsearch/data-dir:/usr/share/elasticsearch/data
+      - esdata:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -29,3 +29,6 @@ services:
 networks:
   docker_elk:
     driver: bridge
+volumes:
+  esdata:
+    driver: local

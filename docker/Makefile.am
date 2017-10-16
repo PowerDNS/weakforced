@@ -1,7 +1,6 @@
 DCMP = docker-compose
 COMPOSE_SOURCE = docker-compose.yml elasticsearch/Dockerfile logstash/Dockerfile logstash/config/logstash.conf 
 COMPOSE_TARGET = .docker
-ES_DATA_DIR = elasticsearch/data-dir
 GEOIP_FILENAME = GeoLite2-City.mmdb
 GEOIP_FILE_GZ = logstash/geoip/$(GEOIP_FILENAME).gz
 GEOIP_FILE = logstash/geoip/$(GEOIP_FILENAME)
@@ -29,7 +28,8 @@ kill:
 	$(DCMP) kill
 
 clean_elastic: stop
-	rm -rf $(ES_DATA_DIR)/*
+	$(DCMP) rm
+	docker volume rm docker_esdata
 	rm $(COMPOSE_TARGET)
 
 clean_geoip:

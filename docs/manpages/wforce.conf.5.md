@@ -138,6 +138,13 @@ cannot be called inside the allow/report/reset functions:
 
 		setNumWebHookThreads(2)
 
+* setWebHookQueueSize(\<queue size\>) - Set the size of the queue for
+  webhook events. If the queue gets too big, then webhooks will be
+  discarded, and an error will be logged. The default queue size is
+  50000, which should be appropriate for most use-cases.
+
+        setWebHookQueueSize(100000)
+
 * initGeoIPDB() - Initializes the country-level IPv4 and IPv6 GeoIP
   databases. If either of these databases is not installed, this
   command will fail and wforce will not start. For example:

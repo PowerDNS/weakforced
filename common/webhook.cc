@@ -28,14 +28,27 @@
 
 using namespace boost::posix_time;
 
-WebHookRunner::WebHookRunner():p(NUM_WEBHOOK_THREADS, 1000)
+WebHookRunner::WebHookRunner()
 {
   curl_global_init(CURL_GLOBAL_ALL);
 }
 
 void WebHookRunner::setNumThreads(unsigned int num_threads)
 {
-  p.resize(num_threads);
+  this->num_threads = num_threads;
+}
+
+void WebHookRunner::startThreads()
+{
+  for (size_t i=0; i<num_threads; ++i) {
+    std::thread t([=] { _runHookThread(); });
+    t.detach();
+  }
+}
+
+void WebHookRunner::setMaxQueueSize(unsigned int max_queue)
+{
+  max_queue_size = max_queue;
 }
 
 void WebHookRunner::setMaxConns(unsigned int max_conns)
@@ -59,13 +72,27 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
 {
   std::string err_msg;
 
+  vdebuglog("runHook: event %s hook id %d", event_name, hook->getID());
   if (!hook->validateConfig(err_msg)) {
     errlog("runHook: Error validating configuration of webhook id=%d for event (%s) [%s]", hook->getID(), event_name, err_msg);
   }
   else {
-    auto cc = getConnection(hook);
-    if (auto ccs = cc.lock())
-      p.push(_runHookThread, event_name, hook, hook_data, ccs);
+    WebHookQueueItem wqi = {
+      event_name,
+      hook,
+      std::make_shared<std::string>(hook_data)
+    };
+    {
+      std::lock_guard<std::mutex> lock(queue_mutex);
+      if (queue.size() >= max_queue_size) {
+        errlog("runHook: Webhook queue at max size (%d) - dropping webhook id=%d for event (%s)", max_queue_size, hook->getID(), event_name);
+        return;
+      }
+      else {
+        queue.push(wqi);
+      }
+    }
+    cv.notify_all();
   }
 }
 
@@ -107,9 +134,23 @@ std::weak_ptr<CurlConnection> WebHookRunner::_getConnection(unsigned int hook_id
   }
 }
 
-void WebHookRunner::_runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc)
+void WebHookRunner::_runHookThread()
 {
-  _runHook(event_name, hook, hook_data, cc);
+  while (true) {
+    WebHookQueueItem wqi;
+    {
+      std::unique_lock<std::mutex> lock(queue_mutex);
+      while (queue.size() == 0) {
+        cv.wait(lock);
+      }
+      wqi = queue.front();
+      queue.pop();
+    }
+    auto ccs = getConnection(wqi.hook);
+    if (auto cc = ccs.lock()) {
+      _runHook(wqi.event_name, wqi.hook, *(wqi.hook_data_p), cc);
+    }
+  }
 }
 
 bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc)
@@ -118,8 +159,10 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   MiniCurlHeaders mch;
   std::string error_msg;
 
-  if (cc == nullptr)
+  if (cc == nullptr) {
+    errlog("_runHook: Curl Connection is nullptr, returning");
     return false;
+  }
   
   mch.insert(std::make_pair("X-Wforce-Event", event_name));
   if (hook->hasConfigKey("content-type")) {
@@ -132,8 +175,8 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   mch.insert(std::make_pair("X-Wforce-HookID", std::to_string(hook->getID())));
   if (hook->hasConfigKey("secret"))
     mch.insert(std::make_pair("X-Wforce-Signature",
-			      Base64Encode(calculateHMAC(hook->getConfigKey("secret"),
-							 hook_data, HashAlgo::SHA256))));
+                             Base64Encode(calculateHMAC(hook->getConfigKey("secret"),
+                                                        hook_data, HashAlgo::SHA256))));
   ptime t(microsec_clock::universal_time());
   std::string b64_hash_id = Base64Encode(calculateHash(to_simple_string(t)+std::to_string(hook->getID())+event_name, HashAlgo::SHA256));
   mch.insert(std::make_pair("X-Wforce-Delivery", b64_hash_id));
@@ -143,7 +186,7 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
   }
   
   vdebuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
-	   hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
+          hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
 
   bool ret;
   {
@@ -153,14 +196,13 @@ bool WebHookRunner::_runHook(const std::string& event_name, std::shared_ptr<cons
 
   if (ret != true) {
     errlog("Webhook id=%d failed for event (%s) to url (%s) with delivery id (%s) [%s]",
-	     hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, error_msg);
+           hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, error_msg);
     hook->incFailed();
   }
   else {
     vinfolog("Webhook id=%d succeeded for event (%s) to url (%s) with delivery id (%s)",
-	    hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
+             hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id);
     hook->incSuccess();
   }
-  
   return ret;
 }

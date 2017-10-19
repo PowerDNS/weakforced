@@ -800,6 +800,8 @@ try
     vinfolog("Running in the foreground");
   }
 
+  g_webhook_runner.startThreads();
+
   // register all the webserver commands
   registerWebserverCommands();
   

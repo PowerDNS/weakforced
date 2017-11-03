@@ -115,7 +115,10 @@ def updateByQueryElastic(es_body, client_ip):
     try:
         response = elastic.update_by_query(index=app.config['ELASTICSEARCH_INDEX'],doc_type="wforce_report",conflicts="proceed", body=es_body,refresh=True)
     except elasticsearch.TransportError as err:
-        app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)
+        if type(err.info) is dict:
+            app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)
+        else:
+            app.logger.error("Elasticsearch update_by_query exception (%s): remote_ip=%s", err.error, client_ip)
         return None
     except elasticsearch.ElasticsearchException:
         app.logger.error("Elasticsearch exception: remote_ip=%s", client_ip)

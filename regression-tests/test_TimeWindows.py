@@ -109,6 +109,26 @@ class TestTimeWindows(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
+    def test_PrefixMappedv4(self):
+        r = self.allowFunc('mappedipv4baddie', '::ffff:114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(50):
+            r = self.reportFunc('mappedipv4baddie%s' % i, "::ffff:%s.31.192.200" % i, "1234", 'true')
+            r.json()
+
+        r = self.allowFunc('mappedipv4baddie', '::ffff:114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        # Wait for the time windows to clear and then check again
+        time.sleep(16)
+        r = self.allowFunc('mappedipv4baddie', '::ffff:114.31.192.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
     def test_Prefixv6(self):
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
         j = r.json()

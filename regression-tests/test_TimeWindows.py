@@ -89,7 +89,7 @@ class TestTimeWindows(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
-    def test_countMinPrefixv4(self):
+    def test_Prefixv4(self):
         r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -109,7 +109,7 @@ class TestTimeWindows(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
-    def test_countMinPrefixv6(self):
+    def test_Prefixv6(self):
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)

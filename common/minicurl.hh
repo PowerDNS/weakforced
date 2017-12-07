@@ -23,6 +23,7 @@
 #pragma once
 #include <map>
 #include <string>
+#include <sstream>
 #include <curl/curl.h> 
 // turns out 'CURL' is currently typedef for void which means we can't easily forward declare it
 
@@ -35,8 +36,11 @@ public:
   ~MiniCurl();
   MiniCurl& operator=(const MiniCurl&) = delete;
   MiniCurl& operator=(const MiniCurl&&) = delete;
+  void setURLData(const std::string& url, const MiniCurlHeaders& headers);
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
   void setCurlOption(int option, ...);
+  void setPostData(const std::string& url, const std::string& post_body,
+                   const MiniCurlHeaders& headers);
   bool postURL(const std::string& url, const std::string& post_body,
 	       const MiniCurlHeaders& headers,
 	       std::string& error_msg);
@@ -45,13 +49,17 @@ public:
 	       const MiniCurlHeaders& headers,
 	       std::string& post_res,
 	       std::string& error_msg);
+  CURL* getCurlHandle() { return d_curl; }
 protected:
-  void setCurlHeaders(const MiniCurlHeaders& headers, struct curl_slist** header_listp);
-  void clearCurlHeaders(struct curl_slist* header_list);
+  void setCurlHeaders(const MiniCurlHeaders& headers);
+  void clearCurlHeaders();
 private:
   CURL *d_curl;
   static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
   static size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
   std::string d_data;
+  std::stringstream d_post_body;
+  struct curl_slist* d_header_list = nullptr;
   char d_error_buf[CURL_ERROR_SIZE];
 };
+

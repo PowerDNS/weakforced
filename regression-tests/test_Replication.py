@@ -92,13 +92,13 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
-    def test_countMinPrefixv4(self):
+    def test_Prefixv4(self):
         r = self.allowFunc('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(12):
+        for i in range(50):
             r = self.reportFunc('ipv4baddiereplication%s' % i, "114.31.193.%s" % i, "1234", 'true')
             r.json()
 
@@ -113,13 +113,34 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
-    def test_countMinPrefixv6(self):
+    def test_PrefixMappedv4(self):
+        r = self.allowFunc('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        r.close()
+
+        for i in range(50):
+            r = self.reportFunc('mappedipv4baddiereplication%s' % i, "::ffff:%s.31.193.200" % i, "1234", 'true')
+            r.json()
+
+        time.sleep(1)
+        r = self.allowFuncReplica('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        # Wait for the time windows to clear and then check again
+        time.sleep(16)
+        r = self.allowFuncReplica('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+    def test_Prefixv6(self):
         r = self.allowFunc('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(12):
+        for i in range(50):
             r = self.reportFunc('ipv6baddiereplication%s' % i, "2001:c78::%s" % i, "1234", 'true')
             r.json()
 

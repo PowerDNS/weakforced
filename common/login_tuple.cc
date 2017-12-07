@@ -67,8 +67,12 @@ void LoginTuple::from_json(const Json& msg, const std::shared_ptr<UserAgentParse
   pwhash=msg["pwhash"].string_value();
   t=msg["t"].number_value();
   success=msg["success"].bool_value();
-  if (msg["remote"].is_string())
+  if (msg["remote"].is_string()) {
     remote=ComboAddress(msg["remote"].string_value());
+    if (remote.isMappedIPv4()) {
+      remote = remote.mapToIPv4();
+    }
+  }
   setLtAttrs(msg);
   setDeviceAttrs(msg, uap);
   device_id=msg["device_id"].string_value();

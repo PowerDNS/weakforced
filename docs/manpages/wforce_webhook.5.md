@@ -84,12 +84,9 @@ setting. The following configuration keys can be used for all events:
 
 		config_key["secret"] = "12345"
 
-* num_conns - The number of connections that wforce will
-  make to the HTTP server. Defaults to 10 if this key is not
-  specified. Webhook events will be randomly distributed between the
-  connections.
-
-		config_key["num_conns"] = 20
+* num_conns - This configuration key is now deprecated - setting it
+  will have no effect. Use "setNumWebHookConnsPerThread()"
+  configuration setting instead (see **wforce.conf(5)**).
 
 * basic-auth - Adds an Authorization header to Webhooks, for servers
   which expect Basic Authentication. The username and password are

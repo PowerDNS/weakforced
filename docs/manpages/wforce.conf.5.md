@@ -134,9 +134,17 @@ cannot be called inside the allow/report/reset functions:
 		setNumSiblingThreads(2)
 
 * setNumWebHookThreads(\<num threads\>) - Set the number of threads in
-  the pool used to send webhook events. For example:
+  the pool used to send webhook events. Defaults to 5 if not
+  specified. For example:
 
 		setNumWebHookThreads(2)
+
+* setNumWebHookConnsPerThread(\<num conns\>) - Set the maximum number
+  of connections used by each WebHook thread. Defaults to 10 if not
+  specified. This setting replaces the deprecated "num_conns" per-hook
+  configuration setting. For example:
+
+        setNumWebHookConnsPerThread(50)
 
 * setWebHookQueueSize(\<queue size\>) - Set the size of the queue for
   webhook events. If the queue gets too big, then webhooks will be

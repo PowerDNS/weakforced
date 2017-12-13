@@ -21,10 +21,13 @@
  */
 
 #include "minicurl.hh"
+#include <time.h>
+#include <chrono>
 #include <curl/curl.h>
 #include <stdarg.h>
 #include <string.h>
 #include <sstream>
+#include "wforce_exception.hh"
 #include "dolog.hh"
 
 MiniCurl::MiniCurl()
@@ -185,4 +188,157 @@ bool MiniCurl::postURL(const std::string& url,
     }
   }
   return retval;
+}
+
+// MiniCurlMulti
+
+MiniCurlMulti::MiniCurlMulti() : d_ccs(numMultiCurlConnections)
+{
+  d_mcurl = curl_multi_init();
+  initMCurl();
+}
+
+MiniCurlMulti::MiniCurlMulti(size_t num_connections) : d_ccs(num_connections)
+{
+  d_mcurl = curl_multi_init();
+  initMCurl();
+}
+
+MiniCurlMulti::~MiniCurlMulti()
+{
+  if (d_mcurl != nullptr) {
+    curl_multi_cleanup(d_mcurl);
+  }
+}
+
+void MiniCurlMulti::initMCurl()
+{
+#ifdef CURLPIPE_HTTP1
+  curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING,
+                    CURLPIPE_HTTP1 | CURLPIPE_MULTIPLEX);
+#else
+  curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING, 1L);  
+#endif
+  curl_multi_setopt(d_mcurl, CURLMOPT_MAX_HOST_CONNECTIONS, d_ccs.size());
+  d_current = d_ccs.begin();
+}
+
+bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
+                            const std::string& post_body,
+                            const MiniCurlHeaders& headers)
+{
+  if (d_mcurl) {
+    // return false if we don't have any spare connections
+    if (d_current == d_ccs.end())
+      return false;
+    d_current->setPostData(url, post_body, headers);
+    d_current->setID(id);
+    curl_multi_add_handle(d_mcurl, d_current->getCurlHandle());
+    ++d_current;
+    return true;
+  }
+  return false;
+}
+
+const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
+{
+  std::vector<mcmPostReturn> post_ret;
+  if (d_mcurl) {
+    int still_running;
+    int without_fds = 0;
+    do {
+      CURLMcode mc;
+      int numfds;
+      mc = curl_multi_perform(d_mcurl, &still_running);
+      if (mc == CURLM_OK) {
+        auto start_time = std::chrono::steady_clock::now();
+        
+        mc = curl_multi_wait(d_mcurl, NULL, 0, 1000, &numfds);
+
+        auto wait_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
+        
+        if (mc == CURLM_OK) {
+          struct CURLMsg *m;
+          do {
+            int msgq = 0;
+            m = curl_multi_info_read(d_mcurl, &msgq);
+            if (m && (m->msg == CURLMSG_DONE)) {
+              CURL *c = m->easy_handle;
+              auto minic = findMiniCurl(c);
+              if (minic == d_ccs.end()) {
+                throw WforceException("Cannot find curl handle in MiniCurlMulti - something is very wrong");
+              }
+              struct mcmPostReturn mpr;
+              if (m->data.result != CURLE_OK) {
+                mpr.ret = false;
+                std::string error_msg = minic->getErrorMsg();
+                if (error_msg.length())
+                  mpr.error_msg = error_msg;
+                else
+                  mpr.error_msg = std::string(curl_easy_strerror(m->data.result));
+              }
+              else {
+                long response_code;
+                curl_easy_getinfo(c, CURLINFO_RESPONSE_CODE, &response_code);
+                if ((response_code < 200) || (response_code > 299)) {
+                  mpr.error_msg = std::string("Received non-2XX response from webserver: ") + std::to_string(response_code);
+                  mpr.ret = false;
+                }
+                else {
+                  mpr.ret = true;
+                  mpr.result_data = minic->getPostResult();
+                }
+              }
+              mpr.id = minic->getID();
+              post_ret.emplace_back(std::move(mpr));
+            }
+          } while (m);
+          if (!numfds) {
+            // Avoid busy looping when there is nothing to do
+            // Inspired by similar code in curl_easy_perform
+            if (wait_time_ms.count() <= 10) {
+              without_fds++;
+              if (without_fds > 2) {
+                int sleep_ms = without_fds < 10 ?
+                                             (1 << (without_fds - 1)) : 1000;
+                struct timespec ts;
+                ts.tv_sec = 0;
+                ts.tv_nsec = sleep_ms*1000000;
+                nanosleep(&ts, nullptr);
+              }
+            }
+            else {
+              /* it wasn't "instant", restart counter */
+              without_fds = 0;
+            }
+          }
+          else {
+            /* got file descriptor, restart counter */
+            without_fds = 0;
+          }
+        }
+        else { // curl_multi_wait failed
+          errlog("curl_multi_wait failed, code %d.n", mc);
+          break;
+        }
+      }
+      else { // curl_multi_perform failed
+        errlog("curl_multi_perform failed, code %d.n", mc);
+        break;
+      }
+    } while (still_running);
+  }
+  finishPost();
+  return post_ret;
+}
+
+// we don't destroy the multi-handle as reusing has benefits like caching,
+// connection pools etc.
+void MiniCurlMulti::finishPost()
+{
+  for (auto i = d_ccs.begin(); i != d_current; ++i) {
+    curl_multi_remove_handle(d_mcurl, i->getCurlHandle());
+  }
+  // Reset the Easy curl handle iterator
+  d_current = d_ccs.begin();
 }

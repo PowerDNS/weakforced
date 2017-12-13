@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: “1.3.0”
+  version: "1.3.0"
   title: "Dovecot Anti-Abuse Shield (Trackalert)"
   description: "An API to the Dovecot Anti-Abuse Shield trackalert daemon to prevent brute-force and abuse of mail systems"
   contact:

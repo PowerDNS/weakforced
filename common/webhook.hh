@@ -438,10 +438,10 @@ struct CurlConnection {
   {
   }
   std::mutex 	cmutex;
-  MiniCurl	mcurl;
+  MiniCurlMulti	mcurl;
 };
 
-using CurlConnMap = std::map<unsigned int, std::vector<std::shared_ptr<CurlConnection>>>;
+using CurlConns = std::vector<std::shared_ptr<CurlConnection>>;
 
 #define MAX_HOOK_CONN 10
 #define NUM_WEBHOOK_THREADS 5
@@ -467,10 +467,10 @@ public:
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
   void startThreads();
 protected:
-  std::weak_ptr<CurlConnection> getConnection(std::shared_ptr<const WebHook> hook);
-  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id, unsigned int num_connections);
-  void _runHookThread();
-  bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
+  void _runHookThread(unsigned int num_conns);
+  void _addHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, MiniCurlMulti& mcurl);
+  bool _runHooks(const std::vector<WebHookQueueItem>& events,
+                 MiniCurlMulti& mcurl);
 private:
   std::queue<WebHookQueueItem> queue;
   std::mutex queue_mutex;
@@ -478,6 +478,4 @@ private:
   unsigned int max_queue_size = QUEUE_SIZE;
   unsigned int max_hook_conns = MAX_HOOK_CONN;
   unsigned int num_threads = NUM_WEBHOOK_THREADS;
-  std::mutex  conn_mutex;
-  CurlConnMap conns;
 };

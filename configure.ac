@@ -32,6 +32,8 @@ BOOST_REGEX
 BOOST_FOREACH
 BOOST_SYSTEM
 BOOST_FILESYSTEM
+AM_CONDITIONAL([HAVE_BOOST_GE_148], [test "$boost_major_version" -ge 148])
+PDNS_ENABLE_UNIT_TESTS
 # Check for dependent programs
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)

@@ -30,12 +30,25 @@
 #include "wforce_exception.hh"
 #include "dolog.hh"
 
+bool MiniCurl::initCurlGlobal()
+{
+  // This is guaranteed to be called only once
+  static const CURLcode init_curl_global = curl_global_init(CURL_GLOBAL_ALL);
+  return init_curl_global == CURLE_OK;
+}
+
 MiniCurl::MiniCurl()
 {
-  d_curl = curl_easy_init();
-  if (d_curl) {
-    curl_easy_setopt(d_curl, CURLOPT_ERRORBUFFER, d_error_buf);
+  bool init_cg = initCurlGlobal();
+  
+  if (init_cg) {
+    d_curl = curl_easy_init();
+    if (d_curl) {
+      curl_easy_setopt(d_curl, CURLOPT_ERRORBUFFER, d_error_buf);
+    }
   }
+  else
+    throw WforceException("Cannot initialize curl library");
 }
 
 MiniCurl::~MiniCurl()

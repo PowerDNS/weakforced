@@ -30,7 +30,6 @@ using namespace boost::posix_time;
 
 WebHookRunner::WebHookRunner()
 {
-  curl_global_init(CURL_GLOBAL_ALL);
 }
 
 void WebHookRunner::setNumThreads(unsigned int num_threads)

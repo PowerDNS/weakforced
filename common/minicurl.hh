@@ -58,6 +58,7 @@ public:
 protected:
   void setCurlHeaders(const MiniCurlHeaders& headers);
   void clearCurlHeaders();
+  bool initCurlGlobal();
 private:
   CURL *d_curl;
   static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);

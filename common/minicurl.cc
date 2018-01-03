@@ -272,10 +272,9 @@ const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
         
         if (mc == CURLM_OK) {
           struct CURLMsg *m;
-          do {
-            int msgq = 0;
-            m = curl_multi_info_read(d_mcurl, &msgq);
-            if (m && (m->msg == CURLMSG_DONE)) {
+          int msgq = 0;
+          while ((m = curl_multi_info_read(d_mcurl, &msgq)) != NULL) {
+            if (m->msg == CURLMSG_DONE) {
               CURL *c = m->easy_handle;
               auto minic = findMiniCurl(c);
               if (minic == d_ccs.end()) {
@@ -305,9 +304,11 @@ const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
               mpr.id = minic->getID();
               post_ret.emplace_back(std::move(mpr));
             }
-          } while (m);
+          }
           if (!numfds) {
             // Avoid busy looping when there is nothing to do
+            // The idea is to busy loop the first couple of times
+            // and then backoff exponentially until a max wait is reached
             // Inspired by similar code in curl_easy_perform
             if (wait_time_ms.count() <= 10) {
               without_fds++;
@@ -331,12 +332,12 @@ const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
           }
         }
         else { // curl_multi_wait failed
-          errlog("curl_multi_wait failed, code %d.n", mc);
+          errlog("curl_multi_wait failed, code %d.n, error=%s", mc, curl_multi_strerror(mc));
           break;
         }
       }
       else { // curl_multi_perform failed
-        errlog("curl_multi_perform failed, code %d.n", mc);
+        errlog("curl_multi_perform failed, code %d.n, error=%s", mc, curl_multi_strerror(mc));
         break;
       }
     } while (still_running);

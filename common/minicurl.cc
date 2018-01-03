@@ -32,7 +32,7 @@
 
 bool MiniCurl::initCurlGlobal()
 {
-  // This is guaranteed to be called only once
+  // curl_global_init() is guaranteed to be called only once
   static const CURLcode init_curl_global = curl_global_init(CURL_GLOBAL_ALL);
   return init_curl_global == CURLE_OK;
 }

@@ -93,6 +93,7 @@ script:
  - autoreconf -i
  - ./configure --enable-docker --enable-trackalert CC=$MYCC CXX=$MYCXX
  - make
+ - make check
  - cd regression-tests
  - ./runtests
  - cd ..

@@ -74,7 +74,6 @@ testrunner_SOURCES = \
 
 testrunner_LDFLAGS = \
 	$(AM_LDFLAGS) \
-	-pthread \
 	$(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS)
 
 testrunner_LDADD = \

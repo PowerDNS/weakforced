@@ -6,6 +6,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
+PDNS_CHECK_OS
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GEOIP], [geoip], [AC_DEFINE([HAVE_GEOIP], [1], [Define to 1 if you have geoip])], [true])

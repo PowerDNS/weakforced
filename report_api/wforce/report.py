@@ -10,6 +10,7 @@ import logging
 import logging.handlers
 from logging.handlers import SysLogHandler
 import json
+import requests
 
 global_query = {
     "size": 0,
@@ -46,6 +47,10 @@ formatter = logging.Formatter(app.config['LOG_FORMAT'])
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
 device_unique_attrs = app.config['DEVICE_UNIQUE_ATTRS']
+trackalert_redis = app.config['TRACKALERT_REDIS']
+trackalert_server = app.config['TRACKALERT_SERVER']
+trackalert_port = app.config['TRACKALERT_PORT']
+trackalert_password = app.config['TRACKALERT_PASSWORD']
 
 def constructMustSearchTerms(j):
     query = []
@@ -110,7 +115,10 @@ def updateByQueryElastic(es_body, client_ip):
     try:
         response = elastic.update_by_query(index=app.config['ELASTICSEARCH_INDEX'],doc_type="wforce_report",conflicts="proceed", body=es_body,refresh=True)
     except elasticsearch.TransportError as err:
-        app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)
+        if type(err.info) is dict:
+            app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)
+        else:
+            app.logger.error("Elasticsearch update_by_query exception (%s): remote_ip=%s", err.error, client_ip)
         return None
     except elasticsearch.ElasticsearchException:
         app.logger.error("Elasticsearch exception: remote_ip=%s", client_ip)
@@ -289,7 +297,36 @@ def forget():
     if response == None:
         return make_response(jsonify({'error_msg': 'Elasticsearch update_by_query failed'}), 500)
 
-    app.logger.debug("Successfully updated device %s for user %s with user confirmation=forget remote_ip=%s", json.dumps(request.json['device']), request.json['login'], client_ip)
+    # Now clear redis cache if used
+    if trackalert_redis:
+        login = request.json['login']
+        trackalert_url = 'http://%s:%s/?command=clearRedisCache' % (trackalert_server, trackalert_port)
+        session = requests.Session()
+        session.auth = ('foo', trackalert_password)
+        payload = dict()
+        payload['attrs'] = dict()
+        payload['attrs']['login'] = login
+        try:
+            res = session.post(trackalert_url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
+        except requests.ConnectionError:
+            app.logger.error("clearRedisCache HTTP call failed with Connection Error: login=%s remote_ip=%s", login, client_ip)
+            return make_response(jsonify({'error_msg': 'Attempt to contact trackalert to clear redis cache failed (ConnectionError)'}))
+        except requests.exceptions.RequestException:
+            app.logger.error("clearRedisCache HTTP call failed: login=%s remote_ip=%s", login, client_ip)
+            return make_response(jsonify({'error_msg': 'Attempt to contact trackalert to clear redis cache failed'}))
+        
+        if res.status_code != 200:
+            app.logger.error("clearRedisCache HTTP call failed: login=%s remote_ip=%s", login, client_ip)
+            return make_response(jsonify({'error_msg': 'Attempt to clear redis cache failed, device cache may be in an inconsistent state'}))
+        
+        j = res.json()
+        
+        if j['r_attrs']['status'] != 'ok':
+            return make_response(jsonify({'error_msg': j['r_attrs']['error']}), 500)
+        else:
+            app.logger.debug("clearRedisCache HTTP call succeeded: login=%s remote_ip=%s", login, client_ip)
+    
+    app.logger.debug("Successfully updated device %s for user %s with user confirmation=forget remote_ip=%s", json.dumps(request.json['device']), login, client_ip)
     return make_response(jsonify(), 200)
 
 @auth.get_password

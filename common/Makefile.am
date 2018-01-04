@@ -49,3 +49,39 @@ noinst_HEADERS = \
 	pdnsexception.hh \
 	wforce-webserver.hh \
 	login_tuple.hh
+
+if UNIT_TESTS
+
+if HAVE_BOOST_GE_148
+TESTS_ENVIRONMENT = env BOOST_TEST_LOG_LEVEL=message SRCDIR='$(srcdir)'
+TESTS=testrunner
+noinst_PROGRAMS = \
+	testrunner
+else
+check-local:
+	@echo "Unit tests disabled, boost is too old"
+endif
+
+else
+check-local:
+	@echo "Unit tests are not enabled"
+	@echo "Run ./configure --enable-unit-tests"
+endif
+
+testrunner_SOURCES = \
+	testrunner.cc \
+	test-minicurl.cc
+
+testrunner_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	$(BOOST_UNIT_TEST_FRAMEWORK_LDFLAGS)
+
+testrunner_LDADD = \
+	$(BOOST_UNIT_TEST_FRAMEWORK_LIBS) \
+	$(LUA_LIBS) $(YAHTTP_LIBS) $(EXT_LIBS) $(WFORCE_LIBS) \
+	${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
+	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
+	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
+	$(YAMLCPP_LIBS) $(WFORCE_LIBS) \
+	$(BOOST_UNIT_TEST_FRAMEWORK_LIBS) \
+	$(LIBDL)

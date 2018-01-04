@@ -27,6 +27,7 @@
 #include "ext/ctpl.h"
 #include "dolog.hh"
 #include "minicurl.hh"
+#include <queue>
 
 using namespace json11;
 
@@ -437,32 +438,44 @@ struct CurlConnection {
   {
   }
   std::mutex 	cmutex;
-  MiniCurl	mcurl;
+  MiniCurlMulti	mcurl;
 };
 
-using CurlConnMap = std::map<unsigned int, std::vector<std::shared_ptr<CurlConnection>>>;
+using CurlConns = std::vector<std::shared_ptr<CurlConnection>>;
 
 #define MAX_HOOK_CONN 10
 #define NUM_WEBHOOK_THREADS 5
+#define QUEUE_SIZE 50000
+
+struct WebHookQueueItem
+{
+  std::string event_name;
+  std::shared_ptr<const WebHook> hook;
+  std::shared_ptr<std::string> hook_data_p;
+};
 
 class WebHookRunner
 {
 public:
   WebHookRunner();
-  void setNumThreads(unsigned int num_threads);
+  void setNumThreads(unsigned int new_num_threads);
   void setMaxConns(unsigned int max_conns);
+  void setMaxQueueSize(unsigned int max_queue);
   // synchronously run the ping command for the hook
   bool pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg);
   // asynchronously run the hook with the supplied data (must be in json format)
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
+  void startThreads();
 protected:
-  std::weak_ptr<CurlConnection> getConnection(std::shared_ptr<const WebHook> hook);
-  std::weak_ptr<CurlConnection> _getConnection(unsigned int hook_id, unsigned int num_connections);
-  static void _runHookThread(int id, const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
-  static bool _runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, std::shared_ptr<CurlConnection> cc);
+  void _runHookThread(unsigned int num_conns);
+  void _addHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, MiniCurlMulti& mcurl);
+  bool _runHooks(const std::vector<WebHookQueueItem>& events,
+                 MiniCurlMulti& mcurl);
 private:
-  ctpl::thread_pool p;
+  std::queue<WebHookQueueItem> queue;
+  std::mutex queue_mutex;
+  std::condition_variable cv;
+  unsigned int max_queue_size = QUEUE_SIZE;
   unsigned int max_hook_conns = MAX_HOOK_CONN;
-  std::mutex  conn_mutex;
-  CurlConnMap conns;
+  unsigned int num_threads = NUM_WEBHOOK_THREADS;
 };

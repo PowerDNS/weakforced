@@ -24,6 +24,9 @@ Makefile.in
 /wforce
 /*.service
 /regexes.yaml
+test-driver
+testrunner
+testrunner.trs
 
 *.libs/
 *.DSYM/
@@ -74,3 +77,6 @@ lt~obsolete.m4
 # Protobuf files
 *.pb.h
 *.pb.cc
+
+# Log files
+*.log

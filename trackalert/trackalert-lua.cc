@@ -436,6 +436,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
+    c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { g_webhook_runner.setMaxQueueSize(queue_size); });
+  }
+  else {
+    c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { });
+  }
+  
+  if (!multi_lua) {
     c_lua.writeFunction("showCustomWebHooks", []() {
 	auto webhooks = g_custom_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-20.20s %-9d %-9d %-s\n");

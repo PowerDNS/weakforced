@@ -6,6 +6,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
+PDNS_CHECK_OS
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GEOIP], [geoip], [AC_DEFINE([HAVE_GEOIP], [1], [Define to 1 if you have geoip])], [true])
@@ -32,6 +33,8 @@ BOOST_REGEX
 BOOST_FOREACH
 BOOST_SYSTEM
 BOOST_FILESYSTEM
+AM_CONDITIONAL([HAVE_BOOST_GE_148], [test "$boost_major_version" -ge 148])
+PDNS_ENABLE_UNIT_TESTS
 # Check for dependent programs
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)

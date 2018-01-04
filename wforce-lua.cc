@@ -846,6 +846,21 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   if (!allow_report) {
+    c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { g_webhook_runner.setMaxQueueSize(queue_size); });
+  }
+  else {
+    c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("setNumWebHookConnsPerThread", [](unsigned int num_conns) { g_webhook_runner.setMaxConns(num_conns); });
+  }
+  else {
+    c_lua.writeFunction("setNumWebHookConnsPerThread", [](unsigned int num_conns) { });
+  }
+
+  
+  if (!allow_report) {
     c_lua.writeFunction("showWebHooks", []() {
 	auto webhooks = g_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-9d %-9d %-45.45s %-s\n");

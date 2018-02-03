@@ -51,6 +51,7 @@ typedef std::vector<std::pair<std::time_t, TWStatsMemberP>> TWStatsBuf;
 class TWStatsMember
 {
 public:
+  virtual ~TWStatsMember() = default;
   virtual void add(int a) = 0; // add an integer to the stored value
   virtual void add(const std::string& s) = 0; // add a string to the stored window (this has different semantics for each subclass)
   virtual void add(const std::string& s, int a) = 0; // add a string/integer combo to the stored window (only applies to some stats types)

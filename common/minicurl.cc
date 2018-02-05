@@ -232,7 +232,9 @@ void MiniCurlMulti::initMCurl()
 #else
   curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING, 1L);  
 #endif
+#ifdef CURLMOPT_MAX_HOST_CONNECTIONS
   curl_multi_setopt(d_mcurl, CURLMOPT_MAX_HOST_CONNECTIONS, d_ccs.size());
+#endif
   d_current = d_ccs.begin();
 }
 

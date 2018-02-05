@@ -149,7 +149,7 @@ void MiniCurl::setPostData(const std::string& url,
                            const MiniCurlHeaders& headers)
 {
   if (d_curl) {
-    d_post_body = std::stringstream(post_body);
+    d_post_body = std::istringstream(post_body);
     clearCurlHeaders();
         
     curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());

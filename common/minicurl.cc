@@ -149,7 +149,7 @@ void MiniCurl::setPostData(const std::string& url,
                            const MiniCurlHeaders& headers)
 {
   if (d_curl) {
-    d_post_body = std::stringstream(post_body);
+    d_post_body = std::istringstream(post_body);
     clearCurlHeaders();
         
     curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
@@ -232,7 +232,9 @@ void MiniCurlMulti::initMCurl()
 #else
   curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING, 1L);  
 #endif
+#ifdef CURLMOPT_MAX_HOST_CONNECTIONS
   curl_multi_setopt(d_mcurl, CURLMOPT_MAX_HOST_CONNECTIONS, d_ccs.size());
+#endif
   d_current = d_ccs.begin();
 }
 

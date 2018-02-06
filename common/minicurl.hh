@@ -64,7 +64,7 @@ private:
   static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
   static size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
   std::string d_data;
-  std::stringstream d_post_body;
+  std::istringstream d_post_body;
   struct curl_slist* d_header_list = nullptr;
   char d_error_buf[CURL_ERROR_SIZE];
   unsigned int d_id;

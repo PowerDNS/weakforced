@@ -51,6 +51,7 @@ typedef std::vector<std::pair<std::time_t, TWStatsMemberP>> TWStatsBuf;
 class TWStatsMember
 {
 public:
+  virtual ~TWStatsMember() = default;
   virtual void add(int a) = 0; // add an integer to the stored value
   virtual void add(const std::string& s) = 0; // add a string to the stored window (this has different semantics for each subclass)
   virtual void add(const std::string& s, int a) = 0; // add a string/integer combo to the stored window (only applies to some stats types)
@@ -71,6 +72,8 @@ public:
   TWStatsMemberInt() {}
   TWStatsMemberInt(const TWStatsMemberInt&) = delete;
   TWStatsMemberInt& operator=(const TWStatsMemberInt&) = delete;
+  TWStatsMemberInt(TWStatsMemberInt&&) = delete; // move construct
+  TWStatsMemberInt& operator=(TWStatsMemberInt &&) = delete; // move assign
   void add(int a) { i += a; }
   void add(const std::string& s) { int a = std::stoi(s); i += a; return; }
   void add(const std::string& s, int a) { return; }
@@ -106,6 +109,8 @@ public:
   }
   TWStatsMemberHLL(const TWStatsMemberHLL&) = delete;
   TWStatsMemberHLL& operator=(const TWStatsMemberHLL&) = delete;
+  TWStatsMemberHLL(TWStatsMemberHLL&&) = delete; // move construct
+  TWStatsMemberHLL& operator=(TWStatsMemberHLL &&) = delete; // move assign
   void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
   void add(const std::string& s) { hllp->add(s.c_str(), s.length()); }
   void add(const std::string& s, int a) { return; }
@@ -143,6 +148,8 @@ public:
   }
   TWStatsMemberCountMin(const TWStatsMemberCountMin&) = delete;
   TWStatsMemberCountMin& operator=(const TWStatsMemberCountMin&) = delete;
+  TWStatsMemberCountMin(TWStatsMemberCountMin&&) = delete; // move construct
+  TWStatsMemberCountMin& operator=(TWStatsMemberCountMin &&) = delete; // move assign
   void add(int a) { return; }
   void add(const std::string& s) { cm->update(s.c_str(), 1); }
   void add(const std::string& s, int a) { cm->update(s.c_str(), a); }

@@ -671,6 +671,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
   c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);
+  c_lua.registerFunction("twResetField", &TWStringStatsDBWrapper::resetField);
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
   c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
 

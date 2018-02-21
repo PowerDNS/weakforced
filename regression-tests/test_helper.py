@@ -165,6 +165,36 @@ class ApiTestCase(unittest.TestCase):
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
 
+    def incLogins(self, login):
+        attrs = dict()
+        attrs['login'] = login
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url("/?command=incLogins"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def countLogins(self, login):
+        attrs = dict()
+        attrs['login'] = login
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url("/?command=countLogins"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def resetLogins(self, login):
+        attrs = dict()
+        attrs['login'] = login
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url("/?command=resetLogins"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def customFunc(self, login):
         attrs = dict()
         attrs['login'] = login

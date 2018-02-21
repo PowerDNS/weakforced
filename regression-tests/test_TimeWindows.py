@@ -194,3 +194,18 @@ class TestTimeWindows(ApiTestCase):
         r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
+
+    def test_ResetField(self):
+        r = self.incLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '1')
+
+        r = self.resetLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')
+
+        r = self.countLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')
+
+        

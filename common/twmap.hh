@@ -443,6 +443,7 @@ public:
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
   bool get_all_fields(const T& key,  std::vector<std::pair<std::string, int>>& ret_vec);
   void reset(const T&key); // Reset to zero all fields for a given key
+  void reset_field(const T&key, const std::string& field_name); // Reset to zero a particular field
   void set_map_size_soft(unsigned int size);
   unsigned int get_size();
   unsigned int get_max_size();
@@ -768,6 +769,21 @@ void TWStatsDB<T>::reset(const T& key)
     // go through all the fields and reset them
     for (auto it = myfm.begin(); it != myfm.end(); ++it) {
       it->second->reset();
+    }
+  }
+}
+
+template <typename T>
+void TWStatsDB<T>::reset_field(const T& key, const std::string& field_name)
+{
+  std::lock_guard<std::mutex> lock(mutx);
+
+  auto mysdb = stats_db.find(key);
+  if (mysdb != stats_db.end()) {
+    auto myfm = mysdb->second.second.find(field_name);
+    if (myfm != mysdb->second.second.end()) {
+      // Reset that field
+      myfm->second->reset();
     }
   }
 }

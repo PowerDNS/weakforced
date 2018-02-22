@@ -176,14 +176,26 @@ class ApiTestCase(unittest.TestCase):
             headers={'Content-Type': 'application/json'})
 
     def countLogins(self, login):
+        return self.countLoginsInternal(login, False)
+
+    def countLoginsReplica(self, login):
+        return self.countLoginsInternal(login, True)
+    
+    def countLoginsInternal(self, login, replica):
         attrs = dict()
         attrs['login'] = login
         payload = dict()
         payload['attrs'] = attrs
-        return self.session.post(
-            self.url("/?command=countLogins"),
-            data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'})
+        if not replica:
+            return self.session.post(
+                self.url("/?command=countLogins"),
+                data=json.dumps(payload),
+                headers={'Content-Type': 'application/json'})
+        else:
+            return self.session.post(
+                self.url2("/?command=countLogins"),
+                data=json.dumps(payload),
+                headers={'Content-Type': 'application/json'})
 
     def resetLogins(self, login):
         attrs = dict()

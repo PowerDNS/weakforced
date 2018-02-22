@@ -201,3 +201,24 @@ class TestTimeWindowsReplication(ApiTestCase):
         r = self.allowFuncReplica('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
+
+    def test_resetField(self):
+        r = self.incLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '1')
+
+        time.sleep(1)
+        
+        r = self.countLoginsReplica("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '1')
+        
+        r = self.resetLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')
+
+        time.sleep(1)
+
+        r = self.countLoginsReplica("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')

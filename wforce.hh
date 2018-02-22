@@ -75,6 +75,8 @@ struct Sibling
   Socket sock;
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
+  std::atomic<unsigned int> rcvd_fail{0};
+  std::atomic<unsigned int> rcvd_success{0};
   void send(const std::string& msg);
   void checkIgnoreSelf(const ComboAddress& ca);
   bool d_ignoreself{false};

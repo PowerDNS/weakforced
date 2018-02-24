@@ -82,11 +82,10 @@ started with the -c option.
 * siblings() - Returns information about configured siblings. For
   example:
 
-		> siblings()
-		Address                             Sucesses  Failures     Note
-		192.168.1.79:4001                   18        7              
-		192.168.1.30:4001                   25        0              
-		192.168.1.54:4001                   0         0            Self
+        > siblings()
+        Address                             Send Successes  Send Failures  Rcv Successes   Rcv Failures     Note
+        127.0.0.1:4001                      0               0              17              0                
+        127.0.0.1:4002                      0               0              0               0                Self
 
 * showNamedReportSinks() - Returns information about configured report
   sinks. For example: 

@@ -492,6 +492,8 @@ definitions:
   statsResponse:
     type: object
     properties:
+      reports:
+        type: integer
       allows:
         type: integer
       denieds:
@@ -525,6 +527,7 @@ definitions:
           WTR_Slow:
             type: integer
     example:
+      reports: 28291
       allows: 120321
       denieds: 20201
       sys-msec: 97211221

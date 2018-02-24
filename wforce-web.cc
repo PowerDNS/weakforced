@@ -609,6 +609,7 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
   resp.status=200;
   Json my_json = Json::object {
+    { "reports", (int)g_stats.reports },
     { "allows", (int)g_stats.allows },
     { "denieds", (int)g_stats.denieds },
     { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },

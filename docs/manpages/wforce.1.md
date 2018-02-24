@@ -77,7 +77,7 @@ started with the -c option.
 * stats() - Returns statistics about the wforce process. For example:
 
 		> stats()
-		40 reports, 8 allow-queries, 40 entries in database
+		40 reports, 8 allow-queries (% denies)
 
 * siblings() - Returns information about configured siblings. For
   example:

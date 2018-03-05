@@ -239,6 +239,10 @@ void doClient(ComboAddress server, const std::string& command)
 {
   cout<<"Connecting to "<<server.toStringWithPort()<<endl;
   int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
+  if (fd < 0) {
+    cout << "Could not open socket" << endl;
+    return;
+  }
   SConnect(fd, server);
 
   SodiumNonce theirs, ours, readingNonce, writingNonce;

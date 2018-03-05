@@ -80,7 +80,12 @@ public:
 
   ~Socket()
   {
-    closesocket(d_socket);
+    try {
+      closesocket(d_socket);
+    }
+    catch (std::runtime_error &e) {
+      // not a lot we can do here
+    }
     delete[] d_buffer;
   }
 

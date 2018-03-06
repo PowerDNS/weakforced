@@ -418,6 +418,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   else {
     c_lua.writeFunction("showCustomEndpoints", []() { });
   }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
+  }
+
+  if (multi_lua) {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
+  }
   
   if (!multi_lua) {
     c_lua.writeFunction("showPerfStats", []() {

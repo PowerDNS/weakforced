@@ -830,6 +830,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   if (!allow_report) {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
+  }
+
+  if (allow_report) {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
+  }
+  
+  if (!allow_report) {
     c_lua.writeFunction("showPerfStats", []() {
 	g_outputBuffer += getPerfStatsString();
       });

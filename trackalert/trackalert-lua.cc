@@ -399,6 +399,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       cobj.c_func = func;
       custom_func_map.insert(std::make_pair(f_name, cobj));
       if (!multi_lua && !client) {
+        addCommandStat(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
 	noticelog("Registering custom endpoint [%s]", f_name);

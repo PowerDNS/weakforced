@@ -38,3 +38,5 @@ int getCommandStat(const std::string& command_name);
 void addCustomStat(const std::string& custom_name);
 void incCustomStat(const std::string& custom_name);
 int getCustomStat(const std::string& custom_name);
+json11::Json commandStatsToJson();
+json11::Json customStatsToJson();

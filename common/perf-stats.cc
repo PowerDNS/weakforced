@@ -201,3 +201,21 @@ Json perfStatsToJson()
   }
   return jattrs;
 }
+
+Json commandStatsToJson()
+{
+  Json::object jattrs;
+  for (const auto i : command_stats) {
+    jattrs.insert(std::make_pair(i, getCommandStat(i)));
+  }
+  return jattrs;
+}
+
+Json customStatsToJson()
+{
+  Json::object jattrs;
+  for (const auto i : custom_stats) {
+    jattrs.insert(std::make_pair(i, getCustomStat(i)));
+  }
+  return jattrs;
+}

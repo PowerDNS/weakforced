@@ -620,7 +620,9 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
     { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
     { "uptime", uptimeOfProcess()},
-    { "perfstats", perfStatsToJson()}
+    { "perfstats", perfStatsToJson()},
+    { "commandstats", commandStatsToJson()},
+    { "customstats", customStatsToJson()}
   };
 
   resp.status=200;

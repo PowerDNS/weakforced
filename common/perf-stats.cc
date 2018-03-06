@@ -43,7 +43,7 @@ FieldMap fm = { { "WTW_0_1", "int" },
 		{ "WTR_10_100", "int" },
 		{ "WTR_100_1000", "int" },
 		{ "WTR_Slow", "int" },
-                { "Commands", "countmin"},
+                { "Command", "countmin"},
                 { "Custom", "countmin"} };
 
 std::map<PerfStat, std::string> lookupPerfStat = { { WorkerThreadWait_0_1, "WTW_0_1" },

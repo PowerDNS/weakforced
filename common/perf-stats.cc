@@ -42,7 +42,9 @@ FieldMap fm = { { "WTW_0_1", "int" },
 		{ "WTR_1_10", "int" },
 		{ "WTR_10_100", "int" },
 		{ "WTR_100_1000", "int" },
-		{ "WTR_Slow", "int" } };
+		{ "WTR_Slow", "int" },
+                { "Commands", "countmin"},
+                { "Custom", "countmin"} };
 
 std::map<PerfStat, std::string> lookupPerfStat = { { WorkerThreadWait_0_1, "WTW_0_1" },
 						   { WorkerThreadWait_1_10, "WTW_1_10" }, 
@@ -102,6 +104,40 @@ int getStat(PerfStat stat)
     return 0;
 }
 
+static std::set<std::string> command_stats;
+
+void addCommandStat(const std::string& command_name)
+{
+  command_stats.insert(command_name);
+}
+
+void incCommandStat(const std::string& command_name)
+{
+  g_perfStats.add(1, "Command", command_name, 1);
+}
+
+int getCommandStat(const std::string& command_name)
+{
+  return g_perfStats.get(1, "Command", command_name);
+}
+
+static std::set<std::string> custom_stats;
+
+void addCustomStat(const std::string& custom_name)
+{
+  custom_stats.insert(custom_name);
+}
+
+void incCustomStat(const std::string& custom_name)
+{
+  g_perfStats.add(1, "Custom", custom_name, 1);
+}
+
+int getCustomStat(const std::string& custom_name)
+{
+  return g_perfStats.get(1, "Custom", custom_name);
+}
+
 void statsReportingThread()
 {
   int interval = STATS_WINDOW_SIZE*STATS_NUM_WINDOWS;
@@ -111,11 +147,31 @@ void statsReportingThread()
     
     sleep(interval);
 
-    ss << "stats last " << interval << " secs: ";
+    ss << "perf stats last " << interval << " secs: ";
     for (auto i=lookupPerfStat.begin(); i!=lookupPerfStat.end(); ++i) {
       ss << i->second << "=" << getStat(i->first) << " ";
     }
     warnlog("%s", ss.str());
+
+    if (command_stats.size() != 0) {
+      ss.str(std::string());
+      ss.clear();
+      ss << "command stats last " << interval << " secs: ";
+      for (const auto& i : command_stats) {
+        ss << i << "=" << getCommandStat(i) << " ";
+      }
+      warnlog("%s", ss.str());
+    }
+
+    if (custom_stats.size() != 0) {
+      ss.str(std::string());
+      ss.clear();
+      ss << "custom stats last " << interval << " secs: ";
+      for (const auto& i : custom_stats) {
+        ss << i << "=" << getCustomStat(i) << " ";
+      }
+      warnlog("%s", ss.str());
+    }
   }
 }
 

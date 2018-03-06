@@ -31,3 +31,10 @@ void addWTRStat(unsigned int num_ms); // number of milliseconds
 void startStatsThread();
 std::string getPerfStatsString(); // return perf stats in a string
 json11::Json perfStatsToJson(); // return perf stats as a json object
+
+void addCommandStat(const std::string& command_name);
+void incCommandStat(const std::string& command_name);
+int getCommandStat(const std::string& command_name);
+void addCustomStat(const std::string& custom_name);
+void incCustomStat(const std::string& custom_name);
+int getCustomStat(const std::string& custom_name);

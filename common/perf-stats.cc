@@ -192,6 +192,24 @@ std::string getPerfStatsString()
   return ss.str();
 }
 
+std::string getCommandStatsString()
+{
+  std::ostringstream ss;
+  for (const auto& i : command_stats) {
+    ss << i << "=" << getCommandStat(i) << endl;
+  }
+  return ss.str();
+}
+
+std::string getCustomStatsString()
+{
+  std::ostringstream ss;
+  for (const auto& i : custom_stats) {
+    ss << i << "=" << getCustomStat(i) << endl;
+  }
+  return ss.str();
+}
+
 using namespace json11;
 Json perfStatsToJson()
 {

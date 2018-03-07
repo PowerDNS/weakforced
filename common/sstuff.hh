@@ -36,6 +36,7 @@
 #include <sys/select.h>
 #include <fcntl.h>
 #include <stdexcept>
+#include "dolog.hh"
 
 #include <boost/utility.hpp>
 #include <csignal>
@@ -84,7 +85,8 @@ public:
       closesocket(d_socket);
     }
     catch (std::runtime_error &e) {
-      // not a lot we can do here
+      // not a lot we can do here except log
+      errlog("Error closing socket: %s", e.what());
     }
     delete[] d_buffer;
   }

@@ -31,31 +31,33 @@
 #define STATS_NUM_WINDOWS 5
 #define STATS_WINDOW_SIZE 60
 
+using namespace PerfStats;
+
 TWStatsDB<unsigned int> g_perfStats("perfStats", STATS_WINDOW_SIZE, STATS_NUM_WINDOWS);
 
-FieldMap fm = { { "WTW_0_1", "int" },
-                { "WTW_1_10", "int" },
-                { "WTW_10_100", "int" },
-                { "WTW_100_1000", "int" },
-                { "WTW_Slow", "int" },
-                { "WTR_0_1", "int" },
-                { "WTR_1_10", "int" },
-                { "WTR_10_100", "int" },
-                { "WTR_100_1000", "int" },
-                { "WTR_Slow", "int" },
-                { "Command", "countmin"},
-                { "Custom", "countmin"} };
+FieldMap fm = { { wtw_0_1_str, "int" },
+                { wtw_1_10_str, "int" },
+                { wtw_10_100_str, "int" },
+                { wtw_100_1000_str, "int" },
+                { wtw_slow_str, "int" },
+                { wtr_0_1_str, "int" },
+                { wtr_1_10_str, "int" },
+                { wtr_10_100_str, "int" },
+                { wtr_100_1000_str, "int" },
+                { wtr_slow_str, "int" },
+                { command_str, "countmin"},
+                { custom_str, "countmin"} };
 
-std::map<PerfStat, std::string> lookupPerfStat = { { WorkerThreadWait_0_1, "WTW_0_1" },
-						   { WorkerThreadWait_1_10, "WTW_1_10" }, 
-						   { WorkerThreadWait_10_100, "WTW_10_100" },
-						   { WorkerThreadWait_100_1000, "WTW_100_1000" },
-						   { WorkerThreadWait_Slow, "WTW_Slow" }, 
-						   { WorkerThreadRun_0_1, "WTR_0_1" },
-						   { WorkerThreadRun_1_10, "WTR_1_10" },
-						   { WorkerThreadRun_10_100, "WTR_10_100" },
-						   { WorkerThreadRun_100_1000, "WTR_100_1000" },
-						   { WorkerThreadRun_Slow, "WTR_Slow" } };
+std::map<PerfStat, std::string> lookupPerfStat = { { WorkerThreadWait_0_1, wtw_0_1_str },
+                                                   { WorkerThreadWait_1_10, wtw_1_10_str }, 
+                                                   { WorkerThreadWait_10_100, wtw_10_100_str },
+                                                   { WorkerThreadWait_100_1000,  wtw_100_1000_str},
+                                                   { WorkerThreadWait_Slow, wtw_slow_str }, 
+                                                   { WorkerThreadRun_0_1, wtr_0_1_str },
+                                                   { WorkerThreadRun_1_10, wtr_1_10_str },
+                                                   { WorkerThreadRun_10_100, wtr_10_100_str },
+                                                   { WorkerThreadRun_100_1000, wtr_100_1000_str },
+                                                   { WorkerThreadRun_Slow, wtr_slow_str } };
 
 void initPerfStats()
 {

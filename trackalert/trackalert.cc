@@ -426,6 +426,8 @@ char* my_generator(const char* text, int state)
       "testCrypto",
       "showCustomWebHooks()",
       "showPerfStats()",
+      "showCommandStats()",
+      "showCustomStats()",
       "showVersion()",
       "showCustomEndpoints()",
       "setCustomEndpoint(",

@@ -852,6 +852,26 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showPerfStats", []() {
       });
   }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showCommandStats", []() {
+	g_outputBuffer += getCommandStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCommandStats", []() {
+      });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showCustomStats", []() {
+	g_outputBuffer += getCustomStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomStats", []() {
+      });
+  }
   
   if (!allow_report) {
     c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { g_webhook_runner.setNumThreads(num_threads); });

@@ -34,15 +34,15 @@
 TWStatsDB<unsigned int> g_perfStats("perfStats", STATS_WINDOW_SIZE, STATS_NUM_WINDOWS);
 
 FieldMap fm = { { "WTW_0_1", "int" },
-		{ "WTW_1_10", "int" },
-		{ "WTW_10_100", "int" },
-		{ "WTW_100_1000", "int" },
-		{ "WTW_Slow", "int" },
-		{ "WTR_0_1", "int" },
-		{ "WTR_1_10", "int" },
-		{ "WTR_10_100", "int" },
-		{ "WTR_100_1000", "int" },
-		{ "WTR_Slow", "int" },
+                { "WTW_1_10", "int" },
+                { "WTW_10_100", "int" },
+                { "WTW_100_1000", "int" },
+                { "WTW_Slow", "int" },
+                { "WTR_0_1", "int" },
+                { "WTR_1_10", "int" },
+                { "WTR_10_100", "int" },
+                { "WTR_100_1000", "int" },
+                { "WTR_Slow", "int" },
                 { "Command", "countmin"},
                 { "Custom", "countmin"} };
 

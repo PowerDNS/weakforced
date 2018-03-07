@@ -42,6 +42,13 @@ cannot be called inside the report or background functions:
 		config_keys["secret"] = "verysecretcode"
 		addCustomWebHook("mycustomhook", config_keys)
 
+* addCustomStat(\<stat name\>) - Add a custom counter which can be
+  used to track statistics. The stats for custom counters are logged
+  every 5 minutes. The counter is incremented with the
+  "incCustomCounter" command. For example:
+
+        addCustomStat("custom_stat1")
+
 * webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
   specified IP address and port. The password is used to authenticate
   client connections using basic authentication. For example:
@@ -390,6 +397,12 @@ configuration or within the allow/report/reset functions:
 				 end
 			 end
 		 end
+
+* incCustomStat(\<stat name\>) - Increment a custom statistics
+  counter. The value of the counter will be logged every 5 minutes,
+  and then reset. For example:
+
+        incCustomStat("custom_stat1")
 
 # FILES
 */etc/trackalert.conf*

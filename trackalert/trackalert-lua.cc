@@ -399,6 +399,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       cobj.c_func = func;
       custom_func_map.insert(std::make_pair(f_name, cobj));
       if (!multi_lua && !client) {
+        addCommandStat(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
 	noticelog("Registering custom endpoint [%s]", f_name);
@@ -417,6 +418,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   else {
     c_lua.writeFunction("showCustomEndpoints", []() { });
   }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
+  }
+
+  if (multi_lua) {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
+  }
   
   if (!multi_lua) {
     c_lua.writeFunction("showPerfStats", []() {
@@ -425,6 +440,26 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
   else {
     c_lua.writeFunction("showPerfStats", []() {
+      });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("showCommandStats", []() {
+	g_outputBuffer += getCommandStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCommandStats", []() {
+      });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("showCustomStats", []() {
+	g_outputBuffer += getCustomStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomStats", []() {
       });
   }
   

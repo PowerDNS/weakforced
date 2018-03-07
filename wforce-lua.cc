@@ -364,10 +364,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   if (!allow_report) {
     c_lua.writeFunction("siblings", []() {
       auto siblings = g_siblings.getCopy();
-      boost::format fmt("%-35s %-10d %-9d    %s\n");
-      g_outputBuffer= (fmt % "Address" % "Successes" % "Failures" % "Note").str();
+      boost::format fmt("%-35s %-15d %-14d %-15d %-14d   %s\n");
+      g_outputBuffer= (fmt % "Address" % "Send Successes" % "Send Failures" % "Rcv Successes" % "Rcv Failures" % "Note").str();
       for(const auto& s : siblings)
-	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % (s->d_ignoreself ? "Self" : "") ).str();
+	g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % s->rcvd_success % s->rcvd_fail % (s->d_ignoreself ? "Self" : "") ).str();
       
     });
   } 
@@ -808,6 +808,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       cobj.c_reportSink = reportSink;
       custom_func_map.insert(std::make_pair(f_name, cobj));
       if (!allow_report && !client) {
+        addCommandStat(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
 	noticelog("Registering custom endpoint [%s]", f_name);
@@ -829,12 +830,46 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   if (!allow_report) {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
+  }
+
+  if (allow_report) {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
+  }
+  else {
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
+  }
+  
+  if (!allow_report) {
     c_lua.writeFunction("showPerfStats", []() {
 	g_outputBuffer += getPerfStatsString();
       });
   }
   else {
     c_lua.writeFunction("showPerfStats", []() {
+      });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showCommandStats", []() {
+	g_outputBuffer += getCommandStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCommandStats", []() {
+      });
+  }
+
+  if (!allow_report) {
+    c_lua.writeFunction("showCustomStats", []() {
+	g_outputBuffer += getCustomStatsString();
+      });
+  }
+  else {
+    c_lua.writeFunction("showCustomStats", []() {
       });
   }
   

@@ -239,6 +239,10 @@ void doClient(ComboAddress server, const std::string& command)
 {
   cout<<"Connecting to "<<server.toStringWithPort()<<endl;
   int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
+  if (fd < 0) {
+    cout << "Could not open socket" << endl;
+    return;
+  }
   SConnect(fd, server);
 
   SodiumNonce theirs, ours, readingNonce, writingNonce;
@@ -490,9 +494,22 @@ void receiveReplicationOperations(ComboAddress local)
   
   warnlog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
   for(;;) {
+    shared_ptr<Sibling> recv_sibling = nullptr;
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
+
+    for (auto &s : *siblings) {
+      if (ComboAddress::addressOnlyEqual()(s->rem, remote) == true) {
+        recv_sibling = s;
+        break;
+      }
+    }
+
+    if (recv_sibling == nullptr) {
+      errlog("Message received from host (%s) that is not configured as a sibling", remote.toStringWithPort());
+      continue;
+    }
     
     SodiumNonce nonce;
     memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
@@ -503,17 +520,20 @@ void receiveReplicationOperations(ComboAddress local)
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt replication operation: %s", e.what());
-      return;
+      recv_sibling->rcvd_fail++;
+      continue;
     }
     
-    p.push([msg,remote](int id) {
-	ReplicationOperation rep_op;
-	if (rep_op.unserialize(msg) != false) {
-	  rep_op.applyOperation();
-	}
-	else {
-	  errlog("Invalid replication operation received from %s", remote.toString());
-	}
+    p.push([msg,remote,recv_sibling](int id) {
+        ReplicationOperation rep_op;
+        if (rep_op.unserialize(msg) != false) {
+          rep_op.applyOperation();
+          recv_sibling->rcvd_success++;
+        }
+        else {
+          errlog("Invalid replication operation received from %s", remote.toString());
+          recv_sibling->rcvd_fail++;
+        }
       });
   }
 }
@@ -574,6 +594,8 @@ char* my_generator(const char* text, int state)
       "addNamedReportSink(",
       "setNamedReportSinks(",
       "showPerfStats()",
+      "showCommandStats()",
+      "showCustomStats()",
       "showStringStatsDB()",
       "showVersion()",
       "addWebHook(",

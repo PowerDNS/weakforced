@@ -77,16 +77,15 @@ started with the -c option.
 * stats() - Returns statistics about the wforce process. For example:
 
 		> stats()
-		40 reports, 8 allow-queries, 40 entries in database
+		40 reports, 8 allow-queries (% denies)
 
 * siblings() - Returns information about configured siblings. For
   example:
 
-		> siblings()
-		Address                             Sucesses  Failures     Note
-		192.168.1.79:4001                   18        7              
-		192.168.1.30:4001                   25        0              
-		192.168.1.54:4001                   0         0            Self
+        > siblings()
+        Address                             Send Successes  Send Failures  Rcv Successes   Rcv Failures     Note
+        127.0.0.1:4001                      0               0              17              0                
+        127.0.0.1:4002                      0               0              0               0                Self
 
 * showNamedReportSinks() - Returns information about configured report
   sinks. For example: 
@@ -159,7 +158,7 @@ started with the -c option.
   refer to the time that worker threads took to run. Each stat is in a
   bucket, where each bucket represents a time range in ms,
   e.g. 0-1. A server that is not overloaded will have most stats in
-  the 0-1 buckets. For example:
+  the 0-1 buckets. Stats are for the previous 5 minutes. For example:
 
 		> showPerfStats()
 		WTW_0_1=2939287
@@ -172,6 +171,33 @@ started with the -c option.
 		WTR_10_100=131
 		WTR_100_1000=0
 		WTR_Slow=0
+
+* showCommandStats() - Returns information about the number of REST
+  API commands that have been called, including custom
+  endpoints. Stats are for the previous 5 mins, and due to the
+  counting method, may be approximate when the numbers get very
+  large. For example:
+
+        > showCommandStats()
+        addBLEntry=0
+        allow=23942
+        delBLEntry=0
+        getBL=0
+        getDBStats=0
+        ping=300
+        report=19232
+        reset=24
+        stats=92
+        customEndpoint=2821
+
+* showCustomStats() - Returns information about custom stats that are
+  incremented from Lua. Stats are for the previous 5 mins, and due to the
+  counting method, may be approximate when the numbers get very
+  large. For example:
+
+        > showCustomStats()
+        custom1=0
+        custom2=8405
 
 * reloadGeoIPDBs() - Reload all GeoIP DBs that have been
 initialized. For example:

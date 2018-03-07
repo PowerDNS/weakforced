@@ -238,11 +238,13 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
 void parseAddBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   parseAddDelBLEntryCmd(req, resp, true);
+  incCommandStat("addBLEntry");
 }
 
 void parseDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   parseAddDelBLEntryCmd(req, resp, false);
+  incCommandStat("delBLEntry");
 }
 
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -322,6 +324,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       resp.body=R"({"status":"failure"})";
     }
   }
+  incCommandStat("reset");
 }
 
 void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -405,6 +408,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
+  incCommandStat("report");
 }
 
 #define OX_PROTECT_NOTIFY 0
@@ -599,6 +603,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     resp.status=200;
     resp.body=msg.dump();
   }
+  incCommandStat("allow");
 }
 
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -609,16 +614,20 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
   resp.status=200;
   Json my_json = Json::object {
+    { "reports", (int)g_stats.reports },
     { "allows", (int)g_stats.allows },
     { "denieds", (int)g_stats.denieds },
     { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
     { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
     { "uptime", uptimeOfProcess()},
-    { "perfstats", perfStatsToJson()}
+    { "perfstats", perfStatsToJson()},
+    { "commandstats", commandStatsToJson()},
+    { "customstats", customStatsToJson()}
   };
 
   resp.status=200;
   resp.body=my_json.dump();
+  incCommandStat("stats");
 }
 
 void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -637,7 +646,8 @@ void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     { "bl_entries", my_entries }
   };
   resp.status=200;
-  resp.body = ret_json.dump();  
+  resp.body = ret_json.dump();
+  incCommandStat("getBL");
 }
 
 void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -727,6 +737,7 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
       resp.body = ret_json.dump();  
     }
   }
+  incCommandStat("getDBStats");
 }
 
 enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
@@ -810,24 +821,35 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       resp.body=ss.str();
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
-  }  
+  }
+  incCommandStat(command);
 }
 
 void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   resp.status = 200;
   resp.body = R"({"status":"ok"})";
+  incCommandStat("ping");
 }
 
 void registerWebserverCommands()
 {
+  addCommandStat("addBLEntry");
   g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, parseAddBLEntryCmd);
+  addCommandStat("delBLEntry");
   g_webserver.registerFunc("delBLEntry", HTTPVerb::POST, parseDelBLEntryCmd);
+  addCommandStat("reset");
   g_webserver.registerFunc("reset", HTTPVerb::POST, parseResetCmd);
+  addCommandStat("report");
   g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  addCommandStat("allow");
   g_webserver.registerFunc("allow", HTTPVerb::POST, parseAllowCmd);
+  addCommandStat("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
+  addCommandStat("getBL");
   g_webserver.registerFunc("getBL", HTTPVerb::GET, parseGetBLCmd);
+  addCommandStat("getDBStats");
   g_webserver.registerFunc("getDBStats", HTTPVerb::POST, parseGetStatsCmd);
+  addCommandStat("ping");
   g_webserver.registerFunc("ping", HTTPVerb::GET, parsePingCmd);
 }

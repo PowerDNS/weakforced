@@ -112,6 +112,33 @@ started with the -c option.
 		WTR_100_1000=0
 		WTR_Slow=0
 
+* showCommandStats() - Returns information about the number of REST
+  API commands that have been called, including custom
+  endpoints. Stats are for the previous 5 mins, and due to the
+  counting method, may be approximate when the numbers get very
+  large. For example:
+
+        > showCommandStats()
+        addBLEntry=0
+        allow=23942
+        delBLEntry=0
+        getBL=0
+        getDBStats=0
+        ping=300
+        report=19232
+        reset=24
+        stats=92
+        customEndpoint=2821
+
+* showCustomStats() - Returns information about custom stats that are
+  incremented from Lua. Stats are for the previous 5 mins, and due to
+  the counting method, may be approximate when the numbers get very
+  large. For example:
+
+        > showCustomStats()
+        custom1=0
+        custom2=8405
+
 * reloadGeoIPDBs() - Reload all GeoIP DBs that have been
 initialized. For example:
 

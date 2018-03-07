@@ -142,6 +142,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     resp.status=200;
     resp.body=R"({"status":"ok"})";      
   }
+  incCommandStat("report");
 }
 
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -161,6 +162,7 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
   resp.status=200;
   resp.body=my_json.dump();
+  incCommandStat("stats");
 }
 
 enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
@@ -239,11 +241,14 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       resp.body=ss.str();
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
-  }  
+  }
+  incCommandStat(command);
 }
 
 void registerWebserverCommands()
 {
+  addCommandStat("report");
   g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  addCommandStat("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
 }

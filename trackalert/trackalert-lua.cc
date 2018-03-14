@@ -37,6 +37,10 @@
 #include "wforce-geoip.hh"
 #endif
 
+#ifdef HAVE_MMDB
+#include "wforce-geoip2.hh"
+#endif
+
 using std::thread;
 
 static vector<std::function<void(void)>>* g_launchWork;
@@ -675,6 +679,41 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   c_lua.writeFunction("lookupISP", [](ComboAddress address) {
       return g_wfgeodb.lookupISP(address);
     });
+
+#ifdef HAVE_MMDB
+
+  if (!multi_lua) {
+    c_lua.writeFunction("newGeoIP2DB", [](const std::string& name, const std::string& filename) {
+	  try {
+            std::lock_guard<std::mutex> lock(geoip2_mutx);
+            geoip2Map.emplace(std::make_pair(name, WFGeoIP2DB::makeWFGeoIP2DB(filename)));
+          }
+	  catch (const WforceException& e) {
+            boost::format fmt("%s (%s)\n");
+            errlog("newGeoIPDB(): Error initialising GeoIP2DB (%s)", e.reason);
+            g_outputBuffer += (fmt % "newGeoIP2DB(): Error loading GeoIP2 DB" % e.reason).str();
+	  }
+	});
+  }
+  else {
+    c_lua.writeFunction("newGeoIP2DB", [](const std::string& name, const std::string& filename) { });
+  }
+
+  c_lua.writeFunction("getGeoIP2DB", [](const std::string& name) {
+      std::lock_guard<std::mutex> lock(geoip2_mutx);
+      auto it = geoip2Map.find(name);
+      if (it != geoip2Map.end())
+	return it->second;
+      else {
+        errlog("getGeoIP2DB(): Could not find database named %s", name);
+	return std::make_shared<WFGeoIP2DB>();
+      }
+  });
+  
+  c_lua.registerFunction("lookupCountry", &WFGeoIP2DB::lookupCountry);
+  c_lua.registerFunction("lookupISP", &WFGeoIP2DB::lookupISP);
+  c_lua.registerFunction("lookupCity", &WFGeoIP2DB::lookupCity);
+#endif // HAVE_MMDB  
 #endif // HAVE_GEOIP
   
   std::ifstream ifs(config);

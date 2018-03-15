@@ -71,6 +71,9 @@ matrix:
         - MYCXX=clang++-4.0
         - MYCC=clang-4.0
 before_script:
+ - sudo add-apt-repository ppa:maxmind/ppa -y
+ - sudo apt-get update -q
+ - sudo apt-get install libmaxminddb0 libmaxminddb-dev mmdb-bin -y
  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
  - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
  - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium
@@ -89,6 +92,9 @@ before_script:
  - sudo gunzip /usr/share/GeoIP/GeoIPCityv6.dat.gz
  - sudo wget -N -O /usr/share/GeoIP/GeoIPCity.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
  - sudo gunzip /usr/share/GeoIP/GeoIPCity.dat.gz
+ - sudo wget -N -O /usr/share/GeoIP/GeoLite2-City.tar.gz http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz
+ - sudo gunzip -c /usr/share/GeoIP/GeoLite2-City.tar.gz | tar xvf - --strip-components 1
+ - sudo geoipupdate -v
 script:
  - autoreconf -i
  - ./configure --enable-docker --enable-trackalert CC=$MYCC CXX=$MYCXX

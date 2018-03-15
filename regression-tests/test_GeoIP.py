@@ -22,4 +22,12 @@ class TestGeoIP(ApiTestCase):
         self.assertRegexpMatches(json.dumps(j), "Wokingham")
         r.close()
 
+    def test_geoIP2City(self):
+        attrs = dict()
+        attrs['ip'] = '86.128.244.97'
+        r = self.customFuncWithName("geoip2", attrs)
+        j = r.json()
+        self.assertRegexpMatches(json.dumps(j), "Wokingham")
+        r.close()
+
     

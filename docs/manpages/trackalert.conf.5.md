@@ -104,27 +104,36 @@ cannot be called inside the report or background functions:
 
 		setNumWebHookThreads(2)
 
-* initGeoIPDB() - Initializes the country-level IPv4 and IPv6 GeoIP
-  databases. If either of these databases is not installed, this
-  command will fail and trackalert will not start. For example:
+* newGeoIP2DB(\<db name\>, \<filename\>) - Opens and initializes a
+  GeoIP2 database. A name must be chosen, and the filename of the
+  database to open must also be supplied. To obtain an object allowing
+  lookups to be performed against the database, use the getGeoIP2DB()
+  function. For example:
+
+        newGeoIP2DB("CityDB", "/usr/share/GeoIP/GeoLite2-City.mmdb")
+
+* initGeoIPDB() - (Deprecated - use newGeoIP2DB()). Initializes the
+  country-level IPv4 and IPv6 GeoIP databases. If either of these
+  databases is not installed, this command will fail and trackalert
+  will not start. For example:
   
 		initGeoIPDB()
 
-* initGeoIPCityDB() - Initializes the city-level IPv4 and IPv6 GeoIP
-  databases. If either of these databases is not installed, this
-  command will fail and trackalert will not start. Ensure these
-  databases have the right names if you're using the free/lite DBs -
-  you may need to create symbolic links e.g. GeoIPCityv6.dat ->
-  GeoLiteCityv6.dat. For example: 
+* initGeoIPCityDB() - (Deprecated - use newGeoIP2DB()). Initializes
+the city-level IPv4 and IPv6 GeoIP databases. If either of these
+databases is not installed, this command will fail and trackalert will
+not start. Ensure these databases have the right names if you're using
+the free/lite DBs - you may need to create symbolic links
+e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   
 		initGeoIPCityDB()
 
-* initGeoIPISPDB() - Initializes the ISP-level IPv4 and IPv6 GeoIP
-  databases. If either of these databases is not installed, this
-  command will fail and trackalert will not start. For example:
+* initGeoIPISPDB() - (Deprecated - use newGeoIP2DB()). Initializes the
+  ISP-level IPv4 and IPv6 GeoIP databases. If either of these
+  databases is not installed, this command will fail and trackalert
+  will not start. For example:
   
 		initGeoIPISPDB()
-
 
 * setReport(\<report func\>) - Tell trackalert to use the specified
   Lua function for handling all "report" commands. For example:
@@ -188,19 +197,52 @@ cannot be called inside the report or background functions:
 The following functions are available anywhere; either as part of the 
 configuration or within the allow/report/reset functions:
 
-* lookupCountry(\<ComboAddress\>) - Returns the two-character country
-  code of the country that the IP address is located in. A
-  ComboAddress object can be created with the newCA() function. For example:
-  
-		my_country = lookupCountry(my_ca)
+* getGeoIP2DB(\<db name\>) - Return an object which can be used to
+  perform GeoIP lookups. The database must first be initialised using
+  newGeoIP2DB(). For example:
 
-* lookupISP(\<ComboAddress\>) - Returns the name of the ISP hosting
+        local citydb = getGeoIP2DB("CityDB")
+
+* GeoIP2DB:lookupCountry(\<ComboAddress\>) - Returns the two-character
+  country code of the country that the IP address is located in. A
+  ComboAddress object can be created with the newCA() function. For
+  example:
+
+		my_country = countrydb:lookupCountry(newCA("8.8.8.8"))
+        my_country = countrydb:lookupCountry(lt.remote)
+
+* GeoIP2DB:lookupISP(\<ComboAddress\>) - Returns the name of the ISP hosting
   the IP address. A ComboAddress object can be created with the
   newCA() function. For example:
 
-		local my_isp = lookupCountry(newCA("128.243.16.21"))
+		local my_isp = ispdb:lookupISP(newCA("128.243.16.21"))
 
-* lookupCity(\<ComboAddress\>) - Returns a map containing information
+* GeoIP2DB:lookupCity(\<ComboAddress\>) - Returns a map containing information
+  about the IP address, such as the city name and latitude and
+  longitude. See GeoIPRecord below for the full list of fields. For
+  example:
+
+		local gip_record = citydb:lookupCity(lt.remote)
+		local my_city = gip_record.city
+		local my_latitude = gip_record.latitude
+
+* lookupCountry(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
+  function). Returns the two-character country
+  code of the country that the IP address is located in. A
+  ComboAddress object can be created with the newCA() function. For
+  example:
+  
+		my_country = lookupCountry(my_ca)
+
+* lookupISP(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
+  function). Returns the name of the ISP hosting
+  the IP address. A ComboAddress object can be created with the
+  newCA() function. For example:
+
+		local my_isp = lookupISP(newCA("128.243.16.21"))
+
+* lookupCity(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
+  function). Returns a map containing information
   about the IP address, such as the city name and latitude and
   longitude. See GeoIPRecord below for the full list of fields. For
   example:

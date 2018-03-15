@@ -22,6 +22,7 @@
 
 #pragma once
 #include <string>
+#include <mutex>
 #include "lock.hh"
 #include "iputils.hh"
 #include "wforce-geoip.hh"

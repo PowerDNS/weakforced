@@ -37,7 +37,7 @@ bool MiniCurl::initCurlGlobal()
   return init_curl_global == CURLE_OK;
 }
 
-MiniCurl::MiniCurl()
+MiniCurl::MiniCurl() : d_id(0)
 {
   bool init_cg = initCurlGlobal();
   

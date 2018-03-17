@@ -175,6 +175,14 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def customFuncWithName(self, custom_func_name, attrs):
+        payload = dict()
+        payload['attrs'] = attrs
+        return self.session.post(
+            self.url("/?command="+custom_func_name),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+    
     def trackalertCustomFunc(self, login):
         attrs = dict()
         attrs['login'] = login

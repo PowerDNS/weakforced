@@ -1,11 +1,12 @@
-AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(EXT_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
+AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(EXT_CFLAGS) $(libsodium_CFLAGS) $(GETDNS_CFLAGS) $(JSON11_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) $(GEOIP_CFLAGS) $(MMDB_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"'
 
 noinst_LTLIBRARIES=libweakforce.la
-libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS)
+libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS) $(GEOIP_LIBS) $(MMDB_LIBS)
 libweakforce_la_SOURCES= \
 	base64.hh \
 	dns_lookup.cc dns_lookup.hh \
 	wforce-geoip.cc wforce-geoip.hh \
+	wforce-geoip2.cc wforce-geoip2.hh \
 	twmap.hh customfunc.hh\
 	dolog.hh wforce_ns.hh \
 	iputils.cc iputils.hh \
@@ -38,6 +39,7 @@ noinst_HEADERS = \
 	twmap.hh \
 	customfunc.hh \
 	wforce-geoip.hh \
+	wforce-geoip2.hh \
 	perf-stats.hh \
 	webhook.hh \
 	minicurl.hh \
@@ -82,6 +84,6 @@ testrunner_LDADD = \
 	${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
-	$(YAMLCPP_LIBS) $(WFORCE_LIBS) \
+	$(YAMLCPP_LIBS) $(WFORCE_LIBS) $(MMDB_LIBS)\
 	$(BOOST_UNIT_TEST_FRAMEWORK_LIBS) \
 	$(LIBDL)

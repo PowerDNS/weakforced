@@ -485,11 +485,60 @@ Address                             Sucesses  Failures     Note
 With this setup, several wforces are all kept in sync, and can be load
 balanced behind (for example) haproxy, which incidentally can also offer SSL.
 
-GeoIP Support
+GeoIP2 Support
 -------------
 
-GeoIP support is provided using the legacy Maxmind APIs and
-Databases (i.e. for DBs ending in .dat not .mmdb).
+GeoIP support is provided using the GeoIP2 Maxmind APIs DBs
+(i.e. DBs ending in .mmdb). This is the preferred integration to use,
+as support for GeoIP Legacy DBs will be discontinued by Maxmind
+in 2019.
+
+GeoIP2 DBs are represented by a Lua object that is created with the
+following call:
+
+```
+newGeoIP2DB("Name", "/path/to/file.mmdb")
+```
+
+The Lua object is retrieved with the following call:
+
+```
+local mygeodb = getGeoIP2DB("Name")
+```
+
+You can then lookup infomation using the following calls:
+
+* lookupCountry() - Returns the 2 letter country code associated with
+  the IP address
+* lookupISP() - Returns the name of the ISP associated with the IP
+  address (requires the Maxmind ISP DB, which is only available on
+  subscription)
+* lookupCity - Rather than only returning a city name, this call
+returns a Lua table which includes the following information:
+    * country_code
+    * country_name
+    * region
+    * city
+    * postal_code
+    * continent_code
+    * latitude
+    * longitude
+
+For example:
+
+```
+local geoip_data = mygeodp:lookupCity(newCA("128.243.21.16"))
+print(geoip_data.city)
+print(geoip_data.longitude)
+print(geoip_data.latitude)
+```
+
+Legacy GeoIP Support
+-------------
+
+Support for legacy GeoIP databases (i.e. ending in .dat) is
+deprecated, since Maxmind will be discontinuing support for them
+in 2019.
 
 Three types of GeoIP lookup are supported:
 
@@ -512,8 +561,10 @@ returns a Lua map consisting of the following keys:
 * longitude
 
 For example:
-	local geoip_data = lookupCity(newCA("128.243.21.16"))
-	print(geoip_data.city)
+```
+local geoip_data = lookupCity(newCA("128.243.21.16"))
+print(geoip_data.city)
+```
 
 When a DB is initialized, wforce attempts to open both v4 and v6
 versions of the database. If either is not found an error is thrown,
@@ -527,4 +578,7 @@ because the filenames for the "lite" DBs are not the same as the
 expected filenames for the full DBs, specifically all files must
 start with GeoIP rather than GeoLite. Creating symbolic links to the
 expected filenames will fix this problem, for example:
-	ln -s GeoLiteCityv6.dat GeoIPCityv6.dat
+
+```
+ln -s GeoLiteCityv6.dat GeoIPCityv6.dat
+```

@@ -60,6 +60,14 @@ SDBReplicationOperation::SDBReplicationOperation(const std::string& my_db_name, 
   sdb_msg.set_int_param(my_a);
 }
 
+SDBReplicationOperation::SDBReplicationOperation(const std::string& my_db_name,
+                                                 SDBOperation_SDBOpType my_op,
+                                                 const std::string& my_key,
+                                                 const std::string& my_field_name) : SDBReplicationOperation(my_db_name, my_op, my_key)
+{
+  sdb_msg.set_field_name(my_field_name);
+}
+
 std::string SDBReplicationOperation::serialize()
 {
   std::string ret_str;
@@ -80,6 +88,8 @@ AnyReplicationOperationP SDBReplicationOperation::unserialize(const std::string&
       return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name(), sdb_msg.int_param());
     else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == true) && (sdb_msg.has_int_param() == true))
       return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name(), sdb_msg.str_param(), sdb_msg.int_param());
+    else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == false) && (sdb_msg.has_int_param() == false))
+      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name());
   }
 
   retval = false;
@@ -103,6 +113,9 @@ void SDBReplicationOperation::applyOperation()
     switch(sdb_msg.op_type()) {
     case SDBOperation_SDBOpType_SDBOpReset:
       statsdb->resetInternal(sdb_msg.key(), false);
+      break;
+    case SDBOperation_SDBOpType_SDBOpResetField:
+      statsdb->resetFieldInternal(sdb_msg.key(), sdb_msg.field_name(), false);
       break;
     case SDBOperation_SDBOpType_SDBOpAdd:
       if (sdb_msg.has_field_name() == false) {

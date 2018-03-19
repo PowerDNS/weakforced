@@ -285,6 +285,28 @@ void TWStringStatsDBWrapper::resetInternal(const TWKeyType vkey, bool replicate)
   }
 }
 
+void TWStringStatsDBWrapper::resetField(const TWKeyType vkey, const std::string& field_name)
+{
+  resetFieldInternal(vkey, field_name, true);
+}
+
+void TWStringStatsDBWrapper::resetFieldInternal(const TWKeyType vkey, const std::string& field_name, bool replicate)
+{
+  std::string key = getStringKey(vkey);
+  std::shared_ptr<SDBReplicationOperation> sdb_rop;
+  std::string db_name = sdbp->getDBName();
+
+  sdbp->reset_field(key, field_name);
+
+  if ((replicate == true) && (*replicated == true)) {
+    sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpResetField, key, field_name);
+    ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
+    // this actually does the replication
+    replicateOperation(rep_op);
+  }
+}
+
+
 unsigned int TWStringStatsDBWrapper::get_size()
 {	
   return sdbp->get_size();

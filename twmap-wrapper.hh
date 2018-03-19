@@ -57,7 +57,9 @@ public:
   std::vector<int> get_windows(const TWKeyType vkey, const std::string& field_name, const boost::optional<boost::variant<std::string, ComboAddress>> param1);
   bool get_all_fields(const TWKeyType vkey, std::vector<std::pair<std::string, int>>& ret_vec);
   void reset(const TWKeyType vkey);
+  void resetField(const TWKeyType vkey, const std::string& field_name);
   void resetInternal(const TWKeyType vkey, bool replicate=true);
+  void resetFieldInternal(const TWKeyType vkey, const std::string& field_name, bool replicate=true);
   unsigned int get_size();
   unsigned int get_max_size();
   void set_size_soft(unsigned int size);

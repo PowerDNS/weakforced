@@ -537,6 +537,12 @@ a Netmask. For example:
   
 		statsdb:twReset(lt.login)
 
+* StringStatsDB:twResetField(\<key\>, \<field name\>) - Reset all
+  stats for all windows in the db for the specified key and field
+  name. For example:
+  
+		statsdb:twResetField(lt.login, "countLogins")
+
 * infoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level t<he
   specified string, adding "key=value" strings to the log for all the
   kvs specified in the key-value map. For example:

@@ -14,6 +14,7 @@ message SDBOperation {
     SDBOpAdd = 0;
     SDBOpSub = 1;
     SDBOpReset = 2;
+    SDBOpResetField = 3;
     SDBOpNone = 999;
   }
   required SDBOpType op_type = 2;

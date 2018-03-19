@@ -36,6 +36,10 @@ public:
 			  const std::string& field_name, int a);
   SDBReplicationOperation(const std::string& db_name, SDBOperation_SDBOpType op, const std::string& key,
 			  const std::string& field_name, const std::string& s, int a);
+  SDBReplicationOperation(const std::string& db_name,
+                          SDBOperation_SDBOpType op,
+                          const std::string& key,
+			  const std::string& field_name);
   std::string serialize();
   AnyReplicationOperationP unserialize(const std::string& str, bool& retval);
   void applyOperation();

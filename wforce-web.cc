@@ -502,18 +502,21 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
       ret_msg = "Temporarily blacklisted IP Address - try again later";
+      incCommandStat("allow_blacklisted");
     }
     else if (g_bl_db.getEntry(lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted Login"), lt, log_attrs);	  
       ret_msg = "Temporarily blacklisted Login Name - try again later";
+      incCommandStat("allow_blacklisted");
     }
     else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
       allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	  	  
       ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+      incCommandStat("allow_blacklisted");
     }
     else {
       try {
@@ -531,8 +534,15 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
 	ret_attrs = std::move(log_attrs);
 	g_stats.allows++;
-	if(status < 0)
+	if(status < 0) {
 	  g_stats.denieds++;
+          incCommandStat("allow_denied");
+        }
+        else if (status > 0) {
+          incCommandStat("allow_tarpitted");
+        } else {
+          incCommandStat("allow_allowed");
+        }
 	Json::object jattrs;
 	for (auto& i : ret_attrs) {
 	  jattrs.insert(make_pair(i.first, Json(i.second)));
@@ -843,6 +853,10 @@ void registerWebserverCommands()
   addCommandStat("report");
   g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
   addCommandStat("allow");
+  addCommandStat("allow_allowed");
+  addCommandStat("allow_blacklisted");
+  addCommandStat("allow_denied");
+  addCommandStat("allow_tarpitted");
   g_webserver.registerFunc("allow", HTTPVerb::POST, parseAllowCmd);
   addCommandStat("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);

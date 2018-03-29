@@ -14,14 +14,6 @@ class TestGeoIP(ApiTestCase):
         self.assertRegexpMatches(json.dumps(j), "Japan")
         r.close()
 
-    def test_geoIPCity(self):
-        # Don't allow IPs from Wokingham
-        r = self.allowFunc('baddie', '86.128.244.97', "1234")
-        j = r.json()
-        self.assertEquals(j['status'], -1)
-        self.assertRegexpMatches(json.dumps(j), "Wokingham")
-        r.close()
-
     def test_geoIP2City(self):
         attrs = dict()
         attrs['ip'] = '86.128.244.97'

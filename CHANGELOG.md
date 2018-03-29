@@ -4,13 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
 ### Added
 - Add configuration setting "setNumWebHookConnsPerThread"
+- Add support for querying replication status in showStringStatsDB()
+- Add sibling received success/fail stats to sibling() command
+- New custom stats framework
+- New stats for all commands, including custom commands
+- GeoIP2 support
+- New resetField() function for statsDBs
+
+### Deprecated
+- GeoIP Legacy support
 
 ### Changed
 - Refactor webhooks to use libcurl multi interface for performance and
 deprecate per-webhook "num_conns" config
 
+## [1.4.2]
+
+### Fixed
+- Fix memory leak in statsDBs
+
+## [1.4.1]
+
+### Fixed
+- Fix issue where mapped v4 addresses in v6 were not handled correctly
 
 ## [1.4.0] - 2017-10-04
 ### Added

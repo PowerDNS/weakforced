@@ -16,10 +16,10 @@ class TestGeoIP(ApiTestCase):
 
     def test_geoIP2City(self):
         attrs = dict()
-        attrs['ip'] = '86.128.244.97'
+        attrs['ip'] = '128.243.1.1'
         r = self.customFuncWithName("geoip2", attrs)
         j = r.json()
-        self.assertRegexpMatches(json.dumps(j), "Wokingham")
+        self.assertRegexpMatches(json.dumps(j), "Nottingham")
         r.close()
 
     

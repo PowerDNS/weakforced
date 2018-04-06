@@ -31,10 +31,13 @@ WFORCE_CHECK_READLINE
 # Boost-specific checks
 BOOST_REQUIRE([1.42])
 BOOST_DATE_TIME
+AS_IF([test -z "$BOOST_DATE_TIME_LIBS"], [AC_MSG_ERROR([Boost date_time library is not installed])])
 BOOST_REGEX
+AS_IF([test -z "$BOOST_REGEX_LIBS"], [ AC_MSG_ERROR([Boost regex library is not installed])])
 BOOST_FOREACH
 BOOST_SYSTEM
 BOOST_FILESYSTEM
+AS_IF([test -z "$BOOST_FILESYSTEM_LIBS"], [ AC_MSG_ERROR([Boost filesystem library is not installed])])
 AM_CONDITIONAL([HAVE_BOOST_GE_148], [test "$boost_major_version" -ge 148])
 PDNS_ENABLE_UNIT_TESTS
 # Check for dependent programs

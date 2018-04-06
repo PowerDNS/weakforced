@@ -725,7 +725,7 @@ a Netmask. For example:
         incCustomStat("custom_stat1")
 
 # FILES
-*/etc/wforce.conf*
+*/etc/wforce/wforce.conf*
 
 # SEE ALSO
 wforce(1) wforce_webhook(5)

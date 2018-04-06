@@ -1,0 +1,41 @@
+FROM ubuntu:bionic as wforce
+
+RUN apt-get update && \
+    apt-get dist-upgrade -y && \
+    apt-get -y -f install \
+               autoconf \
+               automake \
+               libboost-all-dev \
+               libcurl4-openssl-dev \
+               libgeoip-dev \
+               libgetdns-dev \
+               libhiredis-dev \
+               libmaxminddb-dev \
+               liblua5.1-0-dev \
+               libprotobuf-dev \
+               libssl-dev \
+               libsodium-dev \
+               libsystemd-dev \
+               libyaml-cpp-dev \
+               libtool \
+               pkg-config \
+               protobuf-compiler \
+               pandoc \
+               wget
+
+WORKDIR /wforce/
+RUN mkdir /sdist
+
+ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/
+@EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert report_api docker elasticqueries)
+@EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /wforce/$d/" ; done
+ADD builder/helpers/set-configure-ac-version.sh /wforce/builder/helpers/
+
+ARG BUILDER_VERSION
+RUN /wforce/builder/helpers/set-configure-ac-version.sh && \
+    autoreconf -v -i -f && \
+    ./configure \
+      --disable-dependency-tracking && \
+    make dist
+RUN cp wforce-${BUILDER_VERSION}.tar.bz2 /sdist/
+

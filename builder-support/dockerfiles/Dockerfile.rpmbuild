@@ -1,0 +1,32 @@
+FROM dist-base as package-builder
+RUN yum install -y rpm-build rpmdevtools && \
+    yum groupinstall -y "Development Tools" && \
+    rpmdev-setuptree
+
+RUN mkdir /dist /wforce
+WORKDIR /wforce
+
+# Used for -p option to only build specific spec files
+ARG BUILDER_PACKAGE_MATCH
+
+ARG BUILDER_VERSION
+ARG BUILDER_RELEASE
+
+@IF [ ! -z "$M_all$M_wforce" ]
+COPY --from=sdist /sdist /sdist
+RUN for file in /sdist/* ; do ln -s $file /root/rpmbuild/SOURCES/ ; done && ls /root/rpmbuild/SOURCES/
+@ENDIF
+
+ADD builder-support/specs/ /wforce/builder-support/specs/
+ADD builder/helpers /wforce/builder/helpers
+
+RUN yum install -y rpm-build python34
+
+@IF [ ! -z "$M_all$M_wforce" ]
+RUN scl enable devtoolset-6 -- builder/helpers/build-specs.sh builder-support/specs/wforce.spec
+@ENDIF
+
+# mv accross layers with overlay2 is buggy in some kernel versions (results in empty dirs)
+# See: https://github.com/moby/moby/issues/33733
+#RUN mv /root/rpmbuild/RPMS/* /dist/
+RUN cp -R /root/rpmbuild/RPMS/* /dist/

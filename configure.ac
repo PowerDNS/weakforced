@@ -115,6 +115,6 @@ AC_CONFIG_FILES([Makefile
 	common/Makefile
 	docs/Makefile
 	docker/Makefile
-	trackalert/Makefile])
-	
+	trackalert/Makefile
+        wforce/Makefile])
 AC_OUTPUT

@@ -26,6 +26,8 @@ AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
 AC_PROG_LIBTOOL
+# We need readline
+WFORCE_CHECK_READLINE
 # Boost-specific checks
 BOOST_REQUIRE([1.42])
 BOOST_DATE_TIME

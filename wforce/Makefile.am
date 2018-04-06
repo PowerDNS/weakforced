@@ -5,7 +5,7 @@ UAP_REGEX_FILE=regexes.yaml
 
 EXTRA_DIST= wforce.conf wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
 
-CLEANFILES = replication.pb.cc replication.pb.h wforce.service $(UAP_REGEX_FILE)
+CLEANFILES = replication.pb.cc replication.pb.hh wforce.service $(UAP_REGEX_FILE)
 distclean-local:
 	-rm -rf *.dSYM
 
@@ -49,11 +49,11 @@ noinst_HEADERS = \
 	luastate.hh \
 	wforce-web.hh
 
-BUILT_SOURCES = replication.pb.cc replication.pb.h
+BUILT_SOURCES = replication.pb.cc replication.pb.hh
 replication.pb.cc: replication.proto
 	$(AM_V_GEN)$(PROTOC) -I . --cpp_out=./ $<
 
-nodist_wforce_SOURCES = replication.pb.cc replication.pb.h
+nodist_wforce_SOURCES = replication.pb.cc replication.pb.hh
 
 wforce.$(OBJEXT): replication.pb.cc
 

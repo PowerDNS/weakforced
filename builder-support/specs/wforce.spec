@@ -58,6 +58,17 @@ AutoReqProv: yes
  The aim is to support the largest of installations, providing services to
  hundreds of millions of users.
 
+%package trackalert
+Summary: longterm abuse data reporting and alerter
+
+%description trackalert
+ Trackalert is designed to be an optional service to complement
+ wforce. Whereas wforce provides a toolkit to combat  abuse of
+ logins such as password brute forcing in realtime, trackalert is
+ designed to look at abuse asynchronously, using long-term report data
+ stored in an external DB such as elasticsearch, and to send alerts on
+ potential login abuse.
+
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
@@ -65,15 +76,16 @@ AutoReqProv: yes
 %configure                       \
     --disable-dependency-tracking \
     --docdir=%{_docdir}/%{name}-%{getenv:BUILDER_VERSION} \
-    --disable-static --with-luajit --sysconfdir=/etc/%{name}
-make
+    --disable-static --with-luajit --sysconfdir=/etc/%{name} \
+    --enable-trackalert
+make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
 mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}-%{version}/
- 
+
 %clean
 rm -rf %{buildroot}
 
@@ -173,7 +185,12 @@ fi
 %{_docdir}/%{name}-%{version}/%{name}.conf.example
 %{_unitdir}/%{name}.service
 %{_mandir}/man1/%{name}.1.gz
-# %{_mandir}/man1/trackalert.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz
 %{_mandir}/man5/%{name}_webhook.5.gz
-# %{_mandir}/man5/trackalert.conf.5.gz
+
+%files trackalert
+%{_bindir}/trackalert
+%{_mandir}/man1/trackalert.1.gz
+%{_mandir}/man5/trackalert.conf.5.gz
+%doc trackalert/README.md
+%{_unitdir}/trackalert.service

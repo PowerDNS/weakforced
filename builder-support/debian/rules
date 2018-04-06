@@ -17,4 +17,5 @@ include /usr/share/dpkg/default.mk
 override_dh_auto_configure:
 	dh_auto_configure -- \
 	  --sysconfdir=/etc/wforce \
-	  --with-luajit
+	  --with-luajit \
+	  --enable-trackalert

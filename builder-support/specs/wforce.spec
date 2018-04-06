@@ -59,7 +59,7 @@ AutoReqProv: yes
  hundreds of millions of users.
 
 %package trackalert
-Summary: longterm abuse data reporting and alerter
+Summary: Longterm abuse data reporting and alerter
 
 %description trackalert
  Trackalert is designed to be an optional service to complement
@@ -194,3 +194,4 @@ fi
 %{_mandir}/man5/trackalert.conf.5.gz
 %doc trackalert/README.md
 %{_unitdir}/trackalert.service
+%{_sysconfdir}/%{name}/trackalert.conf

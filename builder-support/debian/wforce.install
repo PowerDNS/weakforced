@@ -1,0 +1,4 @@
+usr/bin/wforce
+usr/lib/systemd/system/wforce.service
+etc/wforce/regexes.yaml
+etc/wforce/wforce.conf

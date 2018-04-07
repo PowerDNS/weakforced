@@ -187,11 +187,14 @@ fi
 %{_mandir}/man1/%{name}.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz
 %{_mandir}/man5/%{name}_webhook.5.gz
+%doc CHANGELOG.md README.md
+%license LICENSE
 
 %files trackalert
 %{_bindir}/trackalert
 %{_mandir}/man1/trackalert.1.gz
 %{_mandir}/man5/trackalert.conf.5.gz
-%doc trackalert/README.md
+%doc trackalert/README.md CHANGELOG.md
+%license LICENSE
 %{_unitdir}/trackalert.service
 %{_sysconfdir}/%{name}/trackalert.conf

@@ -25,8 +25,8 @@ wait = ('--wait' in sys.argv)
 if wait:
     sys.argv.remove('--wait')
 
-cmd1 = ("../wforce -C ./wforce1.conf -R ../regexes.yaml").split()
-cmd2 = ("../wforce -C ./wforce2.conf -R ../regexes.yaml").split()
+cmd1 = ("../wforce/wforce -C ./wforce1.conf -R ../wforce/regexes.yaml").split()
+cmd2 = ("../wforce/wforce -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
 webcmd = ("/usr/bin/python ./webhook_server.py").split()
 udpsinkcmd = ("/usr/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -C ./trackalert.conf").split()

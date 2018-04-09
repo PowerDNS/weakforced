@@ -51,7 +51,7 @@ noinst_HEADERS = \
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto
-	$(AM_V_GEN)$(PROTOC) -I . --cpp_out=./ $<
+	$(AM_V_GEN)$(PROTOC) -I $(srcdir) --cpp_out=. $<
 replication.pb.h: replication.pb.cc
 
 nodist_wforce_SOURCES = replication.pb.cc replication.pb.h

@@ -1,0 +1,82 @@
+#!/bin/sh
+VERSION="unknown"
+
+DIRTY=""
+git status | grep -q clean || DIRTY='.dirty'
+
+# Special environment variable to signal that we are building a release, as this
+# has consequenses for the version number.
+if [ "${IS_RELEASE}" = "YES" ]; then
+  TAG="$(git describe --tags --exact-match 2> /dev/null)"
+  if [ -n "${TAG}" ]; then
+    # We're on a tag
+    echo "${TAG}${DIRTY}" > .version
+    printf "${TAG}${DIRTY}"
+    exit 0
+  fi
+  echo 'This is not a tag, either tag this commit or do not set $IS_RELEASE' >&2
+  exit 1
+fi
+
+#
+# Generate the version number based on the branch
+#
+if [ ! -z "$(git rev-parse --abbrev-ref HEAD 2> /dev/null)" ]; then
+  # Possible `git describe --tags` outputs:
+  # 2.4.1 (when on a tag)
+  # 2.4.1-alpha1 (when on a tag)
+  # 2.4.2-1-gdad05a9 (not on a tag)
+  # 2.4.2-alpha1-1-gdad05a9 (not on a tag)
+
+  OIFS=$IFS
+  IFS='-' GIT_VERSION=( $(git describe --tags 2> /dev/null) )
+  IFS=$OIFS
+  LAST_TAG="${GIT_VERSION[0]}"
+  COMMITS_SINCE_TAG=''
+  GIT_HASH=''
+
+  if [ ${#GIT_VERSION[@]} -eq 1 ]; then
+    # We're on a tag, but IS_RELEASE was unset
+    COMMITS_SINCE_TAG=0
+  fi
+
+  if [ ${#GIT_VERSION[@]} -eq 2 ]; then
+    # On a tag for a pre-release, e.g. 1.2.3-beta2
+    LAST_TAG="${LAST_TAG}-${GIT_VERSION[1]}"
+    COMMITS_SINCE_TAG=0
+  fi
+
+  if [ ${#GIT_VERSION[@]} -eq 3 ]; then
+    # Not on a tag
+    # 1.2.3-100-g123456
+    COMMITS_SINCE_TAG="${GIT_VERSION[1]}"
+    GIT_HASH="${GIT_VERSION[2]}"
+  fi
+
+  if [ ${#GIT_VERSION[@]} -eq 4 ]; then
+    # Not on a tag, but a pre-release was made before
+    # 1.2.3-rc1-100-g123456
+    LAST_TAG="${LAST_TAG}-${GIT_VERSION[1]}"
+    COMMITS_SINCE_TAG="${GIT_VERSION[1]}"
+    GIT_HASH="${GIT_VERSION[2]}"
+  fi
+
+  if [ -z "${GIT_HASH}" ]; then
+    GIT_HASH="g$(git show --no-patch --format=format:%h HEAD 2>/dev/null)"
+    if [ -z "$GIT_HASH" ]; then
+      GIT_HASH="g$(git show --format=format:%h HEAD | head -n1)"
+    fi
+  fi
+
+  if [ -z "${LAST_TAG}" ]; then
+    LAST_TAG=0.0.0
+    COMMITS_SINCE_TAG="$(git log --oneline | wc -l)"
+  fi
+
+  BRANCH=".$(git rev-parse --abbrev-ref HEAD | perl -p -e 's/[^[:alnum:]]//g;')"
+  [ "${BRANCH}" = ".master" ] && BRANCH=''
+
+  VERSION="${LAST_TAG}.${COMMITS_SINCE_TAG}${BRANCH}.${GIT_HASH}${DIRTY}"
+fi
+
+printf ${VERSION##v}

@@ -1,0 +1,51 @@
+Source: wforce
+Maintainer: Neil Cook <neil.cook@open-xchange.com>
+Section: web
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: cdbs,
+               autoconf,
+               automake,
+               debhelper (>= 9),
+               dh-autoreconf,
+               dh-systemd,
+               libboost-all-dev,
+               libcurl4-gnutls-dev,
+               libgeoip-dev,
+               libgetdns-dev,
+               libhiredis-dev,
+               libmaxminddb-dev,
+               libluajit-5.1-dev,
+               libprotobuf-dev,
+               libreadline-dev,
+               libssl-dev,
+               libsodium-dev,
+               libsystemd-dev,
+               libyaml-cpp-dev,
+               libtool,
+               pkg-config,
+               protobuf-compiler,
+               pandoc,
+               wget
+
+Package: wforce
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Daemon for detecting brute force attacks
+ The goal of 'wforce' is to detect brute forcing of passwords across many
+ servers, services and instances. In order to support the real world, brute
+ force detection policy can be tailored to deal with "bulk, but legitimate"
+ users of your service, as well as botnet-wide slowscans of passwords.
+ The aim is to support the largest of installations, providing services to
+ hundreds of millions of users.
+
+Package: wforce-trackalert
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Longterm abuse data reporting and alerter
+ Trackalert is designed to be an optional service to complement
+ wforce. Whereas wforce provides a toolkit to combat  abuse of
+ logins such as password brute forcing in realtime, trackalert is
+ designed to look at abuse asynchronously, using long-term report data
+ stored in an external DB such as elasticsearch, and to send alerts on
+ potential login abuse.

@@ -145,7 +145,7 @@ class TestBlacklist(ApiTestCase):
         r.close()
 
     def test_PersistBlacklist(self):
-        cmd3 = ("../wforce -C ./wforce3.conf -R ../regexes.yaml").split()
+        cmd3 = ("../wforce/wforce -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
         proc3 = subprocess.Popen(cmd3, close_fds=True)
         time.sleep(1)
         

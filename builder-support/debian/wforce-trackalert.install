@@ -1,0 +1,3 @@
+usr/bin/trackalert
+usr/lib/systemd/system/trackalert.service
+etc/wforce/trackalert.conf

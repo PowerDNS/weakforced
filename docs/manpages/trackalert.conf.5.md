@@ -447,7 +447,7 @@ configuration or within the allow/report/reset functions:
         incCustomStat("custom_stat1")
 
 # FILES
-*/etc/trackalert.conf*
+*/etc/wforce/trackalert.conf*
 
 # SEE ALSO
 trackalert(1)

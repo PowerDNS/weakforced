@@ -49,12 +49,12 @@ static vector<std::function<void(void)>>* g_launchWork;
 
 // lua functions are split into three groups:
 // 1) Those which are only applicable as "config/setup" (single global lua state) (they are defined as blank/empty functions otherwise) 
-// 2) Those which are only applicable inside the "allow" or "report" functions (multiple lua states running in different threads), which are defined as blank/empty otherwise
+// 2) Those which are only applicable inside the "allow", "report" (and similar) functions, where there are multiple lua states running in different threads, which are defined as empty otherwise
 // 3) Those which are applicable to both states
 // Functions that are in 2) or 3) MUST be thread-safe. The rest not as they are called at startup.
 // We have a single lua config file for historical reasons, hence the somewhat complex structure of this function
-// The Lua state and type is passed via "allow_report" (true means it's one of the multiple states used for allow/report, false means it's the global lua config state) 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua,  
+// The Lua state and type is passed via "multi_lua" (true means it's one of the multi-lua states used for allow/report etc., false means it's the global lua config state)
+vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaContext& c_lua,
 					   allow_t& allow_func, 
 					   report_t& report_func,
 					   reset_t& reset_func,
@@ -64,7 +64,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 {
   g_launchWork= new vector<std::function<void(void)>>();
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("addACL", [](const std::string& domain) {
 	g_webserver.addACL(domain);
       });
@@ -73,7 +73,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("addACL", [](const std::string& domain) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("addReportSink", [](const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -98,7 +98,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("addReportSink", [](const std::string& address) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) {
 	vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
@@ -123,7 +123,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("addNamedReportSink", [](const std::string& sink_name, const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -153,7 +153,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 						 const std::string& address) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) {
 	g_named_report_sinks.modify([sink_name, parts](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
 	    vector<shared_ptr<Sibling>> v;
@@ -183,7 +183,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -202,7 +202,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("addSibling", [](const std::string& address) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
 	vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
@@ -222,7 +222,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -249,7 +249,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("siblingListener", [](const std::string& address) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setACL", [](const vector<pair<int, string>>& parts) {
 	NetmaskGroup nmg;
 	for(const auto& p : parts) {
@@ -262,7 +262,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setACL", [](const vector<pair<int, string>>& parts) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showACL", []() {
 	vector<string> vec;
 
@@ -279,7 +279,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
   c_lua.writeFunction("shutdown", []() { _exit(0);} );
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) {
 	if(client)
 	  return;
@@ -315,7 +315,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("webserver", [](const std::string& address, const std::string& password) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("controlSocket", [client](const std::string& str) {
 	ComboAddress local;
 	try {
@@ -354,7 +354,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("controlSocket", [](const std::string& str) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("stats", []() {
 	boost::format fmt("%d reports, %d allow-queries (%d denies)\n");
 	g_outputBuffer = (fmt % g_stats.reports % g_stats.allows % g_stats.denieds).str();  
@@ -364,7 +364,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("stats", []() { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("siblings", []() {
       auto siblings = g_siblings.getCopy();
       boost::format fmt("%-35s %-15d %-14d %-15d %-14d   %s\n");
@@ -378,7 +378,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("siblings", []() { });
   }	
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showReportSinks", []() {
 	auto rsinks = g_report_sinks.getCopy();
 	boost::format fmt("%-35s %-10d %-9d\n");
@@ -391,7 +391,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showReportSinks", []() { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showNamedReportSinks", []() {
 	auto rsinks = g_named_report_sinks.getCopy();
 	boost::format fmt("%-15s %-35s %-10d %-9d\n");
@@ -405,7 +405,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showNamedReportSinks", []() { });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setNumLuaStates", [](int numStates) {
 	g_num_luastates = numStates;
       });
@@ -414,7 +414,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setNumLuaStates", [](int numStates) { });    
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) {
 	// the number of threads used to process allow/report commands
 	g_webserver.setNumWorkerThreads(numThreads);
@@ -424,7 +424,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) { });    
   }
 
-   if (!allow_report) {
+   if (!multi_lua) {
     c_lua.writeFunction("setNumSiblingThreads", [](int numThreads) {
 	// the number of threads used to process sibling reports
 	g_num_sibling_threads = numThreads;
@@ -435,7 +435,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
 #ifdef HAVE_GEOIP
-  if (!allow_report) {
+  if (!multi_lua) {
       c_lua.writeFunction("initGeoIPDB", []() {
 	  try {
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_COUNTRY|WFGeoIPDBType::GEOIP_COUNTRY_V6);
@@ -450,7 +450,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   else {
     c_lua.writeFunction("initGeoIPDB", []() { });
   }
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("reloadGeoIPDBs", []() {
 	try {
 	  g_wfgeodb.reload();
@@ -469,7 +469,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.writeFunction("lookupCountry", [](ComboAddress address) {
       return g_wfgeodb.lookupCountry(address);
     });
-  if (!allow_report) {
+  if (!multi_lua) {
       c_lua.writeFunction("initGeoIPCityDB", []() {
 	  try {
 	    g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_CITY|WFGeoIPDBType::GEOIP_CITY_V6);
@@ -496,7 +496,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("continent_code", &WFGeoIPRecord::continent_code);
   c_lua.registerMember("latitude", &WFGeoIPRecord::latitude);
   c_lua.registerMember("longitude", &WFGeoIPRecord::longitude);
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("initGeoIPISPDB", []() {
 	try {
 	  g_wfgeodb.initGeoIPDB(WFGeoIPDBType::GEOIP_ISP|WFGeoIPDBType::GEOIP_ISP_V6);
@@ -517,7 +517,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 
 #ifdef HAVE_MMDB
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("newGeoIP2DB", [](const std::string& name, const std::string& filename) {
 	  try {
             std::lock_guard<std::mutex> lock(geoip2_mutx);
@@ -552,7 +552,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
 #endif // HAVE_GEOIP
   
 #ifdef HAVE_GETDNS
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("newDNSResolver", [](const std::string& name) { 
 	std::lock_guard<std::mutex> lock(resolv_mutx);
 	resolvMap.insert(std::make_pair(name, std::make_shared<WFResolver>()));
@@ -576,7 +576,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerFunction("lookupNameByAddr", &WFResolver::lookup_name_by_address);
   c_lua.registerFunction("lookupRBL", &WFResolver::lookupRBL);
   // The following "show.." functions are mainly for regression tests
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showAddrByName", [](std::shared_ptr<WFResolver> resolvp, string name) {
 	std::vector<std::string> retvec = resolvp->lookup_address_by_name(name, 1);
 	boost::format fmt("%s %s\n");
@@ -588,7 +588,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showAddrByName", [](std::shared_ptr<WFResolver> resolvp, string name) { });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showNameByAddr", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address) {
 	std::vector<std::string> retvec = resolvp->lookup_name_by_address(address, 1);
 	boost::format fmt("%s %s\n");
@@ -601,7 +601,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showNameByAddr", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address) { });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showRBL", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address, string rblname) {
 	std::vector<std::string> retvec = resolvp->lookupRBL(address, rblname, 1);
 	boost::format fmt("%s\n");
@@ -615,7 +615,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 #endif // HAVE_GETDNS
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("newStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) {
 	auto twsdbw = TWStringStatsDBWrapper(name, window_size, num_windows, fmvec);
 	// register this statsDB in a map for retrieval later
@@ -638,7 +638,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       }
     });
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showStringStatsDB", []() {
 	std::lock_guard<std::mutex> lock(dbMap_mutx);
 	boost::format fmt("%-20.20d %-5.5s %-11.11d %-9d %-9d %-16.16s %-s\n");
@@ -724,7 +724,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       errlog(os.str().c_str());
     });
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setVerboseAllowLog()", []() {
 	g_allowlog_verbose = true;
       });
@@ -749,7 +749,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       g_bl_db.addEntry(ca, login, seconds, reason);
     });
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {
 	g_bl_db.makePersistent(ip, port);
       });
@@ -810,28 +810,28 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   g_lua.registerFunction("size", &NetmaskGroup::size);
   g_lua.registerFunction("clear", &NetmaskGroup::clear);
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("setAllow", [&allow_func](allow_t func) { allow_func=func;});
   }
   else {
     c_lua.writeFunction("setAllow", [](allow_t func) { });    
   }
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("setReport", [&report_func](report_t func) { report_func=func;});
   }
   else {
     c_lua.writeFunction("setReport", [](report_t func) { });
   }
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("setReset", [&reset_func](reset_t func) { reset_func=func;});
   }
   else {
     c_lua.writeFunction("setReset", [](reset_t func) { });
   }
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("setCanonicalize", [&canon_func](canonicalize_t func) { canon_func=func;});
   }
   else {
@@ -841,12 +841,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
   c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
 
-  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, allow_report, client](const std::string& f_name, bool reportSink, custom_func_t func) {
+  c_lua.writeFunction("setCustomEndpoint", [&custom_func_map, multi_lua, client](const std::string& f_name, bool reportSink, custom_func_t func) {
       CustomFuncMapObject cobj;
       cobj.c_func = func;
       cobj.c_reportSink = reportSink;
       custom_func_map.insert(std::make_pair(f_name, cobj));
-      if (!allow_report && !client) {
+      if (!multi_lua && !client) {
         addCommandStat(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
@@ -854,7 +854,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       }
     });
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showCustomEndpoints", []() {
 	boost::format fmt("%-30.30s %-s \n");
 	g_outputBuffer = (fmt % "Custom Endpoint" % "Send to Report Sink?").str();
@@ -868,21 +868,21 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showCustomEndpoints", []() { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
   }
   else {
     c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
   }
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
   }
   else {
     c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showPerfStats", []() {
 	g_outputBuffer += getPerfStatsString();
       });
@@ -892,7 +892,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showCommandStats", []() {
 	g_outputBuffer += getCommandStatsString();
       });
@@ -902,7 +902,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showCustomStats", []() {
 	g_outputBuffer += getCustomStatsString();
       });
@@ -912,21 +912,21 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
       });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { g_webhook_runner.setNumThreads(num_threads); });
   }
   else {
     c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { g_webhook_runner.setMaxQueueSize(queue_size); });
   }
   else {
     c_lua.writeFunction("setWebHookQueueSize", [](unsigned int queue_size) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setNumWebHookConnsPerThread", [](unsigned int num_conns) { g_webhook_runner.setMaxConns(num_conns); });
   }
   else {
@@ -934,7 +934,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   }
 
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showWebHooks", []() {
 	auto webhooks = g_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-9d %-9d %-45.45s %-s\n");
@@ -950,7 +950,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showWebHooks", []() { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showCustomWebHooks", []() {
 	auto webhooks = g_custom_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-20.20s %-9d %-9d %-s\n");
@@ -966,7 +966,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showCustomWebHooks", []() { });
   }
 
-  if (allow_report) {
+  if (multi_lua) {
     c_lua.writeFunction("runCustomWebHook", [](const std::string& wh_name, const std::string& wh_data) {
 	auto whwp = g_custom_webhook_db.getWebHook(wh_name);
 	if (auto whp = whwp.lock()) {
@@ -985,7 +985,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("runCustomWebHook", []() { });
   }
   
-  if (!(allow_report || client)) {
+  if (!(multi_lua || client)) {
       c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) {
 	  std::string err;
 	  WHEvents events;
@@ -1008,7 +1008,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("addWebHook", [](const std::vector<std::pair<int, std::string>>& events_vec, const std::vector<std::pair<std::string, std::string>>& ck_vec) { });
   }
 
-  if (!(allow_report || client)) {
+  if (!(multi_lua || client)) {
     c_lua.writeFunction("addCustomWebHook", [](const std::string& name,
 					       const std::vector<std::pair<std::string, std::string>>& ck_vec) {
 	  std::string err;
@@ -1028,7 +1028,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("addCustomWebHook", [](const std::string& name, const std::vector<std::pair<std::string, std::string>>& ck_vec) { });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("makeKey", []() {
 	g_outputBuffer="setKey("+newKey()+")\n";
       });
@@ -1037,7 +1037,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("makeKey", []() { });    
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("setKey", [](const std::string& key) {
 	string newkey;
 	if(B64Decode(key, newkey) < 0) {
@@ -1052,7 +1052,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setKey", [](const std::string& key) { });
   }
 
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("showVersion", []() {
 	g_outputBuffer = "wforce " + std::string(VERSION) + "\n";
       });
@@ -1061,7 +1061,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("showVersion", []() { });
   }
   
-  if (!allow_report) {
+  if (!multi_lua) {
     c_lua.writeFunction("testCrypto", [](string testmsg)
 			{
 			  try {
@@ -1094,11 +1094,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
   std::ifstream ifs(config);
   if(!ifs) 
     warnlog("Unable to read configuration from '%s'", config);
-  else if (!allow_report)
+  else if (!multi_lua)
     infolog("Read configuration from '%s'", config);
 
   c_lua.executeCode(ifs);
-  if (!allow_report) {
+  if (!multi_lua) {
     auto ret=*g_launchWork;
     delete g_launchWork;
     g_launchWork=0;

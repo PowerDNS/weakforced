@@ -130,8 +130,8 @@ end
 ```
 
 Many more metrics are available to base decisions on. Some example
-code is in [wforce.conf](wforce.conf), and more extensive examples are
-in [wforce.conf.example](wforce.conf.example). For full
+code is in [wforce.conf](wforce/wforce.conf), and more extensive examples are
+in [wforce.conf.example](wforce/wforce.conf.example). For full
 [documentation](docs/manpages), use "man wforce.conf".
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):

@@ -105,7 +105,7 @@ class TWStatsMemberHLL : public TWStatsMember
 public:
   TWStatsMemberHLL()
   {
-    hllp = wforce::make_unique<hll::HyperLogLog>(HLL_NUM_REGISTER_BITS);
+    hllp = wforce::make_unique<hll::HyperLogLog>(num_bits);
   }
   TWStatsMemberHLL(const TWStatsMemberHLL&) = delete;
   TWStatsMemberHLL& operator=(const TWStatsMemberHLL&) = delete;
@@ -123,7 +123,7 @@ public:
   void erase() { hllp->clear(); }
   int sum(const TWStatsBuf& vec)
   {
-    hll::HyperLogLog hllsum(HLL_NUM_REGISTER_BITS);
+    hll::HyperLogLog hllsum(num_bits);
     for (auto a = vec.begin(); a != vec.end(); ++a)
       {
 	// XXX yes not massively pretty
@@ -132,8 +132,16 @@ public:
     return std::lround(hllsum.estimate());
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
+  static void setNumBits(unsigned int nbits) {
+    if (nbits < 4)
+      nbits = 4;
+    if (num_bits >30)
+      nbits = 30;
+    num_bits = nbits;
+  }
 private:
   std::unique_ptr<hll::HyperLogLog> hllp;
+  static unsigned int num_bits;
 };
 
 #define COUNTMIN_EPS 0.05
@@ -144,7 +152,7 @@ class TWStatsMemberCountMin : public TWStatsMember
 public:
   TWStatsMemberCountMin()
   {
-    cm = wforce::make_unique<CountMinSketch>(COUNTMIN_EPS, COUNTMIN_GAMMA);
+    cm = wforce::make_unique<CountMinSketch>(eps, gamma);
   }
   TWStatsMemberCountMin(const TWStatsMemberCountMin&) = delete;
   TWStatsMemberCountMin& operator=(const TWStatsMemberCountMin&) = delete;
@@ -178,8 +186,26 @@ public:
       }
     return count;
   }
+  static void setGamma(float g)
+  {
+    if (g > 1)
+      g = 1;
+    if (g < 0)
+      g = 0;
+    gamma = g;
+  }
+  static void setEPS(float e)
+  {
+    if (e < 0.01)
+      e = 0.01;
+    if (e > 1)
+      e = 1;
+    eps = e;
+  }
 private:
   std::unique_ptr<CountMinSketch> cm;
+  static float eps;
+  static float gamma;
 };
 
 template<typename T> TWStatsMemberP createInstance() { return wforce::make_unique<T>(); }

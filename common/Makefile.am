@@ -24,7 +24,8 @@ libweakforce_la_SOURCES= \
 	device_parser.hh device_parser.cc \
 	wforce-webserver.cc wforce-webserver.hh \
 	sstuff.hh \
-	login_tuple.cc login_tuple.hh
+	login_tuple.cc login_tuple.hh \
+	common-lua.cc common-lua.hh
 
 noinst_HEADERS = \
 	base64.hh \
@@ -50,7 +51,8 @@ noinst_HEADERS = \
 	lock.hh \
 	pdnsexception.hh \
 	wforce-webserver.hh \
-	login_tuple.hh
+	login_tuple.hh \
+	common-lua.hh
 
 if UNIT_TESTS
 

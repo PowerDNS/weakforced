@@ -7,7 +7,7 @@ libweakforce_la_SOURCES= \
 	dns_lookup.cc dns_lookup.hh \
 	wforce-geoip.cc wforce-geoip.hh \
 	wforce-geoip2.cc wforce-geoip2.hh \
-	twmap.hh customfunc.hh\
+	twmap.hh twmap-static.cc customfunc.hh\
 	dolog.hh wforce_ns.hh \
 	iputils.cc iputils.hh \
 	misc.cc misc.hh \

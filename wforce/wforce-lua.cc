@@ -648,7 +648,56 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   else {
     c_lua.writeFunction("showVersion", []() { });
   }
-    
+  
+  if (!multi_lua) {
+    c_lua.writeFunction("testCrypto", [](string testmsg)
+			{
+			  try {
+			    SodiumNonce sn, sn2;
+			    sn.init();
+			    sn2=sn;
+			    string encrypted = sodEncryptSym(testmsg, g_key, sn);
+			    string decrypted = sodDecryptSym(encrypted, g_key, sn2);
+       
+			    sn.increment();
+			    sn2.increment();
+
+			    encrypted = sodEncryptSym(testmsg, g_key, sn);
+			    decrypted = sodDecryptSym(encrypted, g_key, sn2);
+
+			    if(testmsg == decrypted)
+			      g_outputBuffer="Everything is ok!\n";
+			    else
+			      g_outputBuffer="Crypto failed..\n";
+       
+			  }
+			  catch(...) {
+			    g_outputBuffer="Crypto failed..\n";
+			  }});
+  }
+  else {
+    c_lua.writeFunction("testCrypto", [](string testmsg) {});
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setHLLBits", [](unsigned int nbits) {
+        TWStatsMemberHLL::setNumBits(nbits);
+      });
+  }
+  else {
+    c_lua.writeFunction("setHLLBits", [](unsigned int nbits) { });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setCountMinBits", [](float gamma, float eps) {
+        TWStatsMemberCountMin::setGamma(gamma);
+        TWStatsMemberCountMin::setEPS(eps);
+      });
+  }
+  else {
+    c_lua.writeFunction("setCountMinBits", [](float gamma, float eps) { });
+  }
+  
   std::ifstream ifs(config);
   if(!ifs) 
     warnlog("Unable to read configuration from '%s'", config);

@@ -197,6 +197,20 @@ cannot be called inside the allow/report/reset functions:
   
 		newDNSResolver("MyResolver")
 
+* setHLLBits(\<num bits\>) - Set the accuracy of the HyperLogLog
+  algorithm. The value can be between 4-30, with a high number being
+  more accurate at the expense of using (potentially a lot) more
+  memory. The default value is 6. If you require more accuracy,
+  consider increasing slightly, but check your memory usage carefully.
+
+* setCountMinBits(\<eps\>, \<gamma\>) - Set the accuracy of the
+  CountMin algorithm. The value of eps can be between 0.01 and 1, with
+  a lower number giving more accuracy at the expense of memory. The
+  default is 0.05. The value of gamma is between 0 and 1, with a
+  higher number giving higher accuracy. The default for gamma
+  is 0.2. If you require more acuracy, consider chaning these values
+  slightly, but check your memory usage carefully.
+
 * newStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,
   \<field map\>) - Create a new StatsDB object with
   the specified name. Note this does not return the object - that is

@@ -74,7 +74,11 @@ endif
 
 testrunner_SOURCES = \
 	testrunner.cc \
-	test-minicurl.cc
+	test-minicurl.cc \
+	test-serialize.cc
+
+EXTRA_testrunner_DEPENDENCIES = \
+	$(EXT_LIBS)
 
 testrunner_LDFLAGS = \
 	$(AM_LDFLAGS) \

@@ -156,6 +156,7 @@ void CountMinSketch::swap(CountMinSketch& rhs)
   std::swap(hashes, rhs.hashes);
 }
 
+// XXX - this function does not currently convert everything to network byte order
 void CountMinSketch::dump(std::ostream& os) const throw(std::runtime_error)
 {
   int i=0;
@@ -173,6 +174,7 @@ void CountMinSketch::dump(std::ostream& os) const throw(std::runtime_error)
   }
 }
 
+// XXX - this function does not currently convert everything from network byte order
 void CountMinSketch::restore(std::istream& is) throw(std::runtime_error)
 {
   float myeps=0;

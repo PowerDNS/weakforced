@@ -203,7 +203,7 @@ public:
         os.write((char*)&b_, sizeof(b_));
         os.write((char*)&M_[0], sizeof(M_[0]) * M_.size());
         if(os.fail()){
-            throw std::runtime_error("Failed to dump");
+            throw std::runtime_error("HLL: Failed to dump");
         }
     }
 
@@ -220,7 +220,7 @@ public:
         HyperLogLog tempHLL(b);
         is.read((char*)&(tempHLL.M_[0]), sizeof(M_[0]) * tempHLL.m_);
         if(is.fail()){
-           throw std::runtime_error("Failed to restore");
+           throw std::runtime_error("HLL: Failed to restore");
         }       
         swap(tempHLL);
     }

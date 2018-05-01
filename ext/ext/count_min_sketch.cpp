@@ -11,6 +11,8 @@
 # include <cstdlib>
 # include <ctime>
 # include <limits>
+# include <sstream>
+# include <algorithm>
 # include "count_min_sketch.hpp"
 using namespace std;
 
@@ -143,4 +145,51 @@ unsigned int CountMinSketch::hashstr(const char *str) {
   return hash;
 }
 
+void CountMinSketch::swap(CountMinSketch& rhs)
+{
+  std::swap(eps, rhs.eps);
+  std::swap(this->gamma, rhs.gamma);
+  std::swap(total, rhs.total);
+  std::swap(w, rhs.w);
+  std::swap(d, rhs.d);
+  std::swap(C, rhs.C);
+  std::swap(hashes, rhs.hashes);
+}
 
+void CountMinSketch::dump(std::ostream& os) const throw(std::runtime_error)
+{
+  int i=0;
+  os.write((char*)&eps, sizeof(eps));
+  os.write((char*)&gamma, sizeof(gamma));
+  os.write((char*)&total, sizeof(total));
+  for (i = 0; i < d; i++) {
+    os.write((char*)&(C[i][0]), sizeof(C[i][0])*w);
+  }
+  for (i = 0; i < d; i++) {
+    os.write((char*)&(hashes[i][0]), sizeof(hashes[i][0])*2);
+  }
+  if(os.fail()){
+    throw std::runtime_error("CountMinSketch: Failed to dump");
+  }
+}
+
+void CountMinSketch::restore(std::istream& is) throw(std::runtime_error)
+{
+  float myeps=0;
+  float mygamma=0;
+  int i=0;
+  is.read((char*)&myeps, sizeof(myeps));
+  is.read((char*)&mygamma, sizeof(mygamma));
+  CountMinSketch tempCMS(myeps, mygamma);
+  is.read((char*)&tempCMS.total, sizeof(tempCMS.total));
+  for (i = 0; i < tempCMS.d; i++) {
+    is.read((char*)&(tempCMS.C[i][0]), sizeof(tempCMS.C[i][0])*tempCMS.w);
+  }
+  for (i = 0; i < tempCMS.d; i++) {
+    is.read((char*)&(tempCMS.hashes[i][0]), sizeof(tempCMS.hashes[i][0])*2);
+  }
+  if(is.fail()){
+    throw std::runtime_error("CountMinSketch: Failed to restore");
+  }
+  swap(tempCMS);
+}

@@ -62,6 +62,15 @@ class CountMinSketch {
     // erase counts
     void erase();
 
+    // Exchange the contents of an instance
+    void swap(CountMinSketch& rhs);
+
+    // Dump to a stream
+    void dump(std::ostream& os) const throw(std::runtime_error);
+
+    // Restore from a stream
+    void restore(std::istream& is) throw(std::runtime_error);
+
     // destructor
     ~CountMinSketch();
   };

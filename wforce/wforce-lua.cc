@@ -563,12 +563,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("setVerboseAllowLog()", []() {
+    c_lua.writeFunction("setVerboseAllowLog", []() {
 	g_allowlog_verbose = true;
       });
   }
   else {
-    c_lua.writeFunction("setVerboseAllowLog()", []() { });
+    c_lua.writeFunction("setVerboseAllowLog", []() { });
   }
 
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);

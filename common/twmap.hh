@@ -64,6 +64,8 @@ public:
   virtual void erase() = 0; // Remove all data - notice this isn't necessarily the same as set(0) or set("")
   virtual int sum(const TWStatsBuf& vec) = 0; // combine an array of stored values
   virtual int sum(const std::string& s, const TWStatsBuf& vec) = 0; // combine an array of stored values
+  virtual void dump(std::ostream& os) = 0; // serialize a TWStatsMember
+  virtual void restore(std::istream& is) = 0; // unserialize a TWStatsMember
 };
 
 class TWStatsMemberInt : public TWStatsMember
@@ -94,6 +96,18 @@ public:
     return count;
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
+  void dump(std::ostream& os) {
+    uint32_t neti = htonl(i);
+    os.write((char*)&neti, sizeof(neti));
+    if(os.fail()) {
+      throw std::runtime_error("TWStatsMemberInt: Failed to dump");
+    }
+  }
+  void restore(std::istream& is) {
+    uint32_t neti = 0;
+    is.read((char*)&neti, sizeof(neti));
+    i = ntohl(neti);
+  }
 private:
   int i=0;
 };
@@ -132,6 +146,12 @@ public:
     return std::lround(hllsum.estimate());
   }
   int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
+  void dump(std::ostream& os) {
+    hllp->dump(os);
+  }
+  void restore(std::istream& is) {
+    hllp->restore(is);
+  }
   static void setNumBits(unsigned int nbits) {
     if (nbits < 4)
       nbits = 4;
@@ -186,6 +206,12 @@ public:
       }
     return count;
   }
+  void dump(std::ostream& os) {
+    cm->dump(os);
+  }
+  void restore(std::istream& is) {
+    cm->restore(is);
+  }
   static void setGamma(float g)
   {
     if (g > 1)
@@ -237,6 +263,8 @@ protected:
     type_map["countmin"] = &createInstance<TWStatsMemberCountMin>;
   }
 };
+
+typedef std::vector<std::pair<std::time_t, std::stringstream>> TWStatsBufSerial;
 
 // this class is not protected by mutexes because it sits behind TWStatsDB which has a mutex
 // controlling all access
@@ -361,6 +389,27 @@ public:
     sum_cache_valid = false;
     ssum_cache_valid = false;
   }
+  void dump(TWStatsBufSerial& statsvec, std::time_t& stime)
+  {
+    for (TWStatsBuf::iterator i = stats_array.begin(); i != stats_array.end(); ++i) {
+      std::stringstream ss;
+      i->second->dump(ss);
+      statsvec.emplace_back(std::make_pair(i->first, std::move(ss)));
+    }
+    stime = start_time;
+  }
+  void restore(TWStatsBufSerial& statsvec, std::time_t stime)
+  {
+    start_time = stime;
+    last_cleaned = 0;
+    sum_cache_valid = false;
+    ssum_cache_valid = false;
+    unsigned int j = 0;
+    for (TWStatsBufSerial::iterator i = statsvec.begin(); i != statsvec.end(); ++i, ++j) {
+      stats_array[j].first = i->first;
+      stats_array[j].second->restore(i->second);
+    }
+  }
 protected:
   void update_write_timestamp(int cur_window)
   {
@@ -420,6 +469,7 @@ typedef std::unique_ptr<TWStatsEntry> TWStatsEntryP;
 
 // key is field name, value is field type
 typedef std::map<std::string, std::string> FieldMap;
+typedef std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>> TWStatsDBDumpEntry;
 
 const unsigned int ctwstats_map_size_soft = 524288;
 
@@ -479,6 +529,50 @@ public:
   void setv6Prefix(uint8_t prefix) { v6_prefix = prefix; }
   int windowSize() { return window_size; }
   int numWindows() { return num_windows; }
+  // This function is very dangerous since it relies on later calling endDBDump() to unlock the mutex
+  // But it is essential, otherwise the iterator will become garbage as the DB is modified
+  const typename TWKeyTrackerType::iterator startDBDump()
+  {
+    mutx.lock();
+    return key_tracker.begin();
+  }
+  // While the mutex is being held, no modifications can be made to the DB;
+  // this could cause replication packets to get backed up and lost
+  bool DBDumpEntry(typename TWKeyTrackerType::iterator& i,
+                   TWStatsDBDumpEntry& entry,
+                   T& key)
+  {
+    const typename TWStatsDBMap::iterator it = stats_db.find(*i);
+    if (it != stats_db.end()) {
+      key = it->first;
+      for (auto fm = it->second.second.begin(); fm != it->second.second.end(); ++fm) {
+        TWStatsBufSerial sbs;
+        fm->second->dump(sbs, start_time);
+        entry.emplace(std::make_pair(fm->first, std::make_pair(start_time, std::move(sbs))));
+      }
+      return true;
+    }
+    return false;
+  }
+  const typename TWKeyTrackerType::iterator DBDumpIteratorEnd()
+  {
+    return key_tracker.end();
+  }
+  void endDBDump()
+  {
+    mutx.unlock();
+  }
+  // Restore StatsDB entries
+  void restoreEntry(const T& key, TWStatsDBDumpEntry& entry)
+  {
+    for (auto fm = entry.begin(); fm != entry.end(); ++fm) {
+      find_create_key_field(key, fm->first, [fm, this](std::map<std::string, TWStatsEntryP>::iterator it, typename TWKeyTrackerType::iterator& kt)
+			    {
+			      it->second->restore(fm->second.second, fm->second.first);
+			      this->update_write_timestamp(kt);
+			    });
+    }
+  }
 protected:
   template<typename Fn>
   bool find_create_key_field(const T& key, const std::string& field_name,

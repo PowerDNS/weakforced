@@ -765,6 +765,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaCo
     c_lua.writeFunction("setCanonicalize", [](canonicalize_t func) { });
   }
 
+  if (!allow_report) {
+    c_lua.writeFunction("setVerboseAllowLog", []() {
+	g_allowlog_verbose = true;
+      });
+  }
+  else {
+    c_lua.writeFunction("setVerboseAllowLog", []() { });
+  }
+
   c_lua.registerMember("attrs", &CustomFuncArgs::attrs);
   c_lua.registerMember("attrs_mv", &CustomFuncArgs::attrs_mv);
 

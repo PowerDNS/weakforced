@@ -65,6 +65,13 @@ public:
   void set_size_soft(unsigned int size);
   int windowSize();
   int numWindows();
+  const std::list<std::string>::iterator startDBDump();
+  bool DBDumpEntry(std::list<std::string>::iterator& i,
+                   TWStatsDBDumpEntry& entry,
+                   std::string& key);
+  const std::list<std::string>::iterator DBDumpIteratorEnd();
+  void endDBDump();
+  void restoreEntry(const std::string& key, std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>>& entry);
 };
 
 extern std::mutex dbMap_mutx;

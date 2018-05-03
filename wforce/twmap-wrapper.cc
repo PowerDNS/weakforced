@@ -331,3 +331,30 @@ int TWStringStatsDBWrapper::numWindows()
 {
   return sdbp->numWindows();
 }
+
+const std::list<std::string>::iterator TWStringStatsDBWrapper::startDBDump()
+{
+  return sdbp->startDBDump();
+}
+
+bool TWStringStatsDBWrapper::DBDumpEntry(std::list<std::string>::iterator& i,
+                                         TWStatsDBDumpEntry& entry,
+                                         std::string& key)
+{
+  return sdbp->DBDumpEntry(i, entry, key);
+}
+
+const std::list<std::string>::iterator TWStringStatsDBWrapper::DBDumpIteratorEnd()
+{
+  return sdbp->DBDumpIteratorEnd();
+}
+
+void TWStringStatsDBWrapper::endDBDump()
+{
+  sdbp->endDBDump();
+}
+
+void TWStringStatsDBWrapper::restoreEntry(const std::string& key, std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>>& entry)
+{
+  sdbp->restoreEntry(key, entry);
+}

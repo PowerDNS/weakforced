@@ -6,6 +6,8 @@
     Muthukrishnan and Cormode, 2004
 **/
 
+#pragma once
+
 // define some constants
 # define LONG_PRIME 32993
 #ifndef MIN

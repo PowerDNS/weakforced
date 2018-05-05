@@ -405,7 +405,7 @@ public:
     sum_cache_valid = false;
     ssum_cache_valid = false;
     unsigned int j = 0;
-    for (TWStatsBufSerial::iterator i = statsvec.begin(); i != statsvec.end(); ++i, ++j) {
+    for (auto i = statsvec.begin(); i != statsvec.end(); ++i, ++j) {
       stats_array[j].first = i->first;
       stats_array[j].second->restore(i->second);
     }
@@ -469,6 +469,7 @@ typedef std::unique_ptr<TWStatsEntry> TWStatsEntryP;
 
 // key is field name, value is field type
 typedef std::map<std::string, std::string> FieldMap;
+// key is field name, value is a start time and a bunch of time windows
 typedef std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>> TWStatsDBDumpEntry;
 
 const unsigned int ctwstats_map_size_soft = 524288;

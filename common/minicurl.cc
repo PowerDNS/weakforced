@@ -102,6 +102,11 @@ void MiniCurl::setCurlOption(int option, ...)
   }
 }
 
+void MiniCurl::setTimeout(uint64_t timeout_secs)
+{
+  setCurlOption(CURLOPT_TIMEOUT, timeout_secs);
+}
+
 void MiniCurl::clearCurlHeaders()
 {
   if (d_curl) {
@@ -253,6 +258,13 @@ bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
     return true;
   }
   return false;
+}
+
+void MiniCurlMulti::setTimeout(uint64_t timeout_secs)
+{
+  for (auto& i : d_ccs) {
+    i.setCurlOption(CURLOPT_TIMEOUT, timeout_secs);
+  }
 }
 
 const std::vector<mcmPostReturn> MiniCurlMulti::runPost()

@@ -160,6 +160,11 @@ cannot be called inside the allow/report/reset functions:
 
         setWebHookQueueSize(100000)
 
+* setWebHookTimeoutSecs(\<timeout secs\>) - Set the maximum time a
+  request can take for webhooks. For example:
+
+        setWebHookTimeoutSecs(2)
+
 * newGeoIP2DB(\<db name\>, \<filename\>) - Opens and initializes a
   GeoIP2 database. A name must be chosen, and the filename of the
   database to open must also be supplied. To obtain an object allowing

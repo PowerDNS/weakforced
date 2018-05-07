@@ -41,6 +41,9 @@
 #include "webhook.hh"
 #include "lock.hh"
 #include "wforce-web.hh"
+#include "twmap-wrapper.hh"
+#include "replication_sdb.hh"
+#include "minicurl.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -460,17 +463,85 @@ unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
 SodiumNonce g_sodnonce;
 std::mutex sod_mutx;
 
+void encryptMsg(const std::string& msg, std::string& packet)
+{
+    std::lock_guard<std::mutex> lock(sod_mutx);
+    packet=g_sodnonce.toString();
+    packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+}
+
+void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
+                  const std::string& callback_pw)
+{
+  Sibling sibling(ca);
+
+  noticelog("Synchronizing DBs to: %s, will notify on callback url: %s",
+            ca.toStringWithPort(), callback_url);
+  
+  // loop through the DBs
+  std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
+  {
+    std::lock_guard<std::mutex> lock(dbMap_mutx);
+    // copy (this is safe - everything important is in a shared ptr)
+    my_dbmap = dbMap;
+  }
+  for (auto& i : dbMap) {
+    TWStringStatsDBWrapper sdb = i.second;
+    std::string db_name = i.first;
+    for (auto it = sdb.startDBDump(); it != sdb.DBDumpIteratorEnd(); ++it) {
+      try {
+        TWStatsDBDumpEntry entry;
+        std::string key;
+        if (sdb.DBDumpEntry(it, entry, key)) {
+          std::shared_ptr<SDBReplicationOperation> sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSyncKey, key, entry);
+          ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
+          string msg = rep_op.serialize();
+          string packet;
+          encryptMsg(msg, packet);
+          sibling.send(packet);
+        }
+      }
+      catch(const std::exception& e) {
+        errlog("Exception synchronizing DBs to %s. [Error: %s]", ca.toStringWithPort(), e.what());
+      }
+      catch(const WforceException& e) {
+        errlog("Exception synchronizing DBs to %s [Error: %s]", ca.toStringWithPort(),e.reason);
+      }
+    }
+    sdb.endDBDump();
+  }
+  infolog("Synchronizing DBs to: %s was completed", ca.toStringWithPort());
+
+  // Once we've finished replicating we need to let the requestor know we're
+  // done by calling the callback URL
+  MiniCurl mc;
+  MiniCurlHeaders mch;
+  mc.setTimeout(5);
+  mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + callback_pw)));
+  std::string get_result = mc.getURL(callback_url, mch);
+  std::string err;
+  Json msg = Json::parse(get_result, err);
+  if (msg.is_null()) {
+    errlog("Synchronizing DBs: callback to: %s failed due to no parseable result returned [Error: %s]", ca.toStringWithPort(), err);
+  }
+  else {
+    if (!msg["status"].is_null()) {
+      std::string status = msg["status"].string_value();
+      if (status == std::string("ok"))
+        noticelog("Synchronizing DBs: callback to: %s was successful", callback_url);
+      return;
+    }
+    errlog("Synchronizing DBs: callback to: %s was unsuccessful (no status=ok in result)", callback_url);
+  }
+}
+
 void replicateOperation(const ReplicationOperation& rep_op)
 {
   auto siblings = g_siblings.getLocal();
   string msg = rep_op.serialize();
   string packet;
 
-  {
-    std::lock_guard<std::mutex> lock(sod_mutx);
-    packet=g_sodnonce.toString();
-    packet+=sodEncryptSym(msg, g_key, g_sodnonce);    
-  }
+  encryptMsg(msg, packet);
 
   for(auto& s : *siblings) {
     s->send(packet);

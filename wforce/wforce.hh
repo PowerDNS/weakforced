@@ -108,3 +108,6 @@ extern WebHookDB g_custom_webhook_db;
 extern std::shared_ptr<UserAgentParser> g_ua_parser_p;
 
 extern bool g_allowlog_verbose; // Whether to log allow returns of 0
+
+void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
+                  const std::string& calback_pw);

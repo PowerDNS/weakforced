@@ -145,6 +145,50 @@ bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
   return retval;
 }
 
+void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+
+  resp.status = 200;
+
+  msg = Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    try {
+      if (msg["replication_host"].is_null() ||
+          msg["replication_port"].is_null() ||
+          msg["callback_url"].is_null() ||
+          msg["callback_auth_pw"].is_null()) {
+        throw WforceException("One of mandatory parameters [replication_host, replication_port, callback_url, callback_auth_pw] is missing");
+      }
+      string myip = msg["replication_host"].string_value();
+      int myport = msg["replication_port"].int_value();
+      ComboAddress replication_ca(myip, myport);
+      std::string callback_url = msg["callback_url"].string_value();
+      std::string callback_pw = msg["callback_auth_pw"].string_value();
+      thread t(syncDBThread, replication_ca, callback_url, callback_pw);
+      t.detach();
+    }
+    catch(const WforceException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.reason);
+    }
+  }
+  if (resp.status == 200)
+    resp.body=R"({"status":"ok"})";
+  incCommandStat("SyncDBs");
+}
+
 void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd)
 {
   using namespace json11;
@@ -835,11 +879,25 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   incCommandStat(command);
 }
 
+bool g_ping_up = false;
+
 void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   resp.status = 200;
-  resp.body = R"({"status":"ok"})";
+  if (g_ping_up)
+    resp.body = R"({"status":"ok"})";
+  else
+    resp.body = R"({"status":"warmup"})";
   incCommandStat("ping");
+}
+
+void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  resp.status = 200;
+  g_ping_up = true;
+  
+  resp.body = R"({"status":"ok"})";
+  incCommandStat("syncDone");
 }
 
 void registerWebserverCommands()
@@ -866,4 +924,8 @@ void registerWebserverCommands()
   g_webserver.registerFunc("getDBStats", HTTPVerb::POST, parseGetStatsCmd);
   addCommandStat("ping");
   g_webserver.registerFunc("ping", HTTPVerb::GET, parsePingCmd);
+  addCommandStat("syncDBs");
+  g_webserver.registerFunc("syncDBs", HTTPVerb::POST, parseSyncCmd);
+  addCommandStat("syncDone");
+  g_webserver.registerFunc("syncDone", HTTPVerb::GET, parseSyncDoneCmd);
 }

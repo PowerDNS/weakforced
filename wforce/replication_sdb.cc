@@ -68,6 +68,25 @@ SDBReplicationOperation::SDBReplicationOperation(const std::string& my_db_name,
   sdb_msg.set_field_name(my_field_name);
 }
 
+SDBReplicationOperation::SDBReplicationOperation(const std::string& my_db_name,
+                                                 SDBOperation_SDBOpType my_op,
+                                                 const std::string& my_key,
+                                                 const TWStatsDBDumpEntry& my_entry) : SDBReplicationOperation(my_db_name, my_op, my_key)
+{
+  for (auto i = my_entry.begin(); i != my_entry.end(); ++i) {
+    auto my_sync = sdb_msg.add_sync_fields();
+    my_sync->set_field_name(i->first);
+    my_sync->set_start_time(i->second.first);
+    for (auto j = i->second.second.begin();
+         j != i->second.second.end();
+         ++j) {
+      auto my_tw = my_sync->add_time_windows();
+      my_tw->set_timestamp(j->first);
+      my_tw->set_tw_string(j->second.str());
+    }
+  }
+}
+
 std::string SDBReplicationOperation::serialize()
 {
   std::string ret_str;
@@ -80,16 +99,7 @@ AnyReplicationOperationP SDBReplicationOperation::unserialize(const std::string&
   retval = true;
 
   if (sdb_msg.ParseFromString(str)) {
-    if ((sdb_msg.has_field_name() == false) && (sdb_msg.has_str_param() == false) && (sdb_msg.has_int_param() == false))
-      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key());
-    else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == true) && (sdb_msg.has_int_param() == false))
-      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name(), sdb_msg.str_param());
-    else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == false) && (sdb_msg.has_int_param() == true))
-      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name(), sdb_msg.int_param());
-    else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == true) && (sdb_msg.has_int_param() == true))
-      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name(), sdb_msg.str_param(), sdb_msg.int_param());
-    else if ((sdb_msg.has_field_name() == true) && (sdb_msg.has_str_param() == false) && (sdb_msg.has_int_param() == false))
-      return std::make_shared<SDBReplicationOperation>(sdb_msg.db_name(), sdb_msg.op_type(), sdb_msg.key(), sdb_msg.field_name());
+    return std::make_shared<SDBReplicationOperation>(std::move(sdb_msg));
   }
 
   retval = false;
@@ -110,7 +120,21 @@ void SDBReplicationOperation::applyOperation()
 	return;
       }
     }
+    TWStatsDBDumpEntry entry;
     switch(sdb_msg.op_type()) {
+    case SDBOperation_SDBOpType_SDBOpSyncKey:
+      for (int i=0; i < sdb_msg.sync_fields_size(); i++) {
+        TWStatsBufSerial sbs;
+        const auto& sync_field = sdb_msg.sync_fields(i);
+        for (int j=0; j < sync_field.time_windows_size(); j++) {
+          const auto& time_window = sync_field.time_windows(j);
+          sbs.push_back(std::make_pair(time_window.timestamp(), std::stringstream(time_window.tw_string())));
+        }
+        entry.emplace(std::make_pair(sync_field.field_name(),
+                                     std::make_pair(sync_field.start_time(), std::move(sbs))));
+      }
+      statsdb->restoreEntry(sdb_msg.key(), entry);
+      break;
     case SDBOperation_SDBOpType_SDBOpReset:
       statsdb->resetInternal(sdb_msg.key(), false);
       break;

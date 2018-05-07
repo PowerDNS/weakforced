@@ -232,6 +232,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	auto launch = [ca]() {
 	  thread t1(receiveReplicationOperations, ca);
 	  t1.detach();
+	  thread t2(receiveReplicationOperationsTCP, ca);
+	  t2.detach();
 	};
 	if(g_launchWork)
 	  g_launchWork->push_back(launch);

@@ -44,6 +44,7 @@
 #include "twmap-wrapper.hh"
 #include "replication_sdb.hh"
 #include "minicurl.hh"
+#include "iputils.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -470,48 +471,74 @@ void encryptMsg(const std::string& msg, std::string& packet)
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);
 }
 
+bool decryptMsg(const char* buf, int len, std::string& msg)
+{
+  SodiumNonce nonce;
+  memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
+  string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+  try {
+    msg=sodDecryptSym(packet, g_key, nonce);
+  }
+  catch (std::runtime_error& e) {
+    errlog("Could not decrypt replication operation: %s", e.what());
+    return false;
+  }
+  return true;
+}
+
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
                   const std::string& callback_pw)
 {
   Sibling sibling(ca);
-
+  unsigned int num_synced = 0;
+  
   noticelog("Synchronizing DBs to: %s, will notify on callback url: %s",
             ca.toStringWithPort(), callback_url);
+
+  try {
+    Socket rep_sock(ca.sin4.sin_family, SOCK_STREAM, 0);
+    rep_sock.connect(ca);
   
-  // loop through the DBs
-  std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
-  {
-    std::lock_guard<std::mutex> lock(dbMap_mutx);
-    // copy (this is safe - everything important is in a shared ptr)
-    my_dbmap = dbMap;
-  }
-  for (auto& i : dbMap) {
-    TWStringStatsDBWrapper sdb = i.second;
-    std::string db_name = i.first;
-    for (auto it = sdb.startDBDump(); it != sdb.DBDumpIteratorEnd(); ++it) {
-      try {
-        TWStatsDBDumpEntry entry;
-        std::string key;
-        if (sdb.DBDumpEntry(it, entry, key)) {
-          std::shared_ptr<SDBReplicationOperation> sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSyncKey, key, entry);
-          ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
-          string msg = rep_op.serialize();
-          string packet;
-          encryptMsg(msg, packet);
-          sibling.send(packet);
+    // loop through the DBs
+    std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
+    {
+      std::lock_guard<std::mutex> lock(dbMap_mutx);
+      // copy (this is safe - everything important is in a shared ptr)
+      my_dbmap = dbMap;
+    }
+    for (auto& i : dbMap) {
+      TWStringStatsDBWrapper sdb = i.second;
+      std::string db_name = i.first;
+      for (auto it = sdb.startDBDump(); it != sdb.DBDumpIteratorEnd(); ++it) {
+        try {
+          TWStatsDBDumpEntry entry;
+          std::string key;
+          if (sdb.DBDumpEntry(it, entry, key)) {
+            std::shared_ptr<SDBReplicationOperation> sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSyncKey, key, entry);
+            ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
+            string msg = rep_op.serialize();
+            string packet;
+            encryptMsg(msg, packet);
+            uint16_t nsize = htons(packet.length());
+            rep_sock.write((char*)&nsize, sizeof(nsize));
+            rep_sock.writen(packet);
+            num_synced++;
+          }
+        }
+        catch(const std::exception& e) {
+          errlog("Synchronizing DBs to: %s. [Error: %s]", ca.toStringWithPort(), e.what());
+        }
+        catch(const WforceException& e) {
+          errlog("Synchronizing DBs to: %s [Error: %s]", ca.toStringWithPort(),e.reason);
         }
       }
-      catch(const std::exception& e) {
-        errlog("Exception synchronizing DBs to %s. [Error: %s]", ca.toStringWithPort(), e.what());
-      }
-      catch(const WforceException& e) {
-        errlog("Exception synchronizing DBs to %s [Error: %s]", ca.toStringWithPort(),e.reason);
-      }
+      sdb.endDBDump();
     }
-    sdb.endDBDump();
+    infolog("Synchronizing DBs to: %s was completed. Synced %d entries.", ca.toStringWithPort(), num_synced);
   }
-  infolog("Synchronizing DBs to: %s was completed", ca.toStringWithPort());
-
+  catch (NetworkError& e) {
+    errlog("Synchronizing DBs to: %s. [Network Error: %s]", ca.toStringWithPort(), e.what());
+  }
   // Once we've finished replicating we need to let the requestor know we're
   // done by calling the callback URL
   MiniCurl mc;
@@ -522,16 +549,17 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
   std::string err;
   Json msg = Json::parse(get_result, err);
   if (msg.is_null()) {
-    errlog("Synchronizing DBs: callback to: %s failed due to no parseable result returned [Error: %s]", ca.toStringWithPort(), err);
+    errlog("Synchronizing DBs callback to: %s failed due to no parseable result returned [Error: %s]", callback_url, err);
   }
   else {
     if (!msg["status"].is_null()) {
       std::string status = msg["status"].string_value();
-      if (status == std::string("ok"))
-        noticelog("Synchronizing DBs: callback to: %s was successful", callback_url);
-      return;
+      if (status == std::string("ok")) {
+        noticelog("Synchronizing DBs callback to: %s was successful", callback_url);
+        return;
+      }
     }
-    errlog("Synchronizing DBs: callback to: %s was unsuccessful (no status=ok in result)", callback_url);
+    errlog("Synchronizing DBs callback to: %s was unsuccessful (no status=ok in result)", callback_url);
   }
 }
 
@@ -548,6 +576,115 @@ void replicateOperation(const ReplicationOperation& rep_op)
   }
 }
 
+bool checkConnFromSibling(const ComboAddress& remote,
+                          shared_ptr<Sibling>& recv_sibling)
+{
+  auto siblings = g_siblings.getLocal();
+
+  for (auto &s : *siblings) {
+    if (ComboAddress::addressOnlyEqual()(s->rem, remote) == true) {
+      recv_sibling = s;
+      break;
+    }
+  }
+
+  if (recv_sibling == nullptr) {
+    errlog("Message received from host (%s) that is not configured as a sibling", remote.toStringWithPort());
+    return false;
+  }
+  return true;
+}
+
+void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
+{
+  static ctpl::thread_pool p(g_num_sibling_threads);
+  
+  p.push([msg,remote,recv_sibling](int id) {
+      ReplicationOperation rep_op;
+      if (rep_op.unserialize(msg) != false) {
+        rep_op.applyOperation();
+        recv_sibling->rcvd_success++;
+      }
+      else {
+        errlog("Invalid replication operation received from %s", remote.toString());
+        recv_sibling->rcvd_fail++;
+      }
+    });
+}
+
+void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
+{
+  infolog("New TCP Replication connection from %s", remote.toString());
+  uint16_t size;
+  unsigned char ssize = sizeof(size);
+  char buffer[65535];
+  int len;
+  unsigned int num_rcvd=0;
+  
+  try {
+    while(true) {
+      len = sockp->read((char*)&size, ssize);
+      if (len != ssize) {
+        if (len)
+          errlog("parseTCPReplication: error reading size, got %d bytes, but was expecting %d bytes", len, ssize);
+        break;
+      }
+      size = ntohs(size);
+      if (!size) {
+        errlog("parseTCPReplication: Zero-length size field");
+        break;
+      }
+      if (size > sizeof(buffer)) {
+        errlog("parseTCPReplication: This should not happen - asked to read more than 65535 bytes");
+        break;
+      }
+      int size_read = 0;
+      if ((size_read = sockp->read(buffer, size)) != size) {
+        errlog("parseTCPReplication: Told to read %d bytes, but actually read %d bytes", size, size_read);
+        break;
+      }
+      std::string msg;
+      if (!decryptMsg(buffer, size_read, msg)) {
+        recv_sibling->rcvd_fail++;
+        continue;
+      }
+      parseReceivedReplicationMsg(msg, remote, recv_sibling);
+      num_rcvd++;
+    }
+    infolog("Received %d Replication entries from %s", num_rcvd, remote.toString());
+  }
+  catch(std::exception& e) {
+    errlog("ParseTCPReplication: client thread died with error: %s", e.what());
+  }
+}
+
+void receiveReplicationOperationsTCP(ComboAddress local)
+{
+  Socket sock(local.sin4.sin_family, SOCK_STREAM, 0);
+  ComboAddress remote=local;
+
+  sock.setReuseAddr();
+  sock.bind(local);
+  sock.listen(1024);
+  warnlog("Launched TCP sibling replication listener on %s", local.toStringWithPort());
+  
+  for (;;) {
+    // we wait for activity
+    try {
+      shared_ptr<Sibling> recv_sibling = nullptr;
+      std::shared_ptr<Socket> connp(sock.accept());
+      if (connp->getRemote(remote) && !checkConnFromSibling(remote, recv_sibling)) {
+        continue;
+      }
+      thread t1(parseTCPReplication, connp, remote, recv_sibling);
+      t1.detach();
+    }
+    catch(std::exception& e) {
+      errlog("receiveReplicationOperationsTCP: error accepting new connection: %s", e.what());
+    }
+  }
+}
+
 void receiveReplicationOperations(ComboAddress local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
@@ -556,7 +693,6 @@ void receiveReplicationOperations(ComboAddress local)
   ComboAddress remote=local;
   socklen_t remlen=remote.getSocklen();
   int len;
-  ctpl::thread_pool p(g_num_sibling_threads);
   auto siblings = g_siblings.getLocal();
   
   for(auto& s : *siblings) {
@@ -570,42 +706,17 @@ void receiveReplicationOperations(ComboAddress local)
     if(len <= 0 || len >= (int)sizeof(buf))
       continue;
 
-    for (auto &s : *siblings) {
-      if (ComboAddress::addressOnlyEqual()(s->rem, remote) == true) {
-        recv_sibling = s;
-        break;
-      }
-    }
-
-    if (recv_sibling == nullptr) {
-      errlog("Message received from host (%s) that is not configured as a sibling", remote.toStringWithPort());
+    if (!checkConnFromSibling(remote, recv_sibling)) {
       continue;
     }
     
-    SodiumNonce nonce;
-    memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-    string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
     string msg;
-    try {
-      msg=sodDecryptSym(packet, g_key, nonce);
-    }
-    catch (std::runtime_error& e) {
-      errlog("Could not decrypt replication operation: %s", e.what());
+    
+    if (!decryptMsg(buf, len, msg)) {
       recv_sibling->rcvd_fail++;
       continue;
     }
-    
-    p.push([msg,remote,recv_sibling](int id) {
-        ReplicationOperation rep_op;
-        if (rep_op.unserialize(msg) != false) {
-          rep_op.applyOperation();
-          recv_sibling->rcvd_success++;
-        }
-        else {
-          errlog("Invalid replication operation received from %s", remote.toString());
-          recv_sibling->rcvd_fail++;
-        }
-      });
+    parseReceivedReplicationMsg(msg, remote, recv_sibling);
   }
 }
 

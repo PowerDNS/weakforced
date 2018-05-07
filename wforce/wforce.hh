@@ -66,6 +66,7 @@ extern std::string g_outputBuffer; // locking for this is ok, as locked by g_lua
 extern WforceWebserver g_webserver;
 
 void receiveReports(ComboAddress local);
+void receiveReplicationOperationsTCP(ComboAddress local);
 void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {

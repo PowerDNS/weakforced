@@ -51,9 +51,10 @@ using namespace boost::gregorian;
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, vector<shared_ptr<Sibling>>>>> g_named_report_sinks;
 
+static time_t start=time(0);
+
 static int uptimeOfProcess()
 {
-  static time_t start=time(0);
   return time(0) - start;
 }
 

@@ -51,6 +51,9 @@ class ApiTestCase(unittest.TestCase):
     def writeCmdToConsole(self, cmd):
         return check_output(["../wforce/wforce", "-c", "./wforce1.conf", "-R", "../wforce/regexes.yaml", "-e", cmd])
 
+    def writeCmdToConsole3(self, cmd):
+        return check_output(["../wforce/wforce", "-c", "./wforce3.conf", "-R", "../wforce/regexes.yaml", "-e", cmd])
+    
     def writeFileToConsoleReplica(self, file):
         fp = open(file)
         cmds_nl = fp.read()

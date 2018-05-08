@@ -337,6 +337,34 @@ cannot be called inside the allow/report/reset functions:
 
 		setVerboseAllowLog()
 
+* addSyncHost(\<sync host address\>, \<sync host password\>,
+  \<replication address\>, \<callback address\>) - If you wish wforce
+  to synchronize the contents of its StatsDBs with the rest of a
+  cluster, then use this configuration command. If any sync hosts are
+  added, wforce will attempt to contact them in turn and find a host
+  which has been up longer than the number of seconds specified in
+  setMinSyncHostUptime(). The sync host address should include a port
+  (it defaults to 8084). If successful, the sync host will send the
+  contents of its StatsDBs to this wforce instance on the replication
+  address specified (this address should have the same port as
+  configured in siblingListener() and defaults to 4001), and when it
+  is finished it will notify this instance of wforce using the
+  callback address (this address should have the same port as
+  configured in webserver and defaults to 8084). For
+  example:
+
+        -- Add 10.2.3.1:8084 as a sync host,
+        -- and use the password "super"
+        -- Send the DB dump to 10.2.1.1:4001
+        -- and let me know on 10.2.1.1:8084 when the dump is finished
+        addSyncHost("10.2.3.1:8084", "super", "10.2.1.1:4001", "10.2.1.1:8084") 
+
+* setMinSyncHostUptime(\<seconds\>) - The minimum time that any sync
+  host must have been up for it to be able to send me the contents of
+  its DBs. Defaults to 3600. For example:
+
+        setMinSyncHostUptime(1800)
+
 # GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 

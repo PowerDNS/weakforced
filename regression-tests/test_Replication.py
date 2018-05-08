@@ -37,7 +37,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(32):
-            r = self.reportFunc('flbaddiereplication', '128.0.0.1', "1234", 'false')
+            r = self.reportFunc('flbaddiereplication', '128.0.0.1', "1234", False)
             r.json()
 
         time.sleep(1)
@@ -79,7 +79,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(42):
-            r = self.reportFunc('subbaddiereplication', '228.0.0.1', "1234", 'false')
+            r = self.reportFunc('subbaddiereplication', '228.0.0.1', "1234", False)
             r.json()
 
         r = self.allowFuncReplica('subbaddiereplication', '228.0.0.1', "1234")
@@ -185,7 +185,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(32):
-            r = self.reportFunc('resetbaddiereplication', '128.0.0.1', "1234", 'false')
+            r = self.reportFunc('resetbaddiereplication', '128.0.0.1', "1234", False)
             r.json()
 
         time.sleep(1)

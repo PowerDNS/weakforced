@@ -36,7 +36,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(32):
-            r = self.reportFunc('flbaddie', '128.0.0.1', "1234", 'false')
+            r = self.reportFunc('flbaddie', '128.0.0.1', "1234", False)
             r.json()
 
         r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
@@ -76,7 +76,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(42):
-            r = self.reportFunc('subbaddie', '128.0.0.1', "1234", 'false')
+            r = self.reportFunc('subbaddie', '128.0.0.1', "1234", False)
             r.json()
 
         r = self.allowFunc('subbaddie', '128.0.0.1', "1234")
@@ -180,7 +180,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(32):
-            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", 'false')
+            r = self.reportFunc('resetbaddie', '128.0.0.1', "1234", False)
             r.json()
 
         r = self.allowFunc('resetbaddie', '128.0.0.1', "1234")

@@ -176,6 +176,33 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) { });
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("addSyncHost", [](const std::string& address, const std::string password, const std::string& sync_address, const std::string& webserver_address) {
+	try {
+          g_sync_data.sync_hosts.push_back(std::make_pair(ComboAddress(address, 8084), password));
+          g_sync_data.sibling_listen_addr = ComboAddress(sync_address, 4001);
+          g_sync_data.webserver_listen_addr = ComboAddress(webserver_address, 8084);
+	}
+	catch (const WforceException& e) {
+          boost::format fmt("%s (%s)\n");
+          errlog("addSyncHost() error parsing address/port. Make sure to use IP addresses not hostnames (%s)", e.reason);
+          g_outputBuffer += (fmt % "addSyncHost(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+	  return;
+	}
+      });
+  }
+  else {
+    c_lua.writeFunction("addSyncHost", [](const std::string& address, const std::string password, const std::string& sync_address, const std::string& webserver_address) {});
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setMinSyncHostUptime", [](unsigned int uptime) {
+        g_sync_data.min_sync_host_uptime = uptime;
+      });
+  }
+  else {
+    c_lua.writeFunction("setMinSyncHostUptime", [](unsigned int uptime) {});
+  }
   
   if (!multi_lua) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
@@ -228,7 +255,6 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
           g_outputBuffer += (fmt % "siblingListener(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
 	  return;
 	}
-
 	auto launch = [ca]() {
 	  thread t1(receiveReplicationOperations, ca);
 	  t1.detach();
@@ -259,6 +285,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
           errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
           return;
 	}
+        g_sync_data.webserver_password = password;
 	try {
 	  int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
 	  SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);

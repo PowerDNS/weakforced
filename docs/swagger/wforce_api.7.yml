@@ -614,7 +614,7 @@ definitions:
       perfstats: {"WTR_0_1": 0, "WTR_100_1000": 0, "WTR_10_100": 0, "WTR_1_10": 0, "WTR_Slow": 0, "WTW_0_1": 1, "WTW_100_1000": 0, "WTW_10_100": 0, "WTW_1_10": 0, "WTW_Slow": 0}
       commandstats: {"addBLEntry": 0, "allow": 0, "delBLEntry": 0, "getBL": 0, "getDBStats": 0, "ping": 0, "report": 0, "reset": 0, "stats": 0}
       customstats: {"custom1": 0, "custom2": 0}
-  SyncDBsParams:
+  syncDBsParams:
     type: object
     required:
       - replication_host

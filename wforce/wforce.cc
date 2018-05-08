@@ -67,6 +67,7 @@ WebHookRunner g_webhook_runner;
 WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
+syncData g_sync_data;
 
 std::string g_configDir; // where the config files are located
 std::shared_ptr<UserAgentParser> g_ua_parser_p;
@@ -486,6 +487,34 @@ bool decryptMsg(const char* buf, int len, std::string& msg)
   return true;
 }
 
+Json callWforceGetURL(const std::string& url, const std::string& password, std::string& err)
+{
+  MiniCurl mc;
+  MiniCurlHeaders mch;
+  mc.setTimeout(5);
+  mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
+  std::string get_result = mc.getURL(url, mch);
+  return Json::parse(get_result, err);
+}
+
+Json callWforcePostURL(const std::string& url, const std::string& password, const std::string& post_body, std::string& err)
+{
+  MiniCurl mc;
+  MiniCurlHeaders mch;
+  std::string post_res, post_err;
+  
+  mc.setTimeout(5);
+  mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
+  mch.insert(std::make_pair("Content-Type", "application/json"));
+  if (mc.postURL(url, post_body, mch, post_res, post_err)) {
+    return Json::parse(post_res, err);
+  }
+  else {
+    err = post_err;
+    return Json();
+  }
+}
+
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
                   const std::string& callback_pw)
 {
@@ -541,13 +570,8 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
   }
   // Once we've finished replicating we need to let the requestor know we're
   // done by calling the callback URL
-  MiniCurl mc;
-  MiniCurlHeaders mch;
-  mc.setTimeout(5);
-  mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + callback_pw)));
-  std::string get_result = mc.getURL(callback_url, mch);
   std::string err;
-  Json msg = Json::parse(get_result, err);
+  Json msg = callWforceGetURL(callback_url, callback_pw, err);
   if (msg.is_null()) {
     errlog("Synchronizing DBs callback to: %s failed due to no parseable result returned [Error: %s]", callback_url, err);
   }
@@ -561,6 +585,70 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
     }
     errlog("Synchronizing DBs callback to: %s was unsuccessful (no status=ok in result)", callback_url);
   }
+}
+
+unsigned int checkHostUptime(const std::string& url, const std::string& password)
+{
+  unsigned int ret_uptime = 0;
+  std::string err;
+  Json msg = callWforceGetURL(url, password, err);
+  if (!msg.is_null()) {
+    if (!msg["uptime"].is_null()) {
+      ret_uptime = msg["uptime"].int_value();
+      infolog("checkSyncHosts: uptime: %d returned from sync host: %s", ret_uptime, url);
+    }
+    else {
+      errlog("checkSyncHosts: No uptime in response from sync host: %s", url);
+    }
+  }
+  else {
+    errlog("checkSyncHosts: No valid response from sync host: %s [Error: %s]", url, err);
+  }
+  return ret_uptime;
+}
+
+void checkSyncHosts()
+{
+  bool found_sync_host = false;
+  for (auto i : g_sync_data.sync_hosts) {
+    std::string sync_host = i.first.toStringWithPort();
+    std::string password = i.second;
+    std::string stats_url = "http://" + sync_host + "/?command=stats";
+    unsigned int uptime = checkHostUptime(stats_url, password);
+    if (uptime > g_sync_data.min_sync_host_uptime) {
+      // we have a winner, maybe
+      std::string err;
+      std::string sync_url = "http://" + sync_host + "/?command=syncDBs";
+      std::string callback_url = "http://" + g_sync_data.webserver_listen_addr.toStringWithPort() + "/?command=syncDone";
+      Json post_json = Json::object{{"replication_host", g_sync_data.sibling_listen_addr.toString()},
+                                    {"replication_port", ntohs(g_sync_data.sibling_listen_addr.sin4.sin_port)},
+                                    {"callback_url", callback_url},
+                                    {"callback_auth_pw", g_sync_data.webserver_password}};
+      Json msg = callWforcePostURL(sync_url, password, post_json.dump(), err);
+      if (!msg.is_null()) {
+        if (!msg["status"].is_null()) {
+          std::string status = msg["status"].string_value();
+          if (status == "ok") {
+            found_sync_host = true;
+            infolog("checkSyncHosts: Successful request to synchronize DBs with sync host: %s", sync_host);
+            break;
+          }
+          else {
+            errlog("checkSyncHosts: Error returned status=%s from sync_host: %s", status, sync_url);
+          }
+        }
+        else {
+          errlog("checkSyncHosts: No status in response from sync host: %s", sync_url);
+        }
+      }
+      else {
+        errlog("checkSyncHosts: No valid response from sync host: %s [Error: %s]", sync_url, err);
+      }
+    }
+  }
+  // If we didn't find a sync host we can't warm up
+  if (found_sync_host == false)
+    g_ping_up = true;
 }
 
 void replicateOperation(const ReplicationOperation& rep_op)
@@ -1036,10 +1124,14 @@ try
     errlog("Could not load persistent DB entries, please fix configuration or check redis availability. Exiting.");
     exit(1);
   }
-
+  
   // start the threads created by lua setup. Includes the webserver accept thread
   for(auto& t : todo)
     t();
+
+  // Loop through the list of configured sync hosts, check if any have been
+  // up long enough and if so, kick off a DB sync operation to fill our DBs
+  checkSyncHosts();
   
 #ifdef HAVE_LIBSYSTEMD
   sd_notify(0, "READY=1");

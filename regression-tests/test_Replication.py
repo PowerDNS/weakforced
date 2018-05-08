@@ -16,7 +16,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(22):
-            r = self.reportFunc('ivbaddiereplication', '127.0.0.1', "1234'%s" % i, 'true')
+            r = self.reportFunc('ivbaddiereplication', '127.0.0.1', "1234'%s" % i, True)
             r.json()
 
         time.sleep(1)
@@ -58,7 +58,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(12):
-            r = self.reportFunc('ipbaddiereplication', "227.0.0.%s" % i, "1234", 'true')
+            r = self.reportFunc('ipbaddiereplication', "227.0.0.%s" % i, "1234", True)
             r.json()
 
         time.sleep(1)
@@ -99,7 +99,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('ipv4baddiereplication%s' % i, "114.31.193.%s" % i, "1234", 'true')
+            r = self.reportFunc('ipv4baddiereplication%s' % i, "114.31.193.%s" % i, "1234", True)
             r.json()
 
         time.sleep(1)
@@ -120,7 +120,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('mappedipv4baddiereplication%s' % i, "::ffff:%s.31.193.200" % i, "1234", 'true')
+            r = self.reportFunc('mappedipv4baddiereplication%s' % i, "::ffff:%s.31.193.200" % i, "1234", True)
             r.json()
 
         time.sleep(1)
@@ -141,7 +141,7 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('ipv6baddiereplication%s' % i, "2001:c78::%s" % i, "1234", 'true')
+            r = self.reportFunc('ipv6baddiereplication%s' % i, "2001:c78::%s" % i, "1234", True)
             r.json()
 
         time.sleep(1)
@@ -162,10 +162,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         r.close()
 
         for i in range(20):
-            r = self.reportFunc('expirebaddiereplication%s' % i, "127.0.0.1", "1234", 'true')
+            r = self.reportFunc('expirebaddiereplication%s' % i, "127.0.0.1", "1234", True)
             r.json()
         for i in range(20):
-            r = self.reportFunc('expirebaddiereplication%s' % i, "127.0.0.1", "1234", 'true')
+            r = self.reportFunc('expirebaddiereplication%s' % i, "127.0.0.1", "1234", True)
             r.json()
 
         r = self.allowFuncReplica('expirebaddiereplication', '127.0.0.1', "1234")

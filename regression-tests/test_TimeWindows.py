@@ -96,7 +96,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", 'true')
+            r = self.reportFunc('ipv4baddie%s' % i, "114.31.192.%s" % i, "1234", True)
             r.json()
 
         r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
@@ -116,7 +116,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('mappedipv4baddie%s' % i, "::ffff:%s.31.192.200" % i, "1234", 'true')
+            r = self.reportFunc('mappedipv4baddie%s' % i, "::ffff:%s.31.192.200" % i, "1234", True)
             r.json()
 
         r = self.allowFunc('mappedipv4baddie', '::ffff:114.31.192.200', "1234")
@@ -136,7 +136,7 @@ class TestTimeWindows(ApiTestCase):
         r.close()
 
         for i in range(50):
-            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", 'true')
+            r = self.reportFunc('ipv6baddie%s' % i, "2001:c78::%s" % i, "1234", True)
             r.json()
 
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")

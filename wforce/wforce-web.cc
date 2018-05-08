@@ -879,7 +879,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   incCommandStat(command);
 }
 
-bool g_ping_up = false;
+std::atomic<bool> g_ping_up{false};
 
 void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {

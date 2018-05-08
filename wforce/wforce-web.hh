@@ -20,11 +20,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <atomic>
 #include "yahttp/yahttp.hpp"
 
 // If false, then ping commands will return "warmup".
 // If true then ping commands will return "ok"
-extern bool g_ping_up;
+extern std::atomic<bool> g_ping_up;
 
 void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
 void registerWebserverCommands();

@@ -735,7 +735,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
         break;
       }
       int size_read = 0;
-      if ((size_read = sockp->read(buffer, size)) != size) {
+      if ((size_read = sockp->readAll(buffer, size)) != size) {
         errlog("parseTCPReplication: Told to read %d bytes, but actually read %d bytes", size, size_read);
         break;
       }

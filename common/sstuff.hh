@@ -345,6 +345,16 @@ public:
     return res;
   }
 
+  //! Reads a block of data from the socket to a block of memory
+  //! Only returns when all the data requested is available
+  int readAll(char *buffer, int bytes)
+  {
+    int res=::recv(d_socket,buffer,bytes, MSG_WAITALL);
+    if(res<0) 
+      throw NetworkError("Reading from a socket: "+string(strerror(errno)));
+    return res;
+  }
+
   int readWithTimeout(char* buffer, int n, int timeout)
   {
     int err = waitForRWData(d_socket, true, timeout, 0);

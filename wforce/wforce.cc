@@ -554,11 +554,15 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
             num_synced++;
           }
         }
-        catch(const std::exception& e) {
-          errlog("Synchronizing DBs to: %s. [Error: %s]", ca.toStringWithPort(), e.what());
+        catch(const NetworkError& e) {
+          sdb.endDBDump();
+          auto eptr = std::current_exception();
+          std::rethrow_exception(eptr);
         }
         catch(const WforceException& e) {
-          errlog("Synchronizing DBs to: %s [Error: %s]", ca.toStringWithPort(),e.reason);
+          sdb.endDBDump();
+          auto eptr = std::current_exception();
+          std::rethrow_exception(eptr);
         }
       }
       sdb.endDBDump();
@@ -566,7 +570,11 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
     infolog("Synchronizing DBs to: %s was completed. Synced %d entries.", ca.toStringWithPort(), num_synced);
   }
   catch (NetworkError& e) {
-    errlog("Synchronizing DBs to: %s. [Network Error: %s]", ca.toStringWithPort(), e.what());
+    errlog("Synchronizing DBs to: %s did not complete. [Network Error: %s]", ca.toStringWithPort(), e.what());
+  }
+  catch(const WforceException& e) {
+    errlog("Synchronizing DBs to: %s did not complete. [Network Error: %s]", ca.toStringWithPort(), e.reason);
+
   }
   // Once we've finished replicating we need to let the requestor know we're
   // done by calling the callback URL

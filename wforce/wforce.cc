@@ -475,6 +475,11 @@ void encryptMsg(const std::string& msg, std::string& packet)
 bool decryptMsg(const char* buf, int len, std::string& msg)
 {
   SodiumNonce nonce;
+
+  if (len < crypto_secretbox_NONCEBYTES) {
+    errlog("Could not decrypt replication operation: not enough bytes (%d) to hold nonce", len);
+    return false;
+  }
   memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
   string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
   try {

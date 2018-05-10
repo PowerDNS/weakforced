@@ -184,9 +184,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
           g_sync_data.webserver_listen_addr = ComboAddress(webserver_address, 8084);
 	}
 	catch (const WforceException& e) {
-          boost::format fmt("%s (%s)\n");
-          errlog("addSyncHost() error parsing address/port. Make sure to use IP addresses not hostnames (%s)", e.reason);
-          g_outputBuffer += (fmt % "addSyncHost(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+          const std::string errstr = (boost::format("%s (%s)\n") % "addSyncHost(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+          errlog(errstr.c_str());
+          g_outputBuffer += errstr;
 	  return;
 	}
       });
@@ -211,9 +211,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	  ca = ComboAddress(address, 4001);
 	}
 	catch (const WforceException& e) {
-          boost::format fmt("%s (%s)\n");
-          errlog("addSibling() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
-          g_outputBuffer += (fmt % "addSibling(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+          const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+          errlog(errstr.c_str());
+          g_outputBuffer += errstr;
 	  return;
 	}
 	g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
@@ -231,9 +231,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
             v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
           }
           catch (const WforceException& e) {
-            boost::format fmt("%s [%s] %s (%s)\n");
-            errlog("setSiblings() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", p.second);
-            g_outputBuffer += (fmt % "setSiblings(): Error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+            const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+            errlog(errstr.c_str());
+            g_outputBuffer += errstr;
           }
 	}
 	g_siblings.setState(v);
@@ -250,9 +250,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	  ca = ComboAddress(address, 4001);
 	}
 	catch (const WforceException& e) {
-          boost::format fmt("%s (%s)\n");
-          errlog("siblingListener() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
-          g_outputBuffer += (fmt % "siblingListener(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
+          const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+          errlog(errstr.c_str());
+          g_outputBuffer += errstr;
 	  return;
 	}
 	auto launch = [ca]() {

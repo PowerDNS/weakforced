@@ -189,7 +189,6 @@ paths:
                 type: string
             example:
               status: ok
-              status: warmup
         default:
           description: unexpected error
           schema:
@@ -272,7 +271,8 @@ paths:
     post:
       description: This is a request to synchronize StatsDBs.
       operationId: syncDBs
-      produces: application/json
+      produces:
+        - application/json
       parameters:
         - name: "syncDBs"
           in: body

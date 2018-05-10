@@ -543,7 +543,7 @@ public:
                    TWStatsDBDumpEntry& entry,
                    T& key)
   {
-    const typename TWStatsDBMap::iterator it = stats_db.find(*i);
+    const auto it = stats_db.find(*i);
     if (it != stats_db.end()) {
       key = it->first;
       for (auto fm = it->second.second.begin(); fm != it->second.second.end(); ++fm) {

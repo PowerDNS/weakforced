@@ -76,17 +76,17 @@ public:
   TWStatsMemberInt& operator=(const TWStatsMemberInt&) = delete;
   TWStatsMemberInt(TWStatsMemberInt&&) = delete; // move construct
   TWStatsMemberInt& operator=(TWStatsMemberInt &&) = delete; // move assign
-  void add(int a) { i += a; }
-  void add(const std::string& s) { int a = std::stoi(s); i += a; return; }
-  void add(const std::string& s, int a) { return; }
-  void sub(int a) { i -= a;  }
-  void sub(const std::string& s) { int a = std::stoi(s); i -= a; return; }
-  int get() { return i; }
-  int get(const std::string& s) { return i; }
-  void set(int a) { i = a; }
-  void set(const std::string& s) { return; }
-  void erase() { i = 0; }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { i += a; }
+  void add(const std::string& s) override { int a = std::stoi(s); i += a; return; }
+  void add(const std::string& s, int a) override { return; }
+  void sub(int a) override { i -= a;  }
+  void sub(const std::string& s) override { int a = std::stoi(s); i -= a; return; }
+  int get() override { return i; }
+  int get(const std::string& s) override { return i; }
+  void set(int a) override { i = a; }
+  void set(const std::string& s) override { return; }
+  void erase() override { i = 0; }
+  int sum(const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -95,15 +95,15 @@ public:
       }
     return count;
   }
-  int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
-  void dump(std::ostream& os) {
+  int sum(const std::string& s, const TWStatsBuf& vec) override { return 0; }
+  void dump(std::ostream& os) override {
     uint32_t neti = htonl(i);
     os.write((char*)&neti, sizeof(neti));
     if(os.fail()) {
       throw std::runtime_error("TWStatsMemberInt: Failed to dump");
     }
   }
-  void restore(std::istream& is) {
+  void restore(std::istream& is) override {
     uint32_t neti = 0;
     is.read((char*)&neti, sizeof(neti));
     i = ntohl(neti);
@@ -125,17 +125,17 @@ public:
   TWStatsMemberHLL& operator=(const TWStatsMemberHLL&) = delete;
   TWStatsMemberHLL(TWStatsMemberHLL&&) = delete; // move construct
   TWStatsMemberHLL& operator=(TWStatsMemberHLL &&) = delete; // move assign
-  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
-  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); }
-  void add(const std::string& s, int a) { return; }
-  void sub(int a) { return; }
-  void sub(const std::string& s) { return; }
-  int get() { return std::lround(hllp->estimate()); }
-  int get(const std::string& s) { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
-  void set(int a) { return; }
-  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); }
-  void erase() { hllp->clear(); }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
+  void add(const std::string& s) override { hllp->add(s.c_str(), s.length()); }
+  void add(const std::string& s, int a) override { return; }
+  void sub(int a) override { return; }
+  void sub(const std::string& s) override { return; }
+  int get() override { return std::lround(hllp->estimate()); }
+  int get(const std::string& s) override { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
+  void set(int a) override { return; }
+  void set(const std::string& s) override { hllp->clear(); hllp->add(s.c_str(), s.length()); }
+  void erase() override { hllp->clear(); }
+  int sum(const TWStatsBuf& vec) override
   {
     hll::HyperLogLog hllsum(num_bits);
     for (auto a = vec.begin(); a != vec.end(); ++a)
@@ -145,11 +145,11 @@ public:
       }
     return std::lround(hllsum.estimate());
   }
-  int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
-  void dump(std::ostream& os) {
+  int sum(const std::string& s, const TWStatsBuf& vec) override { return 0; }
+  void dump(std::ostream& os) override {
     hllp->dump(os);
   }
-  void restore(std::istream& is) {
+  void restore(std::istream& is) override {
     hllp->restore(is);
   }
   static void setNumBits(unsigned int nbits) {
@@ -178,17 +178,17 @@ public:
   TWStatsMemberCountMin& operator=(const TWStatsMemberCountMin&) = delete;
   TWStatsMemberCountMin(TWStatsMemberCountMin&&) = delete; // move construct
   TWStatsMemberCountMin& operator=(TWStatsMemberCountMin &&) = delete; // move assign
-  void add(int a) { return; }
-  void add(const std::string& s) { cm->update(s.c_str(), 1); }
-  void add(const std::string& s, int a) { cm->update(s.c_str(), a); }
-  void sub(int a) { return; }
-  void sub(const std::string& s) { return; }
-  int get() { return cm->totalcount(); }
-  int get(const std::string& s) { return cm->estimate(s.c_str()); }
-  void set(int a) { return; }
-  void set(const std::string& s) { return; }
-  void erase() { cm->erase(); return; }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { return; }
+  void add(const std::string& s) override { cm->update(s.c_str(), 1); }
+  void add(const std::string& s, int a) override { cm->update(s.c_str(), a); }
+  void sub(int a) override { return; }
+  void sub(const std::string& s) override { return; }
+  int get() override { return cm->totalcount(); }
+  int get(const std::string& s) override { return cm->estimate(s.c_str()); }
+  void set(int a) override { return; }
+  void set(const std::string& s) override { return; }
+  void erase() override { cm->erase(); return; }
+  int sum(const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -197,7 +197,7 @@ public:
       }
     return count;
   }
-  int sum(const std::string&s, const TWStatsBuf& vec)
+  int sum(const std::string&s, const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -206,10 +206,10 @@ public:
       }
     return count;
   }
-  void dump(std::ostream& os) {
+  void dump(std::ostream& os) override {
     cm->dump(os);
   }
-  void restore(std::istream& is) {
+  void restore(std::istream& is) override {
     cm->restore(is);
   }
   static void setGamma(float g)

@@ -469,8 +469,10 @@ void Sibling::send(const std::string& msg)
     try {
       sockp->write((char*)&nsize, sizeof(nsize));
       sockp->writen(msg);
+      ++success;
     }
     catch (const NetworkError& e) {
+      ++failures;
       debuglog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
       connectSibling();
     }

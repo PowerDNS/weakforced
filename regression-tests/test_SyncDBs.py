@@ -25,3 +25,6 @@ class TestSyncDBs(ApiTestCase):
         res2_ss = res2.split("DB Name", 1)[1]
 
         self.assertEqual(res1_ss == res2_ss, True)
+
+        proc3.terminate()
+        proc3.wait()

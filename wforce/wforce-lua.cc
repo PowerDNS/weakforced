@@ -33,6 +33,7 @@
 #include "wforce-web.hh"
 #include "common-lua.hh"
 #include <fstream>
+#include <boost/algorithm/string.hpp>
 
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
@@ -47,6 +48,25 @@
 using std::thread;
 
 static vector<std::function<void(void)>>* g_launchWork;
+
+void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto)
+{
+  std::vector<std::string> sres;
+  boost::split(sres, str, boost::is_any_of(":"));
+            
+  if (sres.size() > 3) {
+    throw WforceException("Malformed sibling string: " + str + "(Format is <host>[:<port>[:<protocol>]]");
+  }
+  else if (sres.size() == 3) {
+    proto = Sibling::stringToProtocol(sres.back());
+    sres.pop_back();
+    ca_str = boost::join(sres, ":");
+  }
+  else {
+    proto = Sibling::Protocol::UDP;
+    ca_str = str;
+  }
+}
 
 // lua functions are split into three groups:
 // 1) Those which are only applicable as "config/setup" (single global lua state) (they are defined as blank/empty functions otherwise) 
@@ -207,8 +227,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   if (!multi_lua) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
 	ComboAddress ca;
+        std::string ca_str;
+        Sibling::Protocol proto;
+        parseSiblingString(address, ca_str, proto);
 	try {
-	  ca = ComboAddress(address, 4001);
+	  ca = ComboAddress(ca_str, 4001);
 	}
 	catch (const WforceException& e) {
           const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
@@ -216,7 +239,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
           g_outputBuffer += errstr;
 	  return;
 	}
-	g_siblings.modify([ca](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca)); });
+	g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
       });
   }
   else {
@@ -225,10 +248,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
-	vector<shared_ptr<Sibling>> v;
+        vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
           try {
-            v.push_back(std::make_shared<Sibling>(ComboAddress(p.second, 4001)));
+            std::string ca_string;
+            Sibling::Protocol proto;
+
+            parseSiblingString(p.second, ca_string, proto);
+            v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
           }
           catch (const WforceException& e) {
             const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
@@ -364,9 +391,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         auto siblings = g_siblings.getCopy();
         boost::format fmt("%-35s %-15d %-14d %-15d %-14d   %s\n");
         g_outputBuffer= (fmt % "Address" % "Send Successes" % "Send Failures" % "Rcv Successes" % "Rcv Failures" % "Note").str();
-        for(const auto& s : siblings)
-          g_outputBuffer += (fmt % s->rem.toStringWithPort() % s->success % s->failures % s->rcvd_success % s->rcvd_fail % (s->d_ignoreself ? "Self" : "") ).str();
-      
+        for(const auto& s : siblings) {
+          std::string addr =  s->rem.toStringWithPort() + " " + Sibling::protocolToString(s->proto);
+          g_outputBuffer += (fmt % addr % s->success % s->failures % s->rcvd_success % s->rcvd_fail % (s->d_ignoreself ? "Self" : "") ).str();
+        }
       });
   } 
   else {

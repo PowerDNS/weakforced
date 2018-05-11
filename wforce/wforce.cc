@@ -421,7 +421,7 @@ void Sibling::connectSibling()
       sockp->connect(rem);
     }
     catch (const NetworkError& e) {
-      debuglog("TCP Connect to Sibling %s failed (%s)", rem
+      vdebuglog("TCP Connect to Sibling %s failed (%s)", rem
                .toStringWithPort(), e.what());
     }
   }
@@ -473,7 +473,7 @@ void Sibling::send(const std::string& msg)
     }
     catch (const NetworkError& e) {
       ++failures;
-      debuglog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
+      vdebuglog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
       connectSibling();
     }
   }

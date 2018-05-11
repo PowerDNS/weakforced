@@ -29,6 +29,8 @@ class ApiTestCase(unittest.TestCase):
         self.server2_url = 'http://%s:%s/' % (self.server_address, self.server2_port)
         self.server3_port = 8086
         self.server3_url = 'http://%s:%s/' % (self.server_address, self.server3_port)
+        self.server4_port = 8087
+        self.server4_url = 'http://%s:%s/' % (self.server_address, self.server4_port)
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
@@ -77,10 +79,16 @@ class ApiTestCase(unittest.TestCase):
     def allowFuncAttrsReplica(self, login, remote, pwhash, attrs):
         return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True)
 
+    def allowFuncReplica2(self, login, remote, pwhash):
+        return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", True, True)
+    
+    def allowFuncAttrsReplica2(self, login, remote, pwhash, attrs):
+        return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True, True)
+    
     def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)
     
-    def allowFuncAttrsInternal(self, login, remote, pwhash, attrs, device_id, protocol, replica):
+    def allowFuncAttrsInternal(self, login, remote, pwhash, attrs, device_id, protocol, replica, replica2=False):
         payload = dict()
         payload['login'] = login
         payload['remote'] = remote
@@ -94,12 +102,18 @@ class ApiTestCase(unittest.TestCase):
                 self.url("/?command=allow"),
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
-        else:
+        elif replica and not replica2:
             return self.session.post(
                 self.url2("/?command=allow"),
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
+        else:
+            return self.session.post(
+                self.url4("/?command=allow"),
+                data=json.dumps(payload),
+                headers={'Content-Type': 'application/json'})
 
+        
     def reportFunc(self, login, remote, pwhash, success):
         return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, "", "", False)
 
@@ -183,8 +197,11 @@ class ApiTestCase(unittest.TestCase):
 
     def countLoginsReplica(self, login):
         return self.countLoginsInternal(login, True)
-    
-    def countLoginsInternal(self, login, replica):
+
+    def countLoginsReplica2(self, login):
+        return self.countLoginsInternal(login, True, True)
+
+    def countLoginsInternal(self, login, replica, replica2=False):
         attrs = dict()
         attrs['login'] = login
         payload = dict()
@@ -194,9 +211,14 @@ class ApiTestCase(unittest.TestCase):
                 self.url("/?command=countLogins"),
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
-        else:
+        elif replica and not replica2:
             return self.session.post(
                 self.url2("/?command=countLogins"),
+                data=json.dumps(payload),
+                headers={'Content-Type': 'application/json'})
+        else:
+            return self.session.post(
+                self.url4("/?command=countLogins"),
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
 
@@ -366,6 +388,9 @@ class ApiTestCase(unittest.TestCase):
     def url3(self, relative_url):
         return urlparse.urljoin(self.server3_url, relative_url)
 
+    def url4(self, relative_url):
+        return urlparse.urljoin(self.server4_url, relative_url)
+    
     def ta_url(self, relative_url):
         return urlparse.urljoin(self.ta_server_url, relative_url)
 

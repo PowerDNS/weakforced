@@ -24,12 +24,20 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('ivbaddiereplication', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
+        r = self.allowFuncReplica2('ivbaddiereplication', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        
     def test_FailedLogins(self):
         r = self.allowFunc('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
@@ -45,9 +53,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('flbaddiereplication', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('flbaddiereplication', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -66,9 +82,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('ipbaddiereplication', '227.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipbaddiereplication', '227.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -86,9 +110,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('subbaddiereplication', '228.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        
         # Wait for the time windows to clear and then check again
         time.sleep(15)
         r = self.allowFuncReplica('subbaddiereplication', '227.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('subbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -107,9 +139,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('ipv4baddiereplication', '114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipv4baddiereplication', '114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -128,9 +168,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
+        r = self.allowFuncReplica2('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -149,12 +197,20 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('ipv6baddiereplication', '2001:c78::1000', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
+        r = self.allowFuncReplica2('ipv6baddiereplication', '2001:c78::1000', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        
     def test_expiry(self):
         r = self.allowFunc('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
@@ -172,9 +228,17 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('expirebaddiereplication', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
         time.sleep(30)
         r = self.allowFuncReplica('expirebaddiereplication', '127.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+
+        r = self.allowFuncReplica2('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
 
@@ -193,6 +257,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], -1)
 
+        r = self.allowFuncReplica2('resetbaddiereplication', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], -1)
+        
         r = self.resetFunc('resetbaddiereplication', '128.0.0.1')
         j = r.json()
         self.assertEquals(j['status'], "ok")
@@ -202,6 +270,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 0)
 
+        r = self.allowFuncReplica2('resetbaddiereplication', '128.0.0.1', "1234")
+        j = r.json()
+        self.assertEquals(j['status'], 0)
+        
     def test_resetField(self):
         r = self.incLogins("resetFieldTest")
         j = r.json()
@@ -212,6 +284,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         r = self.countLoginsReplica("resetFieldTest")
         j = r.json()
         self.assertEquals(j['r_attrs']['countLogins'], '1')
+
+        r = self.countLoginsReplica2("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '1')
         
         r = self.resetLogins("resetFieldTest")
         j = r.json()
@@ -220,5 +296,9 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
 
         r = self.countLoginsReplica("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')
+
+        r = self.countLoginsReplica2("resetFieldTest")
         j = r.json()
         self.assertEquals(j['r_attrs']['countLogins'], '0')

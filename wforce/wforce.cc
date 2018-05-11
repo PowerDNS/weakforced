@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "wforce.hh"
+#include "wforce_ns.hh"
 #include "sstuff.hh"
 #include "misc.hh"
 #include <netinet/tcp.h>
@@ -71,6 +72,16 @@ syncData g_sync_data;
 
 std::string g_configDir; // where the config files are located
 std::shared_ptr<UserAgentParser> g_ua_parser_p;
+
+struct
+{
+  bool beDaemon{false};
+  bool underSystemd{false};
+  bool beClient{false};
+  string command;
+  string config;
+  string regexes;
+} g_cmdLine;
 
 bool getMsgLen(int fd, uint16_t* len)
 try
@@ -394,9 +405,32 @@ void doConsole()
   }
 }
 
-Sibling::Sibling(const ComboAddress& ca) : rem(ca), sock(ca.sin4.sin_family, SOCK_DGRAM), d_ignoreself(false)
+Sibling::Sibling(const ComboAddress& ca) : rem(ca), proto(Protocol::UDP), d_ignoreself(false)
 {
-  sock.connect(ca);
+  connectSibling();
+}
+
+void Sibling::connectSibling()
+{
+  sockp = wforce::make_unique<Socket>(rem.sin4.sin_family, static_cast<int>(proto));
+  if (proto == Protocol::UDP) {
+    sockp->connect(rem);
+  }
+  else {
+    try {
+      sockp->connect(rem);
+    }
+    catch (const NetworkError& e) {
+      debuglog("TCP Connect to Sibling %s failed (%s)", rem
+               .toStringWithPort(), e.what());
+    }
+  }
+}
+
+Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), d_ignoreself(false)
+{
+  if (!g_cmdLine.beClient)
+    connectSibling();
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)
@@ -405,7 +439,7 @@ void Sibling::checkIgnoreSelf(const ComboAddress& ca)
   actualLocal.sin4.sin_family = ca.sin4.sin_family;
   socklen_t socklen = actualLocal.getSocklen();
 
-  if(getsockname(sock.getHandle(), (struct sockaddr*) &actualLocal, &socklen) < 0) {
+  if(getsockname(sockp->getHandle(), (struct sockaddr*) &actualLocal, &socklen) < 0) {
     return;
   }
 
@@ -419,10 +453,28 @@ void Sibling::send(const std::string& msg)
 {
   if(d_ignoreself)
     return;
-  if(::send(sock.getHandle(),msg.c_str(), msg.length(),0) <= 0)
-    ++failures;
-  else
-    ++success;
+
+  if (proto == Protocol::UDP) {
+    if(::send(sockp->getHandle(),msg.c_str(), msg.length(),0) <= 0) {
+      ++failures;
+    }
+    else
+      ++success;
+  }
+  else if (proto == Protocol::TCP) {
+    // This needs protecting with a mutex because of the reconnect logic
+    std::lock_guard<std::mutex> lock(mutx);
+
+    uint16_t nsize = htons(msg.length());
+    try {
+      sockp->write((char*)&nsize, sizeof(nsize));
+      sockp->writen(msg);
+    }
+    catch (const NetworkError& e) {
+      debuglog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
+      connectSibling();
+    }
+  }
 }
 
 std::atomic<unsigned int> g_report_sink_rr(0);
@@ -955,17 +1007,6 @@ void checkUaRegexFile(const std::string& regexFile)
     exit(-1);
   }
 }
-
-struct 
-{
-  bool beDaemon{false};
-  bool underSystemd{false};
-  bool beClient{false};
-  string command;
-  string config;
-  string regexes;
-} g_cmdLine;
-
 
 int main(int argc, char** argv)
 try

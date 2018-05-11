@@ -61,21 +61,26 @@ cannot be called inside the allow/report/reset functions:
 
         addCustomStat("custom_stat1")
 
-* setSiblings(\<list of IP[:port]\>) - Set the list of siblings to which
+* setSiblings(\<list of IP[:port[:protocol]]\>) - Set the list of siblings to which
   stats db and blacklist data should be replicated. If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001.  If protocol is not specified it defaults to
+  udp. For example:
   
-		setSiblings({"127.0.1.2", "127.0.1.3:4004"})
+		setSiblings({"127.0.1.2", "127.0.1.3:4004", "127.0.2.23:4004:tcp"})
 
-* addSibling(\<IP[:port]\>) - Add a sibling to the list to which all
+* addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist data should be replicated.  If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001. If protocol is not specified it defaults to
+  udp. For example:
   
 		addSibling("192.168.1.23")
+		addSibling("192.168.1.23:4001:udp")
+		addSibling("192.168.1.23:4003:tcp")
 
 * siblingListener(\<IP[:port]\>) - Listen for reports from siblings on
   the specified IP address and port.  If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001. Wforce will always listen on both UDP and TCP
+  ports. For example:
   
 		siblingListener("0.0.0.0:4001")
 

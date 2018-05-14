@@ -467,7 +467,7 @@ void Sibling::send(const std::string& msg)
 
     uint16_t nsize = htons(msg.length());
     try {
-      sockp->write((char*)&nsize, sizeof(nsize));
+      sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
       sockp->writen(msg);
       ++success;
     }
@@ -608,7 +608,7 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
             string packet;
             encryptMsg(msg, packet);
             uint16_t nsize = htons(packet.length());
-            rep_sock.write((char*)&nsize, sizeof(nsize));
+            rep_sock.writen(std::string((char*)&nsize, sizeof(nsize)));
             rep_sock.writen(packet);
             num_synced++;
           }

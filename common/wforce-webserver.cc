@@ -241,18 +241,15 @@ void WforceWebserver::connectionThread(int id, std::shared_ptr<WFConnection> wfc
     writen2(wfc->fd, done.c_str(), done.size());
   }
 
-  {
-    std::lock_guard<std::mutex> lock(wws->d_sock_vec_mutx);
-    if (closeConnection) {
-      wfc->closeConnection = true;
-    }
-    wfc->inConnectionThread = false;
-    auto end_time = std::chrono::steady_clock::now();
-    auto run_time = end_time - start_time;
-    auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
-    addWTRStat(i_millis.count());
-    return;
+  if (closeConnection) {
+    wfc->closeConnection = true;
   }
+  wfc->inConnectionThread = false;
+  auto end_time = std::chrono::steady_clock::now();
+  auto run_time = end_time - start_time;
+  i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
+  addWTRStat(i_millis.count());
+  return;
 }
 
 bool WforceWebserver::compareAuthorization(YaHTTP::Request& req, const string &expected_password)

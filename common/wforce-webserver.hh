@@ -38,16 +38,14 @@
 
 struct WFConnection
 {
-  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
+  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : inConnectionThread{false}, closeConnection{false}, s(sock)
   {
     fd = sock;
     remote = ca;
     password = pass;
-    closeConnection = false;
-    inConnectionThread = false;
   }
-  bool inConnectionThread;
-  bool closeConnection;
+  std::atomic<bool> inConnectionThread;
+  std::atomic<bool> closeConnection;
   int fd;
   Socket s;
   ComboAddress remote;

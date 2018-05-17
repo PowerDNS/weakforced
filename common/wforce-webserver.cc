@@ -360,6 +360,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
     }
     else {
       std::lock_guard<std::mutex> lock(wws->d_sock_vec_mutx);
+      bool pollin = false;
       for (int i=0; i<num_fds; i++) {
 	// set close flag for connections that need closing
 	if (fds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
@@ -368,6 +369,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
 	// process any connections that have activity
 	else if (fds[i].revents & POLLIN) {
           {
+            pollin = true;
             std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
             // If too many active connections, don't give the worker threads any more work
             // Also don't add the connection to the queue more than once
@@ -379,9 +381,10 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
               wws->d_queue.push(wqi);
             }
           }
-          wws->d_cv.notify_all();
 	}
       }
+      if (pollin)
+        wws->d_cv.notify_all();
       // now erase any connections that are done with
       for (WFCArray::iterator i = wws->d_sock_vec.begin(); i != wws->d_sock_vec.end();) {
 	if ((*i)->closeConnection == true) {

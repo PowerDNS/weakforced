@@ -97,6 +97,7 @@ public:
   // if you want to do other stuff
   static void start(int sock, const ComboAddress& local, const std::string& password, WforceWebserver* wws);
 protected:
+  static void connectionStatsThread(WforceWebserver* wws);
   static void connectionThread(WforceWebserver* wws);
   static bool compareAuthorization(YaHTTP::Request& req, const string &expected_password);
   static void pollThread(WforceWebserver* wws);

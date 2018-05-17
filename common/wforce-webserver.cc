@@ -295,6 +295,17 @@ bool WforceWebserver::compareAuthorization(YaHTTP::Request& req, const string &e
   return auth_ok;
 }
 
+void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
+{
+  unsigned int interval = 300; // Log every 300 seconds;
+
+  for (;;) {
+    sleep(interval);
+
+    warnlog("Number of active connections: %d, Max active connections: %d", wws->getNumConns(), wws->d_max_conns);
+  }
+}
+
 #include "poll.h"
 
 void WforceWebserver::pollThread(WforceWebserver* wws)
@@ -308,6 +319,10 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
     std::thread t([wws] { WforceWebserver::connectionThread(wws); });
     t.detach();
   }
+
+  // Start a thread that logs connection stats periodically
+  std::thread t([wws] { WforceWebserver::connectionStatsThread(wws); });
+  t.detach();
   
   for (;;) {
     // parse the array of sockets and create a pollfd array

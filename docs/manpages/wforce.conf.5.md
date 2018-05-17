@@ -151,6 +151,13 @@ cannot be called inside the allow/report/reset functions:
 
 		setNumWebHookThreads(2)
 
+* setMaxWebserverConns(\<max conns\>) - Set the maximum number of
+  active connections to the webserver. This can be used to limit the
+  effect of too many queries to wforce. It defaults to 10,000. For
+  example:
+
+        setMaxWebserverConns(5000)
+
 * setNumWebHookConnsPerThread(\<num conns\>) - Set the maximum number
   of connections used by each WebHook thread. Defaults to 10 if not
   specified. This setting replaces the deprecated "num_conns" per-hook

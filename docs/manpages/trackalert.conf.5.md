@@ -84,6 +84,13 @@ cannot be called inside the report or background functions:
 
 		setNumWorkerThreads(4)
 
+* setMaxWebserverConns(\<max conns\>) - Set the maximum number of
+  active connections to the webserver. This can be used to limit the
+  effect of too many queries to trackalert. It defaults to 10,000. For
+  example:
+
+        setMaxWebserverConns(5000)
+
 * setNumReportThreads(\<num threads\>) - Set the number of threads in
   the pool used to run Lua report functions. Each thread uses a
   separate Lua Context, (see setNumLuaStates()). Defaults to 6 if not

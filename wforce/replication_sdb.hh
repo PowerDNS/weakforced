@@ -29,6 +29,9 @@ class SDBReplicationOperation : public AnyReplicationOperation
 {
 public:
   SDBReplicationOperation();
+  SDBReplicationOperation(SDBOperation&& so) {
+    sdb_msg = so;
+  }
   SDBReplicationOperation(const std::string& db_name, SDBOperation_SDBOpType op, const std::string& key);
   SDBReplicationOperation(const std::string& db_name, SDBOperation_SDBOpType op, const std::string& key,
 			  const std::string& field_name, const std::string& s);
@@ -40,6 +43,10 @@ public:
                           SDBOperation_SDBOpType op,
                           const std::string& key,
 			  const std::string& field_name);
+  SDBReplicationOperation(const std::string& my_db_name,
+                          SDBOperation_SDBOpType my_op,
+                          const std::string& my_key,
+                          const TWStatsDBDumpEntry& my_entry);
   std::string serialize();
   AnyReplicationOperationP unserialize(const std::string& str, bool& retval);
   void applyOperation();

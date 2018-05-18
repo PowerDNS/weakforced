@@ -446,6 +446,7 @@ using CurlConns = std::vector<std::shared_ptr<CurlConnection>>;
 #define MAX_HOOK_CONN 10
 #define NUM_WEBHOOK_THREADS 5
 #define QUEUE_SIZE 50000
+#define DEFAULT_TIMEOUT_SECS 2
 
 struct WebHookQueueItem
 {
@@ -461,6 +462,7 @@ public:
   void setNumThreads(unsigned int new_num_threads);
   void setMaxConns(unsigned int max_conns);
   void setMaxQueueSize(unsigned int max_queue);
+  void setTimeout(uint64_t timeout_seconds);
   // synchronously run the ping command for the hook
   bool pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg);
   // asynchronously run the hook with the supplied data (must be in json format)
@@ -478,4 +480,5 @@ private:
   unsigned int max_queue_size = QUEUE_SIZE;
   unsigned int max_hook_conns = MAX_HOOK_CONN;
   unsigned int num_threads = NUM_WEBHOOK_THREADS;
+  uint64_t timeout_secs = DEFAULT_TIMEOUT_SECS;
 };

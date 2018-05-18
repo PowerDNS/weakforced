@@ -193,6 +193,28 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/Error"
+  /?command=syncDone:
+    get:
+      description: "Tell the server that DB syncing is done"
+      operationId: "syncDone"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "syncDone response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /?command=stats:
     get:
       description: "Get server stats"
@@ -241,6 +263,35 @@ paths:
           description: "getDBStats response"
           schema:
             $ref: "#/definitions/DBStatsResponse"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=syncDBs:
+    post:
+      description: This is a request to synchronize StatsDBs.
+      operationId: syncDBs
+      produces:
+        - application/json
+      parameters:
+        - name: "syncDBs"
+          in: body
+          description: "The ip and address to sync to"
+          required: true
+          schema:
+            $ref: "#/definitions/syncDBsParams"
+      responses:
+        "200":
+          description: "syncDBs response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
         default:
           description: unexpected error
           schema:
@@ -563,3 +614,19 @@ definitions:
       perfstats: {"WTR_0_1": 0, "WTR_100_1000": 0, "WTR_10_100": 0, "WTR_1_10": 0, "WTR_Slow": 0, "WTW_0_1": 1, "WTW_100_1000": 0, "WTW_10_100": 0, "WTW_1_10": 0, "WTW_Slow": 0}
       commandstats: {"addBLEntry": 0, "allow": 0, "delBLEntry": 0, "getBL": 0, "getDBStats": 0, "ping": 0, "report": 0, "reset": 0, "stats": 0}
       customstats: {"custom1": 0, "custom2": 0}
+  syncDBsParams:
+    type: object
+    required:
+      - replication_host
+      - replication_port
+      - callback_url
+      - callback_auth_pwd
+    properties:
+      replication_host:
+        type: string
+      replication_port:
+        type: integer
+      callback_url:
+        type: string
+      callback_auth_pw:
+        type: string

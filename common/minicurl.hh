@@ -40,6 +40,7 @@ public:
   void setURLData(const std::string& url, const MiniCurlHeaders& headers);
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
   void setCurlOption(int option, ...);
+  void setTimeout(uint64_t timeout_secs);
   void setPostData(const std::string& url, const std::string& post_body,
                    const MiniCurlHeaders& headers);
   std::string getPostResult() { return d_data; }
@@ -90,6 +91,7 @@ public:
                const std::string& post_body,
                const MiniCurlHeaders& headers);
   const std::vector<mcmPostReturn> runPost();
+  void setTimeout(uint64_t timeout_secs);
 protected:
   void initMCurl();
   void finishPost();

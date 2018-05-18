@@ -11,8 +11,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Add sibling received success/fail stats to sibling() command
 - New custom stats framework
 - New stats for all commands, including custom commands
-- GeoIP2 support
+- GeoIP2 support (MMDB-style DBs)
 - New resetField() function for statsDBs
+- Support for building packages using pdnsbuilder
+- Configurable accuracy for HLL and CountMin types
+- DB Synchronization for newly started wforce instances
+- Add configuration settings "addSyncHost" and "setMinSyncHostUptime"
+- Add configuration setting "setWebHookTimeoutSecs"
+- Support for replication over TCP
 
 ### Deprecated
 - GeoIP Legacy support
@@ -20,6 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Refactor webhooks to use libcurl multi interface for performance and
 deprecate per-webhook "num_conns" config
+
+## [1.4.3]
+
+### Fixed
+- Fix broken setVerboseAllowLog() function
 
 ## [1.4.2]
 

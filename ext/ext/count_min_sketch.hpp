@@ -6,63 +6,73 @@
     Muthukrishnan and Cormode, 2004
 **/
 
+#pragma once
+
 // define some constants
 # define LONG_PRIME 32993
 #ifndef MIN
 # define MIN(a,b)  (a < b ? a : b)
 #endif
 
-/** CountMinSketch class definition here **/
+  /** CountMinSketch class definition here **/
 class CountMinSketch {
-  // width, depth 
-  unsigned int w,d;
+  protected:
+    // width, depth
+    unsigned int w,d;
   
-  // eps (for error), 0.01 < eps < 1
-  // the smaller the better
-  float eps;
+    // eps (for error), 0.01 < eps < 1
+    // the smaller the better
+    float eps;
   
-  // gamma (probability for accuracy), 0 < gamma < 1
-  // the bigger the better
-  float gamma;
+    // gamma (probability for accuracy), 0 < gamma < 1
+    // the bigger the better
+    float gamma;
   
-  // total count so far
-  unsigned int total; 
+    // total count so far
+    unsigned int total;
 
-  // array of arrays of counters
-  int **C;
+    // array of arrays of counters
+    int **C;
 
-  // array of hash values for a particular item 
-  // contains two element arrays {aj,bj}
-  int **hashes;
+    // array of hash values for a particular item
+    // contains two element arrays {aj,bj}
+    int **hashes;
 
-  // generate "new" aj,bj
-  void genajbj(int **hashes, int i);
+    // generate "new" aj,bj
+    void genajbj(int **hashes, int i);
 
-public:
-  // constructor
-  CountMinSketch(float eps, float gamma);
+  public:
+    // constructor
+    CountMinSketch(float eps, float gamma);
   
-  // update item (int) by count c
-  void update(int item, int c);
-  // update item (string) by count c
-  void update(const char *item, int c);
+    // update item (int) by count c
+    void update(int item, int c);
+    // update item (string) by count c
+    void update(const char *item, int c);
 
-  // estimate count of item i and return count
-  unsigned int estimate(int item);
-  unsigned int estimate(const char *item);
+    // estimate count of item i and return count
+    unsigned int estimate(int item);
+    unsigned int estimate(const char *item);
 
-  // return total count
-  unsigned int totalcount();
+    // return total count
+    unsigned int totalcount();
 
-  // generates a hash value for a string
-  // same as djb2 hash function
-  unsigned int hashstr(const char *str);
+    // generates a hash value for a string
+    // same as djb2 hash function
+    unsigned int hashstr(const char *str);
 
-  // erase counts
-  void erase();
+    // erase counts
+    void erase();
 
-  // destructor
-  ~CountMinSketch();
-};
+    // Exchange the contents of an instance
+    void swap(CountMinSketch& rhs);
 
+    // Dump to a stream
+    void dump(std::ostream& os) const throw(std::runtime_error);
 
+    // Restore from a stream
+    void restore(std::istream& is) throw(std::runtime_error);
+
+    // destructor
+    ~CountMinSketch();
+  };

@@ -27,17 +27,20 @@ if wait:
 
 cmd1 = ("../wforce/wforce -C ./wforce1.conf -R ../wforce/regexes.yaml").split()
 cmd2 = ("../wforce/wforce -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
+cmd4 = ("../wforce/wforce -C ./wforce4.conf -R ../wforce/regexes.yaml").split()
 webcmd = ("/usr/bin/python ./webhook_server.py").split()
 udpsinkcmd = ("/usr/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -C ./trackalert.conf").split()
 report_cmd = (".venv/bin/python ../report_api/runreport.py").split()
 
 # Now run wforce and the tests.
-print "Launching wforce (1 and 2)..."
+print "Launching wforce (1 and 2 and 4)..."
 print ' '.join(cmd1)
 print ' '.join(cmd2)
+print ' '.join(cmd4)
 proc1 = subprocess.Popen(cmd1, close_fds=True)
 proc2 = subprocess.Popen(cmd2, close_fds=True)
+proc4 = subprocess.Popen(cmd4, close_fds=True)
 webproc = subprocess.Popen(webcmd, close_fds=True)
 webpid = webproc.pid
 udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
@@ -52,6 +55,8 @@ def sighandler(signum, frame):
     proc1.wait()
     proc2.terminate()
     proc2.wait()
+    proc4.terminate()
+    proc4.wait()
     webproc.terminate()
     webproc.wait()
     udpproc.terminate()
@@ -80,6 +85,8 @@ if not available:
     proc1.wait()
     proc2.terminate()
     proc2.wait()
+    proc4.terminate()
+    proc4.wait()
     webproc.terminate()
     webproc.wait()
     udpproc.terminate()
@@ -108,6 +115,8 @@ finally:
     proc1.wait()
     proc2.terminate()
     proc2.wait()
+    proc4.terminate()
+    proc4.wait()
     webproc.terminate()
     webproc.wait()
     udpproc.terminate()

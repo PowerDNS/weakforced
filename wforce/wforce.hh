@@ -66,19 +66,37 @@ extern std::string g_outputBuffer; // locking for this is ok, as locked by g_lua
 extern WforceWebserver g_webserver;
 
 void receiveReports(ComboAddress local);
+void receiveReplicationOperationsTCP(ComboAddress local);
 void receiveReplicationOperations(ComboAddress local);
 struct Sibling
 {
-  explicit Sibling(const ComboAddress& rem);
+  enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM };
+  explicit Sibling(const ComboAddress& ca);
+  explicit Sibling(const ComboAddress& ca, Protocol p);
   Sibling(const Sibling&) = delete;
   ComboAddress rem;
-  Socket sock;
+  std::mutex mutx;
+  std::unique_ptr<Socket> sockp;
+  Protocol proto;
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   std::atomic<unsigned int> rcvd_fail{0};
   std::atomic<unsigned int> rcvd_success{0};
   void send(const std::string& msg);
   void checkIgnoreSelf(const ComboAddress& ca);
+  void connectSibling();
+  static Protocol stringToProtocol(const std::string& s) {
+    if (s.compare("tcp") == 0)
+      return Sibling::Protocol::TCP;
+    else
+      return Sibling::Protocol::UDP;
+  }
+  static std::string protocolToString(Protocol p) {
+    if (p == Protocol::TCP)
+      return std::string("tcp");
+    else
+      return std::string("udp");
+  }
   bool d_ignoreself{false};
 };
 
@@ -108,3 +126,16 @@ extern WebHookDB g_custom_webhook_db;
 extern std::shared_ptr<UserAgentParser> g_ua_parser_p;
 
 extern bool g_allowlog_verbose; // Whether to log allow returns of 0
+
+void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
+                  const std::string& calback_pw);
+
+struct syncData {
+  std::vector<std::pair<ComboAddress, std::string>> sync_hosts;
+  unsigned int min_sync_host_uptime;
+  ComboAddress sibling_listen_addr;
+  ComboAddress webserver_listen_addr;
+  std::string  webserver_password;
+};
+
+extern syncData g_sync_data;

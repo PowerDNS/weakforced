@@ -55,6 +55,11 @@ void WebHookRunner::setMaxConns(unsigned int max_conns)
   max_hook_conns = max_conns;
 }
 
+void WebHookRunner::setTimeout(uint64_t tseconds)
+{
+  timeout_secs = tseconds;
+}
+
 // synchronously run the ping command for the hook
 bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg)
 {
@@ -97,6 +102,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
 void WebHookRunner::_runHookThread(unsigned int num_conns)
 {
   MiniCurlMulti mcm(num_conns);
+  mcm.setTimeout(timeout_secs);
   while (true) {
     std::vector<WebHookQueueItem> events;
     {

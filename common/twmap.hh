@@ -64,6 +64,8 @@ public:
   virtual void erase() = 0; // Remove all data - notice this isn't necessarily the same as set(0) or set("")
   virtual int sum(const TWStatsBuf& vec) = 0; // combine an array of stored values
   virtual int sum(const std::string& s, const TWStatsBuf& vec) = 0; // combine an array of stored values
+  virtual void dump(std::ostream& os) = 0; // serialize a TWStatsMember
+  virtual void restore(std::istream& is) = 0; // unserialize a TWStatsMember
 };
 
 class TWStatsMemberInt : public TWStatsMember
@@ -74,17 +76,17 @@ public:
   TWStatsMemberInt& operator=(const TWStatsMemberInt&) = delete;
   TWStatsMemberInt(TWStatsMemberInt&&) = delete; // move construct
   TWStatsMemberInt& operator=(TWStatsMemberInt &&) = delete; // move assign
-  void add(int a) { i += a; }
-  void add(const std::string& s) { int a = std::stoi(s); i += a; return; }
-  void add(const std::string& s, int a) { return; }
-  void sub(int a) { i -= a;  }
-  void sub(const std::string& s) { int a = std::stoi(s); i -= a; return; }
-  int get() { return i; }
-  int get(const std::string& s) { return i; }
-  void set(int a) { i = a; }
-  void set(const std::string& s) { return; }
-  void erase() { i = 0; }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { i += a; }
+  void add(const std::string& s) override { int a = std::stoi(s); i += a; return; }
+  void add(const std::string& s, int a) override { return; }
+  void sub(int a) override { i -= a;  }
+  void sub(const std::string& s) override { int a = std::stoi(s); i -= a; return; }
+  int get() override { return i; }
+  int get(const std::string& s) override { return i; }
+  void set(int a) override { i = a; }
+  void set(const std::string& s) override { return; }
+  void erase() override { i = 0; }
+  int sum(const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -93,7 +95,19 @@ public:
       }
     return count;
   }
-  int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
+  int sum(const std::string& s, const TWStatsBuf& vec) override { return 0; }
+  void dump(std::ostream& os) override {
+    uint32_t neti = htonl(i);
+    os.write((char*)&neti, sizeof(neti));
+    if(os.fail()) {
+      throw std::runtime_error("TWStatsMemberInt: Failed to dump");
+    }
+  }
+  void restore(std::istream& is) override {
+    uint32_t neti = 0;
+    is.read((char*)&neti, sizeof(neti));
+    i = ntohl(neti);
+  }
 private:
   int i=0;
 };
@@ -111,17 +125,17 @@ public:
   TWStatsMemberHLL& operator=(const TWStatsMemberHLL&) = delete;
   TWStatsMemberHLL(TWStatsMemberHLL&&) = delete; // move construct
   TWStatsMemberHLL& operator=(TWStatsMemberHLL &&) = delete; // move assign
-  void add(int a) { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
-  void add(const std::string& s) { hllp->add(s.c_str(), s.length()); }
-  void add(const std::string& s, int a) { return; }
-  void sub(int a) { return; }
-  void sub(const std::string& s) { return; }
-  int get() { return std::lround(hllp->estimate()); }
-  int get(const std::string& s) { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
-  void set(int a) { return; }
-  void set(const std::string& s) { hllp->clear(); hllp->add(s.c_str(), s.length()); }
-  void erase() { hllp->clear(); }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { std::string str; str = std::to_string(a); hllp->add(str.c_str(), str.length()); return; }
+  void add(const std::string& s) override { hllp->add(s.c_str(), s.length()); }
+  void add(const std::string& s, int a) override { return; }
+  void sub(int a) override { return; }
+  void sub(const std::string& s) override { return; }
+  int get() override { return std::lround(hllp->estimate()); }
+  int get(const std::string& s) override { hllp->add(s.c_str(), s.length()); return std::lround(hllp->estimate()); } // add and return value
+  void set(int a) override { return; }
+  void set(const std::string& s) override { hllp->clear(); hllp->add(s.c_str(), s.length()); }
+  void erase() override { hllp->clear(); }
+  int sum(const TWStatsBuf& vec) override
   {
     hll::HyperLogLog hllsum(num_bits);
     for (auto a = vec.begin(); a != vec.end(); ++a)
@@ -131,7 +145,13 @@ public:
       }
     return std::lround(hllsum.estimate());
   }
-  int sum(const std::string& s, const TWStatsBuf& vec) { return 0; }
+  int sum(const std::string& s, const TWStatsBuf& vec) override { return 0; }
+  void dump(std::ostream& os) override {
+    hllp->dump(os);
+  }
+  void restore(std::istream& is) override {
+    hllp->restore(is);
+  }
   static void setNumBits(unsigned int nbits) {
     if (nbits < 4)
       nbits = 4;
@@ -158,17 +178,17 @@ public:
   TWStatsMemberCountMin& operator=(const TWStatsMemberCountMin&) = delete;
   TWStatsMemberCountMin(TWStatsMemberCountMin&&) = delete; // move construct
   TWStatsMemberCountMin& operator=(TWStatsMemberCountMin &&) = delete; // move assign
-  void add(int a) { return; }
-  void add(const std::string& s) { cm->update(s.c_str(), 1); }
-  void add(const std::string& s, int a) { cm->update(s.c_str(), a); }
-  void sub(int a) { return; }
-  void sub(const std::string& s) { return; }
-  int get() { return cm->totalcount(); }
-  int get(const std::string& s) { return cm->estimate(s.c_str()); }
-  void set(int a) { return; }
-  void set(const std::string& s) { return; }
-  void erase() { cm->erase(); return; }
-  int sum(const TWStatsBuf& vec)
+  void add(int a) override { return; }
+  void add(const std::string& s) override { cm->update(s.c_str(), 1); }
+  void add(const std::string& s, int a) override { cm->update(s.c_str(), a); }
+  void sub(int a) override { return; }
+  void sub(const std::string& s) override { return; }
+  int get() override { return cm->totalcount(); }
+  int get(const std::string& s) override { return cm->estimate(s.c_str()); }
+  void set(int a) override { return; }
+  void set(const std::string& s) override { return; }
+  void erase() override { cm->erase(); return; }
+  int sum(const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -177,7 +197,7 @@ public:
       }
     return count;
   }
-  int sum(const std::string&s, const TWStatsBuf& vec)
+  int sum(const std::string&s, const TWStatsBuf& vec) override
   {
     int count = 0;
     for (auto a=vec.begin(); a!=vec.end(); ++a)
@@ -185,6 +205,12 @@ public:
 	count += a->second->get(s);
       }
     return count;
+  }
+  void dump(std::ostream& os) override {
+    cm->dump(os);
+  }
+  void restore(std::istream& is) override {
+    cm->restore(is);
   }
   static void setGamma(float g)
   {
@@ -237,6 +263,8 @@ protected:
     type_map["countmin"] = &createInstance<TWStatsMemberCountMin>;
   }
 };
+
+typedef std::vector<std::pair<std::time_t, std::stringstream>> TWStatsBufSerial;
 
 // this class is not protected by mutexes because it sits behind TWStatsDB which has a mutex
 // controlling all access
@@ -361,6 +389,27 @@ public:
     sum_cache_valid = false;
     ssum_cache_valid = false;
   }
+  void dump(TWStatsBufSerial& statsvec, std::time_t& stime)
+  {
+    for (TWStatsBuf::iterator i = stats_array.begin(); i != stats_array.end(); ++i) {
+      std::stringstream ss;
+      i->second->dump(ss);
+      statsvec.emplace_back(std::make_pair(i->first, std::move(ss)));
+    }
+    stime = start_time;
+  }
+  void restore(TWStatsBufSerial& statsvec, std::time_t stime)
+  {
+    start_time = stime;
+    last_cleaned = 0;
+    sum_cache_valid = false;
+    ssum_cache_valid = false;
+    unsigned int j = 0;
+    for (auto i = statsvec.begin(); i != statsvec.end(); ++i, ++j) {
+      stats_array[j].first = i->first;
+      stats_array[j].second->restore(i->second);
+    }
+  }
 protected:
   void update_write_timestamp(int cur_window)
   {
@@ -420,6 +469,8 @@ typedef std::unique_ptr<TWStatsEntry> TWStatsEntryP;
 
 // key is field name, value is field type
 typedef std::map<std::string, std::string> FieldMap;
+// key is field name, value is a start time and a bunch of time windows
+typedef std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>> TWStatsDBDumpEntry;
 
 const unsigned int ctwstats_map_size_soft = 524288;
 
@@ -479,6 +530,50 @@ public:
   void setv6Prefix(uint8_t prefix) { v6_prefix = prefix; }
   int windowSize() { return window_size; }
   int numWindows() { return num_windows; }
+  // This function is very dangerous since it relies on later calling endDBDump() to unlock the mutex
+  // But it is essential, otherwise the iterator will become garbage as the DB is modified
+  const typename TWKeyTrackerType::iterator startDBDump()
+  {
+    mutx.lock();
+    return key_tracker.begin();
+  }
+  // While the mutex is being held, no modifications can be made to the DB;
+  // this could cause replication packets to get backed up and lost
+  bool DBDumpEntry(typename TWKeyTrackerType::iterator& i,
+                   TWStatsDBDumpEntry& entry,
+                   T& key)
+  {
+    const auto it = stats_db.find(*i);
+    if (it != stats_db.end()) {
+      key = it->first;
+      for (auto fm = it->second.second.begin(); fm != it->second.second.end(); ++fm) {
+        TWStatsBufSerial sbs;
+        fm->second->dump(sbs, start_time);
+        entry.emplace(std::make_pair(fm->first, std::make_pair(start_time, std::move(sbs))));
+      }
+      return true;
+    }
+    return false;
+  }
+  const typename TWKeyTrackerType::iterator DBDumpIteratorEnd()
+  {
+    return key_tracker.end();
+  }
+  void endDBDump()
+  {
+    mutx.unlock();
+  }
+  // Restore StatsDB entries
+  void restoreEntry(const T& key, TWStatsDBDumpEntry& entry)
+  {
+    for (auto fm = entry.begin(); fm != entry.end(); ++fm) {
+      find_create_key_field(key, fm->first, [fm, this](std::map<std::string, TWStatsEntryP>::iterator it, typename TWKeyTrackerType::iterator& kt)
+			    {
+			      it->second->restore(fm->second.second, fm->second.first);
+			      this->update_write_timestamp(kt);
+			    });
+    }
+  }
 protected:
   template<typename Fn>
   bool find_create_key_field(const T& key, const std::string& field_name,

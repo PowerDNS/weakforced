@@ -135,6 +135,31 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   
 		initGeoIPISPDB()
 
+* setNumWebHookThreads(\<num threads\>) - Set the number of threads in
+  the pool used to send webhook events. Defaults to 5 if not
+  specified. For example:
+
+		setNumWebHookThreads(2)
+
+* setNumWebHookConnsPerThread(\<num conns\>) - Set the maximum number
+  of connections used by each WebHook thread. Defaults to 10 if not
+  specified. This setting replaces the deprecated "num_conns" per-hook
+  configuration setting. For example:
+
+        setNumWebHookConnsPerThread(50)
+
+* setWebHookQueueSize(\<queue size\>) - Set the size of the queue for
+  webhook events. If the queue gets too big, then webhooks will be
+  discarded, and an error will be logged. The default queue size is
+  50000, which should be appropriate for most use-cases.
+
+        setWebHookQueueSize(100000)
+
+* setWebHookTimeoutSecs(\<timeout secs\>) - Set the maximum time a
+  request can take for webhooks. For example:
+
+        setWebHookTimeoutSecs(2)
+
 * setReport(\<report func\>) - Tell trackalert to use the specified
   Lua function for handling all "report" commands. For example:
   

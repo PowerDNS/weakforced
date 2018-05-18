@@ -61,21 +61,26 @@ cannot be called inside the allow/report/reset functions:
 
         addCustomStat("custom_stat1")
 
-* setSiblings(\<list of IP[:port]\>) - Set the list of siblings to which
+* setSiblings(\<list of IP[:port[:protocol]]\>) - Set the list of siblings to which
   stats db and blacklist data should be replicated. If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001.  If protocol is not specified it defaults to
+  udp. For example:
   
-		setSiblings({"127.0.1.2", "127.0.1.3:4004"})
+		setSiblings({"127.0.1.2", "127.0.1.3:4004", "127.0.2.23:4004:tcp"})
 
-* addSibling(\<IP[:port]\>) - Add a sibling to the list to which all
+* addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist data should be replicated.  If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001. If protocol is not specified it defaults to
+  udp. For example:
   
 		addSibling("192.168.1.23")
+		addSibling("192.168.1.23:4001:udp")
+		addSibling("192.168.1.23:4003:tcp")
 
 * siblingListener(\<IP[:port]\>) - Listen for reports from siblings on
   the specified IP address and port.  If port is not specified
-  it defaults to 4001. For example:
+  it defaults to 4001. Wforce will always listen on both UDP and TCP
+  ports. For example:
   
 		siblingListener("0.0.0.0:4001")
 
@@ -159,6 +164,11 @@ cannot be called inside the allow/report/reset functions:
   50000, which should be appropriate for most use-cases.
 
         setWebHookQueueSize(100000)
+
+* setWebHookTimeoutSecs(\<timeout secs\>) - Set the maximum time a
+  request can take for webhooks. For example:
+
+        setWebHookTimeoutSecs(2)
 
 * newGeoIP2DB(\<db name\>, \<filename\>) - Opens and initializes a
   GeoIP2 database. A name must be chosen, and the filename of the
@@ -331,6 +341,34 @@ cannot be called inside the allow/report/reset functions:
   example:
 
 		setVerboseAllowLog()
+
+* addSyncHost(\<sync host address\>, \<sync host password\>,
+  \<replication address\>, \<callback address\>) - If you wish wforce
+  to synchronize the contents of its StatsDBs with the rest of a
+  cluster, then use this configuration command. If any sync hosts are
+  added, wforce will attempt to contact them in turn and find a host
+  which has been up longer than the number of seconds specified in
+  setMinSyncHostUptime(). The sync host address should include a port
+  (it defaults to 8084). If successful, the sync host will send the
+  contents of its StatsDBs to this wforce instance on the replication
+  address specified (this address should have the same port as
+  configured in siblingListener() and defaults to 4001), and when it
+  is finished it will notify this instance of wforce using the
+  callback address (this address should have the same port as
+  configured in webserver and defaults to 8084). For
+  example:
+
+        -- Add 10.2.3.1:8084 as a sync host,
+        -- and use the password "super"
+        -- Send the DB dump to 10.2.1.1:4001
+        -- and let me know on 10.2.1.1:8084 when the dump is finished
+        addSyncHost("10.2.3.1:8084", "super", "10.2.1.1:4001", "10.2.1.1:8084") 
+
+* setMinSyncHostUptime(\<seconds\>) - The minimum time that any sync
+  host must have been up for it to be able to send me the contents of
+  its DBs. Defaults to 3600. For example:
+
+        setMinSyncHostUptime(1800)
 
 # GENERAL FUNCTIONS
 

@@ -255,6 +255,13 @@ void setupCommonLua(bool client,
   }
 
   if (!multi_lua) {
+    c_lua.writeFunction("setWebHookTimeoutSecs", [](uint64_t timeout_secs) { g_webhook_runner.setTimeout(timeout_secs); });
+  }
+  else {
+    c_lua.writeFunction("setWebHookTimeoutSecs", [](uint64_t timeout_secs) { });
+  }
+  
+  if (!multi_lua) {
     c_lua.writeFunction("showCustomWebHooks", []() {
 	auto webhooks = g_custom_webhook_db.getWebHooks();
 	boost::format fmt("%-9d %-20.20s %-9d %-9d %-s\n");

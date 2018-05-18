@@ -236,8 +236,6 @@ public:
       res=::send(d_socket, ptr, toWrite, 0);
       if(res<0) 
         throw NetworkError("Writing to a socket: "+string(strerror(errno)));
-      if(!res)
-        throw NetworkError("EOF on socket");
       toWrite-=res;
       ptr+=res;
     }while(toWrite);
@@ -340,6 +338,16 @@ public:
   int read(char *buffer, int bytes)
   {
     int res=::recv(d_socket,buffer,bytes,0);
+    if(res<0) 
+      throw NetworkError("Reading from a socket: "+string(strerror(errno)));
+    return res;
+  }
+
+  //! Reads a block of data from the socket to a block of memory
+  //! Only returns when all the data requested is available
+  int readAll(char *buffer, int bytes)
+  {
+    int res=::recv(d_socket,buffer,bytes, MSG_WAITALL);
     if(res<0) 
       throw NetworkError("Reading from a socket: "+string(strerror(errno)));
     return res;

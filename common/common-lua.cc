@@ -92,6 +92,16 @@ void setupCommonLua(bool client,
     c_lua.writeFunction("setNumWorkerThreads", [](int numThreads) { });    
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("setMaxWebserverConns", [](int max_conns) {
+	// the max number of active webserver connections
+	g_webserver.setMaxConns(max_conns);
+      });
+  }
+  else {
+    c_lua.writeFunction("setMaxWebserverConns", [](int max_conns) { });
+  }
+  
   c_lua.writeFunction("debugLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       if (g_verbose) {
 	std::ostringstream os;

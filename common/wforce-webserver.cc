@@ -39,6 +39,11 @@ void WforceWebserver::setNumWorkerThreads(unsigned int num_workers)
   d_num_worker_threads = num_workers;
 }
 
+void WforceWebserver::setMaxConns(unsigned int max_conns)
+{
+  d_max_conns = max_conns;
+}
+
 void WforceWebserver::setContentType(const std::string& content_type)
 {
   d_content_type = content_type;
@@ -57,6 +62,12 @@ void WforceWebserver::addACL(const std::string& ip)
 NetmaskGroup WforceWebserver::getACL()
 {
   return d_ACL.getCopy();
+}
+
+size_t WforceWebserver::getNumConns()
+{
+  std::lock_guard<std::mutex> lock(d_sock_vec_mutx);
+  return d_sock_vec.size();
 }
 
 bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, WforceWSFunc func)
@@ -104,154 +115,163 @@ bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, Wf
   return retval;
 }
 
-void WforceWebserver::connectionThread(int id, std::shared_ptr<WFConnection> wfc, WforceWebserver* wws)
+void WforceWebserver::connectionThread(WforceWebserver* wws)
 {
   using namespace json11;
-  string line;
-  string request;
-  YaHTTP::Request req;
-  bool keepalive = false;
-  bool closeConnection=true;
-  bool validRequest = true;
 
-  if (!wfc)
-    return;
-
-  auto start_time = std::chrono::steady_clock::now();
-  auto wait_time = start_time - wfc->q_entry_time;
-  auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
-  addWTWStat(i_millis.count());
-
-  vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
-
-  YaHTTP::AsyncRequestLoader yarl;
-  yarl.initialize(&req);
-  int timeout = 5; // XXX make this configurable
-  wfc->s.setNonBlocking();
-  bool complete=false;
-  try {
-    while(!complete) {
-      int bytes;
-      char buf[1024];
-      bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
-      if (bytes > 0) {
-	string data(buf, bytes);
-	complete = yarl.feed(data);
-      } else {
-	// read error OR EOF
-	validRequest = false;
-	break;
+  while (true) {
+    std::shared_ptr<WFConnection> wfc;
+    {
+      std::unique_lock<std::mutex> lock(wws->d_queue_mutex);
+      while (wws->d_queue.size() == 0) {
+        wws->d_cv.wait(lock);
       }
+      auto qi = wws->d_queue.front();
+      wws->d_queue.pop();
+      wfc = qi.conn;
     }
-    yarl.finalize();
-  } catch (YaHTTP::ParseError &e) {
-    // request stays incomplete
-    infolog("WforceWebserver: Unparseable HTTP request from %s", wfc->remote.toStringWithPort());
-    validRequest = false;
-  } catch (NetworkError& e) {
-    warnlog("WforceWebserver: Network error in web server: %s", e.what());
-    validRequest = false;
-  }
+    string line;
+    string request;
+    YaHTTP::Request req;
+    bool keepalive = false;
+    bool closeConnection=true;
+    bool validRequest = true;
 
-  if (validRequest) {
-    string conn_header = req.headers["Connection"];
-    if (conn_header.compare("keep-alive") == 0)
-      keepalive = true;
+    if (!wfc)
+      continue;
+  
+    auto start_time = std::chrono::steady_clock::now();
+    auto wait_time = start_time - wfc->q_entry_time;
+    auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
+    addWTWStat(i_millis.count());
 
-    if (conn_header.compare("close") == 0)
-      closeConnection = true;
-    else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
-      closeConnection = false;
+    vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
-    string command=req.getvars["command"];
-
-    string callback;
-
-    if(req.getvars.count("callback")) {
-      callback=req.getvars["callback"];
-      req.getvars.erase("callback");
+    YaHTTP::AsyncRequestLoader yarl;
+    yarl.initialize(&req);
+    int timeout = 5; // XXX make this configurable
+    wfc->s.setNonBlocking();
+    bool complete=false;
+    try {
+      while(!complete) {
+        int bytes;
+        char buf[1024];
+        bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
+        if (bytes > 0) {
+          string data(buf, bytes);
+          complete = yarl.feed(data);
+        } else {
+          // read error OR EOF
+          validRequest = false;
+          break;
+        }
+      }
+      yarl.finalize();
+    } catch (YaHTTP::ParseError &e) {
+      // request stays incomplete
+      infolog("WforceWebserver: Unparseable HTTP request from %s", wfc->remote.toStringWithPort());
+      validRequest = false;
+    } catch (NetworkError& e) {
+      warnlog("WforceWebserver: Network error in web server: %s", e.what());
+      validRequest = false;
     }
 
-    req.getvars.erase("_"); // jQuery cache buster
+    if (validRequest) {
+      string conn_header = req.headers["Connection"];
+      if (conn_header.compare("keep-alive") == 0)
+        keepalive = true;
 
-    YaHTTP::Response resp;
-    resp.headers["Content-Type"] = wws->d_content_type;
-    if (closeConnection)
-      resp.headers["Connection"] = "close";
-    else if (keepalive == true)
-      resp.headers["Connection"] = "keep-alive";
-    resp.version = req.version;
-    resp.url = req.url;
+      if (conn_header.compare("close") == 0)
+        closeConnection = true;
+      else if (req.version > 10 || ((req.version < 11) && (keepalive == true)))
+        closeConnection = false;
 
-    string ctype = req.headers["Content-Type"];
-    if (!compareAuthorization(req, wfc->password)) {
-      errlog("WforceWebserver: HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
-      resp.status=401;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":" << "\"Unauthorized\"" << "}";
-      resp.body=ss.str();
-      resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
-    }
-    else {
+      string command=req.getvars["command"];
 
-      // set the defaults in case we don't find a command
-      resp.status = 404;
-      resp.body = R"({"status":"failure", "reason":"Command not found"})";
+      string callback;
+
+      if(req.getvars.count("callback")) {
+        callback=req.getvars["callback"];
+        req.getvars.erase("callback");
+      }
+
+      req.getvars.erase("_"); // jQuery cache buster
+
+      YaHTTP::Response resp;
+      resp.headers["Content-Type"] = wws->d_content_type;
+      if (closeConnection)
+        resp.headers["Connection"] = "close";
+      else if (keepalive == true)
+        resp.headers["Connection"] = "keep-alive";
+      resp.version = req.version;
+      resp.url = req.url;
+
+      string ctype = req.headers["Content-Type"];
+      if (!compareAuthorization(req, wfc->password)) {
+        errlog("WforceWebserver: HTTP Request \"%s\" from %s: Web Authentication failed", req.url.path, wfc->remote.toStringWithPort());
+        resp.status=401;
+        std::stringstream ss;
+        ss << "{\"status\":\"failure\", \"reason\":" << "\"Unauthorized\"" << "}";
+        resp.body=ss.str();
+        resp.headers["WWW-Authenticate"] = "basic realm=\"wforce\"";
+      }
+      else {
+
+        // set the defaults in case we don't find a command
+        resp.status = 404;
+        resp.body = R"({"status":"failure", "reason":"Command not found"})";
     
-      if (req.method=="GET") {
-	const auto& f = wws->d_get_map.find(command);
-	if (f != wws->d_get_map.end()) {
-	  f->second(req, resp, command);
-	}
+        if (req.method=="GET") {
+          const auto& f = wws->d_get_map.find(command);
+          if (f != wws->d_get_map.end()) {
+            f->second(req, resp, command);
+          }
+        }
+        else if (req.method=="DELETE") {
+          const auto& f = wws->d_delete_map.find(command);
+          if (f != wws->d_delete_map.end()) {
+            f->second(req, resp, command);
+          }
+        }
+        else if ((command != "") && (ctype.compare("application/json") != 0)) {
+          errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
+          resp.status = 415;
+          std::stringstream ss;
+          ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
+          resp.body=ss.str();
+        }
+        else if (req.method=="POST") {
+          const auto& f = wws->d_post_map.find(command);
+          if (f != wws->d_post_map.end()) {
+            f->second(req, resp, command);
+          }
+        }
+        else if (req.method=="PUT") {
+          const auto& f = wws->d_put_map.find(command);
+          if (f != wws->d_put_map.end()) {
+            f->second(req, resp, command);
+          }
+        }
       }
-      else if (req.method=="DELETE") {
-	const auto& f = wws->d_delete_map.find(command);
-	if (f != wws->d_delete_map.end()) {
-	  f->second(req, resp, command);
-	}
+      if(!callback.empty()) {
+        resp.body = callback + "(" + resp.body + ");";
       }
-      else if ((command != "") && (ctype.compare("application/json") != 0)) {
-	errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
-	resp.status = 415;
-	std::stringstream ss;
-	ss << "{\"status\":\"failure\", \"reason\":" << "\"Invalid Content-Type - must be application/json\"" << "}";
-	resp.body=ss.str();
-      }
-      else if (req.method=="POST") {
-	const auto& f = wws->d_post_map.find(command);
-	if (f != wws->d_post_map.end()) {
-	  f->second(req, resp, command);
-	}
-      }
-      else if (req.method=="PUT") {
-	const auto& f = wws->d_put_map.find(command);
-	if (f != wws->d_put_map.end()) {
-	  f->second(req, resp, command);
-	}
-      }
-    }
-    if(!callback.empty()) {
-      resp.body = callback + "(" + resp.body + ");";
+
+      std::ostringstream ofs;
+      ofs << resp;
+      string done;
+      done=ofs.str();
+      writen2(wfc->fd, done.c_str(), done.size());
     }
 
-    std::ostringstream ofs;
-    ofs << resp;
-    string done;
-    done=ofs.str();
-    writen2(wfc->fd, done.c_str(), done.size());
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(wws->d_sock_vec_mutx);
     if (closeConnection) {
       wfc->closeConnection = true;
     }
-    wfc->inConnectionThread = false;
     auto end_time = std::chrono::steady_clock::now();
     auto run_time = end_time - start_time;
-    auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
+    i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
     addWTRStat(i_millis.count());
-    return;
+    wfc->inConnectionThread = false;
   }
 }
 
@@ -275,15 +295,35 @@ bool WforceWebserver::compareAuthorization(YaHTTP::Request& req, const string &e
   return auth_ok;
 }
 
+void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
+{
+  unsigned int interval = 300; // Log every 300 seconds;
+
+  for (;;) {
+    sleep(interval);
+
+    warnlog("Number of active connections: %d, Max active connections: %d", wws->getNumConns(), wws->d_max_conns);
+  }
+}
+
 #include "poll.h"
 
 void WforceWebserver::pollThread(WforceWebserver* wws)
 {
-  ctpl::thread_pool p(wws->d_num_worker_threads, 5000);
+  ctpl::thread_pool p(wws->d_num_worker_threads, wws->d_max_conns);
   const int fd_increase = 50; // somewhat arbitrary
   struct pollfd* fds=NULL;
   int max_fd_size = -1;
 
+  for (size_t i=0; i<wws->d_num_worker_threads; ++i) {
+    std::thread t([wws] { WforceWebserver::connectionThread(wws); });
+    t.detach();
+  }
+
+  // Start a thread that logs connection stats periodically
+  std::thread t([wws] { WforceWebserver::connectionStatsThread(wws); });
+  t.detach();
+  
   for (;;) {
     // parse the array of sockets and create a pollfd array
     int num_fds=0;
@@ -327,11 +367,29 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
 	}
 	// process any connections that have activity
 	else if (fds[i].revents & POLLIN) {
-	  wws->d_sock_vec[i]->inConnectionThread = true;
-	  wws->d_sock_vec[i]->q_entry_time = std::chrono::steady_clock::now();
-	  p.push(WforceWebserver::connectionThread, wws->d_sock_vec[i], wws);
+          {
+            std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
+            // If too many active connections, don't give the worker threads any more work
+            // Also don't add the connection to the queue more than once
+            if ((wws->d_queue.size() < wws->d_max_conns) &&
+                (!wws->d_sock_vec[i]->inConnectionThread)) {
+              wws->d_sock_vec[i]->inConnectionThread = true;
+              wws->d_sock_vec[i]->q_entry_time = std::chrono::steady_clock::now();
+              WebserverQueueItem wqi = { wws->d_sock_vec[i] };
+              wws->d_queue.push(wqi);
+            }
+          }
 	}
       }
+      bool queue_empty = true;
+      {
+        std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
+        if (wws->d_queue.size() > 0)
+          queue_empty = false;
+      }
+      // We want to call notify_all() only when we don't hold the lock
+      if (!queue_empty)
+        wws->d_cv.notify_all();
       // now erase any connections that are done with
       for (WFCArray::iterator i = wws->d_sock_vec.begin(); i != wws->d_sock_vec.end();) {
 	if ((*i)->closeConnection == true) {

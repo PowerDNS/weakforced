@@ -27,6 +27,7 @@
 #include <sstream>
 #include <mutex>
 #include <map>
+#include <queue>
 #include <unordered_map>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -38,16 +39,14 @@
 
 struct WFConnection
 {
-  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : s(sock)
+  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : inConnectionThread{false}, closeConnection{false}, s(sock)
   {
     fd = sock;
     remote = ca;
     password = pass;
-    closeConnection = false;
-    inConnectionThread = false;
   }
-  bool inConnectionThread;
-  bool closeConnection;
+  std::atomic<bool> inConnectionThread;
+  std::atomic<bool> closeConnection;
   int fd;
   Socket s;
   ComboAddress remote;
@@ -62,6 +61,12 @@ using WforceWSFunc = void (*)(const YaHTTP::Request&, YaHTTP::Response&, const s
 enum class HTTPVerb { GET, POST, PUT, DELETE };
 
 #define WFORCE_NUM_WORKER_THREADS 4
+#define WFORCE_MAX_WS_CONNS 10000
+
+struct WebserverQueueItem
+{
+  std::shared_ptr<WFConnection> conn;
+};
 
 class WforceWebserver {
 public:
@@ -76,12 +81,14 @@ public:
   // timeout for poll()
   void setPollTimeout(int timeout_ms);
   void setNumWorkerThreads(unsigned int num_workers);
+  void setMaxConns(unsigned int max_conns);
   // What the expected content-type is (for POST/PUT commands)
   void setContentType(const std::string& content_type);
   // set the ACLs
   void setACL(const NetmaskGroup& nmg);
   void addACL(const std::string& ip);
   NetmaskGroup getACL();
+  size_t getNumConns();
   
   // Register functions to parse commands
   bool registerFunc(const std::string& command, HTTPVerb verb, WforceWSFunc func);
@@ -90,7 +97,8 @@ public:
   // if you want to do other stuff
   static void start(int sock, const ComboAddress& local, const std::string& password, WforceWebserver* wws);
 protected:
-  static void connectionThread(int id, std::shared_ptr<WFConnection> wfc, WforceWebserver* wws);
+  static void connectionStatsThread(WforceWebserver* wws);
+  static void connectionThread(WforceWebserver* wws);
   static bool compareAuthorization(YaHTTP::Request& req, const string &expected_password);
   static void pollThread(WforceWebserver* wws);
 private:
@@ -104,4 +112,8 @@ private:
   GlobalStateHolder<NetmaskGroup> d_ACL;
   WFCArray d_sock_vec;
   mutable std::mutex d_sock_vec_mutx;
+  std::queue<WebserverQueueItem> d_queue;
+  mutable std::mutex d_queue_mutex;
+  std::condition_variable d_cv;
+  unsigned int d_max_conns = WFORCE_MAX_WS_CONNS;
 };

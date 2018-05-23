@@ -302,7 +302,7 @@ void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
   for (;;) {
     sleep(interval);
 
-    warnlog("Number of active connections: %d, Max active connections: %d", wws->getNumConns(), wws->d_max_conns);
+    noticelog("Number of active connections: %d, Max active connections: %d", wws->getNumConns(), wws->d_max_conns);
   }
 }
 
@@ -405,7 +405,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
 
 void WforceWebserver::start(int sock, const ComboAddress& local, const std::string& password, WforceWebserver* wws)
 {
-  warnlog("WforceWebserver launched on %s", local.toStringWithPort());
+  noticelog("WforceWebserver launched on %s", local.toStringWithPort());
   auto localACL=wws->d_ACL.getLocal();
 
   // spin up a thread to do the polling on the connections accepted by this thread

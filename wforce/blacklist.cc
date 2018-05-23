@@ -618,7 +618,7 @@ bool BlackListDB::loadPersistEntries()
       throw WforceException(myerr);
     }
     if (retval == true)
-      warnlog("Loaded %d blacklist entries from persistent redis DB", num_entries);
+      noticelog("Loaded %d blacklist entries from persistent redis DB", num_entries);
   }
   return retval;
 }

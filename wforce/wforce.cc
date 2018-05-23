@@ -242,7 +242,7 @@ try
 {
   ComboAddress client;
   int sock;
-  warnlog("Accepting control connections on %s", local.toStringWithPort());
+  noticelog("Accepting control connections on %s", local.toStringWithPort());
   while((sock=SAccept(fd, client)) >= 0) {
     infolog("Got control connection from %s", client.toStringWithPort());
     thread t(controlClientThread, sock, client);
@@ -832,7 +832,7 @@ void receiveReplicationOperationsTCP(ComboAddress local)
   sock.setReuseAddr();
   sock.bind(local);
   sock.listen(1024);
-  warnlog("Launched TCP sibling replication listener on %s", local.toStringWithPort());
+  noticelog("Launched TCP sibling replication listener on %s", local.toStringWithPort());
   
   for (;;) {
     // we wait for activity
@@ -865,7 +865,7 @@ void receiveReplicationOperations(ComboAddress local)
     s->checkIgnoreSelf(local);
   }
   
-  warnlog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
+  noticelog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
   for(;;) {
     shared_ptr<Sibling> recv_sibling = nullptr;
     len=recvfrom(sock.getHandle(), buf, sizeof(buf), 0, (struct sockaddr*)&remote, &remlen);

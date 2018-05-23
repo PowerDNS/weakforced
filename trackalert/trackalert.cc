@@ -229,7 +229,7 @@ try
 {
   ComboAddress client;
   int sock;
-  warnlog("Accepting control connections on %s", local.toStringWithPort());
+  noticelog("Accepting control connections on %s", local.toStringWithPort());
   while((sock=SAccept(fd, client)) >= 0) {
     infolog("Got control connection from %s", client.toStringWithPort());
     thread t(controlClientThread, sock, client);

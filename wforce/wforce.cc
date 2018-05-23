@@ -21,6 +21,9 @@
  */
 
 #include "config.h"
+#include <stddef.h>
+#define SYSLOG_NAMES
+#include <syslog.h>
 #include "wforce.hh"
 #include "wforce_ns.hh"
 #include "sstuff.hh"
@@ -81,6 +84,7 @@ struct
   string command;
   string config;
   string regexes;
+  unsigned int facility{LOG_DAEMON};
 } g_cmdLine;
 
 bool getMsgLen(int fd, uint16_t* len)
@@ -1019,7 +1023,6 @@ try
 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
-  openlog("wforce", LOG_PID, LOG_DAEMON);
   g_console=true;
 
 #ifdef HAVE_LIBSODIUM
@@ -1038,12 +1041,13 @@ try
     {"client", optional_argument, 0, 'c'},
     {"systemd",  optional_argument, 0, 's'},
     {"daemon", optional_argument, 0, 'd'},
+    {"facility", required_argument, 0, 'f'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:R:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdc:e:C:R:f:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -1081,6 +1085,20 @@ try
     case 'e':
       g_cmdLine.command=optarg;
       break;
+    case 'f':
+      int i;
+      for (i = 0; facilitynames[i].c_name; i++)
+        if (strcmp((char *)facilitynames[i].c_name, optarg)==0)
+          break;
+      if (facilitynames[i].c_name) {
+        g_cmdLine.facility = facilitynames[i].c_val;
+      }
+      else {
+        cout << "Bad log facility" << endl;
+        exit(1);
+        break;
+      }
+      break;
     case 'h':
       cout<<"Syntax: wforce [-C,--config file] [-R,--regexes file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
       cout<<"[-h,--help] [-l,--local addr]\n";
@@ -1091,6 +1109,7 @@ try
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
+      cout<<"-f,--facility name    Use log facility 'name'\n";
       cout<<"-h,--help             Display this helpful message\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
@@ -1106,6 +1125,8 @@ try
   argc-=optind;
   argv+=optind;
 
+  openlog("wforce", LOG_PID, g_cmdLine.facility);
+  
   g_singleThreaded = false;
   if (chdir(g_configDir.c_str()) != 0) {
     warnlog("Could not change working directory to %s (%s)", g_configDir, strerror(errno));

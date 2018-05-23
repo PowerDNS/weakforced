@@ -50,6 +50,9 @@ on "report") integrated with it using the HTTP/JSON API.
 -e,--execute *CMD*
 :    Connect to trackalert and execute *CMD*.
 
+-f,--facility *FACILITY NAME*
+:    Log using the specified facility name, e.g. local0
+
 -h,--help
 :    Display a helpful message and exit.
 

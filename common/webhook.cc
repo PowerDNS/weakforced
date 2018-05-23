@@ -181,6 +181,10 @@ void WebHookRunner::_addHook(const std::string& event_name, std::shared_ptr<cons
   if (hook->hasConfigKey("basic-auth")) {
     mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(hook->getConfigKey("basic-auth"))));
   }
+
+  if (hook->hasConfigKey("api-key")) {
+    mch.insert(std::make_pair("X-API-Key", hook->getConfigKey("api-key")));
+  }
   
   vdebuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
           hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);

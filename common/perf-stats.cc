@@ -153,7 +153,7 @@ void statsReportingThread()
     for (auto i=lookupPerfStat.begin(); i!=lookupPerfStat.end(); ++i) {
       ss << i->second << "=" << getStat(i->first) << " ";
     }
-    warnlog("%s", ss.str());
+    noticelog("%s", ss.str());
 
     if (command_stats.size() != 0) {
       ss.str(std::string());
@@ -162,7 +162,7 @@ void statsReportingThread()
       for (const auto& i : command_stats) {
         ss << i << "=" << getCommandStat(i) << " ";
       }
-      warnlog("%s", ss.str());
+      noticelog("%s", ss.str());
     }
 
     if (custom_stats.size() != 0) {
@@ -172,14 +172,14 @@ void statsReportingThread()
       for (const auto& i : custom_stats) {
         ss << i << "=" << getCustomStat(i) << " ";
       }
-      warnlog("%s", ss.str());
+      noticelog("%s", ss.str());
     }
   }
 }
 
 void startStatsThread()
 {
-  warnlog("Starting stats reporting thread");
+  infolog("Starting stats reporting thread");
   initPerfStats();
   thread t(statsReportingThread);
   t.detach();

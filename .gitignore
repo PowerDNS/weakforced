@@ -21,7 +21,6 @@ Makefile
 Makefile.in
 /missing
 /stamp-h1
-/wforce
 /*.service
 /regexes.yaml
 test-driver

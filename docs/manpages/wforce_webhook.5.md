@@ -94,6 +94,11 @@ setting. The following configuration keys can be used for all events:
 
 		config_key["basic-auth"] = "wforce:super"
 
+* api-key - Adds an X-API-Key header to Webhooks, for servers that
+  expect such a header for Authorization. For example:
+
+        config_key["api-key"] = "myapikeysecret"
+
 The following configuration keys are custom to specific events:
 
 * allow_filter - Filters allow webhooks based on the allow response

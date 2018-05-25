@@ -57,6 +57,9 @@ ensure that any firewalls forward UDP on the configured ports.
 -e,--execute *CMD*
 :    Connect to wforce and execute *CMD*.
 
+-f,--facility *FACILITY NAME*
+:    Log using the specified facility name, e.g. local0
+
 -h,--help
 :    Display a helpful message and exit.
 

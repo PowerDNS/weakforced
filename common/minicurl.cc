@@ -198,8 +198,8 @@ bool MiniCurl::postURL(const std::string& url,
     else {
       long response_code;
       curl_easy_getinfo(d_curl, CURLINFO_RESPONSE_CODE, &response_code);
-      if (response_code != 200) {
-	error_msg = std::string("Received non-200 response from webserver: ") + std::to_string(response_code);
+      if (!is2xx(response_code)) {
+	error_msg = std::string("Received non-2XX response from webserver: ") + std::to_string(response_code);
       }
       else
 	retval = true;

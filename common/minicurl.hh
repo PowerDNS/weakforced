@@ -60,6 +60,7 @@ protected:
   void setCurlHeaders(const MiniCurlHeaders& headers);
   void clearCurlHeaders();
   bool initCurlGlobal();
+  bool is2xx(const int& code) const { return code/100 == 2; }
 private:
   CURL *d_curl;
   static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);

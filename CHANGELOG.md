@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Add configuration settings "addSyncHost" and "setMinSyncHostUptime"
 - Add configuration setting "setWebHookTimeoutSecs"
 - Support for replication over TCP
+- Customizable log facility via a command line option
 
 ### Deprecated
 - GeoIP Legacy support
@@ -26,6 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Refactor webhooks to use libcurl multi interface for performance and
 deprecate per-webhook "num_conns" config
+- Change log level of informational messages from warn to notice/info
 
 ## [1.4.3]
 

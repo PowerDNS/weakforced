@@ -12,7 +12,7 @@ $(GEOIP_FILE): $(GEOIP_FILE_GZ)
 	gunzip -c $(GEOIP_FILE_GZ) >$(GEOIP_FILE)
 
 $(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(GEOIP_FILE)
-	$(DCMP) down
+	$(DCMP) down -v
 	$(DCMP) build
 	touch $(COMPOSE_TARGET)
 
@@ -28,7 +28,7 @@ kill:
 	$(DCMP) kill
 
 clean_elastic: stop
-	$(DCMP) rm
+	$(DCMP) rm -v
 	docker volume rm docker_esdata
 	rm $(COMPOSE_TARGET)
 
@@ -36,7 +36,7 @@ clean_geoip:
 	rm -rf logstash/geoip/*
 
 clean_docker:
-	docker-compose down
+	docker-compose down -v
 
 clean: clean_docker clean_geoip
 

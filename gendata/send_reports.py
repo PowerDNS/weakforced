@@ -13,7 +13,7 @@ import time
 WEBPORT = '8084'
 APIKEY = 'super'
 
-cmd1 = ("../wforce -C ./wforce_elastic.conf -R ../regexes.yaml").split()
+cmd1 = ("../wforce/wforce -C ./wforce_elastic.conf -R ../regexes.yaml").split()
 wrksuccesscmd = ("wrk -c 2 -d 60 -t 2 -s ./gen_success_reports.lua -R 30 http://127.0.0.1:8084").split()
 wrkfailcmd = ("wrk -c 2 -d 60 -t 2 -s ./gen_fail_reports.lua -R 20 http://127.0.0.1:8084").split()
 

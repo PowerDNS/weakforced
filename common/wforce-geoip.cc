@@ -174,6 +174,7 @@ WFGeoIPRecord WFGeoIPDB::lookupCity(const ComboAddress& address) const
       ret_wfgir.continent_code = gir->continent_code;
     ret_wfgir.latitude = gir->latitude;
     ret_wfgir.longitude = gir->longitude;
+    GeoIPRecord_delete(gir);
   }
   return ret_wfgir;
 }

@@ -57,7 +57,7 @@ cannot be called inside the allow/report/reset functions:
 * addCustomStat(\<stat name\>) - Add a custom counter which can be
   used to track statistics. The stats for custom counters are logged
   every 5 minutes. The counter is incremented with the
-  "incCustomCounter" command. For example:
+  "incCustomStat" command. For example:
 
         addCustomStat("custom_stat1")
 
@@ -225,7 +225,7 @@ cannot be called inside the allow/report/reset functions:
   a lower number giving more accuracy at the expense of memory. The
   default is 0.05. The value of gamma is between 0 and 1, with a
   higher number giving higher accuracy. The default for gamma
-  is 0.2. If you require more acuracy, consider chaning these values
+  is 0.2. If you require more acuracy, consider changing these values
   slightly, but check your memory usage carefully.
 
 * newStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,

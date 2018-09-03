@@ -27,7 +27,7 @@ WORKDIR /wforce/
 RUN mkdir /sdist
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/
-@EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert report_api docker elasticqueries)
+@EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert report_api docker elk)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /wforce/$d/" ; done
 ADD builder/helpers/set-configure-ac-version.sh /wforce/builder/helpers/
 

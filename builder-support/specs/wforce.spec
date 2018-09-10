@@ -8,7 +8,7 @@ Summary: Weakforce daemon for detecting brute force attacts
 Name: wforce
 Version: %{getenv:BUILDER_RPM_VERSION}
 Release: %{getenv:BUILDER_RPM_RELEASE}
-License: Dovecot Oy
+License: GPLv3
 Group: System Environment/Daemons
 URL: http://www.dovecot.fi/
 Source0: %{name}-%{getenv:BUILDER_VERSION}.tar.bz2
@@ -85,6 +85,8 @@ rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
 mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}-%{version}/
+cp elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
+cp elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 
 %clean
 rm -rf %{buildroot}
@@ -183,6 +185,8 @@ fi
 %attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}/%{name}.conf
 %{_sysconfdir}/%{name}/regexes.yaml
 %{_docdir}/%{name}-%{version}/%{name}.conf.example
+%{_docdir}/%{name}-%{version}/logstash.conf
+%{_docdir}/%{name}-%{version}/wforce_template.json
 %{_unitdir}/%{name}.service
 %{_mandir}/man1/%{name}.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz

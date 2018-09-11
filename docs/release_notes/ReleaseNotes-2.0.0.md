@@ -18,6 +18,7 @@ New Features/Bug Fixes
 * New trackalert daemon
 * Logstash Configuration and Elasticsearch Templates
 * Kibana Reports and Dashboards
+* Report API
 
 New Configuration Setting setNumWebHookConnsPerThread
 ------
@@ -273,3 +274,16 @@ Kibana Reports and Dashboards
 
 This release ships with a sample set of reports and dashboards for
 Kibana (version 6+).
+
+Report API
+------
+
+A REST API to handle querying and modification of the data stored in
+Elasticsearch.
+
+Currently this ships as an informational feature for experimentation;
+a future release will ship this API as a package shipping a deployable
+and supported webapp.
+
+The API is documented using OpenAPI (Swagger); consult the
+documentation on documentation.open-xchange.com.

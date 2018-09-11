@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Add configuration setting "setWebHookTimeoutSecs"
 - Support for replication over TCP
 - Customizable log facility via a command line option
+- Example logstash config and elasticsearch template in docs
 
 ### Deprecated
 - GeoIP Legacy support

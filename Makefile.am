@@ -9,4 +9,4 @@ endif
 
 SUBDIRS=ext docs common wforce $(BUILD_TRACKALERT) $(BUILD_DOCKER)
 
-EXTRA_DIST= README.md LICENSE CHANGELOG.md
+EXTRA_DIST= README.md LICENSE CHANGELOG.md elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json

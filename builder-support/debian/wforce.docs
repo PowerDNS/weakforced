@@ -1,3 +1,5 @@
 README.md
 LICENSE
 CHANGELOG.md
+elk/logstash/config/logstash.conf
+elk/logstash/templates/wforce_template.json

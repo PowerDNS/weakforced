@@ -80,13 +80,24 @@ Summary: Longterm abuse data reporting and alerter
     --enable-trackalert
 make %{?_smp_mflags}
 
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
+mkdir -p %{buildroot}/%{_datadir}/%{name}/report_api/wforce
+mkdir -p %{buildroot}/%{_datadir}/%{name}/report_api/instance
 mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}-%{version}/
-cp elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
-cp elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
+mv elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
+mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
+mv report_api/wforce/__init__.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/__init__.py
+mv report_api/wforce/report.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/report.py
+mv report_api/instance/report.cfg %{buildroot}/%{_datadir}/%{name}/report_api/instance/report.cfg
+mv report_api/requirements.txt %{buildroot}/%{_datadir}/%{name}/report_api/requirements.txt
+mv report_api/run.sh %{buildroot}/%{_datadir}/%{name}/report_api/run.sh
+mv report_api/runreport.py %{buildroot}/%{_datadir}/%{name}/report_api/runreport.py
+
 
 %clean
 rm -rf %{buildroot}
@@ -184,6 +195,12 @@ fi
 %ghost %{_sysconfdir}/%{name}.conf
 %attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}/%{name}.conf
 %{_sysconfdir}/%{name}/regexes.yaml
+%{_datadir}/%{name}/report_api/wforce/__init__.py
+%{_datadir}/%{name}/report_api/wforce/report.py
+%{_datadir}/%{name}/report_api/instance/report.cfg
+%{_datadir}/%{name}/report_api/requirements.txt
+%{_datadir}/%{name}/report_api/run.sh
+%{_datadir}/%{name}/report_api/runreport.py
 %{_docdir}/%{name}-%{version}/%{name}.conf.example
 %{_docdir}/%{name}-%{version}/logstash.conf
 %{_docdir}/%{name}-%{version}/wforce_template.json

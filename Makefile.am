@@ -7,6 +7,8 @@ if WITH_TRACKALERT
 BUILD_TRACKALERT = trackalert
 endif
 
-SUBDIRS=ext docs common wforce $(BUILD_TRACKALERT) $(BUILD_DOCKER)
+SUBDIRS=ext docs common wforce report_api $(BUILD_TRACKALERT) $(BUILD_DOCKER)
 
-EXTRA_DIST= README.md LICENSE CHANGELOG.md elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json
+LOGSTASH_DIST = elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json
+
+EXTRA_DIST= README.md LICENSE CHANGELOG.md $(LOGSTASH_DIST)

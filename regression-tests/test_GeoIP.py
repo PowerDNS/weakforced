@@ -14,12 +14,12 @@ class TestGeoIP(ApiTestCase):
         self.assertRegexpMatches(json.dumps(j), "Japan")
         r.close()
 
-    def test_geoIP2City(self):
-        attrs = dict()
-        attrs['ip'] = '128.243.1.1'
-        r = self.customFuncWithName("geoip2", attrs)
-        j = r.json()
-        self.assertRegexpMatches(json.dumps(j), "Nottingham")
-        r.close()
+#    def test_geoIP2City(self):
+#        attrs = dict()
+#        attrs['ip'] = '128.243.1.1'
+#        r = self.customFuncWithName("geoip2", attrs)
+#        j = r.json()
+#        self.assertRegexpMatches(json.dumps(j), "Nottingham")
+#        r.close()
 
     

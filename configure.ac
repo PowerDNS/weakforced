@@ -10,8 +10,8 @@ PDNS_CHECK_OS
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 PDNS_CHECK_GEOIP
-PKG_CHECK_MODULES([GETDNS], [getdns], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 1 if you have getdns])])
-PKG_CHECK_MODULES([libsodium], [libsodium], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])])
+PKG_CHECK_MODULES([GETDNS], [getdns >= 1.2.0], [AC_DEFINE([HAVE_GETDNS], [1], [Define to 1 if you have getdns])])
+PKG_CHECK_MODULES([libsodium], [libsodium >= 1.0.10], [AC_DEFINE([HAVE_LIBSODIUM], [1], [Define to 1 if you have libsodium])])
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd], [AC_DEFINE([HAVE_LIBSYSTEMD], [1], [Define to 1 if you have libsystemd-dev])], [true])
 PKG_CHECK_MODULES([LIBHIREDIS], [libhiredis], [AC_DEFINE([HAVE_LIBHIREDIS], [1], [Define to 1 if you have libhiredis-dev])], [true])
 AS_IF([test "x$LIBHIREDIS_LIBS" = "x"], [

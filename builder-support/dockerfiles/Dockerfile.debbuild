@@ -3,20 +3,42 @@ ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential \
                        python3 python3-pip python3-setuptools
 
-RUN mkdir /dist /wforce
-WORKDIR /wforce
-
+RUN mkdir -p /dist /wforce
 ADD builder/helpers/ /wforce/builder/helpers/
 
 # Used for -p option to only build specific spec files
 ARG BUILDER_PACKAGE_MATCH
+
+@IF [ ! -z "$M_all$M_wforce" ]
+# Build getdns on stretch, has some build hacks for the older debhelper in stretch (we grab the buster source)
+RUN grep -q stretch /etc/os-release && \
+  echo "deb http://ftp.debian.org/debian `grep PRETTY_NAME /etc/os-release | sed 's,.*(\(.*\)).*,\1,'`-backports main" > /etc/apt/sources.list.d/backports.list && \
+  apt-get update && \
+  mkdir -p /dist/vendor/getdns /getdns && \
+  export GETDNS_VERSION='1.4.2' && export GETDNS_DEBIAN_VERSION=1 && \
+  cd /getdns && \
+  curl -LO http://http.debian.net/debian/pool/main/g/getdns/getdns_$GETDNS_VERSION.orig.tar.gz && \
+  curl -LO http://http.debian.net/debian/pool/main/g/getdns/getdns_$GETDNS_VERSION-$GETDNS_DEBIAN_VERSION.debian.tar.xz && \
+  tar xvf getdns_$GETDNS_VERSION.orig.tar.gz && \
+  tar xvf getdns_$GETDNS_VERSION-$GETDNS_DEBIAN_VERSION.debian.tar.xz -C getdns-$GETDNS_VERSION && \
+  printf "Package: * \nPin: release n=stretch-backports \nPin-Priority: 500" > /etc/apt/preferences.d/89_stretch-backports_default && \
+  printf "getdns ($GETDNS_VERSION-$GETDNS_DEBIAN_VERSION.ox) unstable; urgency=medium\n\n  * automatic build\n\n -- Open-Xchange <noreply@open-xchange.com>  $(date -R)" > getdns-$GETDNS_VERSION/debian/changelog && \
+  sed -i 's!debhelper (>= 11~)!debhelper (>= 10~)!' getdns-$GETDNS_VERSION/debian/control && \
+  sed -i 's!^!debian/tmp/!' getdns-$GETDNS_VERSION/debian/stubby.manpages && \
+  /wforce/builder/helpers/build-debs.sh getdns-$GETDNS_VERSION && \
+  mv *getdns*.deb stubby*.deb /dist/vendor/getdns
+
+RUN grep -q stretch /etc/os-release && \
+  dpkg -i /dist/vendor/getdns/libgetdns*.deb; apt-get -f -y install
+
+# Build weakforce
+WORKDIR /wforce
 
 ARG BUILDER_VERSION
 ARG BUILDER_RELEASE
 
 COPY --from=sdist /sdist/ /sdist/
 
-@IF [ ! -z "$M_all$M_wforce" ]
 RUN tar xvf /sdist/wforce-${BUILDER_VERSION}.tar.bz2
 COPY builder-support/debian wforce-${BUILDER_VERSION}/debian
 RUN builder/helpers/build-debs.sh wforce-$BUILDER_VERSION

@@ -157,7 +157,7 @@ void CountMinSketch::swap(CountMinSketch& rhs)
 }
 
 // XXX - this function does not currently convert everything to network byte order
-void CountMinSketch::dump(std::ostream& os) const throw(std::runtime_error)
+void CountMinSketch::dump(std::ostream& os) const
 {
   int i=0;
   os.write((char*)&eps, sizeof(eps));
@@ -175,7 +175,7 @@ void CountMinSketch::dump(std::ostream& os) const throw(std::runtime_error)
 }
 
 // XXX - this function does not currently convert everything from network byte order
-void CountMinSketch::restore(std::istream& is) throw(std::runtime_error)
+void CountMinSketch::restore(std::istream& is)
 {
   float myeps=0;
   float mygamma=0;

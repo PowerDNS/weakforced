@@ -167,7 +167,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       });
   }
   else {
-    c_lua.writeFunction("setBackground",  [bg_func_map](const std::string& func_name, background_t func) { });
+    c_lua.writeFunction("setBackground",  [](const std::string& func_name, background_t func) { });
   }
 
   if (!multi_lua) {
@@ -180,7 +180,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("cronScheduleBackgroundFunc", [bg_func_map](const std::string& cron_str, const std::string& func_name) {
+    c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) {
 	g_bg_schedulerp->cron(cron_str, [func_name] {
 	    try {
 	      g_luamultip->background(func_name);
@@ -205,7 +205,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("intervalScheduleBackgroundFunc", [bg_func_map](const std::string& duration_str, const std::string& func_name) {
+    c_lua.writeFunction("intervalScheduleBackgroundFunc", [](const std::string& duration_str, const std::string& func_name) {
 	std::stringstream ss(duration_str);
 	boost::posix_time::time_duration td;
 	if (ss >> td) {

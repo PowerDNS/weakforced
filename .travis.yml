@@ -30,17 +30,20 @@ addons:
       - redis-server
       - libyaml-cpp-dev
       - wget
+matrix:
+  include:
+  - name: "GCC Regression"
+    env:
+      - COMPILER=gcc
+  - name: "Clang Regression"
+    env:
+      - COMPILER=clang
 script:
  - autoreconf -i
  - ./configure --enable-docker --disable-dns --disable-sodium
  - cd docker
- - make regression-gcc
- - make regression-clang
+ - make regression-$COMPILER
  - cd ..
- - git submodule init
- - git submodule update
- - builder/build.sh debian-stretch
- - builder/build.sh centos-7
  - ./trigger_policy_build.sh
 notifications:
   irc:

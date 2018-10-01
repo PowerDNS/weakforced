@@ -1,123 +1,46 @@
 language: cpp
 sudo: required
 dist: trusty
-services:
-  - redis-server
 env:
   global:
     - secure: "LzLVM/dN1L/MCqBrU3oWXFg86L6denRTcH+CdxOZWu5Y5PxWTzmfxYvPQS+C7EsVp8cuaS54vPy39HihJIYG5wmBBZxRhq3pNSJt25+dxx4Qe/WXooxlkCQ6JKhJB8vBCHEFPFd5CKlZOd6QacauS18KAQNZx+D/wWtT+f19Mata+C/POGbIa4+JQ9imwSPDJg+wpTSbgjfvuf/UyQFMXIXI83fjFx90+c18iLjv8b0xyCvIieIxjFR5wyZCeoXvlQYLkmObxdFedQaiTzo5EJZwsYzfKfF1ltGf45/olMVsSjI/tOOGxmprCk2tS2q1GVd/H+Cz27SqgXJIRSUogCa0r3mSfQ8+SpiM1du6OEYf823/WpOO8H6VrokRmdnjvizBicjYVs93MSFWm73LVbRsHncBQvqKw4J1VEPQRlluCOwg+yFbHFFyH6wdtIvAfxvekVym717WlmDk9wmrielPRQ6YfQKp4nRkuu4bgWTO27vVo1MRdet7DaNOuqyoYRRfoINkL8LiHh1lM1DUdIVKMP1M0r1lzZVKritw45/GoLTfx1k2Muz/gCg9QczQmXnyX8CnsTtengNDcFfuQ2TeP77YqtGN1ewlpG8jYq5DZOvzOEzJCRxUyqlPCNEanpJXQkmRzMPsy0c6P2Ac7GIo4/Wmk+YHrvbCdCrtLtU="
-matrix:
-  include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-5
-            - g++-5
-            - libboost-dev
-            - libboost-date-time-dev
-            - libboost-regex-dev
-            - libboost-system-dev
-            - libboost-filesystem-dev
-            - build-essential
-            - liblua5.1-0-dev
-            - python-virtualenv
-            - python-bottle
-            - libgeoip-dev
-            - geoip-database
-            - cpanminus
-            - libprotobuf-dev
-            - protobuf-compiler
-            - libhiredis-dev
-            - libcurl4-openssl-dev
-            - redis-server
-            - libyaml-cpp-dev
-            - wget
-      env:
-        - MYCXX=g++-5
-        - MYCC=gcc-5
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-4.0
-          packages:
-            - gcc-5
-            - g++-5
-            - clang-4.0
-            - libboost-dev
-            - libboost-date-time-dev
-            - libboost-regex-dev
-            - libboost-system-dev
-            - libboost-filesystem-dev
-            - build-essential
-            - liblua5.1-0-dev
-            - python-virtualenv
-            - python-bottle
-            - libgeoip-dev
-            - geoip-database
-            - cpanminus
-            - libprotobuf-dev
-            - protobuf-compiler
-            - libhiredis-dev
-            - libcurl4-openssl-dev
-            - redis-server
-            - libyaml-cpp-dev
-            - wget
-      env:
-        - MYCXX=clang++-4.0
-        - MYCC=clang-4.0
-before_script:
- - sudo add-apt-repository ppa:maxmind/ppa -y
- - sudo apt-get update -q
- - sudo apt-get install libmaxminddb0 libmaxminddb-dev mmdb-bin geoipupdate -y
- - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install systemd-services libsystemd-daemon-dev libsystemd-daemon0
- - wget http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium-dev_1.0.0-1_amd64.deb http://http.us.debian.org/debian/pool/main/libs/libsodium/libsodium13_1.0.0-1_amd64.deb
- - dpkg-deb -x libsodium13_1.0.0-1_amd64.deb ${HOME}/libsodium
- - dpkg-deb -x libsodium-dev_1.0.0-1_amd64.deb ${HOME}/libsodium
- - rm libsodium13_1.0.0-1_amd64.deb libsodium-dev_1.0.0-1_amd64.deb
- - sed -i -e "s@/usr@${HOME}/libsodium/usr@" ${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig/libsodium.pc
- - export PKG_CONFIG_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu/pkgconfig
- - export LD_LIBRARY_PATH=${HOME}/libsodium/usr/lib/x86_64-linux-gnu
- - echo "deb http://archive.ubuntu.com/ubuntu xenial main universe" | sudo tee -a /etc/apt/sources.list
- - sudo apt update -qq
- - sudo apt install libgetdns-dev -y
- - dig @208.67.222.222 a.root-servers.net
- - cpanm --quiet --installdeps --notest Template
- - cpanm --quiet --installdeps --notest Swagger2::Markdown
- - sudo wget -N -O /usr/share/GeoIP/GeoIPCityv6.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCityv6-beta/GeoLiteCityv6.dat.gz
- - sudo gunzip /usr/share/GeoIP/GeoIPCityv6.dat.gz
- - sudo wget -N -O /usr/share/GeoIP/GeoIPCity.dat.gz http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
- - sudo gunzip /usr/share/GeoIP/GeoIPCity.dat.gz
- - sudo geoipupdate -v
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-5
+      - g++-5
+      - libboost-dev
+      - libboost-date-time-dev
+      - libboost-regex-dev
+      - libboost-system-dev
+      - libboost-filesystem-dev
+      - build-essential
+      - liblua5.1-0-dev
+      - python-virtualenv
+      - python-bottle
+      - libgeoip-dev
+      - geoip-database
+      - cpanminus
+      - libprotobuf-dev
+      - protobuf-compiler
+      - libhiredis-dev
+      - libcurl4-openssl-dev
+      - redis-server
+      - libyaml-cpp-dev
+      - wget
 script:
  - autoreconf -i
- - ./configure --enable-docker --enable-trackalert CC=$MYCC CXX=$MYCXX
- - make
- - make check
- - cd regression-tests
- - ./runtests
- - cd ..
+ - ./configure --enable-docker
  - cd docker
- - make
+ - make regression-gcc
+ - make regression-clang
  - cd ..
- - export WF_VERSION=`grep PACKAGE_VERSION Makefile | awk  '{ print $3}'`
- - git status
- - git status | grep -q clean
- - make dist
- - tar xvf wforce-$WF_VERSION.tar.gz
- - cd wforce-$WF_VERSION
- - autoreconf -i
- - cd ..
- - mkdir build
- - cd build
- - ../wforce-$WF_VERSION/configure --enable-trackalert CC=$MYCC CXX=$MYCXX
- - make
- - cd ..
- - make distcheck
+ - git submodule init
+ - git submodule update
+ - builder/build.sh debian-stretch
+ - builder/build.sh centos-7
  - ./trigger_policy_build.sh
 notifications:
   irc:

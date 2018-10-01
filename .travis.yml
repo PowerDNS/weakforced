@@ -32,7 +32,7 @@ addons:
       - wget
 script:
  - autoreconf -i
- - ./configure --enable-docker
+ - ./configure --enable-docker --disable-dns --disable-sodium
  - cd docker
  - make regression-gcc
  - make regression-clang

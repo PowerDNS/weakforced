@@ -14,8 +14,6 @@ services:
       - elasticsearch
     depends_on:
       - elasticsearch
-    networks:
-      - docker_elk
   elasticsearch:
     build: elasticsearch
     volumes:
@@ -23,11 +21,9 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-    networks:
-      - docker_elk
   regression:
     build:
-      context: ..
+      context: weakforced
       dockerfile: docker/regression/Dockerfile
     volumes:
       - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
@@ -37,12 +33,6 @@ services:
     depends_on:
       - elasticsearch
       - logstash
-    networks:
-      - docker_elk
-
-networks:
-  docker_elk:
-    driver: bridge
 volumes:
   esdata:
     driver: local

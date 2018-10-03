@@ -67,7 +67,7 @@ public:
   LuaMultiThread() : num_states(NUM_LUA_STATES),
 		     state_index(0)
   {
-    LuaMultiThread(num_states);
+    LuaMultiThread{num_states};
   }
 
   LuaMultiThread(unsigned int nstates) : num_states(nstates),

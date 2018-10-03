@@ -3,8 +3,8 @@ services:
   logstash:
     build: logstash
     ports:
-      - "14501:4501/udp"
-      - "18080:8080/tcp"
+      - "4501:4501/udp"
+      - "8080:8080/tcp"
     command: -f /etc/logstash/conf.d/
     volumes:
       - ./logstash/config:/etc/logstash/conf.d
@@ -23,6 +23,20 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    networks:
+      - docker_elk
+  regression:
+    build:
+      context: ..
+      dockerfile: docker/regression/Dockerfile
+    volumes:
+      - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    links:
+      - elasticsearch
+      - logstash
+    depends_on:
+      - elasticsearch
+      - logstash
     networks:
       - docker_elk
 

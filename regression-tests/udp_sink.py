@@ -2,7 +2,7 @@ import socket
 import os
 
 UDP_IP = "127.0.0.1"
-UDP_PORT = 4501
+UDP_PORT = 4502
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP

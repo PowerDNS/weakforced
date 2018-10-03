@@ -42,7 +42,7 @@ class TestWebHooks(ApiTestCase):
         logfile.close()
 
     def test_namedreportsinks(self):
-        self.writeCmdToConsole("addNamedReportSink(\"trackalert\", \"127.0.0.1\")")
+        self.writeCmdToConsole("addNamedReportSink(\"trackalert\", \"127.0.0.1:4502\")")
         r = self.reportFunc('namedreportsink', '1.2.3.4', '1234', False)
         r = self.customFunc("customargs")
         time.sleep(1)

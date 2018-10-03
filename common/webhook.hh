@@ -49,6 +49,7 @@ public:
 	  const std::string& wh_name) : id(wh_id),  active(wh_active), num_success(0), num_failed(0), name(wh_name)  {
     config_keys = wh_config_keys;
   }
+  virtual ~WebHook() {}
   virtual bool operator==(const WebHook& rhs)
   {
     return id == rhs.getID();
@@ -292,6 +293,7 @@ public:
   CustomWebHook(unsigned int wh_id, const std::string& wh_name, bool wh_active,
 		const WHConfigMap& wh_config_keys) : WebHook(wh_id, wh_active, wh_config_keys, wh_name)  {
   }
+  ~CustomWebHook() {}
   bool operator==(const WebHook& rhs)
   {
     return ((id == rhs.getID()) && (name.compare(rhs.getName()) == 0));

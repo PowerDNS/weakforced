@@ -8,7 +8,6 @@ services:
     command: -f /etc/logstash/conf.d/
     volumes:
       - ./logstash/config:/etc/logstash/conf.d
-      - ./logstash/geoip:/usr/share/logstash/geoip
       - ./logstash/templates:/tmp/templates
     links:
       - elasticsearch

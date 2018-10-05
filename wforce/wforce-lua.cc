@@ -578,6 +578,22 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       g_bl_db.addEntry(ca, login, seconds, reason);
     });
 
+  c_lua.writeFunction("unblacklistNetmask", [](const Netmask& nm) {
+      g_bl_db.deleteEntry(nm);
+    });
+  
+  c_lua.writeFunction("unblacklistIP", [](const ComboAddress& ca) {
+      g_bl_db.deleteEntry(ca);
+    });
+
+  c_lua.writeFunction("unblacklistLogin", [](const std::string& login) {
+      g_bl_db.deleteEntry(login);
+    });
+
+  c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca) {
+      g_bl_db.deleteEntry(ca);
+    });
+    
   if (!multi_lua) {
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {
 	g_bl_db.makePersistent(ip, port);

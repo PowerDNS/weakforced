@@ -660,6 +660,27 @@ a Netmask. For example:
   
 		blacklistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
 
+* unblacklistNetmask(\<Netmask\>) Remove the blacklist for the
+  specified netmask. Netmask address must be a Netmask object,
+  e.g. created with newNetmask(). For example:
+  
+		unblacklistNetmask(newNetmask("12.32.0.0/16"))
+
+* unblacklistIP(\<ip\>) - Remove the blacklist for the specified
+  IP. IP address must be a ComboAddress. For example:
+  
+		unblacklistIP(lt.remote)
+
+* unblacklistLogin(\<login\>) - Remove the blacklist for the specified
+  login. For example:
+  
+		unblacklistLogin(lt.login)
+
+* unblacklistIPLogin(\<ip\>) - Remove the blacklist for the specified
+  IP-Login tuple. IP address must be a ComboAddress. For example:
+  
+		unblacklistIPLogin(lt.remote)
+
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following
   fields:

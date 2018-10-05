@@ -118,7 +118,8 @@ bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, Wf
 void WforceWebserver::connectionThread(WforceWebserver* wws)
 {
   using namespace json11;
-
+  const std::string ct_json = "application/json";
+  
   while (true) {
     std::shared_ptr<WFConnection> wfc;
     {
@@ -233,7 +234,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
             f->second(req, resp, command);
           }
         }
-        else if ((command != "") && (ctype.compare("application/json") != 0)) {
+        else if ((command != "") && (ctype.compare(0, ct_json.length(), ct_json) != 0)) {
           errlog("HTTP Request \"%s\" from %s: Content-Type not application/json", req.url.path, wfc->remote.toStringWithPort());
           resp.status = 415;
           std::stringstream ss;

@@ -544,23 +544,34 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     BlackListEntry ble;
     if (g_bl_db.getEntry(lt.remote, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
+	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+          { "reason", ble.reason },
+          { "blacklisted", "1" },
+          { "key", "ip" } };
       allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
       ret_msg = "Temporarily blacklisted IP Address - try again later";
+      ret_attrs = std::move(log_attrs);
       incCommandStat("allow_blacklisted");
     }
     else if (g_bl_db.getEntry(lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
-      allowLog(status, std::string("blacklisted Login"), lt, log_attrs);	  
+	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+          { "reason", ble.reason },
+          { "blacklisted", "1" },
+          { "key", "login" } };
+      allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
       ret_msg = "Temporarily blacklisted Login Name - try again later";
+      ret_attrs = std::move(log_attrs);
       incCommandStat("allow_blacklisted");
     }
     else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) } };
-      allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	  	  
-      ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+          { "reason", ble.reason },
+          { "blacklisted", "1" },
+          { "key", "iplogin" } };
+      allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	      ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+      ret_attrs = std::move(log_attrs);
       incCommandStat("allow_blacklisted");
     }
     else {
@@ -654,7 +665,11 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	errlog("Exception in command [%s] exception: %s", command, e.reason);
       }
     }
-    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", Json::object{}}};
+    Json::object jattrs;
+    for (auto& i : ret_attrs) {
+      jattrs.insert(make_pair(i.first, Json(i.second)));
+    }
+    msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
     resp.status=200;
     resp.body=msg.dump();
   }
@@ -724,7 +739,10 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
     std::string key_name, key_value;
     TWKeyType lookup_key;
     bool is_blacklisted;
+    std::string bl_reason;
+    std::string bl_expire;
     ComboAddress en_ca;
+    BlackListEntry ble;
 
     try {
       if (!msg["ip"].is_null()) {
@@ -742,19 +760,31 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
 	key_name = "ip_login";
 	key_value = en_ca.toString() + ":" + en_login;
 	lookup_key = key_value;
-	is_blacklisted = g_bl_db.checkEntry(en_ca, en_login);
+        if (g_bl_db.getEntry(en_ca, en_login, ble)) {
+          is_blacklisted = true;
+          bl_reason = ble.reason;
+          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+        }
       }
       else if (haveLogin) {
 	key_name = "login";
 	key_value = en_login;
 	lookup_key = en_login;
-	is_blacklisted = g_bl_db.checkEntry(en_login);
+        if (g_bl_db.getEntry(en_login, ble)) {
+          is_blacklisted = true;
+          bl_reason = ble.reason;
+          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+        }
       }
       else if (haveIP) {
 	key_name = "ip";
 	key_value = en_ca.toString();
 	lookup_key = en_ca;
-	is_blacklisted = g_bl_db.checkEntry(en_ca);
+        if (g_bl_db.getEntry(en_ca, ble)) {
+          is_blacklisted = true;
+          bl_reason = ble.reason;
+          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+        }
       }
     }
     catch(...) {
@@ -786,6 +816,8 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
       Json ret_json = Json::object {
 	{ key_name, key_value },
 	{ "blacklisted", is_blacklisted },
+        { "bl_reason", bl_reason },
+        { "bl_expire", bl_expire },
 	{ "stats", js_db_stats }
       };
       resp.status=200;

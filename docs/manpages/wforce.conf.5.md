@@ -638,7 +638,7 @@ a Netmask. For example:
   specified netmask for expiry seconds, with the specified reason. Netmask
   address must be a Netmask object, e.g. created with newNetmask(). For example:
   
-		blacklistIP(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
+		blacklistNetmask(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
 
 * blacklistIP(\<ip\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified IP for expiry seconds, with the specified reason. IP

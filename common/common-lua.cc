@@ -105,7 +105,9 @@ void setupCommonLua(bool client,
   c_lua.writeFunction("debugLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       if (g_verbose) {
 	std::ostringstream os;
-	os << msg << ": ";
+	os << msg;
+        if (kvs.size())
+          os << ": ";
 	for (const auto& i : kvs) {
 	  os << i.first << "="<< "\"" << i.second << "\"" << " ";
 	}
@@ -116,7 +118,9 @@ void setupCommonLua(bool client,
   c_lua.writeFunction("vinfoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       if (g_verbose) {
 	std::ostringstream os;
-	os << msg << ": ";
+	os << msg;
+        if (kvs.size())
+          os << ": ";
 	for (const auto& i : kvs) {
 	  os << i.first << "="<< "\"" << i.second << "\"" << " ";
 	}
@@ -126,7 +130,9 @@ void setupCommonLua(bool client,
   
   c_lua.writeFunction("infoLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
-      os << msg << ": ";
+      os << msg;
+      if (kvs.size())
+        os << ": ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }
@@ -135,7 +141,9 @@ void setupCommonLua(bool client,
 
   c_lua.writeFunction("warnLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
-      os << msg << ": ";
+      os << msg;
+      if (kvs.size())
+        os << ": ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }
@@ -144,7 +152,9 @@ void setupCommonLua(bool client,
 
   c_lua.writeFunction("errorLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       std::ostringstream os;
-      os << msg << ": ";
+      os << msg;
+      if (kvs.size())
+        os << ": ";
       for (const auto& i : kvs) {
 	os << i.first << "="<< "\"" << i.second << "\"" << " ";
       }	

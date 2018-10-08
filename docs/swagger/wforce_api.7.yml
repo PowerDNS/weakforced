@@ -525,6 +525,10 @@ definitions:
         type: string
       blacklisted:
         type: boolean
+      bl_expire:
+        type: string
+      bl_reason:
+        type: string
       stats:
         $ref: "#/definitions/DBStatsEntry"
   DBStatsEntry:

@@ -49,6 +49,7 @@ class TestBasics(ApiTestCase):
         r = self.getDBStatsIP('1.4.3.2')
         j = r.json();
         self.assertRegexpMatches(json.dumps(j), "countLogins")
+        self.assertRegexpMatches(json.dumps(j), "bl_reason")
 
     def chunkGen(self):
         payload = dict()

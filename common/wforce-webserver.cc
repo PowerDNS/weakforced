@@ -262,7 +262,13 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
       ofs << resp;
       string done;
       done=ofs.str();
-      writen2(wfc->fd, done.c_str(), done.size());
+      try {
+        wfc->s.writenWithTimeout(done.c_str(), done.size(), timeout);
+      }
+      catch (const NetworkError& e) {
+        warnlog("WforceWebserver: Network error writing to sock: %s", e.what());
+        closeConnection = true;
+      }
     }
 
     if (closeConnection) {

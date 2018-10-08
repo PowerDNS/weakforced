@@ -33,8 +33,10 @@ struct SodiumNonce
   void init(){};
   void merge(const SodiumNonce& lower, const SodiumNonce& higher){};
   void increment(){};
+  std::string toString() { return string(""); }
   unsigned char value[1];
 };
+#define crypto_secretbox_NONCEBYTES 0
 #else
 #include <sodium.h>
 

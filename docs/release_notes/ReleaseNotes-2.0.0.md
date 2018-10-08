@@ -3,6 +3,9 @@
 New Features/Bug Fixes
 ------------
 
+* Fix extra : at the end of custom log lines when kv table is empty
+* Return additional info about blacklist in allow and getDBStats RESTAPI functions
+* New Lua functions to remove blacklist entries 
 * Add configuration setting "setNumWebHookConnsPerThread"
 * Add configuration setting "setWebHookTimeoutSecs"
 * Add support for querying replication status in showStringStatsDB()
@@ -19,6 +22,50 @@ New Features/Bug Fixes
 * Logstash Configuration and Elasticsearch Templates
 * Kibana Reports and Dashboards
 * Report API
+
+Fix Extra : at end of Custom Log Lines
+-----
+
+The Lua infoLog, errorLog etc. functions would previously, when called
+as 'errorLog("foo", {})' log:
+
+foo :
+
+Now the same call will log only:
+
+foo
+
+Return additional info about blacklist in allow and getDBStats REST API functions
+---
+
+The allow command will now return additional information when an
+IP/Login is blacklisted. The 'r_attrs' object will contain four new
+fields:
+
+* expiration - A string showing the date/time when the blacklist will
+expire
+* reason - A string stating why the blacklist was created
+* key - What was blacllisted, i.e. either ip, login or iplogin
+* blacklisted - This will be set to 1
+
+The getDBStats command will return additional information about
+blacklisted objects:
+
+* bl_expire - A string showing the date/time when the blacklist will
+expire
+* lb_reason - A string stating why the blacklist was created
+
+New Lua functions to remove blacklist entries 
+----
+
+The following new Lua functions are available:
+
+* unblacklistNetmask
+* unblacklistIP
+* unblacklistLogin
+* unblacklistIPLogin
+
+See the wforce.conf manpage for more details.
 
 New Configuration Setting setNumWebHookConnsPerThread
 ------

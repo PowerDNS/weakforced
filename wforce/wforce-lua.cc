@@ -591,8 +591,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         g_bl_db.deleteEntry(login);
       });
 
-    c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca) {
-        g_bl_db.deleteEntry(ca);
+    c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {
+        g_bl_db.deleteEntry(ca, login);
       });
   }
   else {

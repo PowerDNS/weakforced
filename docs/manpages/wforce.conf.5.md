@@ -1,6 +1,6 @@
 % WFORCE.CONF(5)
-% Dovecot Oy
-% 2017
+% Open-Xchange
+% 2018
 
 # NAME
 **wforce.conf** - configuration file for wforce daemon

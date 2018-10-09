@@ -1,14 +1,14 @@
 swagger: "2.0"
 info:
   version: "1.4.0"
-  title: "Dovecot Anti-Abuse Shield (Wforce)"
-  description: "An API to the Dovecot Anti-Abuse Shield wforce daemon to prevent brute-force and abuse of mail systems"
+  title: "OX Abuse Shield (Wforce)"
+  description: "An API to the wforce daemon to prevent brute-force and abuse of mail systems"
   contact:
-    name: "Dovecot Oy"
+    name: "Open-Xchange"
   license:
     name: "GPL3"
     url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
-host: "doesnotexist.dovecot.fi"
+host: "doesnotexist.open-xchange.com"
 basePath: "/"
 schemes:
   - "http"

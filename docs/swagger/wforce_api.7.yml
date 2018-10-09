@@ -336,7 +336,7 @@ definitions:
     required:
       - attrs
     example:
-      attrs: { "key”:”value" }
+      attrs: { "key":"value" }
     properties:
       attrs:
         $ref: "#/definitions/LTAttrs" 

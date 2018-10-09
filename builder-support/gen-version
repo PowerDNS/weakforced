@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 VERSION="unknown"
 
 DIRTY=""
@@ -57,8 +57,8 @@ if [ ! -z "$(git rev-parse --abbrev-ref HEAD 2> /dev/null)" ]; then
     # Not on a tag, but a pre-release was made before
     # 1.2.3-rc1-100-g123456
     LAST_TAG="${LAST_TAG}-${GIT_VERSION[1]}"
-    COMMITS_SINCE_TAG="${GIT_VERSION[1]}"
-    GIT_HASH="${GIT_VERSION[2]}"
+    COMMITS_SINCE_TAG="${GIT_VERSION[2]}"
+    GIT_HASH="${GIT_VERSION[3]}"
   fi
 
   if [ -z "${GIT_HASH}" ]; then

@@ -681,6 +681,22 @@ a Netmask. For example:
   
 		unblacklistIPLogin(lt.remote, lt.login)
 
+* checkBlacklistIP(\<ip\>) - Check if an IP is blacklisted. Return
+  true if the IP is blacklisted. IP must be a ComboAddress. For example:
+
+        checkBlacklistIP(newCA("192.1.2.3"))
+
+* checkBlacklistLogin(\<login\>) - Check if a login is
+  blacklisted. Return true if the login is blacklisted. For example:
+
+        checkBlacklistLogin(lt.login)
+
+* checkBlacklistIPLogin(\<ip\>, \<login\>) - Check if a IP/login is
+  blacklisted. Return true if the ip/login tuple is blacklisted. For
+  example:
+
+        checkBlacklistIPLogin(lt.remote, lt.login)
+
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following
   fields:

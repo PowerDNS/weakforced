@@ -50,6 +50,7 @@ using namespace boost::gregorian;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, vector<shared_ptr<Sibling>>>>> g_named_report_sinks;
+bool g_builtin_bl_enabled = true;
 
 static time_t start=time(0);
 
@@ -543,7 +544,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     
     // first check the built-in blacklists
     BlackListEntry ble;
-    if (g_bl_db.getEntry(lt.remote, ble)) {
+    if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.remote, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
           { "reason", ble.reason },
@@ -554,7 +555,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       ret_attrs = std::move(log_attrs);
       incCommandStat("allow_blacklisted");
     }
-    else if (g_bl_db.getEntry(lt.login, ble)) {
+    else if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
           { "reason", ble.reason },
@@ -565,7 +566,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       ret_attrs = std::move(log_attrs);
       incCommandStat("allow_blacklisted");
     }
-    else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
+    else if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.remote, lt.login, ble)) {
       std::vector<pair<std::string, std::string>> log_attrs = 
 	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
           { "reason", ble.reason },

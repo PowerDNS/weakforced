@@ -568,6 +568,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
   c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
 
+  if (!multi_lua) {
+    c_lua.writeFunction("disableBuiltinBlacklists", []() {
+        g_builtin_bl_enabled = false;
+      });
+  }
+  else {
+    c_lua.writeFunction("disableBuiltinBlacklists", []() {});
+  }
+  
   if (!client) {
     c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
         g_bl_db.addEntry(nm, seconds, reason);
@@ -600,6 +609,18 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {
         g_bl_db.deleteEntry(ca, login);
       });
+
+    c_lua.writeFunction("checkBlacklistIP", [](const ComboAddress& ca) {
+        return g_bl_db.checkEntry(ca);
+      });
+
+    c_lua.writeFunction("checkBlacklistLogin", [](const std::string& login) {
+        return g_bl_db.checkEntry(login);
+      });
+
+    c_lua.writeFunction("checkBlacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {
+        return g_bl_db.checkEntry(ca, login);
+      });
   }
   else {
     c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
@@ -625,6 +646,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
     c_lua.writeFunction("unblacklistIPLogin", [](const ComboAddress& ca) {
       });
+
+    c_lua.writeFunction("checkBlacklistIP", [](const ComboAddress& ca) {});
+
+    c_lua.writeFunction("checkBlacklistLogin", [](const std::string& login) {});
+
+    c_lua.writeFunction("checkBlacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
   }
   
   if (!multi_lua) {

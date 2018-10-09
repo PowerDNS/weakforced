@@ -676,10 +676,10 @@ a Netmask. For example:
   
 		unblacklistLogin(lt.login)
 
-* unblacklistIPLogin(\<ip\>) - Remove the blacklist for the specified
+* unblacklistIPLogin(\<ip\>, \<login\>) - Remove the blacklist for the specified
   IP-Login tuple. IP address must be a ComboAddress. For example:
   
-		unblacklistIPLogin(lt.remote)
+		unblacklistIPLogin(lt.remote, lt.login)
 
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following

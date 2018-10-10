@@ -48,6 +48,10 @@ Requires(postun): systemd
 Requires: initscripts
 Requires(postun): /sbin/service
 %endif
+%if %{?centos} == 7 || %{?rhel} == 7
+BuildRequires: devtoolset-7-gcc-c++
+%define scl devtoolset-7
+%endif
 AutoReqProv: yes
 
 %description
@@ -73,12 +77,17 @@ Summary: Longterm abuse data reporting and alerter
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
 %build
+%{?scl:scl enable %{scl} - << \EOF}
 %configure                       \
     --disable-dependency-tracking \
     --docdir=%{_docdir}/%{name}-%{getenv:BUILDER_VERSION} \
     --disable-static --with-luajit --sysconfdir=/etc/%{name} \
     --enable-trackalert
+%{?scl:EOF}
+
+%{?scl:scl enable %{scl} - << \EOF}
 make %{?_smp_mflags}
+%{?scl:EOF}
 
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 

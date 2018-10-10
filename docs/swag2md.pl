@@ -19,6 +19,6 @@ $progname =~ /.*\/(.*)\.([1-9]).*/;
 $progname = uc $1;
 my $man_version = $2;
 print "% $progname($man_version)\n";
-print "% Dovecot Oy\n";
-print "% 2016\n\n";
+print "% Open-Xchange\n";
+print "% 2018\n\n";
 print $markdown_str;

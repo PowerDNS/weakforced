@@ -1,6 +1,6 @@
 % WFORCE(1)
-% Dovecot Oy
-% 2016
+% Open-Xchange
+% 2018
 
 # NAME
 **wforce** - daemon to detect brute-force login attempts and enforce other policies for logins

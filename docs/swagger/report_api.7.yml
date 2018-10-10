@@ -1,14 +1,14 @@
 swagger: "2.0"
 info:
   version: "1.0.0"
-  title: "Dovecot Anti-Abuse Shield Report API"
-  description: "An API to retrieve and modify Anti-Abuse Shield report information"
+  title: "OX Abuse Shield Report API"
+  description: "An API to retrieve and modify report information"
   contact:
-    name: "Dovecot Oy"
+    name: "Open-Xchange"
   license:
     name: "GPL3"
     url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
-host: "doesnotexist.dovecot.fi"
+host: "doesnotexist.open-xchange.com"
 basePath: "/v1"
 schemes:
   - "http"

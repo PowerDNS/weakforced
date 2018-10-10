@@ -1,6 +1,6 @@
 % TRACKALERT(1)
-% Dovecot Oy
-% 2017
+% Open-Xchange
+% 2018
 
 # NAME
 **trackalert** - daemon to track and alert on long-term abuse trends

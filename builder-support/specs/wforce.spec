@@ -10,7 +10,7 @@ Version: %{getenv:BUILDER_RPM_VERSION}
 Release: %{getenv:BUILDER_RPM_RELEASE}
 License: GPLv3
 Group: System Environment/Daemons
-URL: http://www.dovecot.fi/
+URL: http://www.open-xchange.com/
 Source0: %{name}-%{getenv:BUILDER_VERSION}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires: libtool
@@ -114,7 +114,7 @@ rm -rf %{buildroot}
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
 getent passwd %{name} >/dev/null || \
-useradd -r -g %{name} -d /var/spool/%{name} -s /bin/false -c "Dovecot anti-abuse shield" %{name}
+useradd -r -g %{name} -d /var/spool/%{name} -s /bin/false -c "wforce" %{name}
 
 if [ "$1" = "2" ] || [ "$1" = "1" ]; then
   rm -f %restart_flag

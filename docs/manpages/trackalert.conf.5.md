@@ -1,6 +1,6 @@
 % TRACKALERT.CONF(5)
-% Dovecot Oy
-% 2017
+% Open-Xchange
+% 2018
 
 # NAME
 **trackalert.conf** - configuration file for trackalert daemon

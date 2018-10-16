@@ -506,6 +506,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   string err;
   std::vector<pair<std::string, std::string>> ret_attrs;
 
+  incCommandStat("allow");
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
     resp.status=500;
@@ -673,7 +674,6 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     resp.status=200;
     resp.body=msg.dump();
   }
-  incCommandStat("allow");
 }
 
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)

@@ -322,7 +322,6 @@ void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
 
 void WforceWebserver::pollThread(WforceWebserver* wws)
 {
-  ctpl::thread_pool p(wws->d_num_worker_threads, wws->d_max_conns);
   const int fd_increase = 50; // somewhat arbitrary
   struct pollfd* fds=NULL;
   int max_fd_size = -1;

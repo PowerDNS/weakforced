@@ -30,6 +30,7 @@ SOFTWARE.
 #include <map>
 
 #include "ext/ctpl.h"
+#include "ext/threadname.hh"
 
 #include "InterruptableSleep.h"
 #include "Cron.h"
@@ -88,17 +89,22 @@ namespace Bosma {
   public:
     explicit Scheduler(unsigned int max_n_tasks = 4) : done(false), threads(max_n_tasks + 1) {
       threads.push([this](int) {
-        while (!done) {
-          if (tasks.empty()) {
-            sleeper.sleep();
-          } else {
-            auto time_of_first_task = (*tasks.begin()).first;
-            sleeper.sleep_until(time_of_first_task);
+          thread_local bool init=false;
+          if (!init) {
+            setThreadName("wf/scheduler");
+            init = true;
           }
-          std::lock_guard<std::mutex> l(lock);
-          manage_tasks();
-        }
-      });
+          while (!done) {
+            if (tasks.empty()) {
+              sleeper.sleep();
+            } else {
+              auto time_of_first_task = (*tasks.begin()).first;
+              sleeper.sleep_until(time_of_first_task);
+            }
+            std::lock_guard<std::mutex> l(lock);
+            manage_tasks();
+          }
+        });
     }
 
     Scheduler(const Scheduler &) = delete;

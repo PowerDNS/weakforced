@@ -25,6 +25,7 @@
 #include "dolog.hh"
 #include "hmac.hh"
 #include "base64.hh"
+#include "ext/threadname.hh"
 
 using namespace boost::posix_time;
 
@@ -101,6 +102,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
 
 void WebHookRunner::_runHookThread(unsigned int num_conns)
 {
+  setThreadName("wf/wh-runhook");
   MiniCurlMulti mcm(num_conns);
   mcm.setTimeout(timeout_secs);
   while (true) {

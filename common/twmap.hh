@@ -39,6 +39,7 @@
 #include "iputils.hh"
 #include "dolog.hh"
 #include "wforce_ns.hh"
+#include "ext/threadname.hh"
 
 using std::thread;
 
@@ -498,6 +499,7 @@ public:
   
   static void twExpireThread(std::shared_ptr<TWStatsDB<std::string>> sdbp)
   {
+    setThreadName("wf/tw-expire");
     sdbp->expireEntries();
   }	
   void expireEntries();

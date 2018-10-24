@@ -38,6 +38,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <hiredis/hiredis.h>
+#include "ext/threadname.hh"
 
 struct BlackListEntry {
   std::string key;
@@ -92,6 +93,7 @@ public:
 
   static void purgeEntriesThread(BlackListDB* bl_db)
   {
+    setThreadName("wf/bl-purge");
     bl_db->purgeEntries();
   }
 

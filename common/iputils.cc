@@ -145,7 +145,7 @@ bool HarvestTimestamp(struct msghdr* msgh, struct timeval* tv)
 }
 bool HarvestDestinationAddress(struct msghdr* msgh, ComboAddress* destination)
 {
-  memset(destination, 0, sizeof(*destination));
+  destination->reset();
   struct cmsghdr *cmsg;
   for (cmsg = CMSG_FIRSTHDR(msgh); cmsg != NULL; cmsg = CMSG_NXTHDR(msgh,cmsg)) {
 #if defined(IP_PKTINFO)
@@ -256,6 +256,12 @@ void ComboAddress::truncate(unsigned int bits) noexcept
   // so and by '11111100', which is ~((1<<2)-1)  = ~3
   uint8_t* place = start + len - 1 - tozero/8; 
   *place &= (~((1<<bitsleft)-1));
+}
+
+void ComboAddress::reset()
+{
+  memset(&sin4, 0, sizeof(sin4));
+  memset(&sin6, 0, sizeof(sin6));
 }
 
 ssize_t sendMsgWithTimeout(int fd, const char* buffer, size_t len, int timeout, ComboAddress& dest, const ComboAddress& local, unsigned int localItf)

@@ -278,6 +278,7 @@ union ComboAddress {
   }
   
   void truncate(unsigned int bits) noexcept;
+  void reset();
 };
 
 /** This exception is thrown by the Netmask class and by extension by the NetmaskGroup class */

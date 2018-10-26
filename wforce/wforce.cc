@@ -530,7 +530,7 @@ void encryptMsg(const std::string& msg, std::string& packet)
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);
 }
 
-bool decryptMsg(const char* buf, int len, std::string& msg)
+bool decryptMsg(const char* buf, size_t len, std::string& msg)
 {
   SodiumNonce nonce;
 

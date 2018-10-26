@@ -1,4 +1,20 @@
-AM_CPPFLAGS = $(LUA_CFLAGS) $(YAHTTP_CFLAGS) $(EXT_CFLAGS) $(WFORCE_CFLAGS) $(libsodium_CFLAGS) $(JSON11_CFLAGS) $(LIBCURL_CFLAGS) $(LIBCRYPTO_INCLUDES) $(YAMLCPP_FLAGS) $(MMDB_CFLAGS) -O3 -Wall -pthread -DSYSCONFDIR='"$(sysconfdir)"' -I$(top_srcdir)/wforce
+AM_CPPFLAGS = $(LUA_CFLAGS) \
+	$(YAHTTP_CFLAGS) \
+	$(EXT_CFLAGS) \
+	$(WFORCE_CFLAGS) \
+	$(libsodium_CFLAGS) \
+	$(JSON11_CFLAGS) \
+	$(LIBCURL_CFLAGS) \
+	$(LIBCRYPTO_INCLUDES) \
+	$(YAMLCPP_FLAGS) \
+	$(MMDB_CFLAGS) \
+	-pthread \
+	-DSYSCONFDIR='"$(sysconfdir)"' \
+	-I$(top_srcdir)/wforce
+
+AM_LDFLAGS = \
+	$(PROGRAM_LDFLAGS) \
+	$(SANITIZER_FLAGS)
 
 EXTRA_DIST= trackalert.conf README.md trackalert.service.in
 

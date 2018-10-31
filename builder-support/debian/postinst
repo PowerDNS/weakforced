@@ -4,7 +4,7 @@
 
 set -e
 
-WFORCECONF=/etc/wforce.conf
+WFORCECONF=/etc/wforce/wforce.conf
 
 case "$1" in
   configure)
@@ -15,6 +15,18 @@ case "$1" in
       echo -n "Creating user and group wforce..."
       adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "wforce" wforce
       echo "done"
+    fi
+    if [ -e "/etc/wforce.conf" ]; then
+       echo "Found old config file /etc/wforce.conf. Copying it to /etc/wforce/wforce.conf"
+       if [ -e "/etc/wforce/wforce.conf" ]; then
+          echo "Found also new config file /etc/wforce/wforce.conf"
+          mv /etc/wforce/wforce.conf /etc/wforce/wforce.conf.backup.$$ && \
+          echo "Renamed /etc/wforce/wforce.conf to /etc/wforce/wforce.conf.backup.$$"
+       fi
+       cp -a /etc/wforce.conf /etc/wforce.conf.backup.$$ && \
+       echo "Renamed old /etc/wforce.conf to /etc/wforce.conf.backup.$$"
+       mv /etc/wforce.conf /etc/wforce/wforce.conf && \
+       echo "Moved /etc/wforce.conf to /etc/wforce/wforce.conf"
     fi
     echo -n "Modifying wforce.conf to replace password and key..."
     SETKEY=`echo "makeKey()" | wforce | grep setKey`

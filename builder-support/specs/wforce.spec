@@ -4,6 +4,10 @@
 %bcond_with systemd
 %endif
 
+%global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
+%global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
+
+
 Summary: Weakforce daemon for detecting brute force attacts
 Name: wforce
 Version: %{getenv:BUILDER_RPM_VERSION}
@@ -111,20 +115,46 @@ mv report_api/runreport.py %{buildroot}/%{_datadir}/%{name}/report_api/runreport
 %clean
 rm -rf %{buildroot}
 
+%pre trackalert
+if [ "$1" = "2" ] || [ "$1" = "1" ]; then
+  rm -f %trackalert_restart_flag
+%if %{with systemd}
+  /bin/systemctl is-active %{name}.service >/dev/null 2>&1 && touch %trackalert_restart_flag || :
+   /bin/systemctl is-active %{name}.service >/dev/null 2>&1  && \
+       /bin/systemctl stop %{name}.service >/dev/null 2>&1 || :
+%endif
+fi
+
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
 getent passwd %{name} >/dev/null || \
 useradd -r -g %{name} -d /var/spool/%{name} -s /bin/false -c "wforce" %{name}
 
 if [ "$1" = "2" ] || [ "$1" = "1" ]; then
-  rm -f %restart_flag
+  rm -f %wforce_restart_flag
 %if %{with systemd}
-  /bin/systemctl is-active %{name}.service >/dev/null 2>&1 && touch %restart_flag || :
+  /bin/systemctl is-active %{name}.service >/dev/null 2>&1 && touch %wforce_restart_flag || :
    /bin/systemctl is-active %{name}.service >/dev/null 2>&1  && \
        /bin/systemctl stop %{name}.service >/dev/null 2>&1 || :
 %else
-  /sbin/service %{name} status >/dev/null 2>&1 && touch %restart_flag || :
+  /sbin/service %{name} status >/dev/null 2>&1 && touch %wforce_restart_flag || :
   /sbin/service %{name} stop >/dev/null 2>&1 || :
+%endif
+fi
+
+%post trackalert
+# Post-Install
+if [ $1 -eq 1 ]; then
+  TRACKALERTCONF=/etc/wforce/trackalert.conf
+  echo -n "Modifying trackalert.conf to replace password and key..."
+  SETKEY=`echo "makeKey()" | wforce | grep setKey`
+  WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
+  sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
+  echo "done"
+
+%if %{with systemd}
+  systemctl daemon-reload
+  systemctl enable trackalert.service
 %endif
 fi
 
@@ -136,7 +166,7 @@ if [ $1 -eq 1 ]; then
   SETKEY=`echo "makeKey()" | %{name} | grep setKey`
   WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
   sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $WFORCECONF
-  echo -n "done"
+  echo "done"
 
 %if %{with systemd}
   systemctl daemon-reload
@@ -161,6 +191,15 @@ if [ $1 -eq 2 ]; then
    fi
 fi
 
+%preun trackalert
+if [ $1 = 0 ]; then
+%if %{with systemd}
+    /bin/systemctl disable trackalert.service trackalert.socket >/dev/null 2>&1 || :
+    /bin/systemctl stop trackalert.service trackalert.socket >/dev/null 2>&1 || :
+%endif
+fi
+
+
 %preun
 if [ $1 = 0 ]; then
 %if %{with systemd}
@@ -172,30 +211,53 @@ if [ $1 = 0 ]; then
 %endif
 fi
 
+
+%postun trackalert
+%if %{with systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+%endif
+
+if [ "$1" -ge "1" -a -e %trackalert_restart_flag ]; then
+%if %{with systemd}
+    /bin/systemctl start trackalert.service >/dev/null 2>&1 || :
+%endif
+rm -f %trackalert_restart_flag
+fi
+
 %postun
 %if %{with systemd}
 /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 %endif
 
-if [ "$1" -ge "1" -a -e %restart_flag ]; then
+if [ "$1" -ge "1" -a -e %wforce_restart_flag ]; then
 %if %{with systemd}
     /bin/systemctl start %{name}.service >/dev/null 2>&1 || :
 %else
     /sbin/service %{name} start >/dev/null 2>&1 || :
 %endif
-rm -f %restart_flag
+rm -f %wforce_restart_flag
+fi
+
+%posttrans trackalert
+# trackalert should be started again in %postun, but it's not executed on reinstall
+# if it was already started, restart_flag won't be here, so it's ok to test it again
+if [ -e %trackalert_restart_flag ]; then
+%if %{with systemd}
+    /bin/systemctl start trackalert.service >/dev/null 2>&1 || :
+%endif
+rm -f %trackalert_restart_flag
 fi
 
 %posttrans
 # %{name} should be started again in %postun, but it's not executed on reinstall
-# if it was already started, restart_flag won't be here, so it's ok to test it again
-if [ -e %restart_flag ]; then
+# if it was already started, wforce_restart_flag won't be here, so it's ok to test it again
+if [ -e %wforce_restart_flag ]; then
 %if %{with systemd}
     /bin/systemctl start %{name}.service >/dev/null 2>&1 || :
 %else
     /sbin/service %{name} start >/dev/null 2>&1 || :
 %endif
-rm -f %restart_flag
+rm -f %wforce_restart_flag
 fi
 
 %files

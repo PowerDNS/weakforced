@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+#
+
+set -e
+
+TRACKALERTCONF=/etc/wforce/trackalert.conf
+
+case "$1" in
+  configure)
+    if [ -z "`getent group wforce`" ]; then
+      addgroup --quiet --system wforce
+    fi
+    if [ -z "`getent passwd wforce`" ]; then
+      echo -n "Creating user and group wforce..."
+      adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "wforce" wforce
+      echo "done"
+    fi
+    echo -n "Modifying trackalert.conf to replace password and key..."
+    SETKEY=`echo "makeKey()" | wforce | grep setKey`
+    WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
+    sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
+    echo "done"
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+  ;;
+esac
+
+# Init script has errors in previous versions. Postinst script should just
+# return the exit status of this script
+initscript_error() {
+	return $1
+}
+
+#DEBHELPER#
+
+exit 0

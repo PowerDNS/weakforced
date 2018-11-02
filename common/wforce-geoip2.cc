@@ -33,7 +33,7 @@ WFGeoIP2DB::WFGeoIP2DB(const std::string& filename)
 {
   int res;
   memset(&d_db, 0, sizeof(d_db));
-  if ((res = MMDB_open(filename.c_str(), MMDB_MODE_MMAP, &d_db)) < 0)
+  if ((res = MMDB_open(filename.c_str(), MMDB_MODE_MMAP, &d_db)) != MMDB_SUCCESS)
     throw WforceException(std::string("Cannot open ") + filename + std::string(": ") + std::string(MMDB_strerror(res)));
   d_init = true;
   debuglog("Opened MMDB database %s (type: %s version: %d.%d)", filename, d_db.metadata.database_type, d_db.metadata.binary_format_major_version, d_db.metadata.binary_format_minor_version);

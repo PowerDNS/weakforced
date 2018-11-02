@@ -150,7 +150,7 @@ if [ $1 -eq 1 ]; then
   SETKEY=`echo "makeKey()" | wforce | grep setKey`
   WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
   sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
-  echo -n "done"
+  echo "done"
 
 %if %{with systemd}
   systemctl daemon-reload
@@ -166,7 +166,7 @@ if [ $1 -eq 1 ]; then
   SETKEY=`echo "makeKey()" | %{name} | grep setKey`
   WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
   sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $WFORCECONF
-  echo -n "done"
+  echo "done"
 
 %if %{with systemd}
   systemctl daemon-reload

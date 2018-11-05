@@ -10,6 +10,9 @@ PDNS_CHECK_OS
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 PDNS_CHECK_GEOIP
+AS_IF([test "x$MMDB_LIBS" = "x"], [
+  AC_MSG_ERROR([libmaxmindb not found, libmaxmind is required"])
+])
 AC_ARG_ENABLE([dns],
 AS_HELP_STRING([--disable-dns], [ Disable getdns lookup feature ]))
 AS_IF([test "x$enable_dns" != "xno"], [

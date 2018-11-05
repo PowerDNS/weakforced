@@ -40,7 +40,7 @@ matrix:
       - COMPILER=clang
 script:
  - autoreconf -i
- - ./configure --enable-docker --disable-dns --disable-sodium --enable-asan --enable-ubsan
+ - ./configure --enable-docker --disable-dns --disable-sodium
  - cd docker
  - make regression-$COMPILER
  - cd ..

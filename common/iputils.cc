@@ -260,7 +260,6 @@ void ComboAddress::truncate(unsigned int bits) noexcept
 
 void ComboAddress::reset()
 {
-  memset(&sin4, 0, sizeof(sin4));
   memset(&sin6, 0, sizeof(sin6));
 }
 

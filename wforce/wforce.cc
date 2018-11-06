@@ -530,11 +530,11 @@ void encryptMsg(const std::string& msg, std::string& packet)
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);
 }
 
-bool decryptMsg(const char* buf, int len, std::string& msg)
+bool decryptMsg(const char* buf, size_t len, std::string& msg)
 {
   SodiumNonce nonce;
 
-  if (len < crypto_secretbox_NONCEBYTES) {
+  if (len < static_cast<int>(crypto_secretbox_NONCEBYTES)) {
     errlog("Could not decrypt replication operation: not enough bytes (%d) to hold nonce", len);
     return false;
   }

@@ -46,7 +46,7 @@ wforce_LDFLAGS = \
 	$(AM_LDFLAGS)
 
 wforce_LDADD = \
-	-lreadline -ltermcap \
+	-lreadline \
 	$(LUA_LIBS) $(YAHTTP_LIBS) $(EXT_LIBS) $(WFORCE_LIBS) \
 	${libsodium_LIBS} $(GEOIP_LIBS) $(MMDB_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \

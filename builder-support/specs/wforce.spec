@@ -25,6 +25,7 @@ BuildRequires: lua-devel
 BuildRequires: libidn-devel
 BuildRequires: libuv-devel
 BuildRequires: GeoIP-devel
+BuildRequires: libmaxminddb-devel
 BuildRequires: boost-devel 
 BuildRequires: bzip2
 BuildRequires: pkgconfig

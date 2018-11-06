@@ -3,6 +3,11 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 parallel-tests 1.11 subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
+
+AC_CANONICAL_HOST
+: ${CFLAGS="-Wall -g -O3"}
+: ${CXXFLAGS="-Wall -g -O3"}
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
@@ -57,6 +62,7 @@ BOOST_FILESYSTEM
 AS_IF([test -z "$BOOST_FILESYSTEM_LIBS"], [ AC_MSG_ERROR([Boost filesystem library is not installed])])
 AM_CONDITIONAL([HAVE_BOOST_GE_148], [test "$boost_major_version" -ge 148])
 PDNS_ENABLE_UNIT_TESTS
+PDNS_ENABLE_SANITIZERS
 # Check for dependent programs
 AC_CHECK_PROG(PERL, perl, perl)
 AC_CHECK_PROG(HAVE_WGET, wget, wget)

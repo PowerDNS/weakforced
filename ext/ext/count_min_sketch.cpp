@@ -159,7 +159,7 @@ void CountMinSketch::swap(CountMinSketch& rhs)
 // XXX - this function does not currently convert everything to network byte order
 void CountMinSketch::dump(std::ostream& os) const
 {
-  int i=0;
+  unsigned int i=0;
   os.write((char*)&eps, sizeof(eps));
   os.write((char*)&gamma, sizeof(gamma));
   os.write((char*)&total, sizeof(total));
@@ -179,7 +179,7 @@ void CountMinSketch::restore(std::istream& is)
 {
   float myeps=0;
   float mygamma=0;
-  int i=0;
+  unsigned int i=0;
   is.read((char*)&myeps, sizeof(myeps));
   is.read((char*)&mygamma, sizeof(mygamma));
   CountMinSketch tempCMS(myeps, mygamma);

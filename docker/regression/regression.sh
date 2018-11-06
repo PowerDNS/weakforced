@@ -15,7 +15,7 @@ echo "CC=$MYCC"
 echo "CXX=$MYCXX"
 
 autoreconf -v -i -f
-./configure --enable-trackalert --enable-systemd --disable-docker --enable-unit-tests CC=$MYCC CXX=$MYCXX
+./configure --enable-trackalert --enable-systemd --disable-docker --enable-unit-tests --enable-asan --enable-ubsan --disable-silent-rules CC=$MYCC CXX=$MYCXX
 make clean
 make
 make check

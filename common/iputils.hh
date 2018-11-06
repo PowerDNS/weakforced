@@ -427,9 +427,11 @@ public:
       for (n=0; n<bytes; ++n) {
 	sa6.sin6_addr.s6_addr[n] = d_network.sin6.sin6_addr.s6_addr[n] & 0xFF;
       }
-      uint8_t bits = d_bits % 8;
-      uint8_t mask= ~(0xFF>>bits);
-      sa6.sin6_addr.s6_addr[n] = d_network.sin6.sin6_addr.s6_addr[n] & mask;
+      if (n<sizeof(sa6.sin6_addr.s6_addr)) {
+        uint8_t bits = d_bits % 8;
+        uint8_t mask= ~(0xFF>>bits);
+        sa6.sin6_addr.s6_addr[n] = d_network.sin6.sin6_addr.s6_addr[n] & mask;
+      }
       return (ComboAddress(&sa6).toString()+"/"+std::to_string((unsigned int)d_bits));
     }
     else

@@ -22,8 +22,11 @@
 
 #pragma once
 #include <string>
+
+#ifdef HAVE_GEOIP
 #include <GeoIP.h>
 #include <GeoIPCity.h>
+#endif
 #include "lock.hh"
 #include "iputils.hh"
 
@@ -49,6 +52,8 @@ struct WFGeoIPRecord {
   float	      latitude;
   float	      longitude;
 };
+
+#ifdef HAVE_GEOIP
 
 class WFGeoIPDB
 {
@@ -100,3 +105,5 @@ private:
 };
 
 extern WFGeoIPDB g_wfgeodb;
+
+#endif

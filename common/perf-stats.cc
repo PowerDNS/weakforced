@@ -142,6 +142,8 @@ int getCustomStat(const std::string& custom_name)
 
 void statsReportingThread()
 {
+  setThreadName("wf/perf-stats");
+
   int interval = STATS_WINDOW_SIZE*STATS_NUM_WINDOWS;
 
   for (;;) {

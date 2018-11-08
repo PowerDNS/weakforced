@@ -43,6 +43,7 @@
 #include "webhook.hh"
 #include "lock.hh"
 #include "trackalert-web.hh"
+#include "ext/threadname.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -142,6 +143,8 @@ try
   writen2(fd, (char*)ours.value, sizeof(ours.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
+
+  setThreadName("wf/ctrl-client");
   
   for(;;) {
     uint16_t len;
@@ -229,6 +232,9 @@ try
 {
   ComboAddress client;
   int sock;
+
+  setThreadName("wf/ctrl-accept");
+
   noticelog("Accepting control connections on %s", local.toStringWithPort());
   while((sock=SAccept(fd, client)) >= 0) {
     infolog("Got control connection from %s", client.toStringWithPort());

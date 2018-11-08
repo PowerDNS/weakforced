@@ -26,6 +26,7 @@
 #include "perf-stats.hh"
 #include "base64.hh"
 #include "json11.hpp"
+#include "ext/threadname.hh"
 
 using std::thread;
 
@@ -119,6 +120,8 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
 {
   using namespace json11;
   const std::string ct_json = "application/json";
+
+  setThreadName("wf/web-worker");
   
   while (true) {
     std::shared_ptr<WFConnection> wfc;
@@ -306,6 +309,8 @@ void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
 {
   unsigned int interval = 300; // Log every 300 seconds;
 
+  setThreadName("wf/web-conn-stat");
+  
   for (;;) {
     sleep(interval);
 
@@ -317,11 +322,12 @@ void WforceWebserver::connectionStatsThread(WforceWebserver* wws)
 
 void WforceWebserver::pollThread(WforceWebserver* wws)
 {
-  ctpl::thread_pool p(wws->d_num_worker_threads, wws->d_max_conns);
   const int fd_increase = 50; // somewhat arbitrary
   struct pollfd* fds=NULL;
   int max_fd_size = -1;
 
+  setThreadName("wf/web-poll");
+  
   for (size_t i=0; i<wws->d_num_worker_threads; ++i) {
     std::thread t([wws] { WforceWebserver::connectionThread(wws); });
     t.detach();
@@ -415,6 +421,8 @@ void WforceWebserver::start(int sock, const ComboAddress& local, const std::stri
   noticelog("WforceWebserver launched on %s", local.toStringWithPort());
   auto localACL=wws->d_ACL.getLocal();
 
+  setThreadName("wf/web-accept");
+  
   // spin up a thread to do the polling on the connections accepted by this thread
   thread t1(WforceWebserver::pollThread, wws);
   t1.detach();

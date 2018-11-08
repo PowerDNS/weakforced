@@ -49,6 +49,7 @@
 #include "replication_sdb.hh"
 #include "minicurl.hh"
 #include "iputils.hh"
+#include "ext/threadname.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -155,6 +156,8 @@ try
   writen2(fd, (char*)ours.value, sizeof(ours.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
+
+  setThreadName("wf/ctrl-client");
   
   for(;;) {
     uint16_t len;
@@ -242,6 +245,9 @@ try
 {
   ComboAddress client;
   int sock;
+
+  setThreadName("wf/ctrl-accept");
+
   noticelog("Accepting control connections on %s", local.toStringWithPort());
   while((sock=SAccept(fd, client)) >= 0) {
     infolog("Got control connection from %s", client.toStringWithPort());
@@ -766,6 +772,11 @@ void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& rem
   static ctpl::thread_pool p(g_num_sibling_threads);
   
   p.push([msg,remote,recv_sibling](int id) {
+      thread_local bool init=false;
+      if (!init) {
+        setThreadName("wf/repl-udp");
+        init = true;
+      }
       ReplicationOperation rep_op;
       if (rep_op.unserialize(msg) != false) {
         rep_op.applyOperation();
@@ -780,6 +791,8 @@ void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& rem
 
 void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
 {
+  setThreadName("wf/repl-tcp");
+
   infolog("New TCP Replication connection from %s", remote.toString());
   uint16_t size;
   unsigned char ssize = sizeof(size);
@@ -829,6 +842,8 @@ void receiveReplicationOperationsTCP(ComboAddress local)
   Socket sock(local.sin4.sin_family, SOCK_STREAM, 0);
   ComboAddress remote=local;
 
+  setThreadName("wf/rcv-repl-tcp");
+  
   sock.setReuseAddr();
   sock.bind(local);
   sock.listen(1024);
@@ -860,6 +875,8 @@ void receiveReplicationOperations(ComboAddress local)
   socklen_t remlen=remote.getSocklen();
   int len;
   auto siblings = g_siblings.getLocal();
+
+  setThreadName("wf/rcv-repl-udp");
   
   for(auto& s : *siblings) {
     s->checkIgnoreSelf(local);

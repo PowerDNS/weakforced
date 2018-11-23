@@ -3,3 +3,4 @@ LICENSE
 CHANGELOG.md
 elk/logstash/config/logstash.conf
 elk/logstash/templates/wforce_template.json
+elk/kibana/kibana_saved_objects.json

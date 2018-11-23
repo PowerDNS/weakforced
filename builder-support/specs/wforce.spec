@@ -105,6 +105,7 @@ mkdir -p %{buildroot}/%{_datadir}/%{name}/report_api/instance
 mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
+mv elk/kibana/kibana_saved_objects.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv report_api/wforce/__init__.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/__init__.py
 mv report_api/wforce/report.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/report.py
 mv report_api/instance/report.cfg %{buildroot}/%{_datadir}/%{name}/report_api/instance/report.cfg
@@ -276,6 +277,7 @@ fi
 %{_docdir}/%{name}-%{version}/%{name}.conf.example
 %{_docdir}/%{name}-%{version}/logstash.conf
 %{_docdir}/%{name}-%{version}/wforce_template.json
+%{_docdir}/%{name}-%{version}/kibana_saved_objects.json
 %{_unitdir}/%{name}.service
 %{_mandir}/man1/%{name}.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz

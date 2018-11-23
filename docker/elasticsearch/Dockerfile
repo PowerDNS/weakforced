@@ -1,3 +1,2 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:6.2.0
-RUN bin/elasticsearch-plugin remove x-pack
+FROM docker.elastic.co/elasticsearch/elasticsearch:6.5.0
 RUN sed -i '/xpack/d' /usr/share/elasticsearch/config/elasticsearch.yml

@@ -34,22 +34,20 @@
 #include "threadname.hh"
 
 void setThreadName(const std::string& threadName) {
-  int retval = 0;
-
 #ifdef HAVE_PTHREAD_SETNAME_NP_2
-  retval = pthread_setname_np(pthread_self(), threadName.c_str());
+  pthread_setname_np(pthread_self(), threadName.c_str());
 #endif
 #ifdef HAVE_PTHREAD_SET_NAME_NP_2
-  retval = pthread_set_name_np(pthread_self(), threadName.c_str());
+  pthread_set_name_np(pthread_self(), threadName.c_str());
 #endif
 #ifdef HAVE_PTHREAD_SET_NAME_NP_2_VOID
   pthread_set_name_np(pthread_self(), threadName.c_str());
 #endif
 #ifdef HAVE_PTHREAD_SETNAME_NP_1
-  retval = pthread_setname_np(threadName.c_str());
+  pthread_setname_np(threadName.c_str());
 #endif
 #ifdef HAVE_PTHREAD_SETNAME_NP_3
-  retval = pthread_setname_np(pthread_self(), threadName.c_str(), nullptr);
+  pthread_setname_np(pthread_self(), threadName.c_str(), nullptr);
 #endif
 }
 

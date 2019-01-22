@@ -108,6 +108,9 @@ LIBCURL_CHECK_CONFIG
 AS_IF([test "x$LIBCURL" = "x"], [
   AC_MSG_ERROR([Libcurl not found, libcurl support is required])
 ])
+
+PTHREAD_SET_NAME
+
 # Do we want the docker subdirectories to be built?
 AC_ARG_ENABLE([docker],
 [  --enable-docker         Build and run docker images],

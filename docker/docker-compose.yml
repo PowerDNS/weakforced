@@ -21,6 +21,10 @@ services:
       - "9200:9200"
       - "9300:9300"
   regression:
+    cap_add:
+      - ALL
+    security_opt:
+      - seccomp=unconfined
     build:
       context: weakforced
       dockerfile: docker/regression/Dockerfile

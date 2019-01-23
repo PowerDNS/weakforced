@@ -69,7 +69,8 @@ DeviceStore fill_device_store(const YAML::Node& device_parser) {
       device.brandReplacement = value;
       mark_placeholders(device.brandReplacementMap, device.brandReplacement);
     } else {
-      assert(false);
+      // Ignore, don't barf. We shouldn't let unexpected keys stop us from starting
+      // assert(false);
     }
   }
   if (regex_flag == true) {
@@ -100,7 +101,8 @@ AgentStore fill_agent_store(const YAML::Node& node,
     } else if (key == patch_repl && !value.empty()) {
       agent_store.patchVersionReplacement = value;
     } else {
-      assert(false);
+      // Ignore, don't barf. We shouldn't let unexpected keys stop us from starting
+      // assert(false);
     }
   }
   return agent_store;

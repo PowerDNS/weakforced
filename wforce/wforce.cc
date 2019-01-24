@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "sodcrypto.hh"
-#include "blacklist.hh"
+#include "blackwhitelist.hh"
 #include "perf-stats.hh"
 #include "luastate.hh"
 #include "webhook.hh"
@@ -970,6 +970,26 @@ char* my_generator(const char* text, int state)
       "blacklistIP",
       "blacklistLogin",
       "blacklistIPLogin",
+      "unblacklistNetmask",
+      "unblacklistIP",
+      "unblacklistLogin",
+      "unblacklistIPLogin",
+      "checkBlacklistIP",
+      "checkBlacklistLogin",
+      "checkBlacklistIPLogin",
+      "whitelistlistPersistDB(",
+      "whitelistPersistReplicated()",
+      "whitelistNetmask",
+      "whitelistIP",
+      "whitelistLogin",
+      "whitelistIPLogin",
+      "unwhitelistNetmask",
+      "unwhitelistIP",
+      "unwhitelistLogin",
+      "unwhitelistIPLogin",
+      "checkWhitelistIP",
+      "checkWhitelistLogin",
+      "checkWhitelistIPLogin",
       "reloadGeoIPDBs()"
       };
   static int s_counter=0;
@@ -1212,7 +1232,7 @@ try
   noticelog("ACL allowing queries from: %s", acls.c_str());
 
   // setup blacklist_db purge thread
-  thread t1(BlackListDB::purgeEntriesThread, &g_bl_db);
+  thread t1(BlackWhiteListDB::purgeEntriesThread, &g_bl_db);
   t1.detach();
 
   // start the performance stats thread

@@ -27,7 +27,7 @@
 #include "sodcrypto.hh"
 #include "base64.hh"
 #include "twmap-wrapper.hh"
-#include "blacklist.hh"
+#include "blackwhitelist.hh"
 #include "luastate.hh"
 #include "perf-stats.hh"
 #include "wforce-web.hh"
@@ -568,6 +568,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
   c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
 
+  // Blacklists
   if (!multi_lua) {
     c_lua.writeFunction("disableBuiltinBlacklists", []() {
         g_builtin_bl_enabled = false;
@@ -666,6 +667,108 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
   }
+  // End blacklists
+
+  // Whitelists
+  if (!multi_lua) {
+    c_lua.writeFunction("disableBuiltinWhitelists", []() {
+        g_builtin_wl_enabled = false;
+      });
+  }
+  else {
+    c_lua.writeFunction("disableBuiltinWhitelists", []() {});
+  }
+  
+  if (!client) {
+    c_lua.writeFunction("whitelistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
+        g_wl_db.addEntry(nm, seconds, reason);
+      });
+  
+    c_lua.writeFunction("whitelistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+        g_wl_db.addEntry(ca, seconds, reason);
+      });
+
+    c_lua.writeFunction("whitelistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
+        g_wl_db.addEntry(login, seconds, reason);
+      });
+
+    c_lua.writeFunction("whitelistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+        g_wl_db.addEntry(ca, login, seconds, reason);
+      });
+
+    c_lua.writeFunction("unwhitelistNetmask", [](const Netmask& nm) {
+        g_wl_db.deleteEntry(nm);
+      });
+  
+    c_lua.writeFunction("unwhitelistIP", [](const ComboAddress& ca) {
+        g_wl_db.deleteEntry(ca);
+      });
+
+    c_lua.writeFunction("unwhitelistLogin", [](const std::string& login) {
+        g_wl_db.deleteEntry(login);
+      });
+
+    c_lua.writeFunction("unwhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {
+        g_wl_db.deleteEntry(ca, login);
+      });
+
+    c_lua.writeFunction("checkWhitelistIP", [](const ComboAddress& ca) {
+        return g_wl_db.checkEntry(ca);
+      });
+
+    c_lua.writeFunction("checkWhitelistLogin", [](const std::string& login) {
+        return g_wl_db.checkEntry(login);
+      });
+
+    c_lua.writeFunction("checkWhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {
+        return g_wl_db.checkEntry(ca, login);
+      });
+  }
+  else {
+    c_lua.writeFunction("whitelistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
+      });
+  
+    c_lua.writeFunction("whitelistIP", [](const ComboAddress& ca, unsigned int seconds, const std::string& reason) {
+      });
+
+    c_lua.writeFunction("whitelistLogin", [](const std::string& login, unsigned int seconds, const std::string& reason) {
+      });
+
+    c_lua.writeFunction("whitelistIPLogin", [](const ComboAddress& ca, const std::string& login, unsigned int seconds, const std::string& reason) {
+      });
+
+    c_lua.writeFunction("unwhitelistNetmask", [](const Netmask& nm) {
+      });
+  
+    c_lua.writeFunction("unwhitelistIP", [](const ComboAddress& ca) {
+      });
+
+    c_lua.writeFunction("unwhitelistLogin", [](const std::string& login) {
+      });
+
+    c_lua.writeFunction("unwhitelistIPLogin", [](const ComboAddress& ca) {
+      });
+
+    c_lua.writeFunction("checkWhitelistIP", [](const ComboAddress& ca) {});
+
+    c_lua.writeFunction("checkWhitelistLogin", [](const std::string& login) {});
+
+    c_lua.writeFunction("checkWhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
+  }
+  
+  if (!multi_lua) {
+    c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {
+	g_wl_db.makePersistent(ip, port);
+      });
+    c_lua.writeFunction("whitelistPersistReplicated", []() { g_wl_db.persistReplicated(); });
+    c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) { g_wl_db.setConnectTimeout(timeout_secs); });
+  }
+  else {
+    c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {});
+    c_lua.writeFunction("whitelistPersistReplicated", []() {});
+    c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) {});
+  }
+  // End whitelists
   
   if (multi_lua) {
     c_lua.writeFunction("setAllow", [&allow_func](allow_t func) { allow_func=func;});

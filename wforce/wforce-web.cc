@@ -34,7 +34,7 @@
 #include <sys/resource.h>
 #include "ext/ctpl.h"
 #include "base64.hh"
-#include "blacklist.hh"
+#include "blackwhitelist.hh"
 #include "twmap-wrapper.hh"
 #include "customfunc.hh"
 #include "perf-stats.hh"
@@ -51,6 +51,7 @@ using namespace boost::gregorian;
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_report_sinks;
 GlobalStateHolder<std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, vector<shared_ptr<Sibling>>>>> g_named_report_sinks;
 bool g_builtin_bl_enabled = true;
+bool g_builtin_wl_enabled = true;
 
 static time_t start=time(0);
 
@@ -58,7 +59,6 @@ static int uptimeOfProcess()
 {
   return time(0) - start;
 }
-
 
 void reportLog(const LoginTuple& lt)
 {
@@ -110,7 +110,7 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
   }
 }
 
-void addBLEntries(const std::vector<BlackListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
+void addBLWLEntries(const std::vector<BlackWhiteListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
 {
   using namespace json11;
   for (auto i = blv.begin(); i != blv.end(); ++i) {
@@ -191,7 +191,7 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
   incCommandStat("SyncDBs");
 }
 
-void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd)
+void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd, bool blacklist)
 {
   using namespace json11;
   Json msg;
@@ -249,22 +249,46 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
 	}
       }
       if (haveLogin && haveIP) {
-	if (addCmd)
-	  g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
-	else
-	  g_bl_db.deleteEntry(en_ca, en_login);
+        if (addCmd) {
+          if (blacklist)
+            g_bl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+          else
+            g_wl_db.addEntry(en_ca, en_login, bl_seconds, bl_reason);
+        }
+	else {
+          if (blacklist)
+            g_bl_db.deleteEntry(en_ca, en_login);
+          else 
+            g_wl_db.deleteEntry(en_ca, en_login);
+        }
       }
       else if (haveLogin) {
-	if (addCmd)
-	  g_bl_db.addEntry(en_login, bl_seconds, bl_reason);
-	else
-	  g_bl_db.deleteEntry(en_login);
+	if (addCmd) {
+          if (blacklist)
+            g_bl_db.addEntry(en_login, bl_seconds, bl_reason);
+          else
+            g_wl_db.addEntry(en_login, bl_seconds, bl_reason);            
+        }
+	else {
+          if (blacklist)
+            g_bl_db.deleteEntry(en_login);
+          else
+            g_wl_db.deleteEntry(en_login);
+        }
       }
       else if (haveIP || haveNetmask) {
-	if (addCmd)
-	  g_bl_db.addEntry(en_nm, bl_seconds, bl_reason);
-	else
-	  g_bl_db.deleteEntry(en_nm);
+	if (addCmd) {
+          if (blacklist)
+            g_bl_db.addEntry(en_nm, bl_seconds, bl_reason);
+          else
+            g_wl_db.addEntry(en_nm, bl_seconds, bl_reason);
+        }
+	else {
+          if (blacklist)
+            g_bl_db.deleteEntry(en_nm);
+          else
+            g_wl_db.deleteEntry(en_nm);            
+        }
       }
     }
     catch (std::runtime_error& e) {
@@ -283,14 +307,26 @@ void parseAddDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, b
 
 void parseAddBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
-  parseAddDelBLEntryCmd(req, resp, true);
+  parseAddDelBLWLEntryCmd(req, resp, true, true);
   incCommandStat("addBLEntry");
 }
 
 void parseDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
-  parseAddDelBLEntryCmd(req, resp, false);
+  parseAddDelBLWLEntryCmd(req, resp, false, true);
   incCommandStat("delBLEntry");
+}
+
+void parseAddWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseAddDelBLWLEntryCmd(req, resp, true, false);
+  incCommandStat("addWLEntry");
+}
+
+void parseDelWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseAddDelBLWLEntryCmd(req, resp, false, false);
+  incCommandStat("delWLEntry");
 }
 
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -498,6 +534,22 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
   return retval;
 }
 
+void runAllowWebHook(const Json& request, const Json& response, int status)
+{
+  Json jobj = Json::object{{"request", request}, {"response", response}};
+  std::string hook_data = jobj.dump();
+  for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
+    if (auto hs = h.lock()) {
+      if (hs->hasConfigKey("ox-protect")) {
+        hook_data = genProtectHookData(jobj["request"],
+                                       hs->getConfigKey("ox-protect"));
+      }
+      if (allow_filter(hs, status))
+        g_webhook_runner.runHook("allow", hs, hook_data);
+    }
+  }
+}
+
 enum AllowReturnFields { allowRetStatus=0, allowRetMsg=1, allowRetLogMsg=2, allowRetAttrs=3 };
 
 void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -508,6 +560,8 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   std::vector<pair<std::string, std::string>> ret_attrs;
 
   incCommandStat("allow");
+  g_stats.allows++;
+
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
     resp.status=500;
@@ -542,39 +596,103 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     if (!canonicalizeLogin(lt.login, resp))
       return;
     
-    // first check the built-in blacklists
-    BlackListEntry ble;
-    if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.remote, ble)) {
-      std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
-          { "reason", ble.reason },
-          { "blacklisted", "1" },
-          { "key", "ip" } };
-      allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
-      ret_msg = "Temporarily blacklisted IP Address - try again later";
-      ret_attrs = std::move(log_attrs);
-      incCommandStat("allow_blacklisted");
+    // check the built-in whitelists
+    bool whitelisted = false;
+    BlackWhiteListEntry wle;
+    if (g_builtin_wl_enabled) {
+      if (g_wl_db.getEntry(lt.remote, wle)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(wle.expiration) },
+            { "reason", wle.reason },
+            { "whitelisted", "1" },
+            { "key", "ip" } };
+        status = 0;
+        allowLog(status, std::string("whitelisted IP"), lt, log_attrs);
+        ret_msg = "Whitelisted IP Address";
+        ret_attrs = std::move(log_attrs);
+        whitelisted = true;
+      }
+      else if (g_wl_db.getEntry(lt.login, wle)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(wle.expiration) },
+            { "reason", wle.reason },
+            { "whitelisted", "1" },
+            { "key", "login" } };
+        status = 0;
+        allowLog(status, std::string("whitelisted Login"), lt, log_attrs);
+        ret_msg = "Whitelisted Login Name";
+        ret_attrs = std::move(log_attrs);
+        whitelisted = true;
+      }
+      else if (g_wl_db.getEntry(lt.remote, lt.login, wle)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(wle.expiration) },
+            { "reason", wle.reason },
+            { "whitelisted", "1" },
+            { "key", "iplogin" } };
+        status = 0;
+        allowLog(status, std::string("whitelisted IPLogin"), lt, log_attrs);
+        ret_msg = "Whitelisted IP/Login Tuple";
+        ret_attrs = std::move(log_attrs);
+        whitelisted = true;
+      }
     }
-    else if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.login, ble)) {
-      std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
-          { "reason", ble.reason },
-          { "blacklisted", "1" },
-          { "key", "login" } };
-      allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
-      ret_msg = "Temporarily blacklisted Login Name - try again later";
-      ret_attrs = std::move(log_attrs);
-      incCommandStat("allow_blacklisted");
+    
+    // next check the built-in blacklists
+    bool blacklisted = false;
+    BlackWhiteListEntry ble;
+    if (g_builtin_bl_enabled) {
+      if (g_bl_db.getEntry(lt.remote, ble)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+            { "reason", ble.reason },
+            { "blacklisted", "1" },
+            { "key", "ip" } };
+        allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
+        ret_msg = "Temporarily blacklisted IP Address - try again later";
+        ret_attrs = std::move(log_attrs);
+        blacklisted = true;
+      }
+      else if (g_bl_db.getEntry(lt.login, ble)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+            { "reason", ble.reason },
+            { "blacklisted", "1" },
+            { "key", "login" } };
+        allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
+        ret_msg = "Temporarily blacklisted Login Name - try again later";
+        ret_attrs = std::move(log_attrs);
+        blacklisted = true;
+      }
+      else if (g_bl_db.getEntry(lt.remote, lt.login, ble)) {
+        std::vector<pair<std::string, std::string>> log_attrs = 
+          { { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
+            { "reason", ble.reason },
+            { "blacklisted", "1" },
+            { "key", "iplogin" } };
+        allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);
+        ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+        ret_attrs = std::move(log_attrs);
+        blacklisted = true;
+      }
     }
-    else if (g_builtin_bl_enabled && g_bl_db.getEntry(lt.remote, lt.login, ble)) {
-      std::vector<pair<std::string, std::string>> log_attrs = 
-	{ { "expiration", boost::posix_time::to_simple_string(ble.expiration) },
-          { "reason", ble.reason },
-          { "blacklisted", "1" },
-          { "key", "iplogin" } };
-      allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);	      ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
-      ret_attrs = std::move(log_attrs);
-      incCommandStat("allow_blacklisted");
+    
+    if (blacklisted || whitelisted) {
+      // run webhook
+      Json::object jattrs;
+      for (auto& i : ret_attrs) {
+        jattrs.insert(make_pair(i.first, Json(i.second)));
+      }
+      msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
+      runAllowWebHook(lt.to_json(), msg, status);
+      if (blacklisted) {
+        g_stats.denieds++;
+        incCommandStat("allow_blacklisted");
+        incCommandStat("allow_denied");        
+      }
+      if (whitelisted) {
+        incCommandStat("allow_whitelisted");
+      }
     }
     else {
       try {
@@ -591,7 +709,6 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	allowLog(status, log_msg, lt, log_attrs);
 
 	ret_attrs = std::move(log_attrs);
-	g_stats.allows++;
 	if(status < 0) {
 	  g_stats.denieds++;
           incCommandStat("allow_denied");
@@ -608,18 +725,8 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	msg=Json::object{{"status", status}, {"msg", ret_msg}, {"r_attrs", jattrs}};
 
 	// generate webhook events
-	Json jobj = Json::object{{"request", lt.to_json()}, {"response", msg}};
-	std::string hook_data = jobj.dump();
-	for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
-	  if (auto hs = h.lock()) {
-	    if (hs->hasConfigKey("ox-protect")) {
-	      hook_data = genProtectHookData(jobj["request"],
-					     hs->getConfigKey("ox-protect"));
-	    }
-	    if (allow_filter(hs, status))
-	      g_webhook_runner.runHook("allow", hs, hook_data);
-	  }
-	}
+        runAllowWebHook(lt.to_json(), msg, status);
+
 	resp.status=200;
 	resp.body=msg.dump();
 	return;
@@ -701,24 +808,55 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   incCommandStat("stats");
 }
 
-void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseGetBLWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command, bool blacklist)
 {
   using namespace json11;
   Json::array my_entries;
-
-  std::vector<BlackListEntry> blv = g_bl_db.getIPEntries();
-  addBLEntries(blv, "ip", my_entries);
-  blv = g_bl_db.getLoginEntries();
-  addBLEntries(blv, "login", my_entries);
-  blv = g_bl_db.getIPLoginEntries();
-  addBLEntries(blv, "iplogin", my_entries);
+  std::vector<BlackWhiteListEntry> lv;
+  std::string key_name;
+  std::string cmd_stat;
+  
+  if (blacklist) {
+    key_name = "bl_entries";
+    cmd_stat = "getBL";
+  }
+  else {
+    key_name = "wl_entries";
+    cmd_stat = "getWL";
+  }
+  
+  if (blacklist)
+    lv = g_bl_db.getIPEntries();
+  else
+    lv = g_wl_db.getIPEntries();
+  addBLWLEntries(lv, "ip", my_entries);
+  if (blacklist)
+    lv = g_bl_db.getLoginEntries();
+  else
+    lv = g_wl_db.getLoginEntries();
+  addBLWLEntries(lv, "login", my_entries);
+  if (blacklist)
+    lv = g_bl_db.getIPLoginEntries();
+  else
+    lv = g_wl_db.getIPLoginEntries();    
+  addBLWLEntries(lv, "iplogin", my_entries);
       
   Json ret_json = Json::object {
-    { "bl_entries", my_entries }
+    { key_name, my_entries }
   };
   resp.status=200;
   resp.body = ret_json.dump();
-  incCommandStat("getBL");
+  incCommandStat(cmd_stat);
+}
+
+void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseGetBLWLCmd(req, resp, command, true);
+}
+
+void parseGetWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  parseGetBLWLCmd(req, resp, command, false);
 }
 
 void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -740,10 +878,13 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
     std::string key_name, key_value;
     TWKeyType lookup_key;
     bool is_blacklisted=false;
+    bool is_whitelisted=false;
     std::string bl_reason;
     std::string bl_expire;
+    std::string wl_reason;
+    std::string wl_expire;
     ComboAddress en_ca;
-    BlackListEntry ble;
+    BlackWhiteListEntry bwle;
 
     try {
       if (!msg["ip"].is_null()) {
@@ -761,30 +902,45 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
 	key_name = "ip_login";
 	key_value = en_ca.toString() + ":" + en_login;
 	lookup_key = key_value;
-        if (g_bl_db.getEntry(en_ca, en_login, ble)) {
+        if (g_bl_db.getEntry(en_ca, en_login, bwle)) {
           is_blacklisted = true;
-          bl_reason = ble.reason;
-          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+          bl_reason = bwle.reason;
+          bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+        if (g_wl_db.getEntry(en_ca, en_login, bwle)) {
+          is_whitelisted = true;
+          wl_reason = bwle.reason;
+          wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
         }
       }
       else if (haveLogin) {
 	key_name = "login";
 	key_value = en_login;
 	lookup_key = en_login;
-        if (g_bl_db.getEntry(en_login, ble)) {
+        if (g_bl_db.getEntry(en_login, bwle)) {
           is_blacklisted = true;
-          bl_reason = ble.reason;
-          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+          bl_reason = bwle.reason;
+          bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+        if (g_wl_db.getEntry(en_login, bwle)) {
+          is_whitelisted = true;
+          wl_reason = bwle.reason;
+          wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
         }
       }
       else if (haveIP) {
 	key_name = "ip";
 	key_value = en_ca.toString();
 	lookup_key = en_ca;
-        if (g_bl_db.getEntry(en_ca, ble)) {
+        if (g_bl_db.getEntry(en_ca, bwle)) {
           is_blacklisted = true;
-          bl_reason = ble.reason;
-          bl_expire = boost::posix_time::to_simple_string(ble.expiration);
+          bl_reason = bwle.reason;
+          bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+        if (g_wl_db.getEntry(en_ca, bwle)) {
+          is_whitelisted = true;
+          wl_reason = bwle.reason;
+          wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
         }
       }
     }
@@ -816,6 +972,9 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
       }
       Json ret_json = Json::object {
 	{ key_name, key_value },
+	{ "whitelisted", is_whitelisted },
+        { "wl_reason", wl_reason },
+        { "wl_expire", wl_expire },
 	{ "blacklisted", is_blacklisted },
         { "bl_reason", bl_reason },
         { "bl_expire", bl_expire },
@@ -936,6 +1095,10 @@ void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
 
 void registerWebserverCommands()
 {
+  addCommandStat("addWLEntry");
+  g_webserver.registerFunc("addWLEntry", HTTPVerb::POST, parseAddWLEntryCmd);
+  addCommandStat("delWLEntry");
+  g_webserver.registerFunc("delWLEntry", HTTPVerb::POST, parseDelWLEntryCmd);
   addCommandStat("addBLEntry");
   g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, parseAddBLEntryCmd);
   addCommandStat("delBLEntry");
@@ -947,6 +1110,7 @@ void registerWebserverCommands()
   addCommandStat("allow");
   addCommandStat("allow_allowed");
   addCommandStat("allow_blacklisted");
+  addCommandStat("allow_whitelisted");
   addCommandStat("allow_denied");
   addCommandStat("allow_tarpitted");
   g_webserver.registerFunc("allow", HTTPVerb::POST, parseAllowCmd);
@@ -954,6 +1118,8 @@ void registerWebserverCommands()
   g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
   addCommandStat("getBL");
   g_webserver.registerFunc("getBL", HTTPVerb::GET, parseGetBLCmd);
+  addCommandStat("getWL");
+  g_webserver.registerFunc("getWL", HTTPVerb::GET, parseGetWLCmd);
   addCommandStat("getDBStats");
   g_webserver.registerFunc("getDBStats", HTTPVerb::POST, parseGetStatsCmd);
   addCommandStat("ping");

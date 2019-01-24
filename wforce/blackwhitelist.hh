@@ -40,11 +40,11 @@
 #include <hiredis/hiredis.h>
 #include "ext/threadname.hh"
 
-struct BlackListEntry {
+struct BlackWhiteListEntry {
   std::string key;
   std::string reason;
   boost::system_time expiration;
-  bool operator<(const BlackListEntry& r) const
+  bool operator<(const BlackWhiteListEntry& r) const
   {
     if (key < r.key) return true;
     return false;
@@ -53,12 +53,26 @@ struct BlackListEntry {
 
 using namespace boost::multi_index;
 
-enum BLType { IP_BL=0, LOGIN_BL=1, IP_LOGIN_BL=2, NONE_BL=999 };
+enum BLWLType { IP_BLWL=0, LOGIN_BLWL=1, IP_LOGIN_BLWL=2, NONE_BLWL=999 };
+enum class BLWLDBType { BLACKLIST=0, WHITELIST=1 };
 
-class BlackListDB {
+class BlackWhiteListDB {
 public:  
-  BlackListDB() { redis_context = NULL; redis_port = 6379; redis_timeout=1; }
-  BlackListDB(const BlackListDB&) = delete;
+  BlackWhiteListDB(BLWLDBType type) {
+    db_type = type;
+    if (type == BLWLDBType::BLACKLIST) {
+      list_names = { "ip_bl", "login_bl", "ip_login_bl" };
+      redis_prefix = "wfbl";
+    }
+    else {
+      list_names = { "ip_wl", "login_wl", "ip_login_wl" };
+      redis_prefix = "wfwl";
+    }
+    redis_context = NULL;
+    redis_port = 6379;
+    redis_timeout=1;
+  }
+  BlackWhiteListDB(const BlackWhiteListDB&) = delete;
 
   void addEntry(const Netmask& nm, time_t seconds, const std::string& reason);
   void addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason);
@@ -69,9 +83,9 @@ public:
   bool checkEntry(const std::string& login) const;
   bool checkEntry(const ComboAddress& ca, const std::string& login) const;
 
-  bool getEntry(const ComboAddress& ca, BlackListEntry& ret) const;
-  bool getEntry(const std::string& login, BlackListEntry& ret) const;
-  bool getEntry(const ComboAddress& ca, const std::string& login, BlackListEntry& ret) const;
+  bool getEntry(const ComboAddress& ca, BlackWhiteListEntry& ret) const;
+  bool getEntry(const std::string& login, BlackWhiteListEntry& ret) const;
+  bool getEntry(const ComboAddress& ca, const std::string& login, BlackWhiteListEntry& ret) const;
 
   void deleteEntry(const Netmask& nm);
   void deleteEntry(const ComboAddress& ca);
@@ -82,8 +96,8 @@ public:
   time_t getExpiration(const std::string& login) const;
   time_t getExpiration(const ComboAddress& ca, const std::string& login) const;
 
-  void addEntryInternal(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason, bool replicate);
-  void deleteEntryInternal(const std::string& key, BLType bl_type, bool replicate);
+  void addEntryInternal(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason, bool replicate);
+  void deleteEntryInternal(const std::string& key, BLWLType bl_type, bool replicate);
 
   void makePersistent(const std::string& host, unsigned int port);
   void persistReplicated() { persist_replicated = true; }
@@ -91,15 +105,15 @@ public:
 
   void purgeEntries();
 
-  static void purgeEntriesThread(BlackListDB* bl_db)
+  static void purgeEntriesThread(BlackWhiteListDB* bl_db)
   {
-    setThreadName("wf/bl-purge");
+    setThreadName("wf/blwl-purge");
     bl_db->purgeEntries();
   }
 
-  std::vector<BlackListEntry> getIPEntries() const;
-  std::vector<BlackListEntry> getLoginEntries() const;
-  std::vector<BlackListEntry> getIPLoginEntries() const;
+  std::vector<BlackWhiteListEntry> getIPEntries() const;
+  std::vector<BlackWhiteListEntry> getLoginEntries() const;
+  std::vector<BlackWhiteListEntry> getIPLoginEntries() const;
 
   void setConnectTimeout(int timeout);
 private:
@@ -107,47 +121,50 @@ private:
   struct KeyTag{};
   struct SeqTag{};
   typedef multi_index_container<
-    BlackListEntry,
+    BlackWhiteListEntry,
     indexed_by<
       ordered_non_unique<
 	tag<TimeTag>,
-	member<BlackListEntry, boost::system_time, &BlackListEntry::expiration>	>,
+	member<BlackWhiteListEntry, boost::system_time, &BlackWhiteListEntry::expiration>	>,
       hashed_unique<
 	tag<KeyTag>,
-	member<BlackListEntry, std::string, &BlackListEntry::key> >,
+	member<BlackWhiteListEntry, std::string, &BlackWhiteListEntry::key> >,
       sequenced<tag<SeqTag>>
     >
-    > blacklist_t;
+    > blackwhitelist_t;
 
-  const char* bl_names[4] = { "ip_bl", "login_bl", "ip_login_bl", NULL };
+  std::vector<std::string> list_names = { "ip_blwl", "login_blwl", "ip_login_blwl" };
   const char* key_names[4] = { "ip", "login", "ip_login", NULL };
-  NetmaskGroup ipbl_netmask;
-  blacklist_t ip_blacklist;
-  blacklist_t login_blacklist;
-  blacklist_t ip_login_blacklist;
-  mutable pthread_rwlock_t bl_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+  NetmaskGroup iplist_netmask;
+  blackwhitelist_t ip_list;
+  blackwhitelist_t login_list;
+  blackwhitelist_t ip_login_list;
+  mutable pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
   bool persist=false;
   bool persist_replicated=false;
   std::string redis_server;
   unsigned int redis_port;
   redisContext* redis_context;
   std::atomic<int> redis_timeout;
+  std::string redis_prefix = {"wfbl"};
+  BLWLDBType db_type;
   
-  void _addEntry(const std::string& key, time_t seconds, blacklist_t& blacklist, const std::string& reason);
-  bool _checkEntry(const std::string& key, const blacklist_t& blacklist) const;
-  bool _getEntry(const std::string& key, const blacklist_t& blacklist, BlackListEntry& ret_ble) const;
-  bool _deleteEntry(const std::string& key, blacklist_t& blacklist);
-  time_t _getExpiration(const std::string& key, const blacklist_t& blacklist) const; // returns number of seconds until expiration
-  void _purgeEntries(BLType blt, blacklist_t& blacklist, BLType bl_type);
-  void addEntryLog(BLType blt, const std::string& key, time_t seconds, const std::string& reason) const;
-  void deleteEntryLog(BLType blt, const std::string& key) const;
-  void expireEntryLog(BLType blt, const std::string& key) const;
+  void _addEntry(const std::string& key, time_t seconds, blackwhitelist_t& blackwhitelist, const std::string& reason);
+  bool _checkEntry(const std::string& key, const blackwhitelist_t& blackwhitelist) const;
+  bool _getEntry(const std::string& key, const blackwhitelist_t& blackwhitelist, BlackWhiteListEntry& ret_ble) const;
+  bool _deleteEntry(const std::string& key, blackwhitelist_t& blackwhitelist);
+  time_t _getExpiration(const std::string& key, const blackwhitelist_t& blackwhitelist) const; // returns number of seconds until expiration
+  void _purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitelist, BLWLType bl_type);
+  void addEntryLog(BLWLType blt, const std::string& key, time_t seconds, const std::string& reason) const;
+  void deleteEntryLog(BLWLType blt, const std::string& key) const;
+  void expireEntryLog(BLWLType blt, const std::string& key) const;
   std::string ipLoginStr(const ComboAddress& ca, const std::string& login) const;
   bool checkSetupContext();
-  bool addPersistEntry(const std::string& key, time_t seconds, BLType bl_type, const std::string& reason);
-  bool deletePersistEntry(const std::string& key, BLType bl_type, blacklist_t& blacklist);
-  BLType BLNameToType(const std::string& bl_name) const;
-  std::string BLTypeToName(BLType bl_type) const;
+  bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);
+  bool deletePersistEntry(const std::string& key, BLWLType bl_type, blackwhitelist_t& blackwhitelist);
+  BLWLType BLWLNameToType(const std::string& bl_name) const;
+  std::string BLWLTypeToName(BLWLType bl_type) const;
 };
 
-extern BlackListDB g_bl_db;
+extern BlackWhiteListDB g_bl_db;
+extern BlackWhiteListDB g_wl_db;

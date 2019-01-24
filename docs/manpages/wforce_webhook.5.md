@@ -57,10 +57,30 @@ setting. The following events are available for generating webhooks:
 		{"key": "1.4.3.3:webhooktest@foobar.com",
 		"bl_type": "ip_login_bl"}
 
+* addwl - Runs each time a whitelist entry is added (from Lua or the
+  REST API). The webhook includes the request payload. An example
+  payload for the HTTP post is shown below:
+
+		{"key": "webhooktest@foobar.com",
+		"reason": "This user is an admin",
+		"expire_secs": 10, "wl_type": "login_wl"}
+
+* delwl - Runs each time a whitelist entry is deleted (from Lua or the 
+  REST API). The webhook includes the request payload. An example
+  payload for the HTTP post is shown below:
+
+		{"key": "1.4.3.3:webhooktest@foobar.com",
+		"wl_type": "ip_login_wl"}
+
 * expirebl - Runs each time a blacklist entry is expired. An example
   payload for the HTTP post is shown below:
 
 		{"key": "webhooktest@foobar.com", "bl_type": "login_bl"}
+
+* expirewl - Runs each time a whitelist entry is expired. An example
+  payload for the HTTP post is shown below:
+
+		{"key": "webhooktest@foobar.com", "wl_type": "login_wl"}
 
 # CUSTOM WEBHOOKS
 

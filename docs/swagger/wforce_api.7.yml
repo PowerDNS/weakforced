@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: "1.4.0"
+  version: "2.0.0"
   title: "OX Abuse Shield (Wforce)"
   description: "An API to the wforce daemon to prevent brute-force and abuse of mail systems"
   contact:
@@ -125,7 +125,7 @@ paths:
           description: "Provide IP and/or login"
           required: true
           schema:
-            $ref: "#/definitions/DelBLEntryParams"
+            $ref: "#/definitions/DelBLWLEntryParams"
       responses:
         "200":
           description: "delBLEntry response"
@@ -154,10 +154,68 @@ paths:
           description: "Provide IP and/or login"
           required: true
           schema:
-            $ref: "#/definitions/AddBLEntryParams"
+            $ref: "#/definitions/AddBLWLEntryParams"
       responses:
         "200":
           description: "addBLEntry response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=delWLEntry:
+    post:
+      description: "Delete a whitelist entry for an IP and/or login. Note that netmask and ip parameters are mutually exclusive."
+      operationId: "delWLEntry"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "delWLEntry"
+          in: body
+          description: "Provide IP and/or login"
+          required: true
+          schema:
+            $ref: "#/definitions/DelBLWLEntryParams"
+      responses:
+        "200":
+          description: "delWLEntry response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=addWLEntry:
+    post:
+      description: "Add a whitelist entry for an IP and/or login. Note that netmask and ip parameters are mutually exclusive."
+      operationId: "addWLEntry"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "addWLEntry"
+          in: body
+          description: "Provide IP and/or login"
+          required: true
+          schema:
+            $ref: "#/definitions/AddBLWLEntryParams"
+      responses:
+        "200":
+          description: "addWLEntry response"
           schema:
             type: object
             required:
@@ -240,7 +298,22 @@ paths:
         "200":
           description: "getBL response"
           schema:
-            $ref: "#/definitions/BLResponse"
+            $ref: "#/definitions/BLWLResponse"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=getWL:
+    get:
+      description: "Get the list of all whitelisted IPs and/or Logins"
+      operationId: "getWL"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "getWL response"
+          schema:
+            $ref: "#/definitions/BLWLResponse"
         default:
           description: unexpected error
           schema:
@@ -431,7 +504,7 @@ definitions:
         type: string
     example:
       ip: 127.0.0.1
-  DelBLEntryParams:
+  DelBLWLEntryParams:
     properties:
       ip:
         type: string
@@ -442,7 +515,7 @@ definitions:
     example:
       ip: 127.0.0.1
       netmask: 2001:503:ba3e/64
-  AddBLEntryParams:
+  AddBLWLEntryParams:
     properties:
       ip:
         type: string
@@ -458,7 +531,7 @@ definitions:
       ip: 127.0.0.1
       netmask: 2001:503:ba3e::/64
       expire_secs: 3600
-      reason: "Too many bad passwords"
+      reason: "Is there ever a good reason"
   CustomError:
     required:
       - success
@@ -483,23 +556,23 @@ definitions:
     example:
       status: failure
       reason: Unauthorized
-  BLResponse:
+  BLWLResponse:
     type: object
     properties:
       bl_entries:
         type: array
         items:
-          $ref: "#/definitions/BLArray"
-  BLArray:
+          $ref: "#/definitions/BLWLArray"
+  BLWLArray:
     type: object
     properties:
       ip:
-        $ref: "#/definitions/BLEntry"
+        $ref: "#/definitions/BLWLEntry"
       login:
-        $ref: "#/definitions/BLEntry"
+        $ref: "#/definitions/BLWLEntry"
       iplogin:
-        $ref: "#/definitions/BLEntry"
-  BLEntry:
+        $ref: "#/definitions/BLWLEntry"
+  BLWLEntry:
     type: array
     items:
       type: object
@@ -528,6 +601,12 @@ definitions:
       bl_expire:
         type: string
       bl_reason:
+        type: string
+      whitelisted:
+        type: boolean
+      wl_expire:
+        type: string
+      wl_reason:
         type: string
       stats:
         $ref: "#/definitions/DBStatsEntry"
@@ -585,11 +664,17 @@ definitions:
         type: object
         description: Count of REST API commands run in last 5 minutes
         properties:
-          addBLEntry:
-            type: integer
-          delBLEntry:
-            type: integer
+          addBLEntry: 
+            type: integer 
+          delBLEntry: 
+            type: integer 
           getBL:
+            type: integer
+          addWLEntry: 
+            type: integer 
+          delWLEntry: 
+            type: integer 
+          getWL:
             type: integer
           getDBStats:
             type: integer
@@ -597,11 +682,25 @@ definitions:
             type: integer
           allow:
             type: integer
+          allow_allowed: 
+            type: integer 
+          allow_blacklisted: 
+            type: integer 
+          allow_whitelisted: 
+            type: integer 
+          allow_denied: 
+            type: integer 
+          allow_tarpitted: 
+            type: integer 
           report:
             type: integer
           reset:
             type: integer
           ping:
+            type: integer
+          syncDBs:
+            type: integer
+          syncDone:
             type: integer
       customstats:
         type: object
@@ -616,7 +715,7 @@ definitions:
       sys-msec: 97211221
       user-msec: 292910108
       perfstats: {"WTR_0_1": 0, "WTR_100_1000": 0, "WTR_10_100": 0, "WTR_1_10": 0, "WTR_Slow": 0, "WTW_0_1": 1, "WTW_100_1000": 0, "WTW_10_100": 0, "WTW_1_10": 0, "WTW_Slow": 0}
-      commandstats: {"addBLEntry": 0, "allow": 0, "delBLEntry": 0, "getBL": 0, "getDBStats": 0, "ping": 0, "report": 0, "reset": 0, "stats": 0}
+      commandstats: {"addBLEntry": 0, "addWLEntry": 1, "allow": 8, "allow_allowed": 4, "allow_blacklisted": 0, "allow_denied": 0, "allow_tarpitted": 0, "allow_whitelisted": 4, "delBLEntry": 0, "delWLEntry": 0, "getBL": 0, "getDBStats": 0, "getWL": 0, "ping": 0, "report": 0, "reset": 0, "stats": 3, "syncDBs": 0, "syncDone": 0}
       customstats: {"custom1": 0, "custom2": 0}
   syncDBsParams:
     type: object

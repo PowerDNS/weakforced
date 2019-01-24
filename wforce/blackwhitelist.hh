@@ -63,10 +63,16 @@ public:
     if (type == BLWLDBType::BLACKLIST) {
       list_names = { "ip_bl", "login_bl", "ip_login_bl" };
       redis_prefix = "wfbl";
+      ip_ret_msg = "Temporarily blacklisted IP Address - try again later";
+      login_ret_msg = "Temporarily blacklisted Login Name - try again later";
+      iplogin_ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
     }
     else {
       list_names = { "ip_wl", "login_wl", "ip_login_wl" };
       redis_prefix = "wfwl";
+      ip_ret_msg = "Whitelisted IP Address";
+      login_ret_msg = "Whitelisted Login Name";
+      iplogin_ret_msg = "Whitelisted IP/Login Tuple";
     }
     redis_context = NULL;
     redis_port = 6379;
@@ -116,6 +122,14 @@ public:
   std::vector<BlackWhiteListEntry> getIPLoginEntries() const;
 
   void setConnectTimeout(int timeout);
+
+  const std::string& getIPRetMsg() const { return ip_ret_msg;}
+  const std::string& getLoginRetMsg() const { return login_ret_msg; }
+  const std::string& getIPLoginRetMsg() const { return iplogin_ret_msg; }
+  void setIPRetMsg(const std::string& msg) { ip_ret_msg = msg; }
+  void setLoginRetMsg(const std::string& msg) { login_ret_msg = msg; }
+  void setIPLoginRetMsg(const std::string& msg) { iplogin_ret_msg = msg; }
+  
 private:
   struct TimeTag{};
   struct KeyTag{};
@@ -148,6 +162,9 @@ private:
   std::atomic<int> redis_timeout;
   std::string redis_prefix = {"wfbl"};
   BLWLDBType db_type;
+  std::string ip_ret_msg;
+  std::string login_ret_msg;
+  std::string iplogin_ret_msg;
   
   void _addEntry(const std::string& key, time_t seconds, blackwhitelist_t& blackwhitelist, const std::string& reason);
   bool _checkEntry(const std::string& key, const blackwhitelist_t& blackwhitelist) const;

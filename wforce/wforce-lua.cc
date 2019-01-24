@@ -661,11 +661,23 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       });
     c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) { g_bl_db.setConnectTimeout(timeout_secs); });
+    c_lua.writeFunction("setBlacklistIPRetMsg", [](const std::string& msg) {
+        g_bl_db.setIPRetMsg(msg);
+      });
+    c_lua.writeFunction("setBlacklistLoginRetMsg", [](const std::string& msg) {
+        g_bl_db.setLoginRetMsg(msg);
+      });
+    c_lua.writeFunction("setBlacklistIPLoginRetMsg", [](const std::string& msg) {
+        g_bl_db.setIPLoginRetMsg(msg);
+      });
   }
   else {
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
+    c_lua.writeFunction("setBlacklistIPRetMsg", [](const std::string& msg) {});
+    c_lua.writeFunction("setBlacklistLoginRetMsg", [](const std::string& msg) {});
+    c_lua.writeFunction("setBlacklistIPLoginRetMsg", [](const std::string& msg) {});
   }
   // End blacklists
 

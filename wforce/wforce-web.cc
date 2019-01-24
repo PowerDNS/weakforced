@@ -608,7 +608,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "key", "ip" } };
         status = 0;
         allowLog(status, std::string("whitelisted IP"), lt, log_attrs);
-        ret_msg = "Whitelisted IP Address";
+        ret_msg = g_wl_db.getIPRetMsg();
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -620,7 +620,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "key", "login" } };
         status = 0;
         allowLog(status, std::string("whitelisted Login"), lt, log_attrs);
-        ret_msg = "Whitelisted Login Name";
+        ret_msg = g_wl_db.getLoginRetMsg();
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -632,7 +632,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "key", "iplogin" } };
         status = 0;
         allowLog(status, std::string("whitelisted IPLogin"), lt, log_attrs);
-        ret_msg = "Whitelisted IP/Login Tuple";
+        ret_msg = g_wl_db.getIPLoginRetMsg();
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -649,7 +649,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "blacklisted", "1" },
             { "key", "ip" } };
         allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
-        ret_msg = "Temporarily blacklisted IP Address - try again later";
+        ret_msg = g_bl_db.getIPRetMsg();
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -660,7 +660,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "blacklisted", "1" },
             { "key", "login" } };
         allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
-        ret_msg = "Temporarily blacklisted Login Name - try again later";
+        ret_msg = g_bl_db.getLoginRetMsg();
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -671,7 +671,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
             { "blacklisted", "1" },
             { "key", "iplogin" } };
         allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);
-        ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+        ret_msg =g_bl_db.getIPLoginRetMsg();
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }

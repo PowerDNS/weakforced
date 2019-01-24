@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+VERSION=$1
+[ -z "$VERSION" ] && exit 1
+OS=`uname`
+SED_ARG='-r'
+
+if [ $OS == "Darwin" ]
+then
+  SED_ARG='-E'
+fi
+
+for i in wforce_api.7.yml trackalert_api.7.yml report_api.7.yml
+do
+    sed $SED_ARG "s/version:(.*)/version: \"$VERSION\"/" $i >$i.tmp
+    if [ $? != 0 ]
+    then
+        exit 1
+    fi
+    mv $i.tmp $i
+done
+exit 0

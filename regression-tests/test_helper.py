@@ -272,6 +272,9 @@ class ApiTestCase(unittest.TestCase):
 
     def getBLFuncPersist(self):
         return self.session.get(self.url3("/?command=getBL"))
+
+    def getWLFuncPersist(self):
+        return self.session.get(self.url3("/?command=getWL"))
     
     def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
@@ -348,7 +351,83 @@ class ApiTestCase(unittest.TestCase):
             self.url("/?command=delBLEntry"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
-            
+
+    def addWLEntryIPLogin(self, ip, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def addWLEntryIP(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def addWLEntryNetmask(self, netmask, expire_secs, reason):
+        payload = dict()
+        payload['netmask'] = netmask
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+    
+    def addWLEntryIPPersist(self, ip, expire_secs, reason):
+        payload = dict()
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url3("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+    
+    def addWLEntryLogin(self, login, expire_secs, reason):
+        payload = dict()
+        payload['login'] = login
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delWLEntryIPLogin(self, ip, login):
+        payload = dict()
+        payload['login'] = login
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delWLEntryIP(self, ip):
+        payload = dict()
+        payload['ip'] = ip
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+
+    def delWLEntryLogin(self, login):
+        payload = dict()
+        payload['login'] = login
+        return self.session.post(
+            self.url("/?command=delWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}) 
+    
     def getDBStatsIPLogin(self, ip, login):
         payload = dict()
         payload['login'] = login

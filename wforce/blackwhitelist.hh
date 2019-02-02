@@ -111,10 +111,10 @@ public:
 
   void purgeEntries();
 
-  static void purgeEntriesThread(BlackWhiteListDB* bl_db)
+  static void purgeEntriesThread(BlackWhiteListDB* blwl_db)
   {
     setThreadName("wf/blwl-purge");
-    bl_db->purgeEntries();
+    blwl_db->purgeEntries();
   }
 
   std::vector<BlackWhiteListEntry> getIPEntries() const;

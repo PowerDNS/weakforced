@@ -84,7 +84,7 @@ struct Sibling
   std::atomic<unsigned int> rcvd_success{0};
   void send(const std::string& msg);
   void checkIgnoreSelf(const ComboAddress& ca);
-  void connectSibling();
+  void connectSibling(bool connect_tcp);
   static Protocol stringToProtocol(const std::string& s) {
     if (s.compare("tcp") == 0)
       return Sibling::Protocol::TCP;

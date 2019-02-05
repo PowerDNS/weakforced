@@ -267,9 +267,15 @@ class ApiTestCase(unittest.TestCase):
     def getBLFunc(self):
         return self.session.get(self.url("/?command=getBL"))
 
+    def getWLFunc(self):
+        return self.session.get(self.url("/?command=getWL"))
+
     def getBLFuncReplica(self):
         return self.session.get(self.url2("/?command=getBL"))
 
+    def getWLFuncReplica(self):
+        return self.session.get(self.url2("/?command=getWL"))
+    
     def getBLFuncPersist(self):
         return self.session.get(self.url3("/?command=getBL"))
 

@@ -25,7 +25,8 @@ RUN apt-get update && \
                wget \
                docker \
                docker-compose \
-               python-pip \
+               python3-pip \
+               python3-venv \
                redis \
                geoip-bin \
                geoip-database \
@@ -37,7 +38,7 @@ RUN apt-get update && \
 RUN sed -i "s/bind .*/bind 127.0.0.1/g" /etc/redis/redis.conf
 RUN echo "DatabaseDirectory /usr/share/GeoIP" >>/etc/GeoIP.conf
 RUN geoipupdate -v
-RUN pip install bottle virtualenv
+RUN pip3 install bottle virtualenv
 RUN update-rc.d redis-server enable
 
 WORKDIR /wforce/

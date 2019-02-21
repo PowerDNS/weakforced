@@ -13,7 +13,7 @@ class TestSyncDBs(ApiTestCase):
             r.json()
 
         res1 = self.writeCmdToConsole("showStringStatsDB()");
-        res1_ss = res1.split("DB Name", 1)[1]
+        res1_ss = res1.decode().split("DB Name", 1)[1]
         
         time.sleep(11);
         
@@ -22,7 +22,7 @@ class TestSyncDBs(ApiTestCase):
         time.sleep(5)
 
         res2 = self.writeCmdToConsole3("showStringStatsDB()");
-        res2_ss = res2.split("DB Name", 1)[1]
+        res2_ss = res2.decode().split("DB Name", 1)[1]
 
         self.assertEqual(res1_ss == res2_ss, True)
 

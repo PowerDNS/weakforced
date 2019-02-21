@@ -59,7 +59,7 @@ class TestBasics(ApiTestCase):
         payload['pwhash'] = "1234"
         payload['success'] = True
         payload['attrs'] = {}
-        yield json.dumps(payload)
+        yield json.dumps(payload).encode()
 
     def testChunked(self):
         r = self.session.post(

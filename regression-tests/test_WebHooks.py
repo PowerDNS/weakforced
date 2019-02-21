@@ -19,9 +19,10 @@ class TestWebHooks(ApiTestCase):
         time.sleep(5)
         logfile = open('/tmp/webhook-server.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for event in [ 'report', 'allow', 'reset', 'addbl', 'delbl', 'expirebl' ]:
             regex = r"digest_match=True, event=" + re.escape(event)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
@@ -34,9 +35,10 @@ class TestWebHooks(ApiTestCase):
         time.sleep(5)
         logfile = open('/tmp/webhook-server.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for event in [ 'customwebhook' ]:
             regex = r"digest_match=True, event=" + re.escape(event)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
@@ -48,9 +50,10 @@ class TestWebHooks(ApiTestCase):
         time.sleep(1)
         logfile = open('/tmp/udp-sink.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for event in [ 'namedreportsink', 'customargs' ]:
             regex = r"\"login\": \"" + re.escape(event)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()

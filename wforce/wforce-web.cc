@@ -738,7 +738,7 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
     std::string en_type, en_login;
     std::string key_name, key_value;
     TWKeyType lookup_key;
-    bool is_blacklisted;
+    bool is_blacklisted=false;
     std::string bl_reason;
     std::string bl_expire;
     ComboAddress en_ca;

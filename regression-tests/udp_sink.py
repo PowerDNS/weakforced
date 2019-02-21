@@ -16,4 +16,4 @@ while True:
     data, addr = sock.recvfrom(2048) # buffer size is 2048 bytes
     log_msg = "[%s] Received report=%s\n" % (mypid, data)
     logfile.write(log_msg)
-    print log_msg;
+    print(log_msg)

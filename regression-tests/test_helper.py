@@ -401,6 +401,6 @@ class ApiTestCase(unittest.TestCase):
         try:
             result.raise_for_status()
         except:
-            print result.content
+            print(result.content)
             raise
         self.assertEquals(result.headers['Content-Type'], 'application/json')

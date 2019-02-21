@@ -1,7 +1,8 @@
 from datetime import datetime
 import os
 import requests
-import urlparse
+from urllib.parse import urlparse
+from urllib.parse import urljoin
 import unittest
 import json
 from subprocess import call, check_output
@@ -380,22 +381,22 @@ class ApiTestCase(unittest.TestCase):
             headers={'Content-Type': 'application/json'}, auth=('foo', 'secret'))
     
     def url(self, relative_url):
-        return urlparse.urljoin(self.server1_url, relative_url)
+        return urljoin(self.server1_url, relative_url)
 
     def url2(self, relative_url):
-        return urlparse.urljoin(self.server2_url, relative_url)
+        return urljoin(self.server2_url, relative_url)
 
     def url3(self, relative_url):
-        return urlparse.urljoin(self.server3_url, relative_url)
+        return urljoin(self.server3_url, relative_url)
 
     def url4(self, relative_url):
-        return urlparse.urljoin(self.server4_url, relative_url)
+        return urljoin(self.server4_url, relative_url)
     
     def ta_url(self, relative_url):
-        return urlparse.urljoin(self.ta_server_url, relative_url)
+        return urljoin(self.ta_server_url, relative_url)
 
     def report_url(self, relative_url):
-        return urlparse.urljoin(self.report_server_url, relative_url)
+        return urljoin(self.report_server_url, relative_url)
     
     def assert_success_json(self, result):
         try:

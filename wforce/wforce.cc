@@ -417,22 +417,24 @@ void doConsole()
 
 Sibling::Sibling(const ComboAddress& ca) : rem(ca), proto(Protocol::UDP), d_ignoreself(false)
 {
-  connectSibling();
+  connectSibling(false);
 }
 
-void Sibling::connectSibling()
+void Sibling::connectSibling(bool connect_tcp=true)
 {
   sockp = wforce::make_unique<Socket>(rem.sin4.sin_family, static_cast<int>(proto));
   if (proto == Protocol::UDP) {
     sockp->connect(rem);
   }
   else {
-    try {
-      sockp->connect(rem);
-    }
-    catch (const NetworkError& e) {
-      vdebuglog("TCP Connect to Sibling %s failed (%s)", rem
-               .toStringWithPort(), e.what());
+    if (connect_tcp) {
+      try {
+        sockp->connect(rem);
+      }
+      catch (const NetworkError& e) {
+        errlog("TCP Connect to Sibling %s failed (%s)", rem
+                  .toStringWithPort(), e.what());
+      }
     }
   }
 }
@@ -440,7 +442,7 @@ void Sibling::connectSibling()
 Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), d_ignoreself(false)
 {
   if (!g_cmdLine.beClient)
-    connectSibling();
+    connectSibling(false);
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)
@@ -483,7 +485,7 @@ void Sibling::send(const std::string& msg)
     }
     catch (const NetworkError& e) {
       ++failures;
-      vdebuglog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
+      errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
       connectSibling();
     }
   }

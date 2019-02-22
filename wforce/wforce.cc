@@ -427,7 +427,7 @@ void Sibling::connectSibling(bool connect_tcp=true)
     sockp->connect(rem);
   }
   else {
-    if (connect_tcp) {
+    if (connect_tcp && !d_ignoreself) {
       try {
         sockp->connect(rem);
       }

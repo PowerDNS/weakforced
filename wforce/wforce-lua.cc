@@ -283,7 +283,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	  return;
 	}
 	auto launch = [ca]() {
-	  thread t1(receiveReplicationOperations, ca);
+          auto siblings = g_siblings.getLocal();
+
+          for(auto& s : *siblings) {
+            s->checkIgnoreSelf(ca);
+          }
+          
+          thread t1(receiveReplicationOperations, ca);
 	  t1.detach();
 	  thread t2(receiveReplicationOperationsTCP, ca);
 	  t2.detach();

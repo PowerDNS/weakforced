@@ -5,8 +5,9 @@ import base64
 import json
 import os
 
-logfile = open('/tmp/webhook-server.log', 'w', 0)
+logfile = open('/tmp/webhook-server.log', 'w')
 logfile.write("This is to ensure the file isn't empty\n")
+logfile.flush()
 mypid = os.getpid()
 
 @route('/webhook/<event>', method='POST')
@@ -17,14 +18,15 @@ def webhook(event):
     delivery_id = request.headers.get('X-Wforce-Delivery')
     hook_id = request.headers.get('X-Wforce-HookID')
     body_json = request.json
-    shmac = hmac.new('secret', '', hashlib.sha256)
+    shmac = hmac.new(b"secret", b"", hashlib.sha256)
     for myline in request.body.readlines():
         shmac.update(myline)
     sdigest = base64.b64encode(shmac.digest())
-    if sdigest == secret:
+    if sdigest.decode() == secret:
         digest_match = True
     log_msg = "[%s] Received webhook id=%s, digest_match=%s, event=%s, body=%s\n" % (mypid, hook_id, digest_match, event, json.dumps(body_json))
     logfile.write(log_msg)
+    logfile.flush()
     return "ok\n"
 
 run(host='localhost', port=9080)

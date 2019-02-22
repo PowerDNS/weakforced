@@ -427,7 +427,7 @@ void Sibling::connectSibling(bool connect_tcp=true)
     sockp->connect(rem);
   }
   else {
-    if (connect_tcp) {
+    if (connect_tcp && !d_ignoreself) {
       try {
         sockp->connect(rem);
       }
@@ -879,10 +879,6 @@ void receiveReplicationOperations(ComboAddress local)
   auto siblings = g_siblings.getLocal();
 
   setThreadName("wf/rcv-repl-udp");
-  
-  for(auto& s : *siblings) {
-    s->checkIgnoreSelf(local);
-  }
   
   noticelog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
   for(;;) {

@@ -153,9 +153,9 @@ class TestBlacklist(ApiTestCase):
         j = r.json()
         self.assertEquals(j['status'], 'ok')
 
-        print "Killing process"
+        print("Killing process")
         proc3.terminate()
-        print "Waiting for process"
+        print("Waiting for process")
         proc3.wait()
 
         proc3 = subprocess.Popen(cmd3, close_fds=True)

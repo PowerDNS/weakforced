@@ -22,10 +22,10 @@ class TestReportAPI(ApiTestCase):
         attrs['login'] = "report_api_test@foobar.com"
         r = self.reportAPI("/logins", attrs)
         self.assertEquals(r.status_code, requests.codes.ok)
-        print r.json()
+        print(r.json())
         j=r.json()
         self.assertEquals(j['query']['login'], 'report_api_test@foobar.com')
-        print j['response']
+        print(j['response'])
         self.assertNotEquals(j['response'], [])
         id = j['response'][0]['id']
         attrs = dict()
@@ -41,7 +41,7 @@ class TestReportAPI(ApiTestCase):
         attrs['login'] = "report_api_test@foobar.com"
         r = self.reportAPI("/devices", attrs)
         self.assertEquals(r.status_code, requests.codes.ok)
-        print r.json()
+        print(r.json())
         j=r.json()
         self.assertEquals(j['query']['login'], 'report_api_test@foobar.com')
         self.assertNotEquals(j['response'], [])

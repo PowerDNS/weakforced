@@ -21,9 +21,10 @@ class TestTrackalert(ApiTestCase):
         time.sleep(5)
         logfile = open('/tmp/trackalert.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for mystring in [ 'login=wforce2trackalert', 'remote=1.4.3.2' ]:
             regex = re.escape(mystring)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
@@ -36,9 +37,10 @@ class TestTrackalert(ApiTestCase):
         time.sleep(5)
         logfile = open('/tmp/trackalert.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for mystring in [ 'login=tareportuser', 'remote=127.0.0.1' ]:
             regex = re.escape(mystring)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()
@@ -47,9 +49,10 @@ class TestTrackalert(ApiTestCase):
         time.sleep(61)
         logfile = open('/tmp/trackalert.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
         for mystring in [ 'background1', 'background2' ]:
             regex = re.escape(mystring)
-            result = re.search(regex, s);
+            result = re.search(regex, search_str);
             self.assertNotEquals(result, None)
         s.close()
         logfile.close()

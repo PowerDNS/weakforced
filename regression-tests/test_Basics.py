@@ -50,6 +50,7 @@ class TestBasics(ApiTestCase):
         j = r.json();
         self.assertRegexpMatches(json.dumps(j), "countLogins")
         self.assertRegexpMatches(json.dumps(j), "bl_reason")
+        self.assertRegexpMatches(json.dumps(j), '"blacklisted": false')
 
     def chunkGen(self):
         payload = dict()
@@ -58,7 +59,7 @@ class TestBasics(ApiTestCase):
         payload['pwhash'] = "1234"
         payload['success'] = True
         payload['attrs'] = {}
-        yield json.dumps(payload)
+        yield json.dumps(payload).encode()
 
     def testChunked(self):
         r = self.session.post(

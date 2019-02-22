@@ -880,10 +880,6 @@ void receiveReplicationOperations(ComboAddress local)
 
   setThreadName("wf/rcv-repl-udp");
   
-  for(auto& s : *siblings) {
-    s->checkIgnoreSelf(local);
-  }
-  
   noticelog("Launched UDP sibling replication listener on %s", local.toStringWithPort());
   for(;;) {
     shared_ptr<Sibling> recv_sibling = nullptr;

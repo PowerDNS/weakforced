@@ -1,4 +1,13 @@
-REPORT_API_DIST = wforce/__init__.py wforce/report.py instance/report.cfg requirements.txt run.sh runreport.py
+REPORT_API_DIST = \
+		  MANIFEST.in \
+		  helpers \
+		  instance/ \
+		  nginx/ \
+		  requirements.txt \
+		  run.sh \
+		  runreport.py \
+		  setup.py \
+		  wforce/
 
 EXTRA_DIST= $(REPORT_API_DIST)
 

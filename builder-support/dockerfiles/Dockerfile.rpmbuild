@@ -1,6 +1,7 @@
 FROM dist-base as package-builder
-RUN yum install -y rpm-build rpmdevtools && \
+RUN yum install -y rpm-build rpmdevtools python3-rpm-macros python34 python34-pip && \
     yum groupinstall -y "Development Tools" && \
+    /usr/bin/pip3.4 install venvctrl && \
     rpmdev-setuptree
 
 RUN mkdir /dist /wforce
@@ -20,10 +21,8 @@ RUN for file in /sdist/* ; do ln -s $file /root/rpmbuild/SOURCES/ ; done && ls /
 ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers
 
-RUN yum install -y rpm-build python34
-
 @IF [ ! -z "$M_all$M_wforce" ]
-RUN scl enable devtoolset-6 -- builder/helpers/build-specs.sh builder-support/specs/wforce.spec
+RUN builder/helpers/build-specs.sh builder-support/specs/wforce.spec
 @ENDIF
 
 # mv accross layers with overlay2 is buggy in some kernel versions (results in empty dirs)

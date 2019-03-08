@@ -1,6 +1,7 @@
 FROM dist-base as package-builder
-RUN yum install -y rpm-build rpmdevtools python3-rpm-macros python34 python34-pip && \
-    yum groupinstall -y "Development Tools" && \
+RUN yum install -y rpm-build rpmdevtools python3-rpm-macros python34 python34-pip python34-devel && \
+    yum groupinstall -y "Development Tools"
+RUN /usr/bin/pip3.4 install -U pip && \
     /usr/bin/pip3.4 install venvctrl && \
     rpmdev-setuptree
 

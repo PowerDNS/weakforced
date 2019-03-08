@@ -1,13 +1,13 @@
 REPORT_API_DIST = \
 		  MANIFEST.in \
 		  helpers \
-		  instance/ \
-		  nginx/ \
+		  instance \
+		  nginx \
 		  requirements.txt \
 		  run.sh \
 		  runreport.py \
 		  setup.py \
-		  wforce/
+		  wforce
 
 EXTRA_DIST= $(REPORT_API_DIST)
 

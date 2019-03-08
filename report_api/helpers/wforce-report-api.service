@@ -16,8 +16,5 @@ NoNewPrivileges=true
 ProtectSystem=full
 ProtectHome=true
 RestrictAddressFamilies=AF_INET AF_INET6
-User=wforce
-Group=wforce
-
-[Install]
-WantedBy=multi-user.target
+User=wforce-report-api
+Group=wforce-report-api

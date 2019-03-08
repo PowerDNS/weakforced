@@ -41,8 +41,8 @@ setup(
     name = "wforce-report-api",
     version = version,
     author = "Neil Cook",
-    author_email = "",
-    description = (""),
+    author_email = "neil.cook@open-xchange.com",
+    description = ("Enable access to the report information stored in Elasticsearch."),
     license = "GPL 3",
     keywords = "PowerDNS Zonecontrol",
     url = "https://github.com/PowerDNS/weakforced",
@@ -50,7 +50,7 @@ setup(
     install_requires=install_reqs,
     include_package_data = True,
     scripts=['runreport.py'],
-    long_description="TODO",
+    long_description="The Report API is provided to enable access to the report information stored in Elasticsearch. It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to 'forget' devices and logins.",
     classifiers=[],
 )
 

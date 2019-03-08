@@ -20,7 +20,6 @@
 %global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
 %global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
 
-
 Summary: Weakforce daemon for detecting brute force attacts
 Name: wforce
 Version: %{getenv:BUILDER_RPM_VERSION}
@@ -92,10 +91,12 @@ Summary: Longterm abuse data reporting and alerter
  potential login abuse.
 
 %package report-api
-Summary: XXX FIXME
+Summary: Enable access to the report information stored in Elasticsearch.
+Requires: python34
 
 %description report-api
- XXXXXXXXXX
+ The Report API is provided to enable access to the report information stored in Elasticsearch.
+ It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to "forget" devices and logins.
 
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
@@ -113,8 +114,6 @@ Summary: XXX FIXME
 make %{?_smp_mflags}
 %{?scl:EOF}
 
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
-
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
@@ -125,8 +124,9 @@ mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%
 mv elk/kibana/kibana_saved_objects.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 
 %{venv_cmd} %{venv_dir}
+%{venv_pip} -U pip setuptools
 pushd report_api
-%{venv_python} setup.py install
+%{venv_pip} .
 popd
 
 # RECORD files are used by wheels for checksum. They contain path names which
@@ -148,9 +148,10 @@ find %{venv_dir}/lib -type f -name "*.so" | xargs -r strip
 find %{venv_dir} -type f -exec sed -e 's!%{venv_dir}!%{venv_install_dir}!g' -i {} +
 
 # install some files for the report-api
-%{__install} -m 755 report_api/helpers/wforce-report-api-webserver %{buildroot}/%{_bindir}/
-%{__install} -m 644 report_api/helpers/wforce-report-api.conf %{buildroot}/%{_sysconfdir}/%{name}/
-%{__install} -m 644 report_api/helpers/wforce-report-api.service %{buildroot}/%{_unitdir}/
+%{__install} -D -m 755 report_api/helpers/wforce-report-api-webserver %{buildroot}/%{_bindir}/wforce-report-api-webserver
+%{__install} -D -m 644 report_api/helpers/wforce-report-api.conf %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
+%{__install} -D -m 644 report_api/instance/report.cfg %{buildroot}/%{_sysconfdir}/%{name}-report-api/%{name}-report-api-instance.conf
+%{__install} -D -m 644 report_api/helpers/wforce-report-api.service %{buildroot}/%{_unitdir}/wforce-report-api.service
 
 %clean
 rm -rf %{buildroot}
@@ -181,6 +182,26 @@ if [ "$1" = "2" ] || [ "$1" = "1" ]; then
   /sbin/service %{name} stop >/dev/null 2>&1 || :
 %endif
 fi
+
+%pre report-api
+getent group %{name}-report-api >/dev/null || groupadd -r %{name}-report-api
+getent passwd %{name}-report-api >/dev/null || \
+useradd -r -g %{name}-report-api -d /var/spool/%{name}-report-api -s /bin/false -c "wforce-report-api" %{name}-report-api
+
+%post report-api
+%if %{with systemd}
+%systemd_post %{name}-report-api
+%endif
+
+%preun report-api
+%if %{with systemd}
+%systemd_preun %{name}-report-api
+%endif
+
+%postun report-api
+%if %{with systemd}
+%systemd_postun_with_restart %{name}-report-api
+%endif
 
 %post trackalert
 # Post-Install
@@ -324,7 +345,7 @@ fi
 %{_sysconfdir}/%{name}/trackalert.conf
 
 %files report-api
-%{venv_install_dir}/*
-%attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}/%{name}-report-api.conf
+%{venv_install_dir}
+%attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}-report-api/*.conf
 %{_bindir}/%{name}-report-api-webserver
 %{_unitdir}/%{name}-report-api.service

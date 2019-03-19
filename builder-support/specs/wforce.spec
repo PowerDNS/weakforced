@@ -349,3 +349,4 @@ fi
 %attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}-report-api/*.conf
 %{_bindir}/%{name}-report-api-webserver
 %{_unitdir}/%{name}-report-api.service
+%{_mandir}/man5/%{name}-report-api.5.gz

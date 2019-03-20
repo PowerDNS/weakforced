@@ -93,7 +93,7 @@ commands at the server Lua prompt, and getting multiple answers
 
 Sample:
 
-```
+```lua
 -- set up the things we want to track
 field_map = {}
 -- use hyperloglog to track cardinality of (failed) password attempts
@@ -136,7 +136,7 @@ in [wforce.conf.example](wforce/wforce.conf.example). For full
 
 To report (if you configured with 'webserver("127.0.0.1:8084", "secret")'):
 
-```
+```bash
 $ for a in {1..101}
   do
     curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234'$a'", "success":"false"}' \
@@ -148,7 +148,7 @@ This reports 101 failed logins for one user, but with different password hashes.
 
 Now to look up if we're still allowed in:
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1", "pwhash":"1234"}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
 {"status": -1, "msg": "diffFailedPasswords"}
@@ -159,7 +159,7 @@ It appears we are not!
 You can also provide additional information for use by weakforce using
 the optional "attrs" object. An example:
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1",
 "pwhash":"1234", "attrs":{"attr1":"val1", "attr2":"val2"}}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
@@ -169,7 +169,7 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remo
 An example using the optional attrs object using multi-valued
 attributes:
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "remote": "127.0.0.1",
 "pwhash":"1234", "attrs":{"attr1":"val1", "attr2":["val2","val3"]}}' \
   http://127.0.0.1:8084/?command=allow -u wforce:super
@@ -180,7 +180,7 @@ There is also a command to reset the stats for a given login and/or IP
 Address, using the 'reset' command, the logic for which is also
 implemented in Lua. The default configuration for reset is as follows:
 
-```
+```lua
 function reset(type, login, ip)
 	 sdb = getStringStatsDB("OneHourDB")
 	 if (string.find(type, "ip"))
@@ -202,7 +202,7 @@ end
 
 To test it out, try the following to reset the login 'ahu':
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu"}'\
   http://127.0.0.1:8084/?command=reset -u wforce:super
 {"status": "ok"}
@@ -210,7 +210,7 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu"}'\
 
 You can reset IP addresses also:
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"ip":"128.243.21.16"}'\
   http://127.0.0.1:8084/?command=reset -u wforce:super
 {"status": "ok"}
@@ -219,7 +219,7 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"ip":"128.243.21.16"
 Or both in the same command (this helps if you are tracking stats using compound keys
 combining both IP address and login):
 
-```
+```bash
 $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "ip":"FE80::0202:B3FF:FE1E:8329"}'\
   http://127.0.0.1:8084/?command=reset -u wforce:super
 {"status": "ok"}
@@ -228,7 +228,7 @@ $ curl -X POST -H "Content-Type: application/json" --data '{"login":"ahu", "ip":
 Finally there is a "ping" command, to check the server is up and
 answering requests:
 
-```
+```bash
 $ curl -X GET http://127.0.0.1:8084/?command=ping -u wforce:super
 {"status": "ok"}
 ```
@@ -236,7 +236,7 @@ $ curl -X GET http://127.0.0.1:8084/?command=ping -u wforce:super
 Console
 -------
 Available over TCP/IP, like this:
-```
+```lua
 setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 controlSocket("0.0.0.0:4004")
 ```
@@ -247,7 +247,7 @@ in place of 0.0.0.0, you can use the same config to listen and connect
 remotely.
 
 To get some stats, try:
-```
+```lua
 > stats()
 40 reports, 8 allow-queries, 40 entries in database
 ```
@@ -304,7 +304,7 @@ same scheme!
 
 When in doubt, try:
 
-```
+```SQL
 TRUNCATE(SHA256(SECRET + LOGIN + '\x00' + PASSWORD), 12)
 ```
 
@@ -334,7 +334,7 @@ Custom API Endpoints
 You can create custom API commands (REST Endpoints) using the
 following configuration:
 
-```
+```lua
 setCustomEndpoint("custom", customfunc)
 ```
 
@@ -344,7 +344,7 @@ custom commands are always in the same form, which is key-value pairs
 wrapped in an 'attrs' object. For example, the following parameters
 sents as json in the message body would be valid:
 
-```
+```json
 { "attrs" : { "key" : "value" }}
 ```
 
@@ -352,13 +352,13 @@ Custom functions return values are also key-value pairs, this time
 wrapped in an 'r_attrs' object, along with a boolean success field,
 for example:
 
-```
+```json
 { "r_attrs" : { "key" : "value" }, "success" : true}
 ```
 
 An example configuration for a custom API endpoint would look like:
 
-```
+```lua
 function custom(args)
 	for k,v in pairs(args.attrs) do
 		infoLog("custom func argument attrs", { key=k, value=v });
@@ -371,7 +371,7 @@ setCustomEndpoint("custom", custom)
 
 An example curl command would be:
 
-```
+```lua
 % curl -v -X POST -H "Content-Type: application/json" --data
   '{"attrs":{"login1":"ahu", "remote": "127.0.0.1",  "pwhash":"1234"}}'
   http://127.0.0.1:8084/?command=custom -u wforce:super
@@ -384,7 +384,7 @@ It is possible to configure webhooks, which get called whenever
 specific events occur. To do this, use the "addWebHook" configuration
 command. For example:
 
-```
+```lua
 config_keys={}
 config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
 config_keys["secret"] = "verysecretcode"
@@ -405,7 +405,7 @@ Custom webhooks can also be defined, which are not invoked based on
 specific events, but instead from Lua. Configuration is similar to
 normal webhooks:
 
-```
+```lua
 config_keys={}
 config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
 config_keys["secret"] = "verysecretcode"
@@ -416,7 +416,7 @@ addCustomWebHook("mycustomhook", config_keys)
 However, the webhook will only be invoked via the Lua
 "runCustomWebHook" command, for example:
 
-```
+```lua
 runCustomWebHook(mycustomhook", "{ \"foo\":\"bar\" }")
 ```
 
@@ -457,7 +457,7 @@ information is automatically replicated if you have configured siblings.
 
 To define siblings, use:
 
-```
+```lua
 setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 addSibling("192.168.1.79")
 addSibling("192.168.1.30")
@@ -474,7 +474,7 @@ is nice).  The default port is 4001, the protocol is UDP.
 
 To view sibling stats:
 
-```
+```lua
 > siblings()
 Address                             Sucesses  Failures     Note
 192.168.1.79:4001                   18        7
@@ -496,13 +496,13 @@ in 2019.
 GeoIP2 DBs are represented by a Lua object that is created with the
 following call:
 
-```
+```lua
 newGeoIP2DB("Name", "/path/to/file.mmdb")
 ```
 
 The Lua object is retrieved with the following call:
 
-```
+```lua
 local mygeodb = getGeoIP2DB("Name")
 ```
 
@@ -526,7 +526,7 @@ returns a Lua table which includes the following information:
 
 For example:
 
-```
+```lua
 local geoip_data = mygeodp:lookupCity(newCA("128.243.21.16"))
 print(geoip_data.city)
 print(geoip_data.longitude)
@@ -561,7 +561,7 @@ returns a Lua map consisting of the following keys:
 * longitude
 
 For example:
-```
+```lua
 local geoip_data = lookupCity(newCA("128.243.21.16"))
 print(geoip_data.city)
 ```

@@ -24,7 +24,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('ivbaddie', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -44,7 +44,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('flbaddie', '128.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -64,7 +64,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('ipbaddie', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -84,7 +84,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('subbaddie', '127.0.0.1', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -104,7 +104,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('ipv4baddie', '114.31.192.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -124,7 +124,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('mappedipv4baddie', '::ffff:114.31.192.200', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -144,7 +144,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
-        time.sleep(16)
+        time.sleep(20)
         r = self.allowFunc('ipv6baddie', '2001:c78::1000', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -167,7 +167,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], -1)
 
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
-        time.sleep(30)
+        time.sleep(35)
         r = self.allowFunc('expirebaddie', '127.0.01', "1234")
         j = r.json()
         self.assertEquals(j['status'], 0)
@@ -207,5 +207,3 @@ class TestTimeWindows(ApiTestCase):
         r = self.countLogins("resetFieldTest")
         j = r.json()
         self.assertEquals(j['r_attrs']['countLogins'], '0')
-
-        

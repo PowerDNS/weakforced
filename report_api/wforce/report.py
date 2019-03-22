@@ -36,7 +36,11 @@ update_script = {
     }
 }
 
-app.config.from_pyfile('report.cfg')
+try:
+    app.config.from_envvar('WFORCE_REPORT_API_CONFIG')
+except Exception:
+    app.config.from_pyfile('report.cfg')
+    app.config.from_pyfile('local_settings.cfg', silent=True)
 
 auth = HTTPBasicAuth()
 elastic = Elastic(app, timeout=app.config['ELASTICSEARCH_TIMEOUT'])

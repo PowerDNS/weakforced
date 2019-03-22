@@ -27,7 +27,7 @@ BLReplicationOperation::BLReplicationOperation()
   bl_msg.set_op_type(BLOperation_BLOpType_BLNone);
 }
 
-BLReplicationOperation::BLReplicationOperation(BLOperation_BLOpType my_op_type, BLType my_bl_type, const std::string& my_key, time_t my_ttl, const std::string& my_reason)
+BLReplicationOperation::BLReplicationOperation(BLOperation_BLOpType my_op_type, BLWLType my_bl_type, const std::string& my_key, time_t my_ttl, const std::string& my_reason)
 {
   bl_msg.set_op_type(my_op_type);
   bl_msg.set_type(my_bl_type);
@@ -49,7 +49,7 @@ std::shared_ptr<AnyReplicationOperation> BLReplicationOperation::unserialize(con
   retval = true;
 
   if (bl_msg.ParseFromString(str)) {
-    BLType type = static_cast<BLType>(bl_msg.type());
+    BLWLType type = static_cast<BLWLType>(bl_msg.type());
     return std::make_shared<BLReplicationOperation>(bl_msg.op_type(), type, bl_msg.key(), bl_msg.ttl(), bl_msg.reason());
   }
   retval = false;
@@ -59,7 +59,7 @@ std::shared_ptr<AnyReplicationOperation> BLReplicationOperation::unserialize(con
 void BLReplicationOperation::applyOperation()
 {
   if (bl_msg.op_type() != BLOperation_BLOpType_BLNone) {
-    BLType type = static_cast<BLType>(bl_msg.type());
+    BLWLType type = static_cast<BLWLType>(bl_msg.type());
     switch (bl_msg.op_type()) {
     case BLOperation_BLOpType_BLAdd:
       g_bl_db.addEntryInternal(bl_msg.key(), bl_msg.ttl(), type, bl_msg.reason(), false);

@@ -62,16 +62,16 @@ cannot be called inside the allow/report/reset functions:
         addCustomStat("custom_stat1")
 
 * setSiblings(\<list of IP[:port[:protocol]]\>) - Set the list of siblings to which
-  stats db and blacklist data should be replicated. If port is not specified
-  it defaults to 4001.  If protocol is not specified it defaults to
-  udp. For example:
+  stats db and blacklist/whitelist data should be replicated. If port
+  is not specified it defaults to 4001.  If protocol is not specified
+  it defaults to udp. For example:
   
 		setSiblings({"127.0.1.2", "127.0.1.3:4004", "127.0.2.23:4004:tcp"})
 
 * addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
-  stats db and blacklist data should be replicated.  If port is not specified
-  it defaults to 4001. If protocol is not specified it defaults to
-  udp. For example:
+  stats db and blacklist/whitelist data should be replicated.  If port
+  is not specified it defaults to 4001. If protocol is not specified
+  it defaults to udp. For example:
   
 		addSibling("192.168.1.23")
 		addSibling("192.168.1.23:4001:udp")
@@ -274,7 +274,7 @@ cannot be called inside the allow/report/reset functions:
   been replicated in the redis DB. By default, replicated blacklist 
   entries will not be persisted. If you use a local
   redis DB for each wforce server, then use this config option. If
-  you use a single redis instance (or cluster) for all wforce servers,
+  you use a single redis instance for all wforce servers,
   then you should not specify this option, as it will cause
   unnecessary writes to the redis DB. For example:
   
@@ -287,6 +287,47 @@ cannot be called inside the allow/report/reset functions:
   error will be logged. For example:
 
 		blacklistPersistConnectTimeout(2)
+
+* whitelistPersistDB(\<ip\>, \<port\>) - Make the whitelist persistent
+  by storing entries in the specified redis DB. The IP address is a
+  string, and port should be 6379 unless you are running redis
+  on a non-standard port. If this option is specified, wforce will
+  read all the whitelist entries from the redis DB on startup. For example:
+  
+		whitelistPersistDB("127.0.0.1", 6379)
+
+* whitelistPersistReplicated() - Store whitelist entries that have
+  been replicated in the redis DB. By default, replicated whitelist 
+  entries will not be persisted. If you use a local
+  redis DB for each wforce server, then use this config option. If
+  you use a single redis instance for all wforce servers,
+  then you should not specify this option, as it will cause
+  unnecessary writes to the redis DB. For example:
+  
+		whitelistPersistReplicated()
+
+* whitelistPersistConnectTimeout(<timeout secs>) - Set the connect
+  timeout for connecting to the persistent redis DB. If the timeout is
+  exceeded during connection at startup then wforce will exit,
+  otherwise during normal operation if the timeout is exceeded, an
+  error will be logged. For example:
+
+		whitelistPersistConnectTimeout(2)
+
+* setBlacklistIPRetMsg(<msg>) - Set the message to be returned to
+  clients whose IP address is blacklisted. For example:
+
+        setBlackistIPRetMsg("Go away your IP is blacklisted")
+
+* setBlacklistLoginRetMsg(<msg>) - Set the message to be returned to
+  clients whose login is blacklisted. For example:
+
+        setBlackistLoginRetMsg("Go away your login is blacklisted")
+
+* setBlacklistIPLoginRetMsg(<msg>) - Set the message to be returned to
+  clients whose IP address/login is blacklisted. For example:
+
+        setBlackistIPLoginRetMsg("Go away your IP/Login is blacklisted")
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
@@ -680,6 +721,85 @@ a Netmask. For example:
   IP-Login tuple. IP address must be a ComboAddress. For example:
   
 		unblacklistIPLogin(lt.remote, lt.login)
+
+* checkBlacklistIP(\<ip\>) - Check if an IP is blacklisted. Return
+  true if the IP is blacklisted. IP must be a ComboAddress. For example:
+
+        checkBlacklistIP(newCA("192.1.2.3"))
+
+* checkBlacklistLogin(\<login\>) - Check if a login is
+  blacklisted. Return true if the login is blacklisted. For example:
+
+        checkBlacklistLogin(lt.login)
+
+* checkBlacklistIPLogin(\<ip\>, \<login\>) - Check if a IP/login is
+  blacklisted. Return true if the ip/login tuple is blacklisted. For
+  example:
+
+        checkBlacklistIPLogin(lt.remote, lt.login)
+
+* whitelistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Whitelist the
+  specified netmask for expiry seconds, with the specified reason. Netmask
+  address must be a Netmask object, e.g. created with newNetmask(). For example:
+  
+		whitelistNetmask(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
+
+* whitelistIP(\<ip\>, \<expiry\>, \<reason string\>) - Whitelist the
+  specified IP for expiry seconds, with the specified reason. IP
+  address must be a ComboAddress. For example:
+  
+		whitelistIP(lt.remote, 300, "Attempted password brute forcing")
+
+* whitelistLogin(\<login\>, \<expiry\> \<reason string\>) - Whitelist the
+  specified login for expiry seconds, with the specified
+  reason. For example: 
+  
+		whitelistLogin(lt.login, 300, "Potentially compromised account")
+
+* whitelistIPLogin(\<ip\>, \<login\>, \<expiry\>, \<reason string\>) -
+  Whitelist the specified IP-Login tuple for expiry seconds, with the
+  specified reason. Only when that IP and login are received in the
+  same login tuple will the request be whitelisted. IP address must be
+  a ComboAddress. For example:
+  
+		whitelistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
+
+* unwhitelistNetmask(\<Netmask\>) Remove the whitelist for the
+  specified netmask. Netmask address must be a Netmask object,
+  e.g. created with newNetmask(). For example:
+  
+		unwhitelistNetmask(newNetmask("12.32.0.0/16"))
+
+* unwhitelistIP(\<ip\>) - Remove the whitelist for the specified
+  IP. IP address must be a ComboAddress. For example:
+  
+		unwhitelistIP(lt.remote)
+
+* unwhitelistLogin(\<login\>) - Remove the whitelist for the specified
+  login. For example:
+  
+		unwhitelistLogin(lt.login)
+
+* unwhitelistIPLogin(\<ip\>, \<login\>) - Remove the whitelist for the specified
+  IP-Login tuple. IP address must be a ComboAddress. For example:
+  
+		unwhitelistIPLogin(lt.remote, lt.login)
+
+* checkWhitelistIP(\<ip\>) - Check if an IP is whitelisted. Return
+  true if the IP is whitelisted. IP must be a ComboAddress. For example:
+
+        checkWhitelistIP(newCA("192.1.2.3"))
+
+* checkWhitelistLogin(\<login\>) - Check if a login is
+  whitelisted. Return true if the login is whitelisted. For example:
+
+        checkWhitelistLogin(lt.login)
+
+* checkWhitelistIPLogin(\<ip\>, \<login\>) - Check if a IP/login is
+  whitelisted. Return true if the ip/login tuple is whitelisted. For
+  example:
+
+        checkWhitelistIPLogin(lt.remote, lt.login)
 
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following

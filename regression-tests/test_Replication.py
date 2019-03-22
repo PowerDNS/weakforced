@@ -302,3 +302,25 @@ class TestTimeWindowsReplication(ApiTestCase):
         r = self.countLoginsReplica2("resetFieldTest")
         j = r.json()
         self.assertEquals(j['r_attrs']['countLogins'], '0')
+
+    def test_BlackWhitelist(self):
+        self.addBLEntryIP('12.12.12.12', 60, "replication bl test")
+        self.addWLEntryIP('13.13.13.13', 60, "replication wl test")
+
+        r = self.getBLFunc();
+        j = r.json()
+        self.assertNotEqual(str.find(json.dumps(j), '12.12.12.12'), -1)
+
+        r = self.getWLFunc();
+        j = r.json()
+        self.assertNotEqual(str.find(json.dumps(j), '13.13.13.13'), -1)
+        
+        time.sleep(1)
+        
+        r = self.getBLFuncReplica();
+        j = r.json()
+        self.assertNotEqual(str.find(json.dumps(j), '12.12.12.12'), -1)
+        
+        r = self.getWLFuncReplica();
+        j = r.json()
+        self.assertNotEqual(str.find(json.dumps(j), '13.13.13.13'), -1)

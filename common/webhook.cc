@@ -96,7 +96,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
         queue.push(wqi);
       }
     }
-    cv.notify_all();
+    cv.notify_one();
   }
 }
 

@@ -284,7 +284,11 @@ protected:
 				     { "reset", {{ "url" }, {"secret", "basic-auth"}}},
 				     { "addbl", {{ "url" }, {"secret", "basic-auth"}}},
 				     { "delbl", {{ "url" }, {"secret", "basic-auth"}}},
-				     { "expirebl", {{ "url" }, {"secret", "basic-auth"}}}};
+				     { "expirebl", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "addwl", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "delwl", {{ "url" }, {"secret", "basic-auth"}}},
+				     { "expirewl", {{ "url" }, {"secret", "basic-auth"}}}
+  };
   const std::string name;
 };
 

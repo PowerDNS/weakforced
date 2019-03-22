@@ -139,3 +139,5 @@ struct syncData {
 };
 
 extern syncData g_sync_data;
+extern bool g_builtin_bl_enabled;
+extern bool g_builtin_wl_enabled;

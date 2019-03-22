@@ -52,6 +52,7 @@ message WforceReplicationMsg {
   enum RepType {
     SDBType = 0;
     BlacklistType = 1;
+    WhitelistType = 2;
     NoneType = 999;
   }
   required RepType rep_type = 1;

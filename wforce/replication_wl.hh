@@ -20,8 +20,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "yahttp/yahttp.hpp"
+#pragma once
+#include "replication.hh"
+#include "replication.pb.h"
+#include "blackwhitelist.hh"
+#include "replication_bl.hh"
 
-void setNumReportThreads(int numThreads);
-void registerWebserverCommands();
-void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
+class WLReplicationOperation : public BLReplicationOperation
+{
+public:
+  WLReplicationOperation() : BLReplicationOperation()
+  {
+  }
+  WLReplicationOperation(BLOperation_BLOpType op_type, BLWLType wl_type, const std::string& key, time_t ttl, const std::string& reason) : BLReplicationOperation(op_type, wl_type, key, ttl, reason)
+  {
+  }
+  AnyReplicationOperationP unserialize(const std::string& str, bool& retval);
+  void applyOperation();
+};

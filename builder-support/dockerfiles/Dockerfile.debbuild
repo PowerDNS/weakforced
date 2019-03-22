@@ -15,7 +15,7 @@ RUN grep -q stretch /etc/os-release && \
   echo "deb http://ftp.debian.org/debian `grep PRETTY_NAME /etc/os-release | sed 's,.*(\(.*\)).*,\1,'`-backports main" > /etc/apt/sources.list.d/backports.list && \
   apt-get update && \
   mkdir -p /dist/vendor/getdns /getdns && \
-  export GETDNS_VERSION='1.4.2' && export GETDNS_DEBIAN_VERSION=1 && \
+  export GETDNS_VERSION='1.5.1' && export GETDNS_DEBIAN_VERSION=1 && \
   cd /getdns && \
   curl -LO http://http.debian.net/debian/pool/main/g/getdns/getdns_$GETDNS_VERSION.orig.tar.gz && \
   curl -LO http://http.debian.net/debian/pool/main/g/getdns/getdns_$GETDNS_VERSION-$GETDNS_DEBIAN_VERSION.debian.tar.xz && \
@@ -42,6 +42,10 @@ COPY --from=sdist /sdist/ /sdist/
 RUN tar xvf /sdist/wforce-${BUILDER_VERSION}.tar.bz2
 COPY builder-support/debian wforce-${BUILDER_VERSION}/debian
 RUN builder/helpers/build-debs.sh wforce-$BUILDER_VERSION
+
+COPY builder-support/debian-report-api wforce-${BUILDER_VERSION}/report_api/debian
+RUN builder/helpers/build-debs.sh wforce-$BUILDER_VERSION/report_api
 @ENDIF
 
+RUN mv wforce-${BUILDER_VERSION}/wforce*.deb /dist
 RUN mv wforce*.deb /dist

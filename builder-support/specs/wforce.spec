@@ -4,9 +4,21 @@
 %bcond_with systemd
 %endif
 
+%define venv_cmd %{__python3} -m venv --symlinks
+%define venv_name %{name}-report-api
+%define venv_install_dir /usr/share/%{venv_name}
+%define venv_dir %{buildroot}%{venv_install_dir}
+%define venv_bin %{venv_dir}/bin
+%define venv_python %{venv_bin}/python
+%define venv_pip %{venv_python} %{venv_bin}/pip install
+%define configdir /etc/%{venv_name}
+%define vardir /var/lib/%{venv_name}
+%define __prelink_undo_cmd %{nil}
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+
+
 %global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
 %global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
-
 
 Summary: Weakforce daemon for detecting brute force attacts
 Name: wforce
@@ -78,6 +90,14 @@ Summary: Longterm abuse data reporting and alerter
  stored in an external DB such as elasticsearch, and to send alerts on
  potential login abuse.
 
+%package report-api
+Summary: Enable access to the report information stored in Elasticsearch.
+Requires: python34
+
+%description report-api
+ The Report API is provided to enable access to the report information stored in Elasticsearch.
+ It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to "forget" devices and logins.
+
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
@@ -94,25 +114,44 @@ Summary: Longterm abuse data reporting and alerter
 make %{?_smp_mflags}
 %{?scl:EOF}
 
-%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
-
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
 mkdir -p %{buildroot}/%{_docdir}/%{name}-%{version}
-mkdir -p %{buildroot}/%{_datadir}/%{name}/report_api/wforce
-mkdir -p %{buildroot}/%{_datadir}/%{name}/report_api/instance
 mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/kibana/kibana_saved_objects.json %{buildroot}/%{_docdir}/%{name}-%{version}/
-mv report_api/wforce/__init__.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/__init__.py
-mv report_api/wforce/report.py %{buildroot}/%{_datadir}/%{name}/report_api/wforce/report.py
-mv report_api/instance/report.cfg %{buildroot}/%{_datadir}/%{name}/report_api/instance/report.cfg
-mv report_api/requirements.txt %{buildroot}/%{_datadir}/%{name}/report_api/requirements.txt
-mv report_api/run.sh %{buildroot}/%{_datadir}/%{name}/report_api/run.sh
-mv report_api/runreport.py %{buildroot}/%{_datadir}/%{name}/report_api/runreport.py
 
+%{venv_cmd} %{venv_dir}
+%{venv_pip} -U pip setuptools
+pushd report_api
+%{venv_pip} .
+popd
+
+# RECORD files are used by wheels for checksum. They contain path names which
+# match the buildroot and must be removed or the package will fail to build.
+find %{buildroot} -name "RECORD" -exec rm -rf {} \;
+find %{venv_dir} -type f -iname '*.pyc' -delete
+find %{venv_dir} -type d -iname '__pycache__' -delete
+
+# Change the virtualenv path to the target installation directory.
+venvctrl-relocate --source=%{venv_dir} --destination=%{venv_install_dir}
+
+#remove unfixable files and pycache
+%{__rm} -f %{venv_dir}/bin/activate.*
+
+# Strip native modules as they contain buildroot paths in their debug information
+find %{venv_dir}/lib -type f -name "*.so" | xargs -r strip
+
+# Remove the venvdir from all file contents
+find %{venv_dir} -type f -exec sed -e 's!%{venv_dir}!%{venv_install_dir}!g' -i {} +
+
+# install some files for the report-api
+%{__install} -D -m 755 report_api/helpers/wforce-report-api-webserver %{buildroot}/%{_bindir}/wforce-report-api-webserver
+%{__install} -D -m 644 report_api/helpers/wforce-report-api.conf %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
+%{__install} -D -m 644 report_api/instance/report.cfg %{buildroot}/%{_sysconfdir}/%{name}-report-api/%{name}-report-api-instance.conf
+%{__install} -D -m 644 report_api/helpers/wforce-report-api.service %{buildroot}/%{_unitdir}/wforce-report-api.service
 
 %clean
 rm -rf %{buildroot}
@@ -143,6 +182,26 @@ if [ "$1" = "2" ] || [ "$1" = "1" ]; then
   /sbin/service %{name} stop >/dev/null 2>&1 || :
 %endif
 fi
+
+%pre report-api
+getent group %{name}-report-api >/dev/null || groupadd -r %{name}-report-api
+getent passwd %{name}-report-api >/dev/null || \
+useradd -r -g %{name}-report-api -d /var/spool/%{name}-report-api -s /bin/false -c "wforce-report-api" %{name}-report-api
+
+%post report-api
+%if %{with systemd}
+%systemd_post %{name}-report-api
+%endif
+
+%preun report-api
+%if %{with systemd}
+%systemd_preun %{name}-report-api
+%endif
+
+%postun report-api
+%if %{with systemd}
+%systemd_postun_with_restart %{name}-report-api
+%endif
 
 %post trackalert
 # Post-Install
@@ -268,16 +327,7 @@ fi
 %ghost %{_sysconfdir}/%{name}.conf
 %attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}/%{name}.conf
 %{_sysconfdir}/%{name}/regexes.yaml
-%{_datadir}/%{name}/report_api/wforce/__init__.py
-%{_datadir}/%{name}/report_api/wforce/report.py
-%{_datadir}/%{name}/report_api/instance/report.cfg
-%{_datadir}/%{name}/report_api/requirements.txt
-%{_datadir}/%{name}/report_api/run.sh
-%{_datadir}/%{name}/report_api/runreport.py
-%{_docdir}/%{name}-%{version}/%{name}.conf.example
-%{_docdir}/%{name}-%{version}/logstash.conf
-%{_docdir}/%{name}-%{version}/wforce_template.json
-%{_docdir}/%{name}-%{version}/kibana_saved_objects.json
+%{_docdir}/%{name}-%{version}/*
 %{_unitdir}/%{name}.service
 %{_mandir}/man1/%{name}.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz
@@ -293,3 +343,10 @@ fi
 %license LICENSE
 %{_unitdir}/trackalert.service
 %{_sysconfdir}/%{name}/trackalert.conf
+
+%files report-api
+%{venv_install_dir}
+%attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}-report-api/*.conf
+%{_bindir}/%{name}-report-api-webserver
+%{_unitdir}/%{name}-report-api.service
+%{_mandir}/man5/%{name}-report-api.5.gz

@@ -23,6 +23,7 @@
 #include "replication.hh"
 #include "replication_sdb.hh"
 #include "replication_bl.hh"
+#include "replication_wl.hh"
 
 std::string ReplicationOperation::serialize() const
 {
@@ -40,7 +41,7 @@ std::string ReplicationOperation::serialize() const
 bool ReplicationOperation::unserialize(const std::string& str)
 {
   string err;
-  bool retval=false;
+  bool retval=true;
   WforceReplicationMsg msg;
   
   if (msg.ParseFromString(str)) {
@@ -53,6 +54,12 @@ bool ReplicationOperation::unserialize(const std::string& str)
       BLReplicationOperation bl_op = BLReplicationOperation();
       rep_op = bl_op.unserialize(msg.rep_op(), retval);
     }
+    else if (obj_type == WforceReplicationMsg_RepType_WhitelistType) {
+      WLReplicationOperation wl_op = WLReplicationOperation();
+      rep_op = wl_op.unserialize(msg.rep_op(), retval);
+    }
+    else
+      retval = false;
   }  
   return retval;
 }

@@ -49,7 +49,6 @@
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
-#include "ext/ctpl.h"
 #include "device_parser.hh"
 #include "wforce_ns.hh"
 

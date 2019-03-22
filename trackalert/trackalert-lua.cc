@@ -145,8 +145,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   
   if (!multi_lua) {
     c_lua.writeFunction("setNumReportThreads", [](int numThreads) {
-	// the number of threads used to run the report lua functions
-	setNumReportThreads(numThreads);
+        // XXX this function is deprecated - use setNumWorkerThreads instead
+        infolog("setNumReportThreads is deprecated - use setNumWorkerThreads() instead");
       });
   }
   else {

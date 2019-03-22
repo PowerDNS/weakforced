@@ -35,29 +35,17 @@
 #include "namespaces.hh"
 #include <sys/time.h>
 #include <sys/resource.h>
-#include "ext/ctpl.h"
 #include "base64.hh"
 #include "perf-stats.hh"
 #include "trackalert-luastate.hh"
 #include "webhook.hh"
 #include "login_tuple.hh"
 
-std::atomic<int> numReportThreads(TRACKALERT_NUM_REPORT_THREADS);
-
 static int uptimeOfProcess()
 {
   static time_t start=time(0);
   return time(0) - start;
 }
-
-void setNumReportThreads(int numThreads)
-{
-  numReportThreads = numThreads;
-}
-
-void initReportThreadPool()
-{
-  }
 
 void reportLog(const LoginTuple& lt)
 {
@@ -77,7 +65,7 @@ void reportLog(const LoginTuple& lt)
   }
 }
 
-void runReportLua(int id, Json msg, std::string command)
+static void runReportLua(Json msg, std::string command)
 {
   try {
     LoginTuple lt;
@@ -112,8 +100,6 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   using namespace json11;
   Json msg;
   string err;
-  static std::atomic<bool> init(false);
-  static std::unique_ptr<ctpl::thread_pool> reportPoolp;
 
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
@@ -123,22 +109,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     resp.body=ss.str();
   }
   else {
-    if (!init) {
-      reportPoolp = wforce::make_unique<ctpl::thread_pool>(numReportThreads, 5000);
-      init = true;
-    }
-    if (reportPoolp) {
-      reportPoolp->push(runReportLua, msg, command);
-    }
-    else {
-      std::string myerr = "Cannot initialize report thread pool - this is a catastrophic error!";	
-      errlog(myerr.c_str());
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << myerr << "\"}";
-      resp.body=ss.str();
-      return;
-    }
+    runReportLua(msg, command);
     resp.status=200;
     resp.body=R"({"status":"ok"})";      
   }

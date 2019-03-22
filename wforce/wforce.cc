@@ -55,7 +55,6 @@
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>
 #endif
-#include "ext/ctpl.h"
 #include "device_parser.hh"
 #include "wforce_ns.hh"
 
@@ -73,6 +72,17 @@ WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
 syncData g_sync_data;
+
+struct SiblingQueueItem {
+  std::string msg;
+  ComboAddress remote;
+  std::shared_ptr<Sibling> recv_sibling;
+};
+
+static std::mutex g_sibling_queue_mutex;
+static std::queue<SiblingQueueItem> g_sibling_queue;
+static std::condition_variable g_sibling_queue_cv;
+size_t g_max_sibling_queue_size = 1000;
 
 std::string g_configDir; // where the config files are located
 std::shared_ptr<UserAgentParser> g_ua_parser_p;
@@ -771,24 +781,53 @@ bool checkConnFromSibling(const ComboAddress& remote,
 
 void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
 {
-  static ctpl::thread_pool p(g_num_sibling_threads);
-  
-  p.push([msg,remote,recv_sibling](int id) {
-      thread_local bool init=false;
-      if (!init) {
-        setThreadName("wf/repl-udp");
-        init = true;
-      }
-      ReplicationOperation rep_op;
-      if (rep_op.unserialize(msg) != false) {
-        rep_op.applyOperation();
-        recv_sibling->rcvd_success++;
-      }
-      else {
-        errlog("Invalid replication operation received from %s", remote.toString());
-        recv_sibling->rcvd_fail++;
-      }
-    });
+  static std::atomic<bool> start_threads(true);
+
+  if (start_threads) {
+    for (size_t i=0; i<g_num_sibling_threads; i++) {
+      std::thread t([]() {
+          thread_local bool init=false;
+          if (!init) {
+            setThreadName("wf/repl-worker");
+            init = true;
+          }
+          while (true) {
+            SiblingQueueItem sqi;
+            {
+              std::unique_lock<std::mutex> lock(g_sibling_queue_mutex);
+              while (g_sibling_queue.size() == 0) {
+                g_sibling_queue_cv.wait(lock);
+              }
+              sqi = std::move(g_sibling_queue.front());
+              g_sibling_queue.pop();
+            }
+            ReplicationOperation rep_op;
+            if (rep_op.unserialize(sqi.msg) != false) {
+              rep_op.applyOperation();
+              sqi.recv_sibling->rcvd_success++;
+            }
+            else {
+              errlog("Invalid replication operation received from %s", sqi.remote.toString());
+              sqi.recv_sibling->rcvd_fail++;
+            }
+          }
+        });
+      t.detach();
+    }
+    start_threads = false;
+  }
+  SiblingQueueItem sqi = { msg, remote, recv_sibling };
+  {
+    std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
+    if (g_sibling_queue.size() >= g_max_sibling_queue_size) {
+      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg");
+      return;
+    }
+    else {
+      g_sibling_queue.push(sqi);
+    }
+  }
+  g_sibling_queue_cv.notify_one();
 }
 
 void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)

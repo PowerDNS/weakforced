@@ -32,7 +32,6 @@
 #include "namespaces.hh"
 #include <sys/time.h>
 #include <sys/resource.h>
-#include "ext/ctpl.h"
 #include "base64.hh"
 #include "blackwhitelist.hh"
 #include "twmap-wrapper.hh"

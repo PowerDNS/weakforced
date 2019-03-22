@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+export WFORCE_REPORT_API_CONFIG=${WFORCE_REPORT_API_CONFIG:-/etc/wforce-report-api/wforce-report-api-instance.conf}
+export WFORCE_REPORT_API_WEBSERVER_CONFIG=${WFORCE_REPORT_API_WEBSERVER_CONFIG:-/etc/wforce-report-api/wforce-report-api-web.conf}
+/usr/share/wforce-report-api/bin/gunicorn -c ${WFORCE_REPORT_API_WEBSERVER_CONFIG} runreport:app

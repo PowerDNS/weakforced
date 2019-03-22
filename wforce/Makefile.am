@@ -36,10 +36,11 @@ wforce_SOURCES = \
 	wforce-web.cc wforce-web.hh\
 	twmap.cc \
 	twmap-wrapper.cc twmap-wrapper.hh \
-	blacklist.cc blacklist.hh \
+	blackwhitelist.cc blackwhitelist.hh \
 	replication.cc replication.hh \
 	replication_sdb.hh replication_sdb.cc \
 	replication_bl.cc replication_bl.hh \
+	replication_wl.cc replication_wl.hh \
 	luastate.hh
 
 wforce_LDFLAGS = \
@@ -57,7 +58,7 @@ EXTRA_wforce_DEPENDENCIES = \
 	$(EXT_LIBS) $(WFORCE_LIBS)
 
 noinst_HEADERS = \
-	blacklist.hh \
+	blackwhitelist.hh \
 	wforce.hh \
 	replication.hh \
 	replication_sdb.hh \

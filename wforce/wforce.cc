@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "sodcrypto.hh"
-#include "blacklist.hh"
+#include "blackwhitelist.hh"
 #include "perf-stats.hh"
 #include "luastate.hh"
 #include "webhook.hh"
@@ -970,6 +970,26 @@ char* my_generator(const char* text, int state)
       "blacklistIP",
       "blacklistLogin",
       "blacklistIPLogin",
+      "unblacklistNetmask",
+      "unblacklistIP",
+      "unblacklistLogin",
+      "unblacklistIPLogin",
+      "checkBlacklistIP",
+      "checkBlacklistLogin",
+      "checkBlacklistIPLogin",
+      "whitelistlistPersistDB(",
+      "whitelistPersistReplicated()",
+      "whitelistNetmask",
+      "whitelistIP",
+      "whitelistLogin",
+      "whitelistIPLogin",
+      "unwhitelistNetmask",
+      "unwhitelistIP",
+      "unwhitelistLogin",
+      "unwhitelistIPLogin",
+      "checkWhitelistIP",
+      "checkWhitelistLogin",
+      "checkWhitelistIPLogin",
       "reloadGeoIPDBs()"
       };
   static int s_counter=0;
@@ -1212,15 +1232,21 @@ try
   noticelog("ACL allowing queries from: %s", acls.c_str());
 
   // setup blacklist_db purge thread
-  thread t1(BlackListDB::purgeEntriesThread, &g_bl_db);
+  thread t1(BlackWhiteListDB::purgeEntriesThread, &g_bl_db);
   t1.detach();
+  thread t2(BlackWhiteListDB::purgeEntriesThread, &g_wl_db);
+  t2.detach();
 
   // start the performance stats thread
   startStatsThread();
 
   // load the persistent blacklist entries
   if (!g_bl_db.loadPersistEntries()) {
-    errlog("Could not load persistent DB entries, please fix configuration or check redis availability. Exiting.");
+    errlog("Could not load persistent BL DB entries, please fix configuration or check redis availability. Exiting.");
+    exit(1);
+  }
+  if (!g_wl_db.loadPersistEntries()) {
+    errlog("Could not load persistent WL DB entries, please fix configuration or check redis availability. Exiting.");
     exit(1);
   }
   

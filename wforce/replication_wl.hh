@@ -24,16 +24,17 @@
 #include "replication.hh"
 #include "replication.pb.h"
 #include "blackwhitelist.hh"
+#include "replication_bl.hh"
 
-class BLReplicationOperation : public AnyReplicationOperation
+class WLReplicationOperation : public BLReplicationOperation
 {
 public:
-  BLReplicationOperation();
-  BLReplicationOperation(BLOperation_BLOpType op_type, BLWLType bl_type, const std::string& key, time_t ttl, const std::string& reason);
-  ~BLReplicationOperation() {}
-  std::string serialize();
+  WLReplicationOperation() : BLReplicationOperation()
+  {
+  }
+  WLReplicationOperation(BLOperation_BLOpType op_type, BLWLType wl_type, const std::string& key, time_t ttl, const std::string& reason) : BLReplicationOperation(op_type, wl_type, key, ttl, reason)
+  {
+  }
   AnyReplicationOperationP unserialize(const std::string& str, bool& retval);
   void applyOperation();
-protected:
-  BLOperation bl_msg;
 };

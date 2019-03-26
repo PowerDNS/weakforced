@@ -262,6 +262,11 @@ cannot be called inside the allow/report/reset functions:
   
 		statsdb:twEnableReplication()
 
+* disableBuiltinBlacklists() - Disable the built-in blacklisting checks,
+  enabling them to be checked from Lua instead. For example:
+
+        disableBuiltinBlacklists()
+
 * blacklistPersistDB(\<ip\>, \<port\>) - Make the blacklist persistent
   by storing entries in the specified redis DB. The IP address is a
   string, and port should be 6379 unless you are running redis
@@ -287,6 +292,11 @@ cannot be called inside the allow/report/reset functions:
   error will be logged. For example:
 
 		blacklistPersistConnectTimeout(2)
+
+* disableBuiltinWhitelists() - Disable the built-in whitelisting checks,
+  enabling them to be checked from Lua instead. For example:
+
+        disableBuiltinWhitelists()
 
 * whitelistPersistDB(\<ip\>, \<port\>) - Make the whitelist persistent
   by storing entries in the specified redis DB. The IP address is a

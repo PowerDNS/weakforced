@@ -6,6 +6,7 @@ New Features/Bug Fixes
 * Fix issue where blacklisted is always true in getDBStats output
 * Fix issue where threadnames were not displayed correctly
 * Fix issue where siblings defined as tcp were connected to on startup
+* Fix issue where non-UTF-8 login names would cause protobuf erros
 
 Fix blacklisted always true in getDBStats output
 --------------
@@ -32,3 +33,12 @@ replication attempt. Note that any static blacklist entries in the
 config will cause a replication attempt on startup and this will
 trigger the same startup delay behaviour. Thus it is not recommended to
 create static blacklist entries in the config.
+
+Fix non-UTF-8 Login Name Issue
+----------------
+
+Replication of data used the protobuf "string" type, which gets
+validated on parsing to ensure it is a UTF-8 string. However, certain
+fields such as login can contain non-UTF-8 characters, so this fix
+changes to use the "bytes" type instead. This fix is backwards
+compatible because string and bytes types are identical on the wire.

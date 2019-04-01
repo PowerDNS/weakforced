@@ -14,6 +14,8 @@ class TestEightBit(ApiTestCase):
         j = r.json()
         print(json.dumps(j))
 
+        time.sleep(4)
+        
         r = self.customFuncReplicaWithName("EightBitKey", {})
         j = r.json()
         print(json.dumps(j))

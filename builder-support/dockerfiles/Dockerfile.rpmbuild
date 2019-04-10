@@ -23,6 +23,7 @@ ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers
 
 @IF [ ! -z "$M_all$M_wforce" ]
+RUN yum install -y /usr/bin/python3
 RUN builder/helpers/build-specs.sh builder-support/specs/wforce.spec
 @ENDIF
 

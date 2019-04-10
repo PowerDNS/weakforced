@@ -47,6 +47,9 @@ regression-gcc: build_image start
 regression-clang: build_image start
 	$(DCMP) exec $(REGRESSION_SERVICE) docker/regression/regression.sh clang-4.0 clang++-4.0
 
+regression-none:
+	echo "Regression tests skipped due to compiler 'none'"
+
 regression: regression-gcc regression-clang
 
 all: build_image start

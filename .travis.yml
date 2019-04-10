@@ -35,13 +35,28 @@ matrix:
   - name: "GCC Regression"
     env:
       - COMPILER=gcc
+      - BUILDER=true 
+      - BUILDER_TARGET=
   - name: "Clang Regression"
     env:
       - COMPILER=clang
+      - BUILDER=true 
+      - BUILDER_TARGET=
+  - name: "Package Centos-7"
+    env:
+      - COMPILER=none
+      - BUILDER=./builder/build.sh
+      - BUILDER_TARGET=centos-7
+  - name: "Package Debian-stretch"
+    env:
+      - COMPILER=none
+      - BUILDER=./builder/build.sh
+      - BUILDER_TARGET=debian-stretch
 script:
  - autoreconf -i
  - ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
  - cd docker
  - make regression-$COMPILER
  - cd ..
+ - $BUILDER $BUILDER_TARGET
  - ./trigger_policy_build.sh

@@ -47,4 +47,5 @@ class TestReportAPI(ApiTestCase):
         self.assertNotEquals(j['response'], [])
         attrs['device'] = { "browser.family": "Safari", "os.family": "Mac OS X"}
         r = self.reportAPI("/devices/forget", attrs)
+        print(r.json())
         self.assertEquals(r.status_code, requests.codes.ok)

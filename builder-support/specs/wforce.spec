@@ -92,12 +92,13 @@ Summary: Longterm abuse data reporting and alerter
 
 %package report-api
 Summary: Enable access to the report information stored in Elasticsearch.
-Requires: python34
+Requires: python%{python3_pkgversion}-setuptools
+Requires: python%{python3_pkgversion}-devel
+Requires: python%{python3_pkgversion}-pip
 
 %description report-api
  The Report API is provided to enable access to the report information stored in Elasticsearch.
  It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to "forget" devices and logins.
-
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 

@@ -92,12 +92,13 @@ Summary: Longterm abuse data reporting and alerter
 
 %package report-api
 Summary: Enable access to the report information stored in Elasticsearch.
-Requires: python34
+Requires: python%{python3_pkgversion}-setuptools
+Requires: python%{python3_pkgversion}-devel
+Requires: python%{python3_pkgversion}-pip
 
 %description report-api
  The Report API is provided to enable access to the report information stored in Elasticsearch.
  It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to "forget" devices and logins.
-
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
@@ -136,7 +137,9 @@ find %{venv_dir} -type f -iname '*.pyc' -delete
 find %{venv_dir} -type d -iname '__pycache__' -delete
 
 # Change the virtualenv path to the target installation directory.
-venvctrl-relocate --source=%{venv_dir} --destination=%{venv_install_dir}
+%{venv_pip} -U venvctrl
+%{venv_bin}/venvctrl-relocate --source=%{venv_dir} --destination=%{venv_install_dir}
+%{venv_python} %{venv_bin}/pip3 uninstall --yes venvctrl
 
 #remove unfixable files and pycache
 %{__rm} -f %{venv_dir}/bin/activate.*

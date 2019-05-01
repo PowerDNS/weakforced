@@ -1,9 +1,8 @@
 FROM dist-base as package-builder
-RUN yum install -y rpm-build rpmdevtools python3-rpm-macros python34 python34-pip python34-devel && \
+RUN yum install -y rpm-build rpmdevtools python3-rpm-macros \
+    /usr/bin/python3 /usr/bin/pip3 && \
     yum groupinstall -y "Development Tools"
-RUN /usr/bin/pip3.4 install -U pip && \
-    /usr/bin/pip3.4 install venvctrl && \
-    rpmdev-setuptree
+RUN rpmdev-setuptree
 
 RUN mkdir /dist /wforce
 WORKDIR /wforce

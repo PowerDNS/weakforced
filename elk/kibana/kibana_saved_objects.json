@@ -6,20 +6,12 @@
       "title": "Per-User Login and Abuse Statistics",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"Successful-slash-Unsuccessful-Logins\",\"panelIndex\":1,\"row\":3,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-Passwords\",\"panelIndex\":2,\"row\":3,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Distinct-Count-of-IPs-for-Successful-Logins\",\"panelIndex\":3,\"row\":6,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-IPs-for-Unsuccessful-Logins\",\"panelIndex\":4,\"row\":6,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Distinct-Count-of-Devices-for-Successful-Logins\",\"panelIndex\":5,\"row\":9,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-Devices-for-Unsuccessful-Logins\",\"panelIndex\":6,\"row\":9,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Login-Country-over-Time-(Successful-Logins)\",\"panelIndex\":7,\"row\":12,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Login-Country-over-Time-(Unsuccessful-Logins)\",\"panelIndex\":8,\"row\":12,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Per-User-Dashboard-Instructions\",\"panelIndex\":9,\"row\":1,\"size_x\":12,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Suspicious-IPs\",\"panelIndex\":10,\"row\":15,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Suspicious-Device-Types\",\"panelIndex\":11,\"row\":15,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Unsuccessful-Login-Map\",\"panelIndex\":12,\"row\":20,\"size_x\":12,\"size_y\":6,\"type\":\"visualization\"}]",
-      "optionsJSON": "{\"darkTheme\":false}",
-      "uiStateJSON": "{\"P-10\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"P-11\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"P-12\":{\"mapCenter\":[14.944784875088372,5.09765625]}}",
+      "panelsJSON": "[{\"id\":\"Successful-slash-Unsuccessful-Logins\",\"panelIndex\":\"1\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":10,\"w\":24,\"h\":15,\"i\":\"1\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Passwords\",\"panelIndex\":\"2\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":10,\"w\":24,\"h\":15,\"i\":\"2\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-IPs-for-Successful-Logins\",\"panelIndex\":\"3\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":25,\"w\":24,\"h\":15,\"i\":\"3\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-IPs-for-Unsuccessful-Logins\",\"panelIndex\":\"4\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":25,\"w\":24,\"h\":15,\"i\":\"4\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Devices-for-Successful-Logins\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":40,\"w\":24,\"h\":15,\"i\":\"5\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Devices-for-Unsuccessful-Logins\",\"panelIndex\":\"6\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":40,\"w\":24,\"h\":15,\"i\":\"6\"},\"version\":\"6.4.2\"},{\"id\":\"Login-Country-over-Time-(Successful-Logins)\",\"panelIndex\":\"7\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":55,\"w\":24,\"h\":15,\"i\":\"7\"},\"version\":\"6.4.2\"},{\"id\":\"Login-Country-over-Time-(Unsuccessful-Logins)\",\"panelIndex\":\"8\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":55,\"w\":24,\"h\":15,\"i\":\"8\"},\"version\":\"6.4.2\"},{\"id\":\"Per-User-Dashboard-Instructions\",\"panelIndex\":\"9\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":10,\"i\":\"9\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-IPs\",\"panelIndex\":\"10\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":0,\"y\":70,\"w\":24,\"h\":25,\"i\":\"10\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-Device-Types\",\"panelIndex\":\"11\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":24,\"y\":70,\"w\":24,\"h\":25,\"i\":\"11\"},\"version\":\"6.4.2\"},{\"id\":\"Unsuccessful-Login-Map\",\"panelIndex\":\"12\",\"type\":\"visualization\",\"embeddableConfig\":{\"mapCenter\":[14.944784875088372,5.09765625]},\"gridData\":{\"x\":0,\"y\":95,\"w\":48,\"h\":30,\"i\":\"12\"},\"version\":\"6.4.2\"}]",
+      "optionsJSON": "{\"darkTheme\":true,\"useMargins\":true}",
       "version": 1,
-      "timeRestore": true,
-      "timeTo": "now",
-      "timeFrom": "now/d",
-      "refreshInterval": {
-        "display": "Off",
-        "pause": false,
-        "value": 0
-      },
+      "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
+        "searchSourceJSON": "{\"filter\":[],\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"}}"
       }
     },
     "_meta": {
@@ -33,20 +25,12 @@
       "title": "Per-IP Login and Abuse Statistics",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"Successful-slash-Unsuccessful-Logins\",\"panelIndex\":1,\"row\":4,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-Passwords\",\"panelIndex\":2,\"row\":4,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Distinct-Count-of-Devices-for-Successful-Logins\",\"panelIndex\":5,\"row\":10,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-Devices-for-Unsuccessful-Logins\",\"panelIndex\":6,\"row\":10,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Suspicious-Device-Types\",\"panelIndex\":11,\"row\":13,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Per-IP-Dashboard-Instructions\",\"panelIndex\":13,\"row\":1,\"size_x\":12,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Distinct-Count-of-Successful-User-Logins-(Per-IP)\",\"panelIndex\":14,\"row\":7,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Distinct-Count-of-Unsuccessful-User-Logins-(Per-IP)\",\"panelIndex\":15,\"row\":7,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":9,\"id\":\"GeoIP-City-Name\",\"panelIndex\":16,\"row\":3,\"size_x\":4,\"size_y\":1,\"type\":\"visualization\"},{\"col\":1,\"id\":\"GeoIP-Country-Name\",\"panelIndex\":17,\"row\":3,\"size_x\":4,\"size_y\":1,\"type\":\"visualization\"},{\"col\":5,\"id\":\"GeoIP-Region-Name\",\"panelIndex\":18,\"row\":3,\"size_x\":4,\"size_y\":1,\"type\":\"visualization\"}]",
-      "optionsJSON": "{\"darkTheme\":false}",
-      "uiStateJSON": "{\"P-11\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}}",
+      "panelsJSON": "[{\"id\":\"Successful-slash-Unsuccessful-Logins\",\"panelIndex\":\"1\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":15,\"w\":24,\"h\":15,\"i\":\"1\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Passwords\",\"panelIndex\":\"2\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":15,\"w\":24,\"h\":15,\"i\":\"2\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Devices-for-Successful-Logins\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":45,\"w\":24,\"h\":15,\"i\":\"5\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Devices-for-Unsuccessful-Logins\",\"panelIndex\":\"6\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":45,\"w\":24,\"h\":15,\"i\":\"6\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-Device-Types\",\"panelIndex\":\"11\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":24,\"y\":60,\"w\":24,\"h\":25,\"i\":\"11\"},\"version\":\"6.4.2\"},{\"id\":\"Per-IP-Dashboard-Instructions\",\"panelIndex\":\"13\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":10,\"i\":\"13\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Successful-User-Logins-(Per-IP)\",\"panelIndex\":\"14\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":30,\"w\":24,\"h\":15,\"i\":\"14\"},\"version\":\"6.4.2\"},{\"id\":\"Distinct-Count-of-Unsuccessful-User-Logins-(Per-IP)\",\"panelIndex\":\"15\",\"type\":\"visualization\",\"gridData\":{\"x\":24,\"y\":30,\"w\":24,\"h\":15,\"i\":\"15\"},\"version\":\"6.4.2\"},{\"id\":\"GeoIP-City-Name\",\"panelIndex\":\"16\",\"type\":\"visualization\",\"gridData\":{\"x\":32,\"y\":10,\"w\":16,\"h\":5,\"i\":\"16\"},\"version\":\"6.4.2\"},{\"id\":\"GeoIP-Country-Name\",\"panelIndex\":\"17\",\"type\":\"visualization\",\"gridData\":{\"x\":0,\"y\":10,\"w\":16,\"h\":5,\"i\":\"17\"},\"version\":\"6.4.2\"},{\"id\":\"GeoIP-Region-Name\",\"panelIndex\":\"18\",\"type\":\"visualization\",\"gridData\":{\"x\":16,\"y\":10,\"w\":16,\"h\":5,\"i\":\"18\"},\"version\":\"6.4.2\"}]",
+      "optionsJSON": "{\"darkTheme\":true,\"useMargins\":true}",
       "version": 1,
-      "timeRestore": true,
-      "timeTo": "now",
-      "timeFrom": "now/d",
-      "refreshInterval": {
-        "display": "Off",
-        "pause": false,
-        "value": 0
-      },
+      "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+        "searchSourceJSON": "{\"filter\":[],\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\",\"default_field\":\"*\"}},\"language\":\"lucene\"}}"
       }
     },
     "_meta": {
@@ -60,20 +44,12 @@
       "title": "System-Wide Login Abuse",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"Unsuccessful-Login-Map\",\"panelIndex\":2,\"row\":11,\"size_x\":11,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Suspicious-Device-Types\",\"panelIndex\":3,\"row\":6,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Suspicious-IPs\",\"panelIndex\":4,\"row\":1,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Suspicious-slash-Compromised-Users\",\"panelIndex\":5,\"row\":1,\"size_x\":5,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"Successful-slash-Unsuccessful-Logins\",\"type\":\"visualization\",\"panelIndex\":6,\"size_x\":5,\"size_y\":5,\"col\":7,\"row\":6}]",
-      "optionsJSON": "{\"darkTheme\":false}",
-      "uiStateJSON": "{\"P-1\":{\"vis\":{\"legendOpen\":true}},\"P-2\":{\"mapCenter\":[14.944784875088372,6.328125]},\"P-3\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"P-4\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"P-5\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}}",
+      "panelsJSON": "[{\"id\":\"Unsuccessful-Login-Map\",\"panelIndex\":\"2\",\"type\":\"visualization\",\"embeddableConfig\":{\"mapCenter\":[14.944784875088372,6.328125]},\"gridData\":{\"x\":0,\"y\":50,\"w\":44,\"h\":25,\"i\":\"2\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-Device-Types\",\"panelIndex\":\"3\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":0,\"y\":25,\"w\":24,\"h\":25,\"i\":\"3\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-IPs\",\"panelIndex\":\"4\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":25,\"i\":\"4\"},\"version\":\"6.4.2\"},{\"id\":\"Suspicious-slash-Compromised-Users\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"embeddableConfig\":{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}},\"gridData\":{\"x\":24,\"y\":0,\"w\":20,\"h\":25,\"i\":\"5\"},\"version\":\"6.4.2\"},{\"id\":\"Successful-slash-Unsuccessful-Logins\",\"type\":\"visualization\",\"panelIndex\":\"6\",\"gridData\":{\"x\":24,\"y\":25,\"w\":20,\"h\":25,\"i\":\"6\"},\"version\":\"6.4.2\"}]",
+      "optionsJSON": "{\"darkTheme\":true,\"useMargins\":true}",
       "version": 1,
-      "timeRestore": true,
-      "timeTo": "now",
-      "timeFrom": "now/d",
-      "refreshInterval": {
-        "display": "Off",
-        "pause": false,
-        "value": 0
-      },
+      "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+        "searchSourceJSON": "{\"filter\":[],\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\",\"default_field\":\"*\"}},\"language\":\"lucene\"}}"
       }
     },
     "_meta": {
@@ -115,244 +91,6 @@
     }
   },
   {
-    "_id": "Unsuccessful-Login-Map",
-    "_type": "visualization",
-    "_source": {
-      "title": "Unsuccessful Login Map",
-      "visState": "{\"title\":\"Unsuccessful Login Map\",\"type\":\"tile_map\",\"params\":{\"mapType\":\"Scaled Circle Markers\",\"isDesaturated\":true,\"addTooltip\":true,\"heatMaxZoom\":16,\"heatMinOpacity\":0.1,\"heatRadius\":25,\"heatBlur\":15,\"heatNormalizeData\":true,\"legendPosition\":\"bottomright\",\"mapZoom\":2,\"mapCenter\":[15,5],\"wms\":{\"enabled\":false,\"url\":\"https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WMSServer\",\"options\":{\"version\":\"1.3.0\",\"layers\":\"0\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"Maps provided by USGS\",\"styles\":\"\"}}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"geohash_grid\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.location\",\"autoPrecision\":true,\"customLabel\":\"Unsuccessful Logins\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{\"mapCenter\":[14.944784875088372,5.09765625]}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Suspicious-IPs",
-    "_type": "visualization",
-    "_source": {
-      "title": "Suspicious IPs",
-      "visState": "{\"title\":\"Suspicious IPs\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Count of Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"remote\",\"size\":100,\"customLabel\":\"Suspicious IPs\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{\n  \"vis\": {\n    \"params\": {\n      \"sort\": {\n        \"columnIndex\": null,\n        \"direction\": null\n      }\n    }\n  }\n}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Suspicious-slash-Compromised-Users",
-    "_type": "visualization",
-    "_source": {
-      "title": "Suspicious/Compromised Users",
-      "visState": "{\"title\":\"Suspicious/Compromised Users\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"login\",\"size\":100,\"customLabel\":\"Suspicious/Compromised Users\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Suspicious-Device-Types",
-    "_type": "visualization",
-    "_source": {
-      "title": "Suspicious Device Types",
-      "visState": "{\"title\":\"Suspicious Device Types\",\"type\":\"table\",\"params\":{\"perPage\":6,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"device_id\",\"size\":10,\"customLabel\":\"Suspicious Device Types\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Protocol-Used-over-Time-(Successful-Logins)",
-    "_type": "visualization",
-    "_source": {
-      "title": "Protocol Used over Time (Successful Logins)",
-      "visState": "{\"title\":\"Protocol Used over Time (Successful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Protocol-Used-over-Time",
-    "_type": "visualization",
-    "_source": {
-      "title": "Protocol Used over Time",
-      "visState": "{\"title\":\"Protocol Used over Time\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Protocol-Used-over-Time-(Unsuccessful-Logins)",
-    "_type": "visualization",
-    "_source": {
-      "title": "Protocol Used over Time (Unsuccessful Logins)",
-      "visState": "{\"title\":\"Protocol Used over Time (Unsuccessful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Distinct-Count-of-Passwords",
-    "_type": "visualization",
-    "_source": {
-      "title": "Distinct Count of Passwords",
-      "visState": "{\"title\":\"Distinct Count of Passwords\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"legendPosition\":\"top\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"times\":[],\"yAxis\":{\"min\":1,\"max\":4096}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"pwhash\",\"customLabel\":\"Distinct Count of Passwords\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Login-Country-over-Time-(Successful-Logins)",
-    "_type": "visualization",
-    "_source": {
-      "title": "Login Country over Time (Successful Logins)",
-      "visState": "{\"title\":\"Login Country over Time (Successful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Login Country (GeoIP)\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"geoip.country_code2\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Country (GeoIP)\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Distinct-Count-of-Devices-for-Successful-Logins",
-    "_type": "visualization",
-    "_source": {
-      "title": "Distinct Count of Devices for Successful Logins",
-      "visState": "{\"title\":\"Distinct Count of Devices for Successful Logins\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{},\"type\":\"histogram\",\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\",\"setYExtents\":false,\"defaultYExtents\":false},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Distinct Count of Devices\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"histogram\",\"mode\":\"stacked\",\"data\":{\"label\":\"Distinct Count of Devices\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"remote\",\"customLabel\":\"Distinct Count of Devices\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"device_id\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"include\":\"\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"_term\"}}]}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Login-Country-over-Time-(Unsuccessful-Logins)",
-    "_type": "visualization",
-    "_source": {
-      "title": "Login Country over Time (Unsuccessful Logins)",
-      "visState": "{\"title\":\"Login Country over Time (Unsuccessful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Login Country (GeoIP)\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"geoip.country_code2\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Country (GeoIP)\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "GeoIP-City-Name",
-    "_type": "visualization",
-    "_source": {
-      "title": "GeoIP City Name",
-      "visState": "{\"title\":\"GeoIP City Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24,\"hideLabel\":false},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.city_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_term\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "GeoIP-Region-Name",
-    "_type": "visualization",
-    "_source": {
-      "title": "GeoIP Region Name",
-      "visState": "{\"title\":\"GeoIP Region Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.region_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_term\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "GeoIP-Country-Name",
-    "_type": "visualization",
-    "_source": {
-      "title": "GeoIP Country Name",
-      "visState": "{\"title\":\"GeoIP Country Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.country_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_term\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
     "_id": "Successful-slash-Unsuccessful-Logins",
     "_type": "visualization",
     "_source": {
@@ -362,24 +100,7 @@
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"language\":\"lucene\",\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"default_field\":\"*\",\"query\":\"*\"}}},\"filter\":[]}"
-      }
-    },
-    "_meta": {
-      "savedObjectVersion": 2
-    }
-  },
-  {
-    "_id": "Distinct-Count-of-Devices-for-Unsuccessful-Logins",
-    "_type": "visualization",
-    "_source": {
-      "title": "Distinct Count of Devices for Unsuccessful Logins",
-      "visState": "{\"title\":\"Distinct Count of Devices for Unsuccessful Logins\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"legendPosition\":\"right\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"times\":[],\"yAxis\":{},\"type\":\"histogram\",\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\",\"setYExtents\":false,\"defaultYExtents\":false},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Distinct Count of Devices\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"histogram\",\"mode\":\"stacked\",\"data\":{\"label\":\"Distinct Count of Devices\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"remote\",\"customLabel\":\"Distinct Count of Devices\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"device_id\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"include\":\"\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"_term\"}}]}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"success: false\",\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"default_field\":\"*\",\"query\":\"*\"}}},\"filter\":[]}"
       }
     },
     "_meta": {
@@ -396,7 +117,24 @@
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Distinct-Count-of-Devices-for-Unsuccessful-Logins",
+    "_type": "visualization",
+    "_source": {
+      "title": "Distinct Count of Devices for Unsuccessful Logins",
+      "visState": "{\"title\":\"Distinct Count of Devices for Unsuccessful Logins\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"legendPosition\":\"right\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"times\":[],\"yAxis\":{},\"type\":\"histogram\",\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\",\"setYExtents\":false,\"defaultYExtents\":false},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Distinct Count of Devices\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"histogram\",\"mode\":\"stacked\",\"data\":{\"label\":\"Distinct Count of Devices\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"remote\",\"customLabel\":\"Distinct Count of Devices\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"device_id\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"include\":\"\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"_term\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"success: false\",\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
       }
     },
     "_meta": {
@@ -413,7 +151,257 @@
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Suspicious-IPs",
+    "_type": "visualization",
+    "_source": {
+      "title": "Suspicious IPs",
+      "visState": "{\"title\":\"Suspicious IPs\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Count of Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"remote\",\"size\":100,\"customLabel\":\"Suspicious IPs\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{\n  \"vis\": {\n    \"params\": {\n      \"sort\": {\n        \"columnIndex\": null,\n        \"direction\": null\n      }\n    }\n  }\n}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Protocol-Used-over-Time-(Successful-Logins)",
+    "_type": "visualization",
+    "_source": {
+      "title": "Protocol Used over Time (Successful Logins)",
+      "visState": "{\"title\":\"Protocol Used over Time (Successful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Unsuccessful-Login-Map",
+    "_type": "visualization",
+    "_source": {
+      "title": "Unsuccessful Login Map",
+      "visState": "{\"title\":\"Unsuccessful Login Map\",\"type\":\"tile_map\",\"params\":{\"mapType\":\"Scaled Circle Markers\",\"isDesaturated\":true,\"addTooltip\":true,\"heatMaxZoom\":16,\"heatMinOpacity\":0.1,\"heatRadius\":25,\"heatBlur\":15,\"heatNormalizeData\":true,\"legendPosition\":\"bottomright\",\"mapZoom\":2,\"mapCenter\":[15,5],\"wms\":{\"enabled\":false,\"url\":\"https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WMSServer\",\"options\":{\"version\":\"1.3.0\",\"layers\":\"0\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"Maps provided by USGS\",\"styles\":\"\"}}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"geohash_grid\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.location\",\"autoPrecision\":true,\"customLabel\":\"Unsuccessful Logins\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{\"mapCenter\":[14.944784875088372,5.09765625]}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Suspicious-slash-Compromised-Users",
+    "_type": "visualization",
+    "_source": {
+      "title": "Suspicious/Compromised Users",
+      "visState": "{\"title\":\"Suspicious/Compromised Users\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"login\",\"size\":100,\"customLabel\":\"Suspicious/Compromised Users\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Suspicious-Device-Types",
+    "_type": "visualization",
+    "_source": {
+      "title": "Suspicious Device Types",
+      "visState": "{\"title\":\"Suspicious Device Types\",\"type\":\"table\",\"params\":{\"perPage\":6,\"showPartialRows\":false,\"showMeticsAtAllLevels\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"showTotal\":false,\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Significant Terms\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"significant_terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"device_id\",\"size\":10,\"customLabel\":\"Suspicious Device Types\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"constant_score\":{\"filter\":{\"term\":{\"success\":false}}}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Protocol-Used-over-Time",
+    "_type": "visualization",
+    "_source": {
+      "title": "Protocol Used over Time",
+      "visState": "{\"title\":\"Protocol Used over Time\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Login-Country-over-Time-(Successful-Logins)",
+    "_type": "visualization",
+    "_source": {
+      "title": "Login Country over Time (Successful Logins)",
+      "visState": "{\"title\":\"Login Country over Time (Successful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Login Country (GeoIP)\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"geoip.country_code2\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Country (GeoIP)\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Distinct-Count-of-Passwords",
+    "_type": "visualization",
+    "_source": {
+      "title": "Distinct Count of Passwords",
+      "visState": "{\"title\":\"Distinct Count of Passwords\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"legendPosition\":\"top\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"times\":[],\"yAxis\":{\"min\":1,\"max\":4096}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"pwhash\",\"customLabel\":\"Distinct Count of Passwords\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "98888d10-7329-11e9-8970-ebaa4ad88862",
+    "_type": "index-pattern",
+    "_source": {
+      "title": "logstash-wforce*",
+      "timeFieldName": "@timestamp",
+      "fields": "[{\"name\":\"@timestamp\",\"type\":\"date\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"@version\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"_id\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":false},{\"name\":\"_index\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":false},{\"name\":\"_score\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"_source\",\"type\":\"_source\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"_type\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":false},{\"name\":\"device_attrs\",\"type\":\"unknown\",\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false,\"count\":4},{\"name\":\"device_attrs.app\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"device_attrs.app.brand\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.app.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.app.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.app.name\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.browser\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"device_attrs.browser.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.browser.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.browser.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.device\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"device_attrs.device.brand\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.device.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.device.model\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.imapc\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"device_attrs.imapc.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.imapc.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.imapc.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.os\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"device_attrs.os.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.os.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_attrs.os.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"device_id\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"geoip.city_name\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.continent_code\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.country_code2\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.country_code3\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.country_name\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.ip\",\"type\":\"ip\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.latitude\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.location\",\"type\":\"geo_point\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.longitude\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.postal_code\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.region_code\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.region_name\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"geoip.timezone\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"host\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"input\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"login\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"policy_reject\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"protocol\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"pwhash\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"remote\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"request.device_attrs\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"request.device_attrs.imapc\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"request.device_attrs.imapc.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_attrs.imapc.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_attrs.imapc.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_attrs.os\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"request.device_attrs.os.family\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_attrs.os.major\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_attrs.os.minor\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.device_id\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.login\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.policy_reject\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.protocol\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.pwhash\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.remote\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.success\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.t\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"request.tls\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"response.msg\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs\",\"type\":\"unknown\",\"count\":0,\"scripted\":false,\"searchable\":false,\"aggregatable\":false,\"readFromDocValues\":false},{\"name\":\"response.r_attrs.action\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.bl_expiry\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.blacklisted\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.defaultReturn\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.expiration\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.graylisted\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.key\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.policy\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.policy_code\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.reason\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.suspiciousLogin\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.tarpit\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.test_mode\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.threshold\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.whitelisted\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.r_attrs.wl_key\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"response.status\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"success\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"t\",\"type\":\"number\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"tags\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"tls\",\"type\":\"boolean\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"type\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true},{\"name\":\"user_confirmation\",\"type\":\"string\",\"count\":0,\"scripted\":false,\"searchable\":true,\"aggregatable\":true,\"readFromDocValues\":true}]"
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "98914830-7340-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Rejected by Policy Map",
+      "visState": "{\"title\":\"IPs Rejected by Policy Map\",\"type\":\"tile_map\",\"params\":{\"mapType\":\"Scaled Circle Markers\",\"isDesaturated\":true,\"addTooltip\":true,\"heatMaxZoom\":16,\"heatMinOpacity\":0.1,\"heatRadius\":25,\"heatBlur\":15,\"heatNormalizeData\":true,\"legendPosition\":\"bottomright\",\"mapZoom\":2,\"mapCenter\":[15,5],\"wms\":{\"enabled\":false,\"url\":\"https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WMSServer\",\"options\":{\"version\":\"1.3.0\",\"layers\":\"0\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"Maps provided by USGS\",\"styles\":\"\"},\"baseLayersAreLoaded\":{},\"tmsLayers\":[{\"id\":\"road_map\",\"url\":\"https://tiles.maps.elastic.co/v2/default/{z}/{x}/{y}.png?elastic_tile_service_tos=agree&my_app_name=kibana&my_app_version=6.4.2\",\"minZoom\":0,\"maxZoom\":10,\"attribution\":\"<p>&#169; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap contributors</a>|<a href=\\\"https://openmaptiles.org\\\">OpenMapTiles</a>|<a href=\\\"https://www.maptiler.com\\\">MapTiler</a>|<a href=\\\"https://www.elastic.co/elastic-maps-service\\\">Elastic Maps Service</a></p>&#10;\",\"subdomains\":[]}],\"selectedTmsLayer\":{\"id\":\"road_map\",\"url\":\"https://tiles.maps.elastic.co/v2/default/{z}/{x}/{y}.png?elastic_tile_service_tos=agree&my_app_name=kibana&my_app_version=6.4.2\",\"minZoom\":0,\"maxZoom\":10,\"attribution\":\"<p>&#169; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap contributors</a>|<a href=\\\"https://openmaptiles.org\\\">OpenMapTiles</a>|<a href=\\\"https://www.maptiler.com\\\">MapTiler</a>|<a href=\\\"https://www.elastic.co/elastic-maps-service\\\">Elastic Maps Service</a></p>&#10;\",\"subdomains\":[]}},\"colorSchema\":\"Yellow to Red\",\"heatClusterSize\":1.5},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"geohash_grid\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.location\",\"autoPrecision\":true,\"isFilteredByCollar\":true,\"useGeocentroid\":true,\"mapZoom\":2,\"mapCenter\":[0,0],\"precision\":2,\"customLabel\":\"Rejected IPs\"}}]}",
+      "uiStateJSON": "{\"mapCenter\":[14.944784875088372,5.09765625]}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"type\",\"value\":\"wforce_allow\",\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"response.status\",\"value\":\"-1\",\"params\":{\"query\":-1,\"type\":\"phrase\"}},\"query\":{\"match\":{\"response.status\":{\"query\":-1,\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "b7fad100-7340-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Tarpitted by Policy Map",
+      "visState": "{\"title\":\"IPs Tarpitted by Policy Map\",\"type\":\"tile_map\",\"params\":{\"mapType\":\"Scaled Circle Markers\",\"isDesaturated\":true,\"addTooltip\":true,\"heatMaxZoom\":16,\"heatMinOpacity\":0.1,\"heatRadius\":25,\"heatBlur\":15,\"heatNormalizeData\":true,\"legendPosition\":\"bottomright\",\"mapZoom\":2,\"mapCenter\":[15,5],\"wms\":{\"enabled\":false,\"url\":\"https://basemap.nationalmap.gov/arcgis/services/USGSTopo/MapServer/WMSServer\",\"options\":{\"version\":\"1.3.0\",\"layers\":\"0\",\"format\":\"image/png\",\"transparent\":true,\"attribution\":\"Maps provided by USGS\",\"styles\":\"\"},\"baseLayersAreLoaded\":{},\"tmsLayers\":[{\"id\":\"road_map\",\"url\":\"https://tiles.maps.elastic.co/v2/default/{z}/{x}/{y}.png?elastic_tile_service_tos=agree&my_app_name=kibana&my_app_version=6.4.2\",\"minZoom\":0,\"maxZoom\":10,\"attribution\":\"<p>&#169; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap contributors</a>|<a href=\\\"https://openmaptiles.org\\\">OpenMapTiles</a>|<a href=\\\"https://www.maptiler.com\\\">MapTiler</a>|<a href=\\\"https://www.elastic.co/elastic-maps-service\\\">Elastic Maps Service</a></p>&#10;\",\"subdomains\":[]}],\"selectedTmsLayer\":{\"id\":\"road_map\",\"url\":\"https://tiles.maps.elastic.co/v2/default/{z}/{x}/{y}.png?elastic_tile_service_tos=agree&my_app_name=kibana&my_app_version=6.4.2\",\"minZoom\":0,\"maxZoom\":10,\"attribution\":\"<p>&#169; <a href=\\\"https://www.openstreetmap.org/copyright\\\">OpenStreetMap contributors</a>|<a href=\\\"https://openmaptiles.org\\\">OpenMapTiles</a>|<a href=\\\"https://www.maptiler.com\\\">MapTiler</a>|<a href=\\\"https://www.elastic.co/elastic-maps-service\\\">Elastic Maps Service</a></p>&#10;\",\"subdomains\":[]}},\"colorSchema\":\"Yellow to Red\",\"heatClusterSize\":1.5},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"geohash_grid\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.location\",\"autoPrecision\":true,\"isFilteredByCollar\":true,\"useGeocentroid\":true,\"mapZoom\":2,\"mapCenter\":[0,0],\"precision\":2,\"customLabel\":\"Tarpitted IPs\"}}]}",
+      "uiStateJSON": "{\"mapCenter\":[14.944784875088372,5.09765625]}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"type\",\"value\":\"wforce_allow\",\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.tarpit\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.tarpit\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "c115ff20-7346-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Top 25 Blacklisted Users",
+      "visState": "{\"aggs\":[{\"enabled\":true,\"id\":\"1\",\"params\":{},\"schema\":\"metric\",\"type\":\"count\"},{\"enabled\":true,\"id\":\"2\",\"params\":{\"customLabel\":\"Login Name\",\"field\":\"request.login\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"size\":25},\"schema\":\"bucket\",\"type\":\"terms\"},{\"enabled\":true,\"id\":\"3\",\"params\":{\"aggregate\":\"concat\",\"customLabel\":\"Last 5 Policy Hits\",\"field\":\"response.r_attrs.policy\",\"size\":5,\"sortField\":\"@timestamp\",\"sortOrder\":\"desc\"},\"schema\":\"metric\",\"type\":\"top_hits\"}],\"params\":{\"perPage\":25,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"title\":\"Top 25 Blacklisted Users\",\"type\":\"table\"}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"response.status\",\"negate\":false,\"params\":{\"query\":-1,\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"-1\"},\"query\":{\"match\":{\"response.status\":{\"query\":-1,\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.blacklisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.blacklisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "80dec9a0-7346-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Top 25 Rejected Users (Not Blacklisted)",
+      "visState": "{\"aggs\":[{\"enabled\":true,\"id\":\"1\",\"params\":{},\"schema\":\"metric\",\"type\":\"count\"},{\"enabled\":true,\"id\":\"2\",\"params\":{\"customLabel\":\"Login Name\",\"field\":\"request.login\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"size\":25},\"schema\":\"bucket\",\"type\":\"terms\"},{\"enabled\":true,\"id\":\"3\",\"params\":{\"aggregate\":\"concat\",\"customLabel\":\"Last 5 Policy Hits\",\"field\":\"response.r_attrs.policy\",\"size\":5,\"sortField\":\"@timestamp\",\"sortOrder\":\"desc\"},\"schema\":\"metric\",\"type\":\"top_hits\"}],\"params\":{\"perPage\":25,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"title\":\"Top 25 Rejected Users (Not Blacklisted)\",\"type\":\"table\"}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"response.status\",\"negate\":false,\"params\":{\"query\":-1,\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"-1\"},\"query\":{\"match\":{\"response.status\":{\"query\":-1,\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":true,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.blacklisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.blacklisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Distinct-Count-of-Devices-for-Successful-Logins",
+    "_type": "visualization",
+    "_source": {
+      "title": "Distinct Count of Devices for Successful Logins",
+      "visState": "{\"title\":\"Distinct Count of Devices for Successful Logins\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{},\"type\":\"histogram\",\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\",\"setYExtents\":false,\"defaultYExtents\":false},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Distinct Count of Devices\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"histogram\",\"mode\":\"stacked\",\"data\":{\"label\":\"Distinct Count of Devices\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"remote\",\"customLabel\":\"Distinct Count of Devices\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"device_id\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"include\":\"\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"_term\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Login-Country-over-Time-(Unsuccessful-Logins)",
+    "_type": "visualization",
+    "_source": {
+      "title": "Login Country over Time (Unsuccessful Logins)",
+      "visState": "{\"title\":\"Login Country over Time (Unsuccessful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Login Country (GeoIP)\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"geoip.country_code2\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Country (GeoIP)\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
       }
     },
     "_meta": {
@@ -430,7 +418,7 @@
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: true\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
       }
     },
     "_meta": {
@@ -447,7 +435,281 @@
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"b74f8ca0-7b89-11e8-ac55-c394ed0dba64\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "Protocol-Used-over-Time-(Unsuccessful-Logins)",
+    "_type": "visualization",
+    "_source": {
+      "title": "Protocol Used over Time (Unsuccessful Logins)",
+      "visState": "{\"title\":\"Protocol Used over Time (Unsuccessful Logins)\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"bottom\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Total Logins\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"protocol\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"Login Protocol\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"success: false\",\"analyze_wildcard\":true}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "171cb3a0-7347-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits (Blacklisted)",
+      "visState": "{\"title\":\"Policy Hits (Blacklisted)\",\"type\":\"table\",\"params\":{\"perPage\":20,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.reason\",\"size\":30,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":true,\"missingBucketLabel\":\"No Policy\",\"customLabel\":\"Blacklist Reason\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"$state\":{\"store\":\"appState\"},\"exists\":{\"field\":\"response.r_attrs.blacklisted\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"response.r_attrs.blacklisted\",\"negate\":false,\"type\":\"exists\",\"value\":\"exists\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "9d6e6e90-7332-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Graylisted by Policy",
+      "visState": "{\"title\":\"IPs Graylisted by Policy\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"request.remote\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Remote IP Address\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"No Policy\",\"missingBucket\":true,\"missingBucketLabel\":\"No Policy\",\"customLabel\":\"Policy Name\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.graylisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.graylisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "92f3d020-732f-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits (Graylisted)",
+      "visState": "{\"title\":\"Policy Hits (Graylisted)\",\"type\":\"table\",\"params\":{\"perPage\":20,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Name\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.action\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Action\"}},{\"id\":\"4\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.status\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Status Code\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":true,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.whitelisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.whitelisted\"},\"$state\":{\"store\":\"appState\"}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"response.r_attrs.graylisted\",\"value\":\"1\",\"params\":{\"query\":\"1\",\"type\":\"phrase\"}},\"query\":{\"match\":{\"response.r_attrs.graylisted\":{\"query\":\"1\",\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "d8f3c380-732c-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits (Not Graylisted or Whitelisted)",
+      "visState": "{\"title\":\"Policy Hits (Not Graylisted or Whitelisted)\",\"type\":\"table\",\"params\":{\"perPage\":20,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Name\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.action\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Action\"}},{\"id\":\"4\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.status\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Status Code\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":true,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.graylisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.graylisted\"},\"$state\":{\"store\":\"appState\"}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":true,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.whitelisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.whitelisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "GeoIP-Region-Name",
+    "_type": "visualization",
+    "_source": {
+      "title": "GeoIP Region Name",
+      "visState": "{\"title\":\"GeoIP Region Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24,\"showLabel\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.region_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_key\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Region Name\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\",\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "GeoIP-City-Name",
+    "_type": "visualization",
+    "_source": {
+      "title": "GeoIP City Name",
+      "visState": "{\"title\":\"GeoIP City Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24,\"hideLabel\":false,\"showLabel\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.city_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_key\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"City Name\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\",\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "8e9e7660-7348-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Blacklisted by Policy",
+      "visState": "{\"title\":\"IPs Blacklisted by Policy\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"request.remote\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Remote IP Address\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.reason\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Blacklist Reason\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"response.status\",\"negate\":false,\"params\":{\"query\":-1,\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"-1\"},\"query\":{\"match\":{\"response.status\":{\"query\":-1,\"type\":\"phrase\"}}}},{\"$state\":{\"store\":\"appState\"},\"exists\":{\"field\":\"response.r_attrs.blacklisted\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"response.r_attrs.blacklisted\",\"negate\":false,\"type\":\"exists\",\"value\":\"exists\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "37e3d2a0-7331-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Rejected by Policy (not Blacklisted)",
+      "visState": "{\"title\":\"IPs Rejected by Policy (not Blacklisted)\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"request.remote\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Remote IP Address\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Name\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"response.status\",\"value\":\"-1\",\"params\":{\"query\":-1,\"type\":\"phrase\"}},\"query\":{\"match\":{\"response.status\":{\"query\":-1,\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":true,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.blacklisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.blacklisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "e9e1c570-7331-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Tarpitted by Policy",
+      "visState": "{\"title\":\"IPs Tarpitted by Policy\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"request.remote\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Remote IP Address\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Name\"}},{\"id\":\"4\",\"enabled\":false,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.status\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Response Code\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.tarpit\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.tarpit\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "a914a370-732f-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits (Whitelisted)",
+      "visState": "{\"title\":\"Policy Hits (Whitelisted)\",\"type\":\"table\",\"params\":{\"perPage\":20,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":null,\"direction\":null},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":true,\"missingBucketLabel\":\"No Policy\",\"customLabel\":\"Policy Name\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":null,\"direction\":null}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"response.r_attrs.whitelisted\",\"value\":\"1\",\"params\":{\"query\":\"1\",\"type\":\"phrase\"}},\"query\":{\"match\":{\"response.r_attrs.whitelisted\":{\"query\":\"1\",\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "12d181f0-7332-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "IPs Whitelisted by Policy",
+      "visState": "{\"title\":\"IPs Whitelisted by Policy\",\"type\":\"table\",\"params\":{\"perPage\":10,\"showMetricsAtAllLevels\":false,\"showPartialRows\":false,\"showTotal\":false,\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"},\"totalFunc\":\"sum\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"request.remote\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Remote IP Address\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"bucket\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"No Policy\",\"missingBucket\":true,\"missingBucketLabel\":\"No Policy\",\"customLabel\":\"Policy Name\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"params\":{\"sort\":{\"columnIndex\":2,\"direction\":\"desc\"}}}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[{\"$state\":{\"store\":\"appState\"},\"meta\":{\"alias\":null,\"disabled\":false,\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"key\":\"type\",\"negate\":false,\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"},\"type\":\"phrase\",\"value\":\"wforce_allow\"},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}}},{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"exists\",\"key\":\"response.r_attrs.whitelisted\",\"value\":\"exists\"},\"exists\":{\"field\":\"response.r_attrs.whitelisted\"},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "GeoIP-Country-Name",
+    "_type": "visualization",
+    "_source": {
+      "title": "GeoIP Country Name",
+      "visState": "{\"title\":\"GeoIP Country Name\",\"type\":\"tagcloud\",\"params\":{\"scale\":\"linear\",\"orientation\":\"single\",\"minFontSize\":12,\"maxFontSize\":24,\"showLabel\":true},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"geoip.country_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"_key\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Country Name\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true,\"default_field\":\"*\"}},\"language\":\"lucene\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "f8e2ec80-732b-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits over Time",
+      "visState": "{\"title\":\"Policy Hits over Time\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"labels\":{\"show\":true,\"truncate\":100},\"position\":\"bottom\",\"scale\":{\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{},\"type\":\"category\"}],\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"legendPosition\":\"right\",\"seriesParams\":[{\"data\":{\"id\":\"1\",\"label\":\"Count\"},\"drawLinesBetweenPoints\":true,\"mode\":\"normal\",\"show\":\"true\",\"showCircles\":true,\"type\":\"line\",\"valueAxis\":\"ValueAxis-1\"}],\"times\":[],\"type\":\"line\",\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"labels\":{\"filter\":false,\"rotate\":0,\"show\":true,\"truncate\":100},\"name\":\"LeftAxis-1\",\"position\":\"left\",\"scale\":{\"mode\":\"normal\",\"type\":\"linear\"},\"show\":true,\"style\":{},\"title\":{\"text\":\"Count\"},\"type\":\"value\"}]},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\"}}]}",
+      "uiStateJSON": "{\"vis\":{\"legendOpen\":true}}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"language\":\"lucene\",\"query\":\"type: wforce_allow\"},\"filter\":[]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "9c9beb10-732c-11e9-8970-ebaa4ad88862",
+    "_type": "visualization",
+    "_source": {
+      "title": "Policy Hits Breakdown",
+      "visState": "{\"title\":\"Policy Hits Breakdown\",\"type\":\"pie\",\"params\":{\"type\":\"pie\",\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"isDonut\":true,\"labels\":{\"show\":false,\"values\":true,\"last_level\":true,\"truncate\":100}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"response.r_attrs.policy\",\"size\":25,\"order\":\"desc\",\"orderBy\":\"1\",\"otherBucket\":false,\"otherBucketLabel\":\"Other\",\"missingBucket\":false,\"missingBucketLabel\":\"Missing\",\"customLabel\":\"Policy Name\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"query\":{\"query\":\"\",\"language\":\"lucene\"},\"filter\":[{\"meta\":{\"index\":\"98888d10-7329-11e9-8970-ebaa4ad88862\",\"negate\":false,\"disabled\":false,\"alias\":null,\"type\":\"phrase\",\"key\":\"type\",\"value\":\"wforce_allow\",\"params\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}},\"query\":{\"match\":{\"type\":{\"query\":\"wforce_allow\",\"type\":\"phrase\"}}},\"$state\":{\"store\":\"appState\"}}]}"
+      }
+    },
+    "_meta": {
+      "savedObjectVersion": 2
+    }
+  },
+  {
+    "_id": "89cd5660-7334-11e9-8970-ebaa4ad88862",
+    "_type": "dashboard",
+    "_source": {
+      "title": "Abuse Shield Policy Dashboard",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"1\",\"w\":24,\"x\":0,\"y\":0},\"id\":\"f8e2ec80-732b-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"1\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"2\",\"w\":24,\"x\":0,\"y\":15},\"id\":\"d8f3c380-732c-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"2\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"3\",\"w\":24,\"x\":24,\"y\":15},\"id\":\"92f3d020-732f-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"3\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"4\",\"w\":11,\"x\":13,\"y\":30},\"id\":\"a914a370-732f-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"4\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"5\",\"w\":24,\"x\":24,\"y\":30},\"id\":\"37e3d2a0-7331-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"5\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"6\",\"w\":24,\"x\":24,\"y\":45},\"id\":\"e9e1c570-7331-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"6\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"7\",\"w\":24,\"x\":24,\"y\":75},\"id\":\"12d181f0-7332-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"7\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"8\",\"w\":24,\"x\":24,\"y\":60},\"id\":\"9d6e6e90-7332-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"8\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"9\",\"w\":24,\"x\":24,\"y\":0},\"id\":\"9c9beb10-732c-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"9\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"10\",\"w\":13,\"x\":0,\"y\":30},\"id\":\"171cb3a0-7347-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"10\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"11\",\"w\":24,\"x\":0,\"y\":60},\"id\":\"80dec9a0-7346-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"11\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"12\",\"w\":24,\"x\":24,\"y\":90},\"id\":\"c115ff20-7346-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"12\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"13\",\"w\":24,\"x\":0,\"y\":75},\"id\":\"98914830-7340-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"13\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"14\",\"w\":24,\"x\":24,\"y\":105},\"id\":\"b7fad100-7340-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"14\",\"type\":\"visualization\",\"version\":\"6.4.2\"},{\"embeddableConfig\":{},\"gridData\":{\"h\":15,\"i\":\"15\",\"w\":24,\"x\":0,\"y\":45},\"id\":\"8e9e7660-7348-11e9-8970-ebaa4ad88862\",\"panelIndex\":\"15\",\"type\":\"visualization\",\"version\":\"6.4.2\"}]",
+      "optionsJSON": "{\"darkTheme\":true,\"hidePanelTitles\":false,\"useMargins\":true}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"language\":\"lucene\",\"query\":\"\"},\"filter\":[]}"
       }
     },
     "_meta": {

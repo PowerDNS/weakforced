@@ -386,7 +386,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	  resp.body=R"({"status":"failure", "reason":"reset function returned false"})";
       }
       // generate webhook events
-      Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}};
+      Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}, {"type", "wforce_reset"}};
       std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
 	if (auto hs = h.lock())
@@ -441,7 +441,10 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       sendReportSink(lt); // XXX - this is deprecated now in favour of NamedReportSinks
       sendNamedReportSink(lt.serialize());
       
-      std::string hook_data = lt.serialize();
+      Json msg = lt.to_json();
+      Json::object jobj = msg.object_items();
+      jobj.insert(make_pair("type", "wforce_report"));
+      std::string hook_data = msg.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
 	if (auto hs = h.lock())
 	  g_webhook_runner.runHook("report", hs, hook_data);
@@ -535,7 +538,7 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
 
 void runAllowWebHook(const Json& request, const Json& response, int status)
 {
-  Json jobj = Json::object{{"request", request}, {"response", response}};
+  Json jobj = Json::object{{"request", request}, {"response", response}, {"type", "wforce_allow"}};
   std::string hook_data = jobj.dump();
   for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
     if (auto hs = h.lock()) {

@@ -68,6 +68,16 @@ void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Pr
   }
 }
 
+std::vector<std::map<std::string, std::string>> getWLBLKeys(const std::vector<BlackWhiteListEntry>& blv, const char* key_name) {
+  std::vector<std::map<std::string, std::string>> ret_vec;
+  for (const auto& i : blv) {
+    auto key_val = static_cast<std::string>(i.key);
+    std::map<std::string, std::string> bl_map = {{key_name, key_val }, {"expiration", boost::posix_time::to_simple_string(i.expiration)}, {"reason", i.reason}};
+    ret_vec.emplace_back(bl_map);
+  }
+  return ret_vec;
+}
+
 // lua functions are split into three groups:
 // 1) Those which are only applicable as "config/setup" (single global lua state) (they are defined as blank/empty functions otherwise) 
 // 2) Those which are only applicable inside the "allow", "report" (and similar) functions, where there are multiple lua states running in different threads, which are defined as empty otherwise
@@ -623,6 +633,19 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("checkBlacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {
         return g_bl_db.checkEntry(ca, login);
       });
+
+    c_lua.writeFunction("getIPBlacklist", []() {
+        auto bl = g_bl_db.getIPEntries();
+        return getWLBLKeys(bl, "ip");
+      });
+    c_lua.writeFunction("getLoginBlacklist", []() {
+        auto bl = g_bl_db.getLoginEntries();
+        return getWLBLKeys(bl, "login");
+      });
+    c_lua.writeFunction("getIPLoginBlacklist", []() {
+        auto bl = g_bl_db.getIPLoginEntries();
+        return getWLBLKeys(bl, "iplogin");
+      });
   }
   else {
     c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
@@ -654,6 +677,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("checkBlacklistLogin", [](const std::string& login) {});
 
     c_lua.writeFunction("checkBlacklistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
+
+    c_lua.writeFunction("getIPBlacklist", []() {});
+    c_lua.writeFunction("getLoginBlacklist", []() {});
+    c_lua.writeFunction("getIPLoginBlacklist", []() {});
   }
   
   if (!multi_lua) {
@@ -736,6 +763,20 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("checkWhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {
         return g_wl_db.checkEntry(ca, login);
       });
+
+    c_lua.writeFunction("getIPWhitelist", []() {
+        auto wl = g_wl_db.getIPEntries();
+        return getWLBLKeys(wl, "ip");
+      });
+    c_lua.writeFunction("getLoginWhitelist", []() {
+        auto wl = g_wl_db.getLoginEntries();
+        return getWLBLKeys(wl, "login");
+      });
+    c_lua.writeFunction("getIPLoginWhitelist", []() {
+        auto wl = g_wl_db.getIPLoginEntries();
+        return getWLBLKeys(wl, "iplogin");
+      });
+
   }
   else {
     c_lua.writeFunction("whitelistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
@@ -767,6 +808,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("checkWhitelistLogin", [](const std::string& login) {});
 
     c_lua.writeFunction("checkWhitelistIPLogin", [](const ComboAddress& ca, const std::string& login) {});
+
+    c_lua.writeFunction("getIPWhitelist", []() {});
+    c_lua.writeFunction("getLoginWhitelist", []() {});
+    c_lua.writeFunction("getIPLoginWhitelist", []() {});
   }
   
   if (!multi_lua) {

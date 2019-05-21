@@ -243,6 +243,10 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def customGetFunc(self, func):
+        return self.session.get(
+            self.url("/?command=" + func))
+    
     def customFuncWithName(self, custom_func_name, attrs):
         payload = dict()
         payload['attrs'] = attrs

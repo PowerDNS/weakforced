@@ -830,7 +830,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       if (!multi_lua && !client) {
         addCommandStat(f_name);
 	// register a webserver command
-	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
+	g_webserver.registerFunc(f_name, HTTPVerb::POST, WforceWSFunc(parseCustomCmd));
 	noticelog("Registering custom endpoint [%s]", f_name);
       }
     });

@@ -99,7 +99,7 @@ public:
   size_t getNumConns();
   
   // Register functions to parse commands
-  bool registerFunc(const std::string& command, HTTPVerb verb, WforceWSFunc func);
+  bool registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& func);
 
   // Start listening - this function doesn't return, so start in a thread
   // if you want to do other stuff

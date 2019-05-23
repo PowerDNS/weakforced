@@ -71,7 +71,7 @@ size_t WforceWebserver::getNumConns()
   return d_sock_vec.size();
 }
 
-bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, WforceWSFunc func)
+bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& func)
 {
   bool retval = false;
   

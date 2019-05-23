@@ -37,11 +37,11 @@ struct LoginTuple
   string device_id;
   std::map<std::string, std::string> device_attrs;
   string protocol;
-  bool tls;
-  bool success;
+  bool tls=false;
+  bool success=false;
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
-  bool policy_reject;
+  bool policy_reject=false;
   std::string session_id;
   Json to_json() const;
   std::string serialize() const;

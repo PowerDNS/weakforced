@@ -47,7 +47,10 @@ struct CustomFuncMapObject {
 typedef std::map<std::string, CustomFuncMapObject> CustomFuncMap;
 extern CustomFuncMap g_custom_func_map;
 
-vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, const std::string& config);
+typedef std::map<std::string, custom_get_func_t> CustomGetFuncMap;
+extern CustomGetFuncMap g_custom_get_func_map;
+
+vector<std::function<void(void)>> setupLua(bool client, bool allow_report, LuaContext& c_lua, allow_t& allow_func, report_t& report_func, reset_t& reset_func, canonicalize_t& canon_func, CustomFuncMap& custom_func_map, CustomGetFuncMap& custom_get_func_map, const std::string& config);
 
 struct LuaThreadContext {
   LuaContext lua_context;
@@ -57,6 +60,7 @@ struct LuaThreadContext {
   reset_t reset_func;
   canonicalize_t canon_func;
   CustomFuncMap custom_func_map;
+  CustomGetFuncMap custom_get_func_map;
 };
 
 #define NUM_LUA_STATES 6
@@ -129,6 +133,19 @@ public:
       }
     }
     return CustomFuncReturn(false, KeyValVector{});
+  }
+
+  std::string custom_get_func(const std::string& command) {
+    auto lt_context = getLuaState();
+    // lock the lua state mutex
+    std::lock_guard<std::mutex> lock(lt_context->lua_mutex);
+    // call the custom function
+    for (const auto& i : lt_context->custom_get_func_map) {
+      if (command.compare(i.first) == 0) {
+	return i.second();
+      }
+    }
+    return string();
   }
   
 protected:

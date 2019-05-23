@@ -28,4 +28,5 @@
 extern std::atomic<bool> g_ping_up;
 
 void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
+void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
 void registerWebserverCommands();

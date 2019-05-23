@@ -65,3 +65,4 @@ struct CustomFuncArgs {
 };
 
 typedef std::function<CustomFuncReturn(const CustomFuncArgs&)> custom_func_t;
+typedef std::function<std::string()> custom_get_func_t;

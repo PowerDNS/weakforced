@@ -81,6 +81,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 					   reset_t& reset_func,
 					   canonicalize_t& canon_func,
 					   CustomFuncMap& custom_func_map,
+                                           CustomGetFuncMap& custom_get_func_map,
 					   const std::string& config)
 {
   g_launchWork= new vector<std::function<void(void)>>();
@@ -831,17 +832,30 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         addCommandStat(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, WforceWSFunc(parseCustomCmd));
-	noticelog("Registering custom endpoint [%s]", f_name);
+	noticelog("Registering custom POST endpoint [%s]", f_name);
       }
     });
 
+  c_lua.writeFunction("setCustomGetEndpoint", [&custom_get_func_map, multi_lua, client](const std::string& f_name,  custom_get_func_t func) {
+      custom_get_func_map.insert(std::make_pair(f_name, func));
+      if (!multi_lua && !client) {
+        addCommandStat(f_name+"_Get");
+	// register a webserver command
+	g_webserver.registerFunc(f_name, HTTPVerb::GET, WforceWSFunc(parseCustomGetCmd, "text/plain"));
+	noticelog("Registering custom GET endpoint [%s]", f_name);
+      }
+    });
+  
   if (!multi_lua) {
     c_lua.writeFunction("showCustomEndpoints", []() {
-	boost::format fmt("%-30.30s %-s \n");
-	g_outputBuffer = (fmt % "Custom Endpoint" % "Send to Report Sink?").str();
+	boost::format fmt("%-30.30s %-5.5s %-s \n");
+	g_outputBuffer = (fmt % "Custom Endpoint" % "Type" % "Send to Report Sink?").str();
 	for (const auto& i : g_custom_func_map) {
 	  std::string reportStr = i.second.c_reportSink == true ? "true" : "false";
-	  g_outputBuffer += (fmt % i.first % reportStr).str();
+	  g_outputBuffer += (fmt % i.first % "POST" % reportStr).str();
+	}
+	for (const auto& i : g_custom_get_func_map) {
+	  g_outputBuffer += (fmt % i.first % "GET" % "false").str();
 	}
       });
   }

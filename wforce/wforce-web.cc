@@ -1074,6 +1074,50 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   incCommandStat(command);
 }
 
+void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  string err;
+
+  try {
+    std::string ret_msg =g_luamultip->custom_get_func(command);
+    resp.status=200;
+    resp.body=ret_msg;
+  }
+  catch(LuaContext::ExecutionErrorException& e) {
+    resp.status=500;
+    std::stringstream ss;
+    try {
+      std::rethrow_if_nested(e);
+      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Lua custom function [%s] exception: %s", command, e.what());
+    }
+    catch (const std::exception& ne) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, ne.what());
+    }
+    catch (const WforceException& ne) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, ne.reason);
+    }
+  }
+  catch(const std::exception& e) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+    resp.body=ss.str();
+    errlog("Exception in command [%s] exception: %s", command, e.what());
+  }
+  incCommandStat(command+"_Get");
+}
+
 std::atomic<bool> g_ping_up{false};
 
 void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)

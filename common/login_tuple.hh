@@ -42,6 +42,7 @@ struct LoginTuple
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
   bool policy_reject;
+  std::string session_id;
   Json to_json() const;
   std::string serialize() const;
   void from_json(const Json& msg, const std::shared_ptr<UserAgentParser> uap=std::shared_ptr<UserAgentParser>());

@@ -52,7 +52,9 @@ Json LoginTuple::to_json() const
     {"protocol", protocol},
     {"tls", tls},
     {"attrs", jattrs},
-    {"policy_reject", policy_reject}};
+    {"policy_reject", policy_reject},
+    {"session_id", session_id},
+  };
 }
 
 std::string LoginTuple::serialize() const
@@ -79,6 +81,7 @@ void LoginTuple::from_json(const Json& msg, const std::shared_ptr<UserAgentParse
   protocol=msg["protocol"].string_value();
   tls=msg["tls"].bool_value();
   policy_reject=msg["policy_reject"].bool_value();
+  session_id=msg["session_id"].string_value();
 }
 
 void LoginTuple::unserialize(const std::string& str) 

@@ -224,17 +224,21 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
         // set the defaults in case we don't find a command
         resp.status = 404;
         resp.body = R"({"status":"failure", "reason":"Command not found"})";
-    
+
+        std::string new_content_type;
+        
         if (req.method=="GET") {
           const auto& f = wws->d_get_map.find(command);
           if (f != wws->d_get_map.end()) {
-            f->second(req, resp, command);
+            f->second.d_func_ptr(req, resp, command);
+            new_content_type = f->second.d_ret_content_type;
           }
         }
         else if (req.method=="DELETE") {
           const auto& f = wws->d_delete_map.find(command);
           if (f != wws->d_delete_map.end()) {
-            f->second(req, resp, command);
+            f->second.d_func_ptr(req, resp, command);
+            new_content_type = f->second.d_ret_content_type;
           }
         }
         else if ((command != "") && (ctype.compare(0, ct_json.length(), ct_json) != 0)) {
@@ -247,14 +251,19 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
         else if (req.method=="POST") {
           const auto& f = wws->d_post_map.find(command);
           if (f != wws->d_post_map.end()) {
-            f->second(req, resp, command);
+            f->second.d_func_ptr(req, resp, command);
+            new_content_type = f->second.d_ret_content_type;
           }
         }
         else if (req.method=="PUT") {
           const auto& f = wws->d_put_map.find(command);
           if (f != wws->d_put_map.end()) {
-            f->second(req, resp, command);
+            f->second.d_func_ptr(req, resp, command);
+            new_content_type = f->second.d_ret_content_type;
           }
+        }
+        if (!new_content_type.empty()) {
+          resp.headers["Content-Type"] = new_content_type;
         }
       }
       if(!callback.empty()) {

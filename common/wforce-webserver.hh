@@ -56,7 +56,15 @@ struct WFConnection
 
 typedef std::vector<std::shared_ptr<WFConnection>> WFCArray;
 
-using WforceWSFunc = void (*)(const YaHTTP::Request&, YaHTTP::Response&, const std::string& path);
+using WforceWSFuncPtr = void (*)(const YaHTTP::Request&, YaHTTP::Response&, const std::string& path);
+
+struct WforceWSFunc {
+  WforceWSFunc() = delete;
+  WforceWSFunc(WforceWSFuncPtr func) : d_func_ptr(func) {}
+  WforceWSFunc(WforceWSFuncPtr func, const std::string& ct) : d_func_ptr(func), d_ret_content_type(ct) {}
+  WforceWSFuncPtr d_func_ptr;
+  std::string  d_ret_content_type;
+};
 
 enum class HTTPVerb { GET, POST, PUT, DELETE };
 

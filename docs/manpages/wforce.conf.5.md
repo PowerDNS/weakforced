@@ -886,6 +886,10 @@ a Netmask. For example:
   used TLS or not. If the client is using TLS offload proxies then it
   may be set to false.
 
+* LoginTuple.session_id - An optional string representing the
+  particular session that a user used to login. If this is not
+  supplied by the wforce client, it will be an empty string.
+
 * GeoIPRecord - The type returned by the lookupCity() function. See
   below for fields:
 

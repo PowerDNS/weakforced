@@ -219,7 +219,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
 void registerWebserverCommands()
 {
   addCommandStat("report");
-  g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  g_webserver.registerFunc("report", HTTPVerb::POST, WforceWSFunc(parseReportCmd));
   addCommandStat("stats");
-  g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
+  g_webserver.registerFunc("stats", HTTPVerb::GET, WforceWSFunc(parseStatsCmd));
 }

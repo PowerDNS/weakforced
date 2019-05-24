@@ -30,6 +30,11 @@ class TestBasics(ApiTestCase):
         j = r.json()
         self.assertEquals(j['r_attrs']['login'], 'custom1')
 
+    def test_customGetFunc(self):
+        r = self.customGetFunc("testCustomGet")
+        t = r.text
+        self.assertEquals(t, '1.2.3.4/32\n')
+        
     def test_deviceParsing(self):
         r = self.allowFuncDeviceProtocol('foobar', '127.0.0.1', "12432", '"name" "Mac OS X Mail" "version" "10.0 (3226)" "os" "Mac OS X" "os-version" "10.12 (16A323)" "vendor" "Apple Inc."', "imap")
         j = r.json()

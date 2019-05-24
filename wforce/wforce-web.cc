@@ -1074,6 +1074,50 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   incCommandStat(command);
 }
 
+void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  string err;
+
+  try {
+    std::string ret_msg =g_luamultip->custom_get_func(command);
+    resp.status=200;
+    resp.body=ret_msg;
+  }
+  catch(LuaContext::ExecutionErrorException& e) {
+    resp.status=500;
+    std::stringstream ss;
+    try {
+      std::rethrow_if_nested(e);
+      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Lua custom function [%s] exception: %s", command, e.what());
+    }
+    catch (const std::exception& ne) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, ne.what());
+    }
+    catch (const WforceException& ne) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, ne.reason);
+    }
+  }
+  catch(const std::exception& e) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+    resp.body=ss.str();
+    errlog("Exception in command [%s] exception: %s", command, e.what());
+  }
+  incCommandStat(command+"_Get");
+}
+
 std::atomic<bool> g_ping_up{false};
 
 void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -1098,36 +1142,36 @@ void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
 void registerWebserverCommands()
 {
   addCommandStat("addWLEntry");
-  g_webserver.registerFunc("addWLEntry", HTTPVerb::POST, parseAddWLEntryCmd);
+  g_webserver.registerFunc("addWLEntry", HTTPVerb::POST, WforceWSFunc(parseAddWLEntryCmd));
   addCommandStat("delWLEntry");
-  g_webserver.registerFunc("delWLEntry", HTTPVerb::POST, parseDelWLEntryCmd);
+  g_webserver.registerFunc("delWLEntry", HTTPVerb::POST, WforceWSFunc(parseDelWLEntryCmd));
   addCommandStat("addBLEntry");
-  g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, parseAddBLEntryCmd);
+  g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, WforceWSFunc(parseAddBLEntryCmd));
   addCommandStat("delBLEntry");
-  g_webserver.registerFunc("delBLEntry", HTTPVerb::POST, parseDelBLEntryCmd);
+  g_webserver.registerFunc("delBLEntry", HTTPVerb::POST, WforceWSFunc(parseDelBLEntryCmd));
   addCommandStat("reset");
-  g_webserver.registerFunc("reset", HTTPVerb::POST, parseResetCmd);
+  g_webserver.registerFunc("reset", HTTPVerb::POST, WforceWSFunc(parseResetCmd));
   addCommandStat("report");
-  g_webserver.registerFunc("report", HTTPVerb::POST, parseReportCmd);
+  g_webserver.registerFunc("report", HTTPVerb::POST, WforceWSFunc(parseReportCmd));
   addCommandStat("allow");
   addCommandStat("allow_allowed");
   addCommandStat("allow_blacklisted");
   addCommandStat("allow_whitelisted");
   addCommandStat("allow_denied");
   addCommandStat("allow_tarpitted");
-  g_webserver.registerFunc("allow", HTTPVerb::POST, parseAllowCmd);
+  g_webserver.registerFunc("allow", HTTPVerb::POST, WforceWSFunc(parseAllowCmd));
   addCommandStat("stats");
-  g_webserver.registerFunc("stats", HTTPVerb::GET, parseStatsCmd);
+  g_webserver.registerFunc("stats", HTTPVerb::GET, WforceWSFunc(parseStatsCmd));
   addCommandStat("getBL");
-  g_webserver.registerFunc("getBL", HTTPVerb::GET, parseGetBLCmd);
+  g_webserver.registerFunc("getBL", HTTPVerb::GET, WforceWSFunc(parseGetBLCmd));
   addCommandStat("getWL");
-  g_webserver.registerFunc("getWL", HTTPVerb::GET, parseGetWLCmd);
+  g_webserver.registerFunc("getWL", HTTPVerb::GET, WforceWSFunc(parseGetWLCmd));
   addCommandStat("getDBStats");
-  g_webserver.registerFunc("getDBStats", HTTPVerb::POST, parseGetStatsCmd);
+  g_webserver.registerFunc("getDBStats", HTTPVerb::POST, WforceWSFunc(parseGetStatsCmd));
   addCommandStat("ping");
-  g_webserver.registerFunc("ping", HTTPVerb::GET, parsePingCmd);
+  g_webserver.registerFunc("ping", HTTPVerb::GET, WforceWSFunc(parsePingCmd));
   addCommandStat("syncDBs");
-  g_webserver.registerFunc("syncDBs", HTTPVerb::POST, parseSyncCmd);
+  g_webserver.registerFunc("syncDBs", HTTPVerb::POST, WforceWSFunc(parseSyncCmd));
   addCommandStat("syncDone");
-  g_webserver.registerFunc("syncDone", HTTPVerb::GET, parseSyncDoneCmd);
+  g_webserver.registerFunc("syncDone", HTTPVerb::GET, WforceWSFunc(parseSyncDoneCmd));
 }

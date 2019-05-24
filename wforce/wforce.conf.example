@@ -192,7 +192,7 @@ function allow(lt)
    if (sdb:twGet(lt.login, "diffPasswords") > 90)
    then
       -- blacklist the login for 300 seconds
-      blackistLogin(lt.login, 300, "too many different incorrect password attempts")
+      blacklistLogin(lt.login, 300, "too many different incorrect password attempts")
       return -1, "too many different password attempts for this account", "diffPasswords", { diffPasswords=90 }
    end
    

@@ -135,6 +135,93 @@ bool WFGeoIP2DB::mmdbLookup(const std::string& ip, MMDB_lookup_result_s& res)
   return false;
 }
 
+char* convertToCharStar(const std::pair<unsigned int, std::string>& pair)
+{
+  char *cs = new char[pair.second.size()+1];
+  std::strcpy(cs, pair.second.c_str());
+  return cs;
+}
+
+bool WFGeoIP2DB::lookupDataValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs, MMDB_entry_data_s& ret_data)
+{
+  MMDB_lookup_result_s res;
+  std::vector<char*> path;
+  bool retval = false;
+  
+  if (mmdbLookup(address.toString(), res)) {
+    std::transform(attrs.begin(), attrs.end(), std::back_inserter(path), convertToCharStar);
+    path.emplace_back(nullptr);
+    if ((MMDB_aget_value(&res.entry, &ret_data, &path[0]) == MMDB_SUCCESS) && (ret_data.has_data)) {
+      retval = true;
+    }
+    for (auto& i : path) {
+      if (i != nullptr)
+        delete i;
+    }
+  }
+  return retval;
+}
+
+std::string WFGeoIP2DB::lookupStringValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs)
+{
+  MMDB_entry_data_s data;
+  std::string ret_str;
+  
+  if (lookupDataValue(address, attrs, data)) {
+    if (data.type == MMDB_DATA_TYPE_UTF8_STRING)
+      ret_str = std::string(data.utf8_string, data.data_size);
+  }
+  return ret_str;
+}
+
+uint64_t WFGeoIP2DB::lookupUIntValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs)
+{
+  MMDB_entry_data_s data;
+  uint64_t ret_int = 0;
+  
+  if (lookupDataValue(address, attrs, data)) {
+    if (data.type == MMDB_DATA_TYPE_UINT16) {
+      ret_int = static_cast<uint64_t>(data.uint16);
+    }
+    else if (data.type == MMDB_DATA_TYPE_UINT32) {
+      ret_int = static_cast<uint64_t>(data.uint32);
+    }
+    else if (data.type == MMDB_DATA_TYPE_UINT64) {
+      ret_int = data.uint64;
+    }
+  }
+  return ret_int;
+}
+
+bool WFGeoIP2DB::lookupBoolValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs)
+{
+  MMDB_entry_data_s data;
+  bool ret_bool = false;
+  
+  if (lookupDataValue(address, attrs, data)) {
+    if (data.type == MMDB_DATA_TYPE_BOOLEAN) {
+      ret_bool = data.boolean;
+    }
+  }
+  return ret_bool;
+}
+
+double WFGeoIP2DB::lookupDoubleValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs)
+{
+  MMDB_entry_data_s data;
+  double ret_double = 0;
+  
+  if (lookupDataValue(address, attrs, data)) {
+    if (data.type == MMDB_DATA_TYPE_FLOAT) {
+      ret_double = static_cast<double>(data.float_value);
+    }
+    else if (data.type == MMDB_DATA_TYPE_DOUBLE) {
+      ret_double = data.double_value;
+    }
+  }
+  return ret_double;
+}
+
 std::shared_ptr<WFGeoIP2DB> WFGeoIP2DB::makeWFGeoIP2DB(const std::string& filename)
 {
   return std::make_shared<WFGeoIP2DB>(filename);

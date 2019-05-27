@@ -23,6 +23,7 @@
 #pragma once
 #include <string>
 #include <mutex>
+#include <vector>
 #include "lock.hh"
 #include "iputils.hh"
 #include "wforce-geoip.hh"
@@ -45,12 +46,16 @@ public:
   std::string lookupCountry(const ComboAddress& address);
   std::string lookupISP(const ComboAddress& address);
   WFGeoIPRecord lookupCity(const ComboAddress& address);
+  std::string lookupStringValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
+  uint64_t lookupUIntValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
+  bool lookupBoolValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
+  double lookupDoubleValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
 
   static std::shared_ptr<WFGeoIP2DB> makeWFGeoIP2DB(const std::string& filename);
 private:
   MMDB_s d_db;
   bool d_init = false;
-  
+  bool lookupDataValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs, MMDB_entry_data_s& ret_data);
   bool mmdbLookup(const std::string& ip, MMDB_lookup_result_s& res);
 };
 

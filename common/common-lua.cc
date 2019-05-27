@@ -505,6 +505,10 @@ void setupCommonLua(bool client,
   c_lua.registerFunction("lookupCountry", &WFGeoIP2DB::lookupCountry);
   c_lua.registerFunction("lookupISP", &WFGeoIP2DB::lookupISP);
   c_lua.registerFunction("lookupCity", &WFGeoIP2DB::lookupCity);
+  c_lua.registerFunction("lookupStringValue", &WFGeoIP2DB::lookupStringValue);
+  c_lua.registerFunction("lookupUIntValue", &WFGeoIP2DB::lookupUIntValue);
+  c_lua.registerFunction("lookupBoolValue", &WFGeoIP2DB::lookupBoolValue);
+  c_lua.registerFunction("lookupDoubleValue", &WFGeoIP2DB::lookupDoubleValue);
 #endif // HAVE_MMDB  
 #endif // HAVE_GEOIP  
 }

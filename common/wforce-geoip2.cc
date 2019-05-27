@@ -25,6 +25,7 @@
 #include "wforce-geoip2.hh"
 #include "wforce_exception.hh"
 #include "dolog.hh"
+#include <string.h>
 
 std::mutex geoip2_mutx;
 std::map<std::string, std::shared_ptr<WFGeoIP2DB>> geoip2Map;
@@ -137,9 +138,7 @@ bool WFGeoIP2DB::mmdbLookup(const std::string& ip, MMDB_lookup_result_s& res)
 
 char* convertToCharStar(const std::pair<unsigned int, std::string>& pair)
 {
-  char *cs = new char[pair.second.size()+1];
-  std::strcpy(cs, pair.second.c_str());
-  return cs;
+  return strdup(pair.second.c_str());
 }
 
 bool WFGeoIP2DB::lookupDataValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs, MMDB_entry_data_s& ret_data)
@@ -156,7 +155,7 @@ bool WFGeoIP2DB::lookupDataValue(const ComboAddress& address, const std::vector<
     }
     for (auto& i : path) {
       if (i != nullptr)
-        delete i;
+        free(i);
     }
   }
   return retval;

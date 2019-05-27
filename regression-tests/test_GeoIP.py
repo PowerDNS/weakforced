@@ -21,5 +21,13 @@ class TestGeoIP(ApiTestCase):
 #        j = r.json()
 #        self.assertRegexpMatches(json.dumps(j), "Nottingham")
 #        r.close()
-
-    
+    def test_geoIP2LookupVals(self):
+        attrs = dict()
+        attrs['ip'] = '62.31.28.109'
+        r = self.customFuncWithName("geoip2_lookupValue", attrs)
+        j = r.json()
+        self.assertRegexpMatches(json.dumps(j['city']), "London")
+        self.assertRegexpMatches(json.dumps(j['accuracy']), "200")
+        self.assertRegexpMatches(json.dumps(j['latitude']), "51.4776")
+        self.assertRegexpMatches(json.dumps(j['is_in_eu']), "1")
+        r.close()

@@ -154,8 +154,7 @@ bool WFGeoIP2DB::lookupDataValue(const ComboAddress& address, const std::vector<
       retval = true;
     }
     for (auto& i : path) {
-      if (i != nullptr)
-        free(i);
+      free(i);
     }
   }
   return retval;

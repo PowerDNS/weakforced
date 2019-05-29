@@ -12,7 +12,7 @@ $(GEOIP_FILE_GZ):
 $(GEOIP_FILE): $(GEOIP_FILE_GZ)
 	gunzip -c $(GEOIP_FILE_GZ) >$(GEOIP_FILE)
 
-$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(GEOIP_FILE) $(shell find ../common -type f) $(shell find ../wforce -type f) $(shell find ../trackalert -type f) $(shell find ../ext -type f) 
+$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(GEOIP_FILE) $(shell find ../common -type f) $(shell find ../wforce -type f) $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f)
 	$(DCMP) down -v
 	$(DCMP) build
 	touch $(COMPOSE_TARGET)

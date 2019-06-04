@@ -393,6 +393,31 @@ cannot be called inside the allow/report/reset functions:
 		-- report sinks
 		-- setCustomEndpoint("custom", true, custom)
 
+* setCustomGetEndpoint(\<name of endpoint\>, \<custom lua
+  function\>) - Create a new custom REST endpoint accessible via a GET
+  command (setCustomEndpoint() only works with POST). The return value
+  of the function is a string, which will be passed to the HTTP client
+  as a text/plain response body. For example:
+
+        function textIPBlacklist()
+            local ipbl = getIPBlacklist()
+            local ret_table = {}
+            for i,j in pairs(ipbl)
+            do
+                for k,v in pairs(j)
+                do
+                    if k == "ip"
+                    then
+                        table.insert(ret_table, v)
+                    end
+                end
+            end
+            local s =  table.concat(ret_table, "\n") .. "\n"
+            return s
+        end
+
+        setCustomGetEndpoint("textIPBlacklist", textIPBlacklist)
+
 * setVerboseAllowLog() - When logging allow requests, for performance
   reaons, allow requests returning 0 will not be logged by default. In
   order to log allow requests returning 0, use this function. For

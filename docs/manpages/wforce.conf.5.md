@@ -462,6 +462,32 @@ configuration or within the allow/report/reset functions:
 		local my_city = gip_record.city
 		local my_latitude = gip_record.latitude
 
+* GeoIP2DB:lookupStringValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns a string corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local city_name = citydb:lookupStringValue(newCA(ip_address), {"city", "names", "en"})
+
+* GeoIP2DB:lookupUIntValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns an integer corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local accuracy = citydb:lookupUIntValue(newCA(ip_address), {"location", "accuracy_radius"})
+
+* GeoIP2DB:lookupBoolValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns a boolean corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local eu = citydb:lookupBoolValue(newCA(ip_address), {"country", "is_in_european_union"})
+
+* GeoIP2DB:lookupDoubleValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns the value corresponding to the value of the field
+  specified by the array of string values (which can be either double
+  or float in the MMDB specification). For example:
+
+        local city_lat = citydb:lookupDoubleValue(newCA(ip_address), {"location", "latitude"})
+        local city_long = citydb:lookupDoubleValue(newCA(ip_address), {"location", "longitude"})
+
 * lookupCountry(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
   function). Returns the two-character country
   code of the country that the IP address is located in. A

@@ -3,6 +3,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- Lookup individual GeoIP2 values (Unsigned Integer, String,
+Double/Float and Boolean)
+- Add session_id to wforce LoginTuple
+- The report_api is now deployable via proper packaging, systemd and gunicorn
+- Custom GET Endpoints supporting non-JSON return values
+- New Kibana Reports and Dashboard to view effectiveness of wforce
+policy
+- New "type" field added to built-in webhooks
+- Built-in whitelists added in addition to built-in blacklists
+- New checkXXXBlacklist (and Whitelist) function in Lua
+- Built-in black/whitelisting can be disabled and checked from Lua
+instead
+- Thread names support
+- Blacklisting return messages are configurable 
+
+### Changed
+- Fix typo in wforce.conf.example blackistLogin->blacklistLogin
+- Python3 support throughout wforce (regression tests and deployment)
+- Uses "bytes" instead of "string" in replication, which avoids
+protobuf errors for non-UTF-8 StatsDB keys or values.
+- Remove ctpl from wforce
+- Sibling threads now use explicit std::queue instead of ctpl
+- Only connect to TCP siblings when necessary (not on startup) to
+prevent delays on startup.
+
 ## [2.0.0]
 
 ### Added

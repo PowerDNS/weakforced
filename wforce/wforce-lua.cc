@@ -646,6 +646,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         auto bl = g_bl_db.getIPLoginEntries();
         return getWLBLKeys(bl, "iplogin");
       });
+    c_lua.writeFunction("getBlacklistIPRetMsg", []() {
+        return g_bl_db.getIPRetMsg();
+      });
+    c_lua.writeFunction("getBlacklistLoginRetMsg", []() {
+        return g_bl_db.getLoginRetMsg();
+      });
+    c_lua.writeFunction("getBlacklistIPLoginRetMsg", []() {
+        return g_bl_db.getIPLoginRetMsg();
+      });
   }
   else {
     c_lua.writeFunction("blacklistNetmask", [](const Netmask& nm, unsigned int seconds, const std::string& reason) {
@@ -681,6 +690,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("getIPBlacklist", []() {});
     c_lua.writeFunction("getLoginBlacklist", []() {});
     c_lua.writeFunction("getIPLoginBlacklist", []() {});
+    c_lua.writeFunction("getBlacklistIPRetMsg", []() {});
+    c_lua.writeFunction("getBlacklistLoginRetMsg", []() {});
+    c_lua.writeFunction("getBlacklistIPLoginRetMsg", []() {});
   }
   
   if (!multi_lua) {

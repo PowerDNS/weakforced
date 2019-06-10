@@ -685,6 +685,21 @@ a Netmask. For example:
   
 		debugLog("This will only log if wforce is started with -v", { logging=1, foo=bar })
 
+* getBlacklistIPRetMsg() - Get the message to be returned to
+  clients whose IP address is blacklisted. For example:
+
+        local retmsg = getBlackistIPRetMsg()
+
+* getBlacklistLoginRetMsg() - Get the message to be returned to
+  clients whose login is blacklisted. For example:
+
+        local retmsg = getBlackistLoginRetMsg()
+
+* getBlacklistIPLoginRetMsg() - Get the message to be returned to
+  clients whose IP address/login is blacklisted. For example:
+
+        local retmsg = getBlackistIPLoginRetMsg()
+
 * blacklistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified netmask for expiry seconds, with the specified reason. Netmask
   address must be a Netmask object, e.g. created with newNetmask(). For example:

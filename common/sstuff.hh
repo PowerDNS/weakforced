@@ -142,6 +142,13 @@ public:
       throw NetworkError(string("Setsockopt failed: ")+strerror(errno));
   }
 
+  void setKeepAlive()
+  {
+    int tmp = 1;
+    if (setsockopt(d_socket, SOL_SOCKET, SO_KEEPALIVE, (char*)&tmp, static_cast<unsigned>(sizeof tmp))<0)
+      throw NetworkError(string("Setsockopt failed: ")+strerror(errno));
+  }
+  
   //! Bind the socket to a specified endpoint
   void bind(const ComboAddress &local)
   {

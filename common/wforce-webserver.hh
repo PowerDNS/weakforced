@@ -44,6 +44,7 @@ struct WFConnection
     fd = sock;
     remote = ca;
     password = pass;
+    s.setKeepAlive();
   }
   std::atomic<bool> inConnectionThread;
   std::atomic<bool> closeConnection;

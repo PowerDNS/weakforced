@@ -17,6 +17,7 @@ policy
 instead
 * Thread names support
 * Built-In Blacklist and Whitelist return messages are configurable
+* Support TCP Keepalive
 
 Bug Fixes/Changes
 -----------------
@@ -210,3 +211,10 @@ The following new functions enable the return messages for built-in blacklists t
 * setBlackistIPLoginRetMsg
 
 See the wforce.conf man page for more details.
+
+Support TCP Keepalive
+----------
+
+The wforce daemon previously did not enable TCP keepalive on 
+accepted sockets. The TCP keepalive socketoption is now enabled for
+all sockets.

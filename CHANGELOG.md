@@ -19,7 +19,9 @@ policy
 - Built-in black/whitelisting can be disabled and checked from Lua
 instead
 - Thread names support
-- Blacklisting return messages are configurable 
+- Blacklisting return messages are configurable
+- Add support for TCP keepalive
+- New functions to retrieve the custom return message for blacklisted IPs, Logins and IP/Logins.
 
 ### Changed
 - Fix typo in wforce.conf.example blackistLogin->blacklistLogin

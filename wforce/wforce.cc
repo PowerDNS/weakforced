@@ -166,8 +166,11 @@ try
   writen2(fd, (char*)ours.value, sizeof(ours.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
-
+  Socket sock(fd);
+  
   setThreadName("wf/ctrl-client");
+
+  sock.setKeepAlive();
   
   for(;;) {
     uint16_t len;
@@ -895,6 +898,7 @@ void receiveReplicationOperationsTCP(ComboAddress local)
     try {
       shared_ptr<Sibling> recv_sibling = nullptr;
       std::shared_ptr<Socket> connp(sock.accept());
+      connp->setKeepAlive();
       if (connp->getRemote(remote) && !checkConnFromSibling(remote, recv_sibling)) {
         continue;
       }

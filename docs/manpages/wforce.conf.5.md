@@ -393,6 +393,31 @@ cannot be called inside the allow/report/reset functions:
 		-- report sinks
 		-- setCustomEndpoint("custom", true, custom)
 
+* setCustomGetEndpoint(\<name of endpoint\>, \<custom lua
+  function\>) - Create a new custom REST endpoint accessible via a GET
+  command (setCustomEndpoint() only works with POST). The return value
+  of the function is a string, which will be passed to the HTTP client
+  as a text/plain response body. For example:
+
+        function textIPBlacklist()
+            local ipbl = getIPBlacklist()
+            local ret_table = {}
+            for i,j in pairs(ipbl)
+            do
+                for k,v in pairs(j)
+                do
+                    if k == "ip"
+                    then
+                        table.insert(ret_table, v)
+                    end
+                end
+            end
+            local s =  table.concat(ret_table, "\n") .. "\n"
+            return s
+        end
+
+        setCustomGetEndpoint("textIPBlacklist", textIPBlacklist)
+
 * setVerboseAllowLog() - When logging allow requests, for performance
   reaons, allow requests returning 0 will not be logged by default. In
   order to log allow requests returning 0, use this function. For
@@ -461,6 +486,32 @@ configuration or within the allow/report/reset functions:
 		local gip_record = citydb:lookupCity(lt.remote)
 		local my_city = gip_record.city
 		local my_latitude = gip_record.latitude
+
+* GeoIP2DB:lookupStringValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns a string corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local city_name = citydb:lookupStringValue(newCA(ip_address), {"city", "names", "en"})
+
+* GeoIP2DB:lookupUIntValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns an integer corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local accuracy = citydb:lookupUIntValue(newCA(ip_address), {"location", "accuracy_radius"})
+
+* GeoIP2DB:lookupBoolValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns a boolean corresponding to the value of the field
+  specified by the array of string values. For example:
+
+        local eu = citydb:lookupBoolValue(newCA(ip_address), {"country", "is_in_european_union"})
+
+* GeoIP2DB:lookupDoubleValue(\<ComboAddress\>, \<array of string
+  values\>) - Returns the value corresponding to the value of the field
+  specified by the array of string values (which can be either double
+  or float in the MMDB specification). For example:
+
+        local city_lat = citydb:lookupDoubleValue(newCA(ip_address), {"location", "latitude"})
+        local city_long = citydb:lookupDoubleValue(newCA(ip_address), {"location", "longitude"})
 
 * lookupCountry(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
   function). Returns the two-character country

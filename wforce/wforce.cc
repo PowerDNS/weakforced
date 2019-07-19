@@ -241,15 +241,12 @@ try
     putMsgLen(fd, response.length());
     writen2(fd, response.c_str(), (uint16_t)response.length());
   }
+  // The Socket class wrapper will close the socket for us
   infolog("Closed control connection from %s", client.toStringWithPort());
-  close(fd);
-  fd=-1;
 }
 catch(std::exception& e)
 {
   errlog("Got an exception in client connection from %s: %s", client.toStringWithPort(), e.what());
-  if(fd >= 0)
-    close(fd);
 }
 
 

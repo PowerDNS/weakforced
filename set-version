@@ -9,7 +9,7 @@ then
   SED_ARG='-E'
 fi
 
-docs/swagger/set-version $VERSION
+cd docs/swagger && ./set-version $VERSION && cd ../..
 if [ $? == 0 ]
 then
     sed $SED_ARG "s/AC_INIT\(\[wforce\],(.*)/AC_INIT([wforce], [$VERSION])/" configure.ac >configure.tmp

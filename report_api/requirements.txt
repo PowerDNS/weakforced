@@ -1,7 +1,7 @@
 click==6.7
 coverage==4.4.1
 elasticsearch>=6.0.0,<7.0.0
-Flask==0.12.3
+Flask==1.0.4
 Flask-Elastic==0.2
 Flask-HTTPAuth==3.2.3
 itsdangerous==0.24

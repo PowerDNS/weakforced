@@ -779,43 +779,42 @@ bool checkConnFromSibling(const ComboAddress& remote,
   return true;
 }
 
+void startReplicationWorkerThreads()
+{
+  for (size_t i=0; i<g_num_sibling_threads; i++) {
+    std::thread t([]() {
+        thread_local bool init=false;
+        if (!init) {
+          setThreadName("wf/repl-worker");
+          init = true;
+        }
+        while (true) {
+          SiblingQueueItem sqi;
+          {
+            std::unique_lock<std::mutex> lock(g_sibling_queue_mutex);
+            while (g_sibling_queue.size() == 0) {
+              g_sibling_queue_cv.wait(lock);
+            }
+            sqi = std::move(g_sibling_queue.front());
+            g_sibling_queue.pop();
+          }
+          ReplicationOperation rep_op;
+          if (rep_op.unserialize(sqi.msg) != false) {
+            rep_op.applyOperation();
+            sqi.recv_sibling->rcvd_success++;
+          }
+          else {
+            errlog("Invalid replication operation received from %s", sqi.remote.toString());
+            sqi.recv_sibling->rcvd_fail++;
+          }
+        }
+      });
+    t.detach();
+  }
+}
+
 void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
 {
-  static std::atomic<bool> start_threads(true);
-
-  if (start_threads) {
-    for (size_t i=0; i<g_num_sibling_threads; i++) {
-      std::thread t([]() {
-          thread_local bool init=false;
-          if (!init) {
-            setThreadName("wf/repl-worker");
-            init = true;
-          }
-          while (true) {
-            SiblingQueueItem sqi;
-            {
-              std::unique_lock<std::mutex> lock(g_sibling_queue_mutex);
-              while (g_sibling_queue.size() == 0) {
-                g_sibling_queue_cv.wait(lock);
-              }
-              sqi = std::move(g_sibling_queue.front());
-              g_sibling_queue.pop();
-            }
-            ReplicationOperation rep_op;
-            if (rep_op.unserialize(sqi.msg) != false) {
-              rep_op.applyOperation();
-              sqi.recv_sibling->rcvd_success++;
-            }
-            else {
-              errlog("Invalid replication operation received from %s", sqi.remote.toString());
-              sqi.recv_sibling->rcvd_fail++;
-            }
-          }
-        });
-      t.detach();
-    }
-    start_threads = false;
-  }
   SiblingQueueItem sqi = { msg, remote, recv_sibling };
   {
     std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
@@ -1291,6 +1290,9 @@ try
     errlog("Could not load persistent WL DB entries, please fix configuration or check redis availability. Exiting.");
     exit(1);
   }
+
+  // Start the replication worker threads
+  startReplicationWorkerThreads();
   
   // start the threads created by lua setup. Includes the webserver accept thread
   for(auto& t : todo)

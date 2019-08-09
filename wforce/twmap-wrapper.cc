@@ -29,8 +29,6 @@ TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int wind
 {
   sdbp = std::make_shared<TWStatsDB<std::string>>(name, window_size, num_windows);
   replicated = std::make_shared<bool>(false);
-  thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
-  t.detach();
 }
 
 TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec)
@@ -38,8 +36,6 @@ TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int wind
   sdbp = std::make_shared<TWStatsDB<std::string>>(name, window_size, num_windows);    
   replicated = std::make_shared<bool>(false);
   (void)setFields(fmvec);
-  thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
-  t.detach();
 }
 
 void TWStringStatsDBWrapper::enableReplication()
@@ -357,4 +353,10 @@ void TWStringStatsDBWrapper::endDBDump()
 void TWStringStatsDBWrapper::restoreEntry(const std::string& key, std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>>& entry)
 {
   sdbp->restoreEntry(key, entry);
+}
+
+void TWStringStatsDBWrapper::startExpireThread()
+{
+  thread t(TWStatsDB<std::string>::twExpireThread, sdbp);
+  t.detach();
 }

@@ -1295,9 +1295,11 @@ try
   startReplicationWorkerThreads();
 
   // Start the StatsDB expire threads (this must be done after any daemonizing)
-  std::lock_guard<std::mutex> lock(dbMap_mutx);
-  for (auto& i : dbMap) {
-    i.second.startExpireThread();
+  {
+    std::lock_guard<std::mutex> lock(dbMap_mutx);
+    for (auto& i : dbMap) {
+      i.second.startExpireThread();
+    }
   }
   
   // start the threads created by lua setup. Includes the webserver accept thread

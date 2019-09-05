@@ -72,6 +72,7 @@ public:
   const std::list<std::string>::iterator DBDumpIteratorEnd();
   void endDBDump();
   void restoreEntry(const std::string& key, TWStatsDBDumpEntry& entry);
+  void startExpireThread();
 };
 
 extern std::mutex dbMap_mutx;

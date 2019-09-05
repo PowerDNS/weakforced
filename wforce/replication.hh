@@ -31,7 +31,7 @@ typedef std::shared_ptr<AnyReplicationOperation> AnyReplicationOperationP;
 class AnyReplicationOperation
 {
 public:
-  virtual ~AnyReplicationOperation() {}
+  virtual ~AnyReplicationOperation() = default;
   virtual std::string serialize()=0;
   virtual AnyReplicationOperationP unserialize(const std::string& data, bool& retval)=0;
   virtual void applyOperation()=0;

@@ -85,7 +85,10 @@ AC_SUBST([EXT_LIBS], ['$(abs_top_builddir)/ext/ext/libext.la'])
 AC_SUBST([WFORCE_CFLAGS], ['-I$(top_srcdir)'/common])
 AC_SUBST([WFORCE_LIBS], ['$(abs_top_builddir)/common/libweakforce.la'])
 # We need libcrypto for hash functions
-PDNS_CHECK_LIBCRYPTO
+PDNS_CHECK_LIBCRYPTO([], [
+  AC_MSG_ERROR([Libcrypto not found, libcrypto support is required])
+  ]
+)
 # Check for LuaJIT first then Lua
 PDNS_WITH_LUAJIT
 AS_IF([test "x$with_luajit" = "xno"], [

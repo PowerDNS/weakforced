@@ -12,6 +12,7 @@ ARG BUILDER_PACKAGE_MATCH
 
 ARG BUILDER_VERSION
 ARG BUILDER_RELEASE
+ARG BUILDER_EPOCH
 
 @IF [ ! -z "$M_all$M_wforce" ]
 COPY --from=sdist /sdist /sdist

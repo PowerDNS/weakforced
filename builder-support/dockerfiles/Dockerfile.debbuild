@@ -36,6 +36,7 @@ WORKDIR /wforce
 
 ARG BUILDER_VERSION
 ARG BUILDER_RELEASE
+ARG BUILDER_EPOCH
 
 COPY --from=sdist /sdist/ /sdist/
 

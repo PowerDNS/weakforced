@@ -425,20 +425,18 @@ void doConsole()
   }
 }
 
-Sibling::Sibling(const ComboAddress& ca) : rem(ca), proto(Protocol::UDP), d_ignoreself(false)
+Sibling::Sibling(const ComboAddress& ca) : Sibling(ca, Protocol::UDP)
 {
-  if (!g_cmdLine.beClient)
-    connectSibling(false);
 }
 
-void Sibling::connectSibling(bool connect_tcp=true)
+void Sibling::connectSibling()
 {
   sockp = wforce::make_unique<Socket>(rem.sin4.sin_family, static_cast<int>(proto));
   if (proto == Protocol::UDP) {
     sockp->connect(rem);
   }
   else {
-    if (connect_tcp && !d_ignoreself) {
+    if (!d_ignoreself) {
       try {
         sockp->connect(rem);
       }
@@ -452,8 +450,29 @@ void Sibling::connectSibling(bool connect_tcp=true)
 
 Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), d_ignoreself(false)
 {
-  if (!g_cmdLine.beClient)
-    connectSibling(false);
+  if (!g_cmdLine.beClient) {
+    std::thread t([this]() {
+        thread_local bool init=false;
+        if (!init) {
+          setThreadName("wf/sibling-worker");
+          init = true;
+        }
+        connectSibling();
+        while (true) {
+          std::string msg;
+          {
+            std::unique_lock<std::mutex> lock(queue_mutx);
+            while (queue.size() == 0) {
+              queue_cv.wait(lock);
+            }
+            msg = std::move(queue.front());
+            queue.pop();
+          }
+          send(msg);
+        }
+      });
+    t.detach();
+  }
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)
@@ -500,6 +519,19 @@ void Sibling::send(const std::string& msg)
       connectSibling();
     }
   }
+}
+
+void Sibling::queueMsg(const std::string& msg)
+{
+  std::lock_guard<std::mutex> lock(queue_mutx);
+  if (queue.size() >= max_queue_size) {
+    errlog("Sibling::queueMsg: max sibling queue size (%d) reached - dropping replication msg");
+    return;
+  }
+  else {
+    queue.push(msg);
+  }
+  queue_cv.notify_one();
 }
 
 std::atomic<unsigned int> g_report_sink_rr(0);
@@ -757,7 +789,7 @@ void replicateOperation(const ReplicationOperation& rep_op)
   encryptMsg(msg, packet);
 
   for(auto& s : *siblings) {
-    s->send(packet);
+    s->queueMsg(packet);
   }
 }
 

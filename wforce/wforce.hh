@@ -77,14 +77,25 @@ struct Sibling
   ComboAddress rem;
   std::mutex mutx;
   std::unique_ptr<Socket> sockp;
-  Protocol proto;
+  Protocol proto = Protocol::UDP;
+
+  // The queue is used to process messages in a separate thread
+  // so that replication delays/timeouts don't affect the caller.
+  // To use this asynchronous behaviour, queueMsg() must be used.
+  // To send synchronously, use send().
+  std::mutex queue_mutx;
+  std::queue<std::string> queue;
+  std::condition_variable queue_cv;
+  const size_t max_queue_size = 5000; // XXX Arbitrary
+  
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   std::atomic<unsigned int> rcvd_fail{0};
   std::atomic<unsigned int> rcvd_success{0};
   void send(const std::string& msg);
+  void queueMsg(const std::string& msg);
   void checkIgnoreSelf(const ComboAddress& ca);
-  void connectSibling(bool connect_tcp);
+  void connectSibling();
   static Protocol stringToProtocol(const std::string& s) {
     if (s.compare("tcp") == 0)
       return Sibling::Protocol::TCP;

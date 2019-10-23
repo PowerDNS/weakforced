@@ -547,7 +547,7 @@ void sendReportSink(const LoginTuple& lt)
   // round-robin between report sinks
   unsigned int i = g_report_sink_rr++ % vsize;
 
-  (*rsinks)[i]->send(msg);
+  (*rsinks)[i]->queueMsg(msg);
 }
 
 void sendNamedReportSink(const std::string& msg)
@@ -564,7 +564,7 @@ void sendNamedReportSink(const std::string& msg)
     unsigned int j = (*i.second.first)++ % vsize;
     auto& vec = i.second.second;
 
-    vec[j]->send(msg);
+    vec[j]->queueMsg(msg);
   }
 }
 

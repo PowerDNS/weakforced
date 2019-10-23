@@ -427,7 +427,8 @@ void doConsole()
 
 Sibling::Sibling(const ComboAddress& ca) : rem(ca), proto(Protocol::UDP), d_ignoreself(false)
 {
-  connectSibling(false);
+  if (!g_cmdLine.beClient)
+    connectSibling(false);
 }
 
 void Sibling::connectSibling(bool connect_tcp=true)

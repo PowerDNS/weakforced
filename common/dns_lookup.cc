@@ -42,17 +42,15 @@
 std::mutex resolv_mutx;
 std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
 
-WFResolver::WFResolver(): num_contexts(NUM_GETDNS_CONTEXTS)
+WFResolver::WFResolver(): WFResolver(std::string("default"))
+{ 
+}
+
+WFResolver::WFResolver(const std::string& name) : num_contexts(NUM_GETDNS_CONTEXTS), resolver_name(name)
 { 
   resolver_list = getdns_list_create(); 
   req_timeout = DNS_REQUEST_TIMEOUT;
   context_index = 0;
-  resolver_name = std::string("default");
-}
-
-WFResolver::WFResolver(const std::string& name) : WFResolver()
-{ 
-  resolver_name = name;
 }
 
 WFResolver::~WFResolver() 

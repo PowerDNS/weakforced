@@ -30,8 +30,9 @@ instead
 protobuf errors for non-UTF-8 StatsDB keys or values.
 - Remove ctpl from wforce
 - Sibling threads now use explicit std::queue instead of ctpl
-- Only connect to TCP siblings when necessary (not on startup) to
-prevent delays on startup.
+- Perform replication to siblings asynchronously instead of synchronously,
+  preventing delays at startup and in REST API functions which triggered
+  replication.
 
 ## [2.0.0]
 

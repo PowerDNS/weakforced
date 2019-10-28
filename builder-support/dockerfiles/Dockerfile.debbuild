@@ -25,6 +25,8 @@ RUN grep -q stretch /etc/os-release && \
   printf "getdns ($GETDNS_VERSION-$GETDNS_DEBIAN_VERSION.ox) unstable; urgency=medium\n\n  * automatic build\n\n -- Open-Xchange <noreply@open-xchange.com>  $(date -R)" > getdns-$GETDNS_VERSION/debian/changelog && \
   sed -i 's!debhelper (>= 11~)!debhelper (>= 10~)!' getdns-$GETDNS_VERSION/debian/control && \
   sed -i 's!^!debian/tmp/!' getdns-$GETDNS_VERSION/debian/stubby.manpages && \
+  sed -i '/Breaks:/a \ libgetdns1,' getdns-$GETDNS_VERSION/debian/control && \
+  sed -i '/Replaces:/a \ ligetdns1,' getdns-$GETDNS_VERSION/debian/control && \
   /wforce/builder/helpers/build-debs.sh getdns-$GETDNS_VERSION && \
   mv *getdns*.deb stubby*.deb /dist/vendor/getdns
 

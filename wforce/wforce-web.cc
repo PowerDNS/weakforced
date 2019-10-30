@@ -188,8 +188,8 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
   }
   if (resp.status == 200)
     resp.body=R"({"status":"ok"})";
-  incCommandStat("SyncDBs");
-  incPrometheusCommandMetric("SyncDBs");
+  incCommandStat("syncDBs");
+  incPrometheusCommandMetric("syncDBs");
 }
 
 void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd, bool blacklist)

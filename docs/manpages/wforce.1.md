@@ -155,7 +155,8 @@ started with the -c option.
 		 custom1                        true
 		 custom2                        false
 
-* showPerfStats() - Returns information about performance
+* showPerfStats() - (Deprecated in favour of prometheus metrics - will
+  be removed in a future version). Returns information about performance
   statistics. Stats beginning with WTW refer to the time that worker
   threads waited in a queue before running. Stats beginning with WTR
   refer to the time that worker threads took to run. Each stat is in a
@@ -175,7 +176,9 @@ started with the -c option.
 		WTR_100_1000=0
 		WTR_Slow=0
 
-* showCommandStats() - Returns information about the number of REST
+* showCommandStats() - (Deprecated in favour of prometheus metrics -
+  will be removed in a future version). Returns information about the
+  number of REST 
   API commands that have been called, including custom
   endpoints. Stats are for the previous 5 mins, and due to the
   counting method, may be approximate when the numbers get very
@@ -193,7 +196,9 @@ started with the -c option.
         stats=92
         customEndpoint=2821
 
-* showCustomStats() - Returns information about custom stats that are
+* showCustomStats() - (Deprecated in favour of prometheus metrics -
+  will be removed in a future version). Returns information about
+  custom stats that are
   incremented from Lua. Stats are for the previous 5 mins, and due to the
   counting method, may be approximate when the numbers get very
   large. For example:

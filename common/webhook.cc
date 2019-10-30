@@ -95,6 +95,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
       else {
         queue.push(wqi);
       }
+      setPrometheusWebhookQueueSize(queue.size());
     }
     cv.notify_one();
   }

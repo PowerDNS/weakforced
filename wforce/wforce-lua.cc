@@ -35,6 +35,7 @@
 #include "common-lua.hh"
 #include <fstream>
 #include <boost/algorithm/string.hpp>
+#include "wforce-prometheus.hh"
 
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
@@ -262,6 +263,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	  return;
 	}
 	g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
+        addPrometheusReplicationSibling(ca.toStringWithPort());
       });
   }
   else {
@@ -278,6 +280,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
             parseSiblingString(p.second, ca_string, proto);
             v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
+            addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
           }
           catch (const WforceException& e) {
             const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
@@ -470,7 +473,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   if (!multi_lua) {
     c_lua.writeFunction("newDNSResolver", [](const std::string& name) { 
 	std::lock_guard<std::mutex> lock(resolv_mutx);
-	resolvMap.insert(std::make_pair(name, std::make_shared<WFResolver>()));
+	resolvMap.insert(std::make_pair(name, std::make_shared<WFResolver>(name)));
+        addPrometheusDNSResolverMetric(name);
       });
   }
   else {
@@ -911,6 +915,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       custom_func_map.insert(std::make_pair(f_name, cobj));
       if (!multi_lua && !client) {
         addCommandStat(f_name);
+        addPrometheusCommandMetric("f_name");
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, WforceWSFunc(parseCustomCmd));
 	noticelog("Registering custom POST endpoint [%s]", f_name);
@@ -921,7 +926,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       custom_get_func_map.insert(std::make_pair(f_name, func));
       if (!multi_lua && !client) {
         addCommandStat(f_name+"_Get");
-	// register a webserver command
+        addPrometheusCommandMetric(f_name+"_Get");
+        // register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::GET, WforceWSFunc(parseCustomGetCmd, "text/plain"));
 	noticelog("Registering custom GET endpoint [%s]", f_name);
       }

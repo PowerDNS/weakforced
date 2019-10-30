@@ -26,6 +26,7 @@
 #include "replication_wl.hh"
 #include "replication.pb.h"
 #include "wforce.hh"
+#include "wforce-prometheus.hh"
 #include <boost/version.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -421,6 +422,19 @@ void BlackWhiteListDB::purgeEntries()
     _purgeEntries(IP_BLWL, ip_list, IP_BLWL);
     _purgeEntries(LOGIN_BLWL, login_list, LOGIN_BLWL);
     _purgeEntries(IP_LOGIN_BLWL, ip_login_list, IP_LOGIN_BLWL);
+    {
+      ReadLock rl(&rwlock);
+      if (db_type == BLWLDBType::BLACKLIST) {
+        setPrometheusBLIPEntries(ip_list.size());
+        setPrometheusBLLoginEntries(login_list.size());
+        setPrometheusBLIPLoginEntries(ip_login_list.size());
+      }
+      else {
+        setPrometheusWLIPEntries(ip_list.size());
+        setPrometheusWLLoginEntries(login_list.size());
+        setPrometheusWLIPLoginEntries(ip_login_list.size());        
+      }
+    }
   }
 }
 
@@ -561,6 +575,10 @@ bool BlackWhiteListDB::checkSetupContext()
 	redis_context = NULL;
       }
       errlog("checkSetupContext: could not connect to redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
+      if (db_type == BLWLDBType::BLACKLIST)
+        incPrometheusRedisBLConnFailed();
+      else
+        incPrometheusRedisWLConnFailed();
       return false;
     }
   }
@@ -595,6 +613,10 @@ bool BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, B
       freeReplyObject(reply);
     }
   }
+  if (db_type == BLWLDBType::BLACKLIST)
+    incPrometheusRedisBLUpdates();
+  else
+    incPrometheusRedisWLUpdates();
   return retval;
 }
 

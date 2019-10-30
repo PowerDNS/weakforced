@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 	$(LIBHIREDIS_CFLAGS) \
 	$(LIBCURL_CFLAGS) \
 	$(LIBCRYPTO_INCLUDES) \
+	$(LIBPROMETHEUS_INCLUDES) \
 	$(YAMLCPP_FLAGS) \
 	$(MMDB_CFLAGS) \
 	-DSYSCONFDIR='"$(sysconfdir)"' \
@@ -43,6 +44,7 @@ wforce_SOURCES = \
 	replication_bl.cc replication_bl.hh \
 	replication_wl.cc replication_wl.hh \
 	wforce-replication.cc wforce-replication.hh \
+	wforce-prometheus.hh wforce-prometheus.cc \
 	luastate.hh
 
 wforce_LDFLAGS = \
@@ -54,7 +56,7 @@ wforce_LDADD = \
 	${libsodium_LIBS} $(GEOIP_LIBS) $(MMDB_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LDFLAGS) $(LIBCRYPTO_LIBS) \
-	$(YAMLCPP_LIBS)
+	$(YAMLCPP_LIBS) $(LIBPROMETHEUS_LDFLAGS) $(LIBPROMETHEUS_LIBS)
 
 EXTRA_wforce_DEPENDENCIES = \
 	$(EXT_LIBS) $(WFORCE_LIBS)

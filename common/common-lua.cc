@@ -320,7 +320,7 @@ void setupCommonLua(bool client,
       });
   }
   else {
-    c_lua.writeFunction("runCustomWebHook", []() { });
+    c_lua.writeFunction("runCustomWebHook", [](const std::string& wh_name, const std::string& wh_data) { });
   }
   
   if (!(multi_lua || client)) {

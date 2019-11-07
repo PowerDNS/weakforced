@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: "2.2.0-rc1"
+  version: "2.2.0"
   title: "OX Abuse Shield (Wforce)"
   description: "An API to the wforce daemon to prevent brute-force and abuse of mail systems"
   contact:

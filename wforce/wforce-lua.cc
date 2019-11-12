@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "wforce.hh"
+#include "wforce-replication.hh"
 #include <thread>
 #include "dolog.hh"
 #include "sodcrypto.hh"
@@ -281,7 +282,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("siblingListener", [](const std::string& address) {
 	ComboAddress ca;
 	try {

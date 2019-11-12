@@ -34,6 +34,7 @@ wforce_SOURCES = \
 	wforce.cc wforce.hh \
 	wforce-lua.cc \
 	wforce-web.cc wforce-web.hh\
+	wforce-sibling.cc wforce-sibling.hh \
 	twmap.cc \
 	twmap-wrapper.cc twmap-wrapper.hh \
 	blackwhitelist.cc blackwhitelist.hh \
@@ -41,6 +42,7 @@ wforce_SOURCES = \
 	replication_sdb.hh replication_sdb.cc \
 	replication_bl.cc replication_bl.hh \
 	replication_wl.cc replication_wl.hh \
+	wforce-replication.cc wforce-replication.hh \
 	luastate.hh
 
 wforce_LDFLAGS = \
@@ -65,7 +67,9 @@ noinst_HEADERS = \
 	replication_bl.hh \
 	twmap-wrapper.hh \
 	luastate.hh \
-	wforce-web.hh
+	wforce-web.hh \
+	wforce-sibling.hh \
+	wforce-replication.hh
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
 replication.pb.cc: replication.proto

@@ -486,7 +486,6 @@ Json callWforcePostURL(const std::string& url, const std::string& password, cons
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
                   const std::string& callback_pw)
 {
-  Sibling sibling(ca);
   unsigned int num_synced = 0;
   
   noticelog("Synchronizing DBs to: %s, will notify on callback url: %s",

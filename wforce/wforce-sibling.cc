@@ -63,9 +63,10 @@ void Sibling::connectSibling()
   }
 }
 
-Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), d_ignoreself(false)
+Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
 {
-  std::thread t([this]() {
+  // std::thread is moveable
+  queue_thread = std::thread([this]() {
       thread_local bool init=false;
       if (!init) {
         setThreadName("wf/sibling-worker");
@@ -76,16 +77,27 @@ Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), d_igno
         std::string msg;
         {
           std::unique_lock<std::mutex> lock(queue_mutx);
-          while (queue.size() == 0) {
+          while ((queue.size() == 0) && queue_thread_run) {
             queue_cv.wait(lock);
           }
+          if (!queue_thread_run)
+            return;
           msg = std::move(queue.front());
           queue.pop();
         }
         send(msg);
       }
     });
-  t.detach();
+}
+
+Sibling::~Sibling()
+{
+  {
+    std::lock_guard<std::mutex> lock(queue_mutx);
+    queue_thread_run = false;
+  }
+  queue_cv.notify_one();
+  queue_thread.join();
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)

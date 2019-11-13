@@ -38,6 +38,7 @@ struct Sibling
   enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM };
   explicit Sibling(const ComboAddress& ca);
   explicit Sibling(const ComboAddress& ca, Protocol p);
+  ~Sibling();
   Sibling(const Sibling&) = delete;
   ComboAddress rem;
   std::mutex mutx;
@@ -52,6 +53,8 @@ struct Sibling
   std::queue<std::string> queue;
   std::condition_variable queue_cv;
   const size_t max_queue_size = 5000; // XXX Arbitrary
+  std::thread queue_thread; // We hang on to this so that the queue thread can be terminated in the destructor
+  bool queue_thread_run;
   
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};

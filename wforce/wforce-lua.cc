@@ -99,7 +99,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   setupCommonLua(client, multi_lua, c_lua, config);
   
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("addReportSink", [](const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -124,7 +124,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("addReportSink", [](const std::string& address) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) {
 	vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {
@@ -149,7 +149,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setReportSinks", [](const vector<pair<int, string>>& parts) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("addNamedReportSink", [](const std::string& sink_name, const std::string& address) {
 	ComboAddress ca;
 	try {
@@ -179,7 +179,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 						 const std::string& address) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) {
 	g_named_report_sinks.modify([sink_name, parts](std::map<std::string, std::pair<std::shared_ptr<std::atomic<unsigned int>>, std::vector<std::shared_ptr<Sibling>>>>& m) {
 	    vector<shared_ptr<Sibling>> v;
@@ -208,7 +208,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setNamedReportSinks", [](const std::string& sink_name, const vector<pair<int, string>>& parts) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("addSyncHost", [](const std::string& address, const std::string password, const std::string& sync_address, const std::string& webserver_address) {
 	try {
           g_sync_data.sync_hosts.push_back(std::make_pair(ComboAddress(address, 8084), password));
@@ -236,7 +236,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setMinSyncHostUptime", [](unsigned int uptime) {});
   }
   
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
 	ComboAddress ca;
         std::string ca_str;
@@ -258,7 +258,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("addSibling", [](const std::string& address) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
         vector<shared_ptr<Sibling>> v;
 	for(const auto& p : parts) {

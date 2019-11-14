@@ -34,9 +34,8 @@ extern SodiumNonce g_sodnonce;
 
 #define WFORCE_NUM_SIBLING_THREADS 2
 
-void receiveReports(ComboAddress local);
-void receiveReplicationOperationsTCP(ComboAddress local);
-void receiveReplicationOperations(ComboAddress local);
+void receiveReplicationOperationsTCP(const ComboAddress& local);
+void receiveReplicationOperations(const ComboAddress& local);
 void startReplicationWorkerThreads();
 
 void encryptMsg(const std::string& msg, std::string& packet);

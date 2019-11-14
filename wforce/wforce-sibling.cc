@@ -63,7 +63,7 @@ void Sibling::connectSibling()
   }
 }
 
-Sibling::Sibling(const ComboAddress& ca, Protocol p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
+Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
 {
   // std::thread is moveable
   queue_thread = std::thread([this]() {

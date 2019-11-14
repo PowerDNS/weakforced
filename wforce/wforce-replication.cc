@@ -53,7 +53,7 @@ struct SiblingQueueItem {
 static std::mutex g_sibling_queue_mutex;
 static std::queue<SiblingQueueItem> g_sibling_queue;
 static std::condition_variable g_sibling_queue_cv;
-size_t g_max_sibling_queue_size = 1000;
+const size_t g_max_sibling_queue_size = 1000;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
@@ -71,7 +71,7 @@ bool decryptMsg(const char* buf, size_t len, std::string& msg)
 {
   SodiumNonce nonce;
 
-  if (len < static_cast<int>(crypto_secretbox_NONCEBYTES)) {
+  if (len < static_cast<size_t>(crypto_secretbox_NONCEBYTES)) {
     errlog("Could not decrypt replication operation: not enough bytes (%d) to hold nonce", len);
     return false;
   }
@@ -175,7 +175,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
 
   infolog("New TCP Replication connection from %s", remote.toString());
   uint16_t size;
-  unsigned char ssize = sizeof(size);
+  size_t ssize = sizeof(size);
   char buffer[65535];
   int len;
   unsigned int num_rcvd=0;
@@ -217,7 +217,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
   }
 }
 
-void receiveReplicationOperationsTCP(ComboAddress local)
+void receiveReplicationOperationsTCP(const ComboAddress& local)
 {
   Socket sock(local.sin4.sin_family, SOCK_STREAM, 0);
   ComboAddress remote=local;
@@ -247,7 +247,7 @@ void receiveReplicationOperationsTCP(ComboAddress local)
   }
 }
 
-void receiveReplicationOperations(ComboAddress local)
+void receiveReplicationOperations(const ComboAddress& local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
   sock.bind(local);

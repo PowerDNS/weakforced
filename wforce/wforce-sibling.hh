@@ -37,7 +37,7 @@ struct Sibling
 {
   enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM };
   explicit Sibling(const ComboAddress& ca);
-  explicit Sibling(const ComboAddress& ca, Protocol p);
+  explicit Sibling(const ComboAddress& ca, const Protocol& p);
   ~Sibling();
   Sibling(const Sibling&) = delete;
   ComboAddress rem;
@@ -70,7 +70,7 @@ struct Sibling
     else
       return Sibling::Protocol::UDP;
   }
-  static std::string protocolToString(Protocol p) {
+  static std::string protocolToString(const Protocol& p) {
     if (p == Protocol::TCP)
       return std::string("tcp");
     else

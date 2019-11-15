@@ -40,6 +40,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include "wforce-sibling.hh"
 
 struct WForceStats
 {
@@ -65,54 +66,7 @@ extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 extern WforceWebserver g_webserver;
 
-void receiveReports(ComboAddress local);
-void receiveReplicationOperationsTCP(ComboAddress local);
-void receiveReplicationOperations(ComboAddress local);
-struct Sibling
-{
-  enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM };
-  explicit Sibling(const ComboAddress& ca);
-  explicit Sibling(const ComboAddress& ca, Protocol p);
-  Sibling(const Sibling&) = delete;
-  ComboAddress rem;
-  std::mutex mutx;
-  std::unique_ptr<Socket> sockp;
-  Protocol proto = Protocol::UDP;
-
-  // The queue is used to process messages in a separate thread
-  // so that replication delays/timeouts don't affect the caller.
-  // To use this asynchronous behaviour, queueMsg() must be used.
-  // To send synchronously, use send().
-  std::mutex queue_mutx;
-  std::queue<std::string> queue;
-  std::condition_variable queue_cv;
-  const size_t max_queue_size = 5000; // XXX Arbitrary
-  
-  std::atomic<unsigned int> success{0};
-  std::atomic<unsigned int> failures{0};
-  std::atomic<unsigned int> rcvd_fail{0};
-  std::atomic<unsigned int> rcvd_success{0};
-  void send(const std::string& msg);
-  void queueMsg(const std::string& msg);
-  void checkIgnoreSelf(const ComboAddress& ca);
-  void connectSibling();
-  static Protocol stringToProtocol(const std::string& s) {
-    if (s.compare("tcp") == 0)
-      return Sibling::Protocol::TCP;
-    else
-      return Sibling::Protocol::UDP;
-  }
-  static std::string protocolToString(Protocol p) {
-    if (p == Protocol::TCP)
-      return std::string("tcp");
-    else
-      return std::string("udp");
-  }
-  bool d_ignoreself{false};
-};
-
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
-extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 extern ComboAddress g_sibling_listen;
 extern ComboAddress g_serverControl; // not changed during runtime
 

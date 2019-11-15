@@ -165,5 +165,3 @@ private:
 
 extern std::shared_ptr<LuaMultiThread> g_luamultip;
 extern int g_num_luastates;
-extern unsigned int g_num_sibling_threads;
-#define WFORCE_NUM_SIBLING_THREADS 2

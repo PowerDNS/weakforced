@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace wforce {
   template<typename T, typename... Ts>
   std::unique_ptr<T> make_unique(Ts&&... params)

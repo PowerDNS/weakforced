@@ -32,6 +32,7 @@ std::string ReplicationOperation::serialize() const
 
   msg.set_rep_type(obj_type);
   msg.set_rep_op(bytes);
+  msg.set_forwarded(forwarded);
 
   std::string ret_str;
   msg.SerializeToString(&ret_str);
@@ -60,7 +61,8 @@ bool ReplicationOperation::unserialize(const std::string& str)
     }
     else
       retval = false;
-  }  
+  }
+  forwarded = msg.forwarded();
   return retval;
 }
 

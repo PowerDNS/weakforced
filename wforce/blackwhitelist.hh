@@ -39,6 +39,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <hiredis/hiredis.h>
 #include "ext/threadname.hh"
+#include "webhook.hh"
 
 struct BlackWhiteListEntry {
   std::string key;
@@ -185,3 +186,7 @@ private:
 
 extern BlackWhiteListDB g_bl_db;
 extern BlackWhiteListDB g_wl_db;
+
+// These are expected to be instantiated elsewhere
+extern WebHookRunner g_webhook_runner;
+extern WebHookDB g_webhook_db;

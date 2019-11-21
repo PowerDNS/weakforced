@@ -54,6 +54,7 @@ public:
   void applyOperation();
   void setForwarded(bool fwd) { forwarded = fwd; }
   bool getForwarded() { return forwarded; }
+  WforceReplicationMsg_RepType getType() { return obj_type; }
   
 private:
   bool forwarded = false;

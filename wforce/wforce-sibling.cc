@@ -51,9 +51,10 @@ void Sibling::connectSibling()
   if (proto == Protocol::UDP) {
     sockp->connect(rem);
   }
-  else {
+  else if (proto == Protocol::TCP) {
     if (!d_ignoreself) {
       try {
+        sockp->setKeepAlive();
         sockp->connect(rem);
       }
       catch (const NetworkError& e) {
@@ -67,39 +68,43 @@ void Sibling::connectSibling()
 
 Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
 {
-  // std::thread is moveable
-  queue_thread = std::thread([this]() {
-      thread_local bool init=false;
-      if (!init) {
-        setThreadName("wf/sibling-worker");
-        init = true;
-      }
-      connectSibling();
-      while (true) {
-        std::string msg;
-        {
-          std::unique_lock<std::mutex> lock(queue_mutx);
-          while ((queue.size() == 0) && queue_thread_run) {
-            queue_cv.wait(lock);
-          }
-          if (!queue_thread_run)
-            return;
-          msg = std::move(queue.front());
-          queue.pop();
+  if (proto != Protocol::NONE) {
+    // std::thread is moveable
+    queue_thread = std::thread([this]() {
+        thread_local bool init=false;
+        if (!init) {
+          setThreadName("wf/sibling-worker");
+          init = true;
         }
-        send(msg);
-      }
-    });
+        connectSibling();
+        while (true) {
+          std::string msg;
+          {
+            std::unique_lock<std::mutex> lock(queue_mutx);
+            while ((queue.size() == 0) && queue_thread_run) {
+              queue_cv.wait(lock);
+            }
+            if (!queue_thread_run)
+              return;
+            msg = std::move(queue.front());
+            queue.pop();
+          }
+          send(msg);
+        }
+      });
+  }
 }
 
 Sibling::~Sibling()
 {
-  {
-    std::lock_guard<std::mutex> lock(queue_mutx);
-    queue_thread_run = false;
+  if (proto != Protocol::NONE) {
+    {
+      std::lock_guard<std::mutex> lock(queue_mutx);
+      queue_thread_run = false;
+    }
+    queue_cv.notify_one();
+    queue_thread.join();
   }
-  queue_cv.notify_one();
-  queue_thread.join();
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)

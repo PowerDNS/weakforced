@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.1]
+
+### Changed
+- Fix wforce crash in Sibling send thread triggered by syncDB operation 
+
+## [2.2.0]
+
 ### Added
 - Lookup individual GeoIP2 values (Unsigned Integer, String,
 Double/Float and Boolean)

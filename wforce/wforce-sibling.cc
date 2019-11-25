@@ -141,19 +141,24 @@ void Sibling::send(const std::string& msg)
   else if (proto == Protocol::TCP) {
     // This needs protecting with a mutex because of the reconnect logic
     std::lock_guard<std::mutex> lock(mutx);
-
-    uint16_t nsize = htons(msg.length());
-    try {
-      sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
-      sockp->writen(msg);
-      ++success;
-      incPrometheusReplicationSent(rem.toStringWithPort(), true);
-    }
-    catch (const NetworkError& e) {
-      ++failures;
-      incPrometheusReplicationSent(rem.toStringWithPort(), false);
-      errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
-      connectSibling();
+    // Try to send. In case of error, try to reconnect (but only once) and then try to send again
+    for (int i=0; i<2; ++i) {
+      uint16_t nsize = htons(msg.length());
+      try {
+        sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
+        sockp->writen(msg);
+        ++success;
+        incPrometheusReplicationSent(rem.toStringWithPort(), true);
+        break;
+      }
+      catch (const NetworkError& e) {
+        if (i == 0) {
+          ++failures;
+          incPrometheusReplicationSent(rem.toStringWithPort(), false);
+          errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
+          connectSibling();
+        }
+      }
     }
   }
 }

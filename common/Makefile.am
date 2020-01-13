@@ -96,7 +96,7 @@ testrunner_SOURCES = \
 	test-serialize.cc
 
 EXTRA_testrunner_DEPENDENCIES = \
-	$(EXT_LIBS)
+	libweakforce.la $(EXT_LIBS)
 
 testrunner_LDFLAGS = \
 	$(AM_LDFLAGS) \

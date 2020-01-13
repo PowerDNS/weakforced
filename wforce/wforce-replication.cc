@@ -159,7 +159,7 @@ void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& rem
   {
     std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
     if (g_sibling_queue.size() >= g_max_sibling_queue_size) {
-      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg");
+      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg", g_max_sibling_queue_size);
       return;
     }
     else {

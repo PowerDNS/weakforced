@@ -36,7 +36,9 @@ RUN apt-get update && \
 
 # Disable Ipv6 for redis
 RUN sed -i "s/bind .*/bind 127.0.0.1/g" /etc/redis/redis.conf
+RUN echo "AccountID 164476\nLicenseKey W68a2SACgoSv\nEditionIDs GeoLite2-ASN GeoLite2-City GeoLite2-Country" >/etc/GeoIP.conf
 RUN echo "DatabaseDirectory /usr/share/GeoIP" >>/etc/GeoIP.conf
+RUN cat /etc/GeoIP.conf
 RUN geoipupdate -v
 RUN pip3 install bottle virtualenv
 RUN update-rc.d redis-server enable

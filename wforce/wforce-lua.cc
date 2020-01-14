@@ -235,6 +235,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   else {
     c_lua.writeFunction("setMinSyncHostUptime", [](unsigned int uptime) {});
   }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {
+        setMaxSiblingQueueSize(size);
+      });
+  }
+  else {
+    c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {});
+  }
+
   
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
@@ -579,7 +589,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   c_lua.registerFunction("twResetField", &TWStringStatsDBWrapper::resetField);
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
   c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
-
+  c_lua.registerFunction("twSetExpireSleep", &TWStringStatsDBWrapper::set_expire_sleep);
   // Blacklists
   if (!multi_lua) {
     c_lua.writeFunction("disableBuiltinBlacklists", []() {

@@ -28,7 +28,7 @@ tar xvf wforce-$WF_VERSION.tar.gz
 cd wforce-$WF_VERSION
 autoreconf -i
 cd ..
-rm -f build
+rm -rf build
 mkdir build
 cd build
 ../wforce-$WF_VERSION/configure --enable-trackalert CC=$MYCC CXX=$MYCXX

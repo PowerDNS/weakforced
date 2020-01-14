@@ -313,6 +313,11 @@ void TWStringStatsDBWrapper::set_size_soft(unsigned int size)
   sdbp->set_map_size_soft(size);
 }
 
+void TWStringStatsDBWrapper::set_expire_sleep(unsigned int ms)
+{
+  sdbp->set_expire_sleep(ms);
+}
+
 unsigned int TWStringStatsDBWrapper::get_max_size()
 {	
   return sdbp->get_max_size();

@@ -63,6 +63,7 @@ public:
   unsigned int get_size();
   unsigned int get_max_size();
   void set_size_soft(unsigned int size);
+  void set_expire_sleep(unsigned int ms);
   int windowSize();
   int numWindows();
   const std::list<std::string>::iterator startDBDump();

@@ -41,3 +41,4 @@ void startReplicationWorkerThreads();
 void encryptMsg(const std::string& msg, std::string& packet);
 bool decryptMsg(const char* buf, size_t len, std::string& msg);
 
+void setMaxSiblingQueueSize(size_t size);

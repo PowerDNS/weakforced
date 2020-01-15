@@ -177,7 +177,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
   uint16_t size;
   size_t ssize = sizeof(size);
   char buffer[65535];
-  int len;
+  ssize_t len;
   unsigned int num_rcvd=0;
   
   try {

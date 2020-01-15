@@ -535,34 +535,35 @@ public:
   void set_expire_sleep(unsigned int ms) { expire_ms = ms; }
   // This function is very dangerous since it relies on later calling endDBDump() to unlock the mutex
   // But it is essential, otherwise the iterator will become garbage as the DB is modified
-  const typename TWKeyTrackerType::iterator startDBDump()
+  typename TWKeyTrackerType::const_iterator startDBDump() const
   {
     mutx.lock();
-    return key_tracker.begin();
+    return key_tracker.cbegin();
   }
   // While the mutex is being held, no modifications can be made to the DB;
   // this could cause replication packets to get backed up and lost
-  bool DBDumpEntry(typename TWKeyTrackerType::iterator& i,
+  bool DBDumpEntry(typename TWKeyTrackerType::const_iterator& i,
                    TWStatsDBDumpEntry& entry,
-                   T& key)
+                   T& key) const
   {
     const auto it = stats_db.find(*i);
     if (it != stats_db.end()) {
       key = it->first;
       for (auto fm = it->second.second.begin(); fm != it->second.second.end(); ++fm) {
         TWStatsBufSerial sbs;
-        fm->second->dump(sbs, start_time);
-        entry.emplace(std::make_pair(fm->first, std::make_pair(start_time, std::move(sbs))));
+        std::time_t stime;
+        fm->second->dump(sbs, stime);
+        entry.emplace(std::make_pair(fm->first, std::make_pair(stime, std::move(sbs))));
       }
       return true;
     }
     return false;
   }
-  const typename TWKeyTrackerType::iterator DBDumpIteratorEnd()
+  const typename TWKeyTrackerType::const_iterator DBDumpIteratorEnd() const
   {
-    return key_tracker.end();
+    return key_tracker.cend();
   }
-  void endDBDump()
+  void endDBDump() const
   {
     mutx.unlock();
   }

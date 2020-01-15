@@ -239,6 +239,12 @@ cannot be called inside the allow/report/reset functions:
 		field_map["countCountries"] = "countmin"
 		newStringStatsDB("OneHourDB", 900, 4, field_map)
 
+* newShardedStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,
+  \<field map\>, \<num shards\>) - Identical to "newStringStatsDB"
+  except that it creates a sharded DB, which is more scalable at
+  higher query loads. A good starting value for the number of shards
+  might be 10.
+
 * StringStatsDB:twSetv4Prefix(\<prefix\>) - Set the prefix to use for
   any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
   group statistics for class C networks. For example:

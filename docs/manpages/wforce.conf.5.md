@@ -84,6 +84,16 @@ cannot be called inside the allow/report/reset functions:
   
 		siblingListener("0.0.0.0:4001")
 
+* setMaxSiblingQueueSize(\<size\>) - Sets the maximum size of the
+  queue for replication events waiting to be processed. Defaults
+  to 5000. This is only to handle short-term spikes in load/latency -
+  if error messages relating to the queue max size being reached are
+  seen, then you should consider using sharded string stats dbs
+  (newShardedStringStatsDB), and/or tuning the stats db expiry sleep
+  time (twSetExpireSleep).
+
+        setMaxSiblingQueueSize(10000)
+
 * setNamedReportSinks(\<name\>, \<list of IP[:port]\>) - Set a named list
   of report sinks to which all received reports should be forwarded
   over UDP. Reports will be sent to the configured report sinks for a
@@ -709,6 +719,12 @@ a Netmask. For example:
   name. For example:
   
 		statsdb:twResetField(lt.login, "countLogins")
+
+* StringStatsDB:twSetExpireSleep(\<miliseconds\>) - Set the sleep
+  interval between checks to expire/expunge entries. Defaults to
+  250ms. For example:
+
+        statsdb:twSetExpireSleep(200)
 
 * infoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level t<he
   specified string, adding "key=value" strings to the log for all the

@@ -26,17 +26,26 @@
 
 typedef boost::variant<std::string, int, ComboAddress> TWKeyType;
 
+using VTWPtr = std::vector<std::shared_ptr<TWStatsDB<std::string>>>;
 // This is a Lua-friendly wrapper to the Stats DB
 // All db state is stored in the TWStatsDB shared pointer because passing back/forth to Lua means copies
 class TWStringStatsDBWrapper
 {
 private:
-  std::shared_ptr<TWStatsDB<std::string>> sdbp;
+  std::shared_ptr<VTWPtr> sdbvp;
   std::shared_ptr<bool> replicated;
+  int window_size=0;
+  int num_windows=0;
+  int num_shards=1;
+  std::string db_name;
+protected:
+  unsigned int getShardIndex(const std::string& key);
 public:
 
   TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows);
   TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec);
+  TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows, int num_shards);
+  TWStringStatsDBWrapper(const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec, int num_shards);
 
   void enableReplication();
   void disableReplication();
@@ -66,12 +75,16 @@ public:
   void set_expire_sleep(unsigned int ms);
   int windowSize();
   int numWindows();
-  const std::list<std::string>::iterator startDBDump();
-  bool DBDumpEntry(std::list<std::string>::iterator& i,
+  int numShards();
+  VTWPtr::const_iterator begin() const;
+  VTWPtr::const_iterator end() const;
+  std::list<std::string>::const_iterator startDBDump(VTWPtr::const_iterator& sdbp) const;
+  bool DBDumpEntry(VTWPtr::const_iterator& sdbp,
+                   std::list<std::string>::const_iterator& i,
                    TWStatsDBDumpEntry& entry,
-                   std::string& key);
-  const std::list<std::string>::iterator DBDumpIteratorEnd();
-  void endDBDump();
+                   std::string& key) const;
+  const std::list<std::string>::const_iterator DBDumpIteratorEnd(VTWPtr::const_iterator& sdbp) const;
+  void endDBDump(VTWPtr::const_iterator& sdbp) const;
   void restoreEntry(const std::string& key, TWStatsDBDumpEntry& entry);
   void startExpireThread();
 };

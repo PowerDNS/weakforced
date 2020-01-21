@@ -522,16 +522,6 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
               num_synced++;
             }
           }
-          catch(const NetworkError& e) {
-            sdb.endDBDump(vi);
-            auto eptr = std::current_exception();
-            std::rethrow_exception(eptr);
-          }
-          catch(const WforceException& e) {
-            sdb.endDBDump(vi);
-            auto eptr = std::current_exception();
-            std::rethrow_exception(eptr);
-          }
           catch(const std::exception& e) {
             sdb.endDBDump(vi);
             auto eptr = std::current_exception();

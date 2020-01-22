@@ -235,6 +235,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   else {
     c_lua.writeFunction("setMinSyncHostUptime", [](unsigned int uptime) {});
   }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {
+        setMaxSiblingQueueSize(size);
+      });
+  }
+  else {
+    c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {});
+  }
+
   
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
@@ -532,6 +542,18 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("newStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec) { });
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("newShardedStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec, int num_shards) {
+	auto twsdbw = TWStringStatsDBWrapper(name, window_size, num_windows, fmvec, num_shards);
+	// register this statsDB in a map for retrieval later
+	std::lock_guard<std::mutex> lock(dbMap_mutx);
+	dbMap.emplace(std::make_pair(name, twsdbw));
+      });
+  }
+  else {
+    c_lua.writeFunction("newShardedStringStatsDB", [](const std::string& name, int window_size, int num_windows, const std::vector<pair<std::string, std::string>>& fmvec, int num_shards) { });
+  }
+  
   c_lua.writeFunction("getStringStatsDB", [](const std::string& name) {
       std::lock_guard<std::mutex> lock(dbMap_mutx);
       auto it = dbMap.find(name);
@@ -547,13 +569,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("showStringStatsDB", []() {
 	std::lock_guard<std::mutex> lock(dbMap_mutx);
 	boost::format fmt("%-20.20d %-5.5s %-11.11d %-9d %-9d %-16.16s %-s\n");
-	g_outputBuffer= (fmt % "DB Name" % "Repl?" % "Win Size/No" % "Max Size" % "Cur Size" % "Field Name" % "Type").str();
+	g_outputBuffer= (fmt % "DB Name/Shards" % "Repl?" % "Win Size/No" % "Max Size" % "Cur Size" % "Field Name" % "Type").str();
 	for (auto& i : dbMap) {
 	  const FieldMap fields = i.second.getFields();
 	  for (auto f=fields.begin(); f!=fields.end(); ++f) {
 	    if (f == fields.begin()) {
 	      std::string win = std::to_string(i.second.windowSize()) + "/" + std::to_string(i.second.numWindows());
-	      g_outputBuffer += (fmt % i.first % (i.second.getReplicationStatus() ? "yes" : "no") % win % i.second.get_max_size() % i.second.get_size() % f->first % f->second).str();
+              std::string name_shards = i.first + "/" + std::to_string(i.second.numShards());
+	      g_outputBuffer += (fmt % name_shards % (i.second.getReplicationStatus() ? "yes" : "no") % win % i.second.get_max_size() % i.second.get_size() % f->first % f->second).str();
 	    }
 	    else {
 	      g_outputBuffer += (fmt % "" % "" % "" % "" % "" % f->first % f->second).str();
@@ -579,7 +602,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   c_lua.registerFunction("twResetField", &TWStringStatsDBWrapper::resetField);
   c_lua.registerFunction("twEnableReplication", &TWStringStatsDBWrapper::enableReplication);
   c_lua.registerFunction("twGetName", &TWStringStatsDBWrapper::getDBName);
-
+  c_lua.registerFunction("twSetExpireSleep", &TWStringStatsDBWrapper::set_expire_sleep);
   // Blacklists
   if (!multi_lua) {
     c_lua.writeFunction("disableBuiltinBlacklists", []() {

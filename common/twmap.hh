@@ -532,36 +532,38 @@ public:
   void setv6Prefix(uint8_t prefix) { v6_prefix = prefix; }
   int windowSize() { return window_size; }
   int numWindows() { return num_windows; }
+  void set_expire_sleep(unsigned int ms) { expire_ms = ms; }
   // This function is very dangerous since it relies on later calling endDBDump() to unlock the mutex
   // But it is essential, otherwise the iterator will become garbage as the DB is modified
-  const typename TWKeyTrackerType::iterator startDBDump()
+  typename TWKeyTrackerType::const_iterator startDBDump() const
   {
     mutx.lock();
-    return key_tracker.begin();
+    return key_tracker.cbegin();
   }
   // While the mutex is being held, no modifications can be made to the DB;
   // this could cause replication packets to get backed up and lost
-  bool DBDumpEntry(typename TWKeyTrackerType::iterator& i,
+  bool DBDumpEntry(typename TWKeyTrackerType::const_iterator& i,
                    TWStatsDBDumpEntry& entry,
-                   T& key)
+                   T& key) const
   {
     const auto it = stats_db.find(*i);
     if (it != stats_db.end()) {
       key = it->first;
       for (auto fm = it->second.second.begin(); fm != it->second.second.end(); ++fm) {
         TWStatsBufSerial sbs;
-        fm->second->dump(sbs, start_time);
-        entry.emplace(std::make_pair(fm->first, std::make_pair(start_time, std::move(sbs))));
+        std::time_t stime;
+        fm->second->dump(sbs, stime);
+        entry.emplace(std::make_pair(fm->first, std::make_pair(stime, std::move(sbs))));
       }
       return true;
     }
     return false;
   }
-  const typename TWKeyTrackerType::iterator DBDumpIteratorEnd()
+  const typename TWKeyTrackerType::const_iterator DBDumpIteratorEnd() const
   {
-    return key_tracker.end();
+    return key_tracker.cend();
   }
-  void endDBDump()
+  void endDBDump() const
   {
     mutx.unlock();
   }
@@ -608,6 +610,7 @@ private:
   std::string db_name;
   uint8_t v4_prefix=32;
   uint8_t v6_prefix=128;
+  unsigned int expire_ms=250; // expiry thread sleep time
 };
 
 // Template methods
@@ -627,12 +630,19 @@ bool TWStatsDB<T>::setFields(const FieldMap& fields)
 template <typename T>
 void TWStatsDB<T>::expireEntries()
 {
-  // spend some time every now and again expiring entries which haven't been updated 
-  // wait at least window_size seconds before doing this each time
-  unsigned int wait_interval = window_size < 30 ? window_size : 30;
-
+  struct timespec wait_interval;
+  // spend some time every now and again expiring entries which haven't been updated
+  if (expire_ms >= 1000) {
+    wait_interval.tv_sec = expire_ms / 1000;
+    wait_interval.tv_nsec = (expire_ms % 1000) * 1000000;
+  }
+  else {
+    wait_interval.tv_sec = 0;
+    wait_interval.tv_nsec = expire_ms * 1000000;
+  }
+  
   for (;;) {
-    sleep(wait_interval);
+    nanosleep(&wait_interval, nullptr);
     {
       std::lock_guard<std::mutex> lock(mutx);
   

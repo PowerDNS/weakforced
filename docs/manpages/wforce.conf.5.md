@@ -84,6 +84,16 @@ cannot be called inside the allow/report/reset functions:
   
 		siblingListener("0.0.0.0:4001")
 
+* setMaxSiblingQueueSize(\<size\>) - Sets the maximum size of the
+  queue for replication events waiting to be processed. Defaults
+  to 5000. This is only to handle short-term spikes in load/latency -
+  if error messages relating to the queue max size being reached are
+  seen, then you should consider using sharded string stats dbs
+  (newShardedStringStatsDB), and/or tuning the stats db expiry sleep
+  time (twSetExpireSleep).
+
+        setMaxSiblingQueueSize(10000)
+
 * setNamedReportSinks(\<name\>, \<list of IP[:port]\>) - Set a named list
   of report sinks to which all received reports should be forwarded
   over UDP. Reports will be sent to the configured report sinks for a
@@ -238,6 +248,12 @@ cannot be called inside the allow/report/reset functions:
 		field_map["diffPasswords"] = "hll"
 		field_map["countCountries"] = "countmin"
 		newStringStatsDB("OneHourDB", 900, 4, field_map)
+
+* newShardedStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,
+  \<field map\>, \<num shards\>) - Identical to "newStringStatsDB"
+  except that it creates a sharded DB, which is more scalable at
+  higher query loads. A good starting value for the number of shards
+  might be 10.
 
 * StringStatsDB:twSetv4Prefix(\<prefix\>) - Set the prefix to use for
   any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
@@ -703,6 +719,12 @@ a Netmask. For example:
   name. For example:
   
 		statsdb:twResetField(lt.login, "countLogins")
+
+* StringStatsDB:twSetExpireSleep(\<miliseconds\>) - Set the sleep
+  interval between checks to expire/expunge entries. Defaults to
+  250ms. For example:
+
+        statsdb:twSetExpireSleep(200)
 
 * infoLog(\<log string\>, \<key-value map\>) - Log at LOG_INFO level t<he
   specified string, adding "key=value" strings to the log for all the

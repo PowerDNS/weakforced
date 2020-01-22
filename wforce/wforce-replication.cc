@@ -53,7 +53,7 @@ struct SiblingQueueItem {
 static std::mutex g_sibling_queue_mutex;
 static std::queue<SiblingQueueItem> g_sibling_queue;
 static std::condition_variable g_sibling_queue_cv;
-const size_t g_max_sibling_queue_size = 1000;
+size_t max_sibling_queue_size = 5000;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
@@ -158,8 +158,8 @@ void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& rem
   SiblingQueueItem sqi = { msg, remote, recv_sibling };
   {
     std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
-    if (g_sibling_queue.size() >= g_max_sibling_queue_size) {
-      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg");
+    if (g_sibling_queue.size() >= max_sibling_queue_size) {
+      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg", max_sibling_queue_size);
       return;
     }
     else {
@@ -177,7 +177,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
   uint16_t size;
   size_t ssize = sizeof(size);
   char buffer[65535];
-  int len;
+  ssize_t len;
   unsigned int num_rcvd=0;
   
   try {
@@ -278,4 +278,9 @@ void receiveReplicationOperations(const ComboAddress& local)
     }
     parseReceivedReplicationMsg(msg, remote, recv_sibling);
   }
+}
+
+void setMaxSiblingQueueSize(size_t size)
+{
+  max_sibling_queue_size = size;
 }

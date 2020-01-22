@@ -151,7 +151,7 @@ void Sibling::queueMsg(const std::string& msg)
   {
     std::lock_guard<std::mutex> lock(queue_mutx);
     if (queue.size() >= max_queue_size) {
-      errlog("Sibling::queueMsg: max sibling queue size (%d) reached - dropping replication msg");
+      errlog("Sibling::queueMsg: max sibling queue size (%d) reached - dropping replication msg", max_queue_size);
       return;
     }
     else {

@@ -471,6 +471,14 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def getWforceMetrics(self):
+        return self.session.get(
+            self.url("/metrics"))
+
+    def getTrackalertMetrics(self):
+        return self.session.get(
+            self.ta_url("/metrics"))
+    
     def reportAPI(self, path, attrs):
         return self.session.post(
             self.report_url(path),

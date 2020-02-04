@@ -51,6 +51,7 @@
 #include "minicurl.hh"
 #include "iputils.hh"
 #include "ext/threadname.hh"
+#include "wforce-prometheus.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -903,6 +904,9 @@ try
     doClient(g_serverControl, g_cmdLine.command);
     exit(EXIT_SUCCESS);
   }
+
+  // Initialise Prometheus Metrics
+  initWforcePrometheusMetrics(std::make_shared<WforcePrometheus>("wforce"));
 
   // this sets up the global lua state used for config and setup
   auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_custom_get_func_map, g_cmdLine.config);

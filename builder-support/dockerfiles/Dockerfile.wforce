@@ -21,10 +21,21 @@ RUN apt-get update && \
                pkg-config \
                protobuf-compiler \
                pandoc \
-               wget
+               wget \
+               cmake \
+               git
 
 WORKDIR /wforce/
 RUN mkdir /sdist
+
+RUN git clone https://github.com/jupp0r/prometheus-cpp.git
+RUN echo 'include(CPack)' >> prometheus-cpp/CMakeLists.txt
+RUN cat prometheus-cpp/CMakeLists.txt
+RUN cd prometheus-cpp && git submodule init && git submodule update && \
+mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off \
+-DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off && make \
+&& make install && make package_source
+RUN cd prometheus-cpp/_build && cp prometheus-cpp*Source.tar.gz /sdist/
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/
 @EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert report_api docker elk)

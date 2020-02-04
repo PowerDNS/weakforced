@@ -32,7 +32,8 @@ RUN apt-get update && \
                geoip-database \
                geoipupdate \
                net-tools \
-               clang-4.0
+               clang-4.0 \
+               cmake
 
 # Disable Ipv6 for redis
 RUN sed -i "s/bind .*/bind 127.0.0.1/g" /etc/redis/redis.conf
@@ -45,6 +46,9 @@ RUN update-rc.d redis-server enable
 
 WORKDIR /wforce/
 RUN mkdir /sdist
+
+RUN git clone https://github.com/jupp0r/prometheus-cpp.git
+RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/
 COPY m4/ /wforce/m4/

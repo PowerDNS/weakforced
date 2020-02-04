@@ -25,6 +25,7 @@
 #include "dns_lookup.hh"
 #include "misc.hh"
 #include "iputils.hh"
+#include "prometheus.hh"
 #include "dolog.hh"
 #include <sstream>
 #include <iostream>
@@ -41,7 +42,11 @@
 std::mutex resolv_mutx;
 std::map<std::string, std::shared_ptr<WFResolver>> resolvMap;
 
-WFResolver::WFResolver(): num_contexts(NUM_GETDNS_CONTEXTS)
+WFResolver::WFResolver(): WFResolver(std::string("default"))
+{ 
+}
+
+WFResolver::WFResolver(const std::string& name) : num_contexts(NUM_GETDNS_CONTEXTS), resolver_name(name)
 { 
   resolver_list = getdns_list_create(); 
   req_timeout = DNS_REQUEST_TIMEOUT;
@@ -185,7 +190,8 @@ std::vector<std::string> WFResolver::do_lookup_address_by_name(getdns_context *c
 {
   getdns_dict *response;
   std::vector<std::string> retvec;
-
+  auto start_time = std::chrono::steady_clock::now();
+  
   if (!getdns_address_sync(context, name.c_str(), NULL, &response)) {
     uint32_t status;
     if (!getdns_dict_get_int(response, "status", &status)) {
@@ -215,6 +221,11 @@ std::vector<std::string> WFResolver::do_lookup_address_by_name(getdns_context *c
     }
     getdns_dict_destroy(response);
   }
+  auto end_time = std::chrono::steady_clock::now();
+  auto elapsed = end_time - start_time;
+  observePrometheusDNSResolverLatency(resolver_name, std::chrono::duration<float>(elapsed).count());
+  incPrometheusDNSResolverMetric(resolver_name);
+  
   return retvec;
 }
 
@@ -234,6 +245,7 @@ std::vector<std::string> WFResolver::do_lookup_address_by_name_async(getdns_cont
   std::vector<std::string> retvec;
   AsyncThreadUserData ud;
   getdns_transaction_t tid;
+  auto start_time = std::chrono::steady_clock::now();
 
   ud.response = NULL;
 
@@ -273,6 +285,11 @@ std::vector<std::string> WFResolver::do_lookup_address_by_name_async(getdns_cont
       getdns_dict_destroy(ud.response);
     }
   }
+  auto end_time = std::chrono::steady_clock::now();
+  auto elapsed = end_time - start_time;
+  observePrometheusDNSResolverLatency(resolver_name, std::chrono::duration<float>(elapsed).count());
+  incPrometheusDNSResolverMetric(resolver_name);
+
   return retvec;
 }
 
@@ -306,6 +323,7 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address(getdns_context* c
 {
   struct getdns_dict* response;
   std::vector<std::string> retvec;
+  auto start_time = std::chrono::steady_clock::now();
 
   if (!getdns_hostname_sync(context, addr_dict, NULL, &response)) {
     getdns_list* answer;
@@ -345,6 +363,11 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address(getdns_context* c
     }
     getdns_dict_destroy(response);
   }
+  auto end_time = std::chrono::steady_clock::now();
+  auto elapsed = end_time - start_time;
+  observePrometheusDNSResolverLatency(resolver_name, std::chrono::duration<float>(elapsed).count());
+  incPrometheusDNSResolverMetric(resolver_name);
+
   return retvec;
 }	
 
@@ -353,6 +376,7 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address_async(getdns_cont
   std::vector<std::string> retvec;
   AsyncThreadUserData ud;
   getdns_transaction_t tid;
+  auto start_time = std::chrono::steady_clock::now();
 
   ud.response = NULL;
 
@@ -401,6 +425,11 @@ std::vector<std::string> WFResolver::do_lookup_name_by_address_async(getdns_cont
       getdns_dict_destroy(ud.response);
     }
   }
+  auto end_time = std::chrono::steady_clock::now();
+  auto elapsed = end_time - start_time;
+  observePrometheusDNSResolverLatency(resolver_name, std::chrono::duration<float>(elapsed).count());
+  incPrometheusDNSResolverMetric(resolver_name);
+
   return retvec;
 }	
 

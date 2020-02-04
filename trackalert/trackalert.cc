@@ -44,6 +44,7 @@
 #include "lock.hh"
 #include "trackalert-web.hh"
 #include "ext/threadname.hh"
+#include "prometheus.hh"
 
 #include <getopt.h>
 #ifdef HAVE_LIBSYSTEMD
@@ -616,6 +617,9 @@ try
     exit(EXIT_SUCCESS);
   }
 
+  // Initialise Prometheus Metrics
+  initPrometheusMetrics(std::make_shared<PrometheusMetrics>("trackalert"));
+  
   // this sets up the global lua state used for config and setup
   auto todo=setupLua(false, false, g_lua, g_report, nullptr, g_custom_func_map, g_cmdLine.config);
 

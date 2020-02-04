@@ -46,6 +46,7 @@ struct AsyncThreadUserData {
 class WFResolver {
 public:
   WFResolver();
+  WFResolver(const std::string& name);
   ~WFResolver();
   WFResolver(const WFResolver&) = delete;
   WFResolver& operator=(const WFResolver&) = delete;
@@ -70,6 +71,7 @@ private:
   unsigned int num_contexts;
   std::vector<std::shared_ptr<GetDNSContext>> contexts;
   std::atomic<unsigned int> context_index;
+  std::string resolver_name;
 };
 
 extern std::mutex resolv_mutx;

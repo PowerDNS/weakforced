@@ -36,6 +36,7 @@
 #include "sodcrypto.hh"
 #include "iputils.hh"
 #include "ext/threadname.hh"
+#include "wforce-prometheus.hh"
 
 using std::atomic;
 using std::thread;
@@ -58,6 +59,7 @@ void Sibling::connectSibling()
       catch (const NetworkError& e) {
         errlog("TCP Connect to Sibling %s failed (%s)", rem
                   .toStringWithPort(), e.what());
+        incPrometheusReplicationConnFail(rem.toStringWithPort());
       }
     }
   }
@@ -124,9 +126,12 @@ void Sibling::send(const std::string& msg)
   if (proto == Protocol::UDP) {
     if(::send(sockp->getHandle(),msg.c_str(), msg.length(),0) <= 0) {
       ++failures;
+      incPrometheusReplicationSent(rem.toStringWithPort(), false);
     }
-    else
+    else {
       ++success;
+      incPrometheusReplicationSent(rem.toStringWithPort(), true);
+    }
   }
   else if (proto == Protocol::TCP) {
     // This needs protecting with a mutex because of the reconnect logic
@@ -137,9 +142,11 @@ void Sibling::send(const std::string& msg)
       sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
       sockp->writen(msg);
       ++success;
+      incPrometheusReplicationSent(rem.toStringWithPort(), true);
     }
     catch (const NetworkError& e) {
       ++failures;
+      incPrometheusReplicationSent(rem.toStringWithPort(), false);
       errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
       connectSibling();
     }

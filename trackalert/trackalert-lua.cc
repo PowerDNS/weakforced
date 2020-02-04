@@ -33,6 +33,7 @@
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "common-lua.hh"
+#include "prometheus.hh"
 
 using std::thread;
 
@@ -259,6 +260,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       custom_func_map.insert(std::make_pair(f_name, cobj));
       if (!multi_lua && !client) {
         addCommandStat(f_name);
+        addPrometheusCommandMetric(f_name);
 	// register a webserver command
 	g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
 	noticelog("Registering custom endpoint [%s]", f_name);

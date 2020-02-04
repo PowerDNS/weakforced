@@ -42,6 +42,7 @@
 #include "webhook.hh"
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/gregorian/gregorian.hpp"
+#include "wforce-prometheus.hh"
 
 using std::thread;
 using namespace boost::posix_time;
@@ -187,7 +188,8 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
   }
   if (resp.status == 200)
     resp.body=R"({"status":"ok"})";
-  incCommandStat("SyncDBs");
+  incCommandStat("syncDBs");
+  incPrometheusCommandMetric("syncDBs");
 }
 
 void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd, bool blacklist)
@@ -308,24 +310,28 @@ void parseAddBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, cons
 {
   parseAddDelBLWLEntryCmd(req, resp, true, true);
   incCommandStat("addBLEntry");
+  incPrometheusCommandMetric("addBLEntry");
 }
 
 void parseDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   parseAddDelBLWLEntryCmd(req, resp, false, true);
   incCommandStat("delBLEntry");
+  incPrometheusCommandMetric("delBLEntry");
 }
 
 void parseAddWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   parseAddDelBLWLEntryCmd(req, resp, true, false);
   incCommandStat("addWLEntry");
+  incPrometheusCommandMetric("addWLEntry");
 }
 
 void parseDelWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   parseAddDelBLWLEntryCmd(req, resp, false, false);
   incCommandStat("delWLEntry");
+  incPrometheusCommandMetric("delWLEntry");
 }
 
 void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -406,6 +412,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
     }
   }
   incCommandStat("reset");
+  incPrometheusCommandMetric("reset");
 }
 
 void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -493,6 +500,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     }
   }
   incCommandStat("report");
+  incPrometheusCommandMetric("report");
 }
 
 #define OX_PROTECT_NOTIFY 0
@@ -562,6 +570,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   std::vector<pair<std::string, std::string>> ret_attrs;
 
   incCommandStat("allow");
+  incPrometheusCommandMetric("allow");
   g_stats.allows++;
 
   msg=Json::parse(req.body, err);
@@ -690,10 +699,13 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       if (blacklisted) {
         g_stats.denieds++;
         incCommandStat("allow_blacklisted");
+        incPrometheusAllowStatusMetric("blacklisted");
         incCommandStat("allow_denied");        
+        incPrometheusAllowStatusMetric("denied");
       }
       if (whitelisted) {
         incCommandStat("allow_whitelisted");
+        incPrometheusAllowStatusMetric("whitelisted");
       }
     }
     else {
@@ -714,11 +726,14 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 	if(status < 0) {
 	  g_stats.denieds++;
           incCommandStat("allow_denied");
+          incPrometheusAllowStatusMetric("denied");
         }
         else if (status > 0) {
           incCommandStat("allow_tarpitted");
+          incPrometheusAllowStatusMetric("tarpitted");
         } else {
           incCommandStat("allow_allowed");
+          incPrometheusAllowStatusMetric("allowed");
         }
 	Json::object jattrs;
 	for (auto& i : ret_attrs) {
@@ -786,6 +801,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   }
 }
 
+// XXX BEGIN Deprecated functions - will be removed in a later release
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
@@ -808,7 +824,9 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   resp.status=200;
   resp.body=my_json.dump();
   incCommandStat("stats");
+  incPrometheusCommandMetric("stats");
 }
+// XXX END Deprecated functions - will be removed in a later release
 
 void parseGetBLWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command, bool blacklist)
 {
@@ -849,6 +867,7 @@ void parseGetBLWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const s
   resp.status=200;
   resp.body = ret_json.dump();
   incCommandStat(cmd_stat);
+  incPrometheusCommandMetric(cmd_stat);
 }
 
 void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -987,6 +1006,7 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
     }
   }
   incCommandStat("getDBStats");
+  incPrometheusCommandMetric("getDBStats");
 }
 
 enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
@@ -1072,6 +1092,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     }
   }
   incCommandStat(command);
+  incPrometheusCommandMetric(command);
 }
 
 void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -1116,6 +1137,7 @@ void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const
     errlog("Exception in command [%s] exception: %s", command, e.what());
   }
   incCommandStat(command+"_Get");
+  incPrometheusCommandMetric(command+"_Get");
 }
 
 std::atomic<bool> g_ping_up{false};
@@ -1128,6 +1150,7 @@ void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
   else
     resp.body = R"({"status":"warmup"})";
   incCommandStat("ping");
+  incPrometheusCommandMetric("ping");
 }
 
 void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -1137,41 +1160,61 @@ void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
   
   resp.body = R"({"status":"ok"})";
   incCommandStat("syncDone");
+  incPrometheusCommandMetric("syncDone");
 }
 
 void registerWebserverCommands()
 {
   addCommandStat("addWLEntry");
+  addPrometheusCommandMetric("addWLEntry");
   g_webserver.registerFunc("addWLEntry", HTTPVerb::POST, WforceWSFunc(parseAddWLEntryCmd));
   addCommandStat("delWLEntry");
+  addPrometheusCommandMetric("delWLEntry");
   g_webserver.registerFunc("delWLEntry", HTTPVerb::POST, WforceWSFunc(parseDelWLEntryCmd));
   addCommandStat("addBLEntry");
+  addPrometheusCommandMetric("addBLEntry");
   g_webserver.registerFunc("addBLEntry", HTTPVerb::POST, WforceWSFunc(parseAddBLEntryCmd));
   addCommandStat("delBLEntry");
+  addPrometheusCommandMetric("delWLEntry");
   g_webserver.registerFunc("delBLEntry", HTTPVerb::POST, WforceWSFunc(parseDelBLEntryCmd));
   addCommandStat("reset");
+  addPrometheusCommandMetric("reset");
   g_webserver.registerFunc("reset", HTTPVerb::POST, WforceWSFunc(parseResetCmd));
   addCommandStat("report");
+  addPrometheusCommandMetric("report");
   g_webserver.registerFunc("report", HTTPVerb::POST, WforceWSFunc(parseReportCmd));
   addCommandStat("allow");
+  addPrometheusCommandMetric("allow");
   addCommandStat("allow_allowed");
+  addPrometheusAllowStatusMetric("allowed");
   addCommandStat("allow_blacklisted");
+  addPrometheusAllowStatusMetric("blacklisted");
   addCommandStat("allow_whitelisted");
+  addPrometheusAllowStatusMetric("whitelisted");
   addCommandStat("allow_denied");
+  addPrometheusAllowStatusMetric("denied");
   addCommandStat("allow_tarpitted");
+  addPrometheusAllowStatusMetric("tarpitted");
   g_webserver.registerFunc("allow", HTTPVerb::POST, WforceWSFunc(parseAllowCmd));
   addCommandStat("stats");
+  addPrometheusCommandMetric("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, WforceWSFunc(parseStatsCmd));
   addCommandStat("getBL");
+  addPrometheusCommandMetric("getBL");
   g_webserver.registerFunc("getBL", HTTPVerb::GET, WforceWSFunc(parseGetBLCmd));
   addCommandStat("getWL");
+  addPrometheusCommandMetric("getWL");
   g_webserver.registerFunc("getWL", HTTPVerb::GET, WforceWSFunc(parseGetWLCmd));
   addCommandStat("getDBStats");
+  addPrometheusCommandMetric("getDBStats");
   g_webserver.registerFunc("getDBStats", HTTPVerb::POST, WforceWSFunc(parseGetStatsCmd));
   addCommandStat("ping");
+  addPrometheusCommandMetric("ping");
   g_webserver.registerFunc("ping", HTTPVerb::GET, WforceWSFunc(parsePingCmd));
   addCommandStat("syncDBs");
+  addPrometheusCommandMetric("syncDBs");
   g_webserver.registerFunc("syncDBs", HTTPVerb::POST, WforceWSFunc(parseSyncCmd));
   addCommandStat("syncDone");
+  addPrometheusCommandMetric("syncDone");
   g_webserver.registerFunc("syncDone", HTTPVerb::GET, WforceWSFunc(parseSyncDoneCmd));
 }

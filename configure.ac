@@ -85,7 +85,10 @@ AC_SUBST([EXT_LIBS], ['$(abs_top_builddir)/ext/ext/libext.la'])
 AC_SUBST([WFORCE_CFLAGS], ['-I$(top_srcdir)'/common])
 AC_SUBST([WFORCE_LIBS], ['$(abs_top_builddir)/common/libweakforce.la'])
 # We need libcrypto for hash functions
-PDNS_CHECK_LIBCRYPTO
+PDNS_CHECK_LIBCRYPTO([], [
+  AC_MSG_ERROR([Libcrypto not found, libcrypto support is required])
+  ]
+)
 # Check for LuaJIT first then Lua
 PDNS_WITH_LUAJIT
 AS_IF([test "x$with_luajit" = "xno"], [
@@ -100,6 +103,11 @@ PDNS_CHECK_PANDOC
 # Check for C++ 2011 support
 AX_CXX_COMPILE_STDCXX_11(ext,mandatory)
 AM_CONDITIONAL([CXX2011],[test "$HAVE_CXX11" = "1"])
+# We need prometheus-cpp
+PDNS_CHECK_LIBPROMETHEUS([], [
+  AC_MSG_ERROR([Libprometheus not found, libprometheus-cpp support is required])
+  ]
+)
 # Check for systemd
 AX_AVAILABLE_SYSTEMD
 AM_CONDITIONAL([HAVE_SYSTEMD], [ test x"$systemd" = "xy" ])

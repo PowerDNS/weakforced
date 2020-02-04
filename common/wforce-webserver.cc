@@ -27,6 +27,7 @@
 #include "base64.hh"
 #include "json11.hpp"
 #include "ext/threadname.hh"
+#include "prometheus.hh"
 
 using std::thread;
 
@@ -120,7 +121,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
 {
   using namespace json11;
   const std::string ct_json = "application/json";
-
+  
   setThreadName("wf/web-worker");
   
   while (true) {
@@ -148,6 +149,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     auto wait_time = start_time - wfc->q_entry_time;
     auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
     addWTWStat(i_millis.count());
+    observePrometheusWQD(std::chrono::duration<float>(wait_time).count());
 
     vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
@@ -226,12 +228,21 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
         resp.body = R"({"status":"failure", "reason":"Command not found"})";
 
         std::string new_content_type;
-        
+
         if (req.method=="GET") {
-          const auto& f = wws->d_get_map.find(command);
-          if (f != wws->d_get_map.end()) {
-            f->second.d_func_ptr(req, resp, command);
-            new_content_type = f->second.d_ret_content_type;
+          auto metrics_path = std::string("/metrics");
+          // First check if this is a request for prometheus metrics
+          if (req.url.path.compare(0, metrics_path.length(), metrics_path) == 0) {
+            new_content_type = "text/plain";
+            resp.status = 200;
+            resp.body = serializePrometheusMetrics();
+          }
+          else {
+            const auto& f = wws->d_get_map.find(command);
+            if (f != wws->d_get_map.end()) {
+              f->second.d_func_ptr(req, resp, command);
+              new_content_type = f->second.d_ret_content_type;
+            }
           }
         }
         else if (req.method=="DELETE") {
@@ -290,6 +301,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     auto run_time = end_time - start_time;
     i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
     addWTRStat(i_millis.count());
+    observePrometheusWRD(std::chrono::duration<float>(run_time).count());
     wfc->inConnectionThread = false;
   }
 }
@@ -352,6 +364,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
     {
       std::lock_guard<std::mutex> lock(wws->d_sock_vec_mutx);
       num_fds = wws->d_sock_vec.size();
+      setPrometheusActiveConns(num_fds);
       // Only allocate a new pollfd array if it needs to be bigger
       if (num_fds > max_fd_size) {
 	if (fds!=NULL)
@@ -408,6 +421,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
         std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
         if (wws->d_queue.size() > 0)
           queue_empty = false;
+        setPrometheusWebQueueSize(wws->d_queue.size());
       }
       // We want to call notify_all() only when we don't hold the lock
       if (!queue_empty)
@@ -431,7 +445,7 @@ void WforceWebserver::start(int sock, const ComboAddress& local, const std::stri
   auto localACL=wws->d_ACL.getLocal();
 
   setThreadName("wf/web-accept");
-  
+
   // spin up a thread to do the polling on the connections accepted by this thread
   thread t1(WforceWebserver::pollThread, wws);
   t1.detach();

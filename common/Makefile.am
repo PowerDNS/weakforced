@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 	$(JSON11_CFLAGS) \
 	$(LIBCURL_CFLAGS) \
 	$(LIBCRYPTO_INCLUDES) \
+	$(LIBPROMETHEUS_INCLUDES) \
 	$(YAMLCPP_FLAGS) \
 	$(GEOIP_CFLAGS) \
 	$(MMDB_CFLAGS) \
@@ -19,7 +20,7 @@ AM_LDFLAGS = \
 	$(SANITIZER_FLAGS)
 
 noinst_LTLIBRARIES=libweakforce.la
-libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS) $(GEOIP_LIBS) $(MMDB_LIBS)
+libweakforce_la_LIBADD=$(EXT_LIBS) $(YAHTTP_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS) $(GEOIP_LIBS) $(MMDB_LIBS) $(LIBPROMETHEUS_LIBS)
 libweakforce_la_SOURCES= \
 	base64.hh \
 	dns_lookup.cc dns_lookup.hh \
@@ -43,7 +44,8 @@ libweakforce_la_SOURCES= \
 	wforce-webserver.cc wforce-webserver.hh \
 	sstuff.hh \
 	login_tuple.cc login_tuple.hh \
-	common-lua.cc common-lua.hh
+	common-lua.cc common-lua.hh \
+	prometheus.hh prometheus.cc
 
 noinst_HEADERS = \
 	base64.hh \
@@ -70,7 +72,8 @@ noinst_HEADERS = \
 	pdnsexception.hh \
 	wforce-webserver.hh \
 	login_tuple.hh \
-	common-lua.hh
+	common-lua.hh \
+	prometheus.hh
 
 if UNIT_TESTS
 
@@ -96,7 +99,7 @@ testrunner_SOURCES = \
 	test-serialize.cc
 
 EXTRA_testrunner_DEPENDENCIES = \
-	libweakforce.la $(EXT_LIBS)
+	$(EXT_LIBS) libweakforce.la
 
 testrunner_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -108,7 +111,7 @@ testrunner_LDADD = \
 	${libsodium_LIBS} $(GEOIP_LIBS) $(GETDNS_LIBS)  $(PROTOBUF_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
 	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBCURL) $(LIBCRYPTO_LDFLAGS) \
-        $(LIBCRYPTO_LIBS) \
+        $(LIBCRYPTO_LIBS) $(LIBPROMETHEUS_LDFLAGS) $(LIBPROMETHEUS_LIBS)\
 	$(YAMLCPP_LIBS) $(MMDB_LIBS)\
 	$(BOOST_UNIT_TEST_FRAMEWORK_LIBS) \
 	$(LIBDL)

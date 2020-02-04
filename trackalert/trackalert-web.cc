@@ -40,6 +40,7 @@
 #include "trackalert-luastate.hh"
 #include "webhook.hh"
 #include "login_tuple.hh"
+#include "prometheus.hh"
 
 static int uptimeOfProcess()
 {
@@ -114,6 +115,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     resp.body=R"({"status":"ok"})";      
   }
   incCommandStat("report");
+  incPrometheusCommandMetric("report");
 }
 
 void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
@@ -134,6 +136,7 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   resp.status=200;
   resp.body=my_json.dump();
   incCommandStat("stats");
+  incPrometheusCommandMetric("stats");
 }
 
 enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
@@ -214,12 +217,15 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     }
   }
   incCommandStat(command);
+  incPrometheusCommandMetric(command);
 }
 
 void registerWebserverCommands()
 {
   addCommandStat("report");
+  addPrometheusCommandMetric("report");
   g_webserver.registerFunc("report", HTTPVerb::POST, WforceWSFunc(parseReportCmd));
   addCommandStat("stats");
+  addPrometheusCommandMetric("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, WforceWSFunc(parseStatsCmd));
 }

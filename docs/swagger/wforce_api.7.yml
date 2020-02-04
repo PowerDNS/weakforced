@@ -275,7 +275,8 @@ paths:
             $ref: "#/definitions/Error"
   /?command=stats:
     get:
-      description: "Get server stats"
+      description: "Get server stats (deprecated - will be removed in
+      future version)"
       operationId: "stats"
       produces:
         - "application/json"
@@ -404,6 +405,19 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/CustomError"
+  /metrics:
+    get:
+      description: "Retrieve prometheus metrics"
+      operationId: "metrics"
+      produces:
+        - "text/plain"
+      responses:
+        "200":
+          description: "Prometheus metrics in the format described at https://prometheus.io/docs/instrumenting/exposition_formats/"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
 definitions:
   CustomFuncArgs:
     required:

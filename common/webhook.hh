@@ -27,6 +27,7 @@
 #include "ext/ctpl.h"
 #include "dolog.hh"
 #include "minicurl.hh"
+#include "prometheus.hh"
 #include <queue>
 
 using namespace json11;
@@ -255,17 +256,19 @@ public:
     };
     return my_object;
   }
-  void incSuccess() const
+  virtual void incSuccess() const
   {
     num_success++;
+    incPrometheusWebhookMetric(id, true, false);
   }
   unsigned int getSuccess() const
   {
     return num_success;
   }
-  void incFailed() const
+  virtual void incFailed() const
   {
     num_failed++;
+    incPrometheusWebhookMetric(id, false, false);
   }
   unsigned int getFailed() const
   {
@@ -298,12 +301,12 @@ public:
 		const WHConfigMap& wh_config_keys) : WebHook(wh_id, wh_active, wh_config_keys, wh_name)  {
   }
   ~CustomWebHook() {}
-  bool operator==(const WebHook& rhs)
+  bool operator==(const WebHook& rhs) override
   {
     return ((id == rhs.getID()) && (name.compare(rhs.getName()) == 0));
   }
     // returns true if config is OK
-  bool validateConfig(std::string& error_msg) const
+  bool validateConfig(std::string& error_msg) const override
   {
     std::lock_guard<std::mutex> lock(mutex);
     if (config_keys.find("url") == config_keys.end()) {
@@ -312,7 +315,17 @@ public:
     }
     return true;
   }
-  Json to_json() const
+  void incSuccess() const override
+  {
+    num_success++;
+    incPrometheusWebhookMetric(id, true, true);
+  }
+  void incFailed() const override
+  {
+    num_failed++;
+    incPrometheusWebhookMetric(id, false, true);
+  }
+  Json to_json() const override
   {
     std::lock_guard<std::mutex> lock(mutex);
     Json::array jevents;
@@ -349,11 +362,13 @@ public:
 	  infolog("Registering custom webhook id=%d name=%s to url (%s)",
 		  hook.getID(), hook.getName(),  hook.getConfigKey("url"));
 	  webhooks.push_back(std::make_shared<CustomWebHook>(hook.getID(), hook.getName(), hook.isActive(), hook.getConfigKeys()));
+          addPrometheusWebhookMetric(id, hook.getConfigKey("url"), true);
 	}
 	else {
 	  infolog("Registering webhook id=%d for events [%s] to url (%s)",
 		  hook.getID(), hook.getEventsStr(), hook.getConfigKey("url"));
 	  webhooks.push_back(std::make_shared<WebHook>(hook.getID(), hook.getEvents(), hook.isActive(), hook.getConfigKeys()));
+          addPrometheusWebhookMetric(id, hook.getConfigKey("url"), false);
 	}
       }
     }

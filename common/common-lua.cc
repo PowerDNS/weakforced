@@ -29,6 +29,8 @@
 #include "wforce-geoip2.hh"
 #endif
 
+#include "prometheus.hh"
+
 using std::thread;
 
 void setupCommonLua(bool client,
@@ -211,19 +213,22 @@ void setupCommonLua(bool client,
   g_lua.registerFunction("clear", &NetmaskGroup::clear);
 
   if (!multi_lua) {
-    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name); });
+    c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) { addCustomStat(stat_name);
+        addPrometheusCustomMetric(stat_name);});
   }
   else {
     c_lua.writeFunction("addCustomStat", [](const std::string& stat_name) {} );
   }
 
   if (multi_lua) {
-    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name); });
+    c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) { incCustomStat(stat_name);
+        incPrometheusCustomMetric(stat_name);});
   }
   else {
     c_lua.writeFunction("incCustomStat", [](const std::string& stat_name) {} );
   }
-  
+
+  // XXX BEGIN Deprecated functions - will be removed in a later release
   if (!multi_lua) {
     c_lua.writeFunction("showPerfStats", []() {
 	g_outputBuffer += getPerfStatsString();
@@ -253,6 +258,7 @@ void setupCommonLua(bool client,
     c_lua.writeFunction("showCustomStats", []() {
       });
   }
+  // XXX END Deprecated functions - will be removed in a later release
   
   if (!multi_lua) {
     c_lua.writeFunction("setNumWebHookThreads", [](unsigned int num_threads) { g_webhook_runner.setNumThreads(num_threads); });
@@ -314,7 +320,7 @@ void setupCommonLua(bool client,
       });
   }
   else {
-    c_lua.writeFunction("runCustomWebHook", []() { });
+    c_lua.writeFunction("runCustomWebHook", [](const std::string& wh_name, const std::string& wh_data) { });
   }
   
   if (!(multi_lua || client)) {

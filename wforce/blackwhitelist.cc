@@ -25,14 +25,16 @@
 #include "replication_bl.hh"
 #include "replication_wl.hh"
 #include "replication.pb.h"
-#include "wforce.hh"
 #include "wforce-prometheus.hh"
+#include "json11.hpp"
 #include <boost/version.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <hiredis/hiredis.h>
 #include <ostream>
+
+using namespace json11;
 
 BlackWhiteListDB g_bl_db(BLWLDBType::BLACKLIST);
 BlackWhiteListDB g_wl_db(BLWLDBType::WHITELIST);

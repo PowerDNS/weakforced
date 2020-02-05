@@ -57,4 +57,5 @@ message WforceReplicationMsg {
   }
   required RepType rep_type = 1;
   required bytes rep_op = 2;
+  optional bool forwarded = 3;
 }

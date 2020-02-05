@@ -35,7 +35,7 @@
 
 struct Sibling
 {
-  enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM };
+  enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM, NONE=-1 };
   explicit Sibling(const ComboAddress& ca);
   explicit Sibling(const ComboAddress& ca, const Protocol& p);
   ~Sibling();

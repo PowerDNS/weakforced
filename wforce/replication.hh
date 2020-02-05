@@ -52,8 +52,12 @@ public:
   std::string serialize() const;
   bool unserialize(const std::string& str);
   void applyOperation();
-
+  void setForwarded(bool fwd) { forwarded = fwd; }
+  bool getForwarded() { return forwarded; }
+  WforceReplicationMsg_RepType getType() { return obj_type; }
+  
 private:
+  bool forwarded = false;
   AnyReplicationOperationP rep_op;
   WforceReplicationMsg_RepType obj_type;
 };

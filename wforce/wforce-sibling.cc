@@ -51,9 +51,10 @@ void Sibling::connectSibling()
   if (proto == Protocol::UDP) {
     sockp->connect(rem);
   }
-  else {
+  else if (proto == Protocol::TCP) {
     if (!d_ignoreself) {
       try {
+        sockp->setKeepAlive();
         sockp->connect(rem);
       }
       catch (const NetworkError& e) {
@@ -67,39 +68,43 @@ void Sibling::connectSibling()
 
 Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
 {
-  // std::thread is moveable
-  queue_thread = std::thread([this]() {
-      thread_local bool init=false;
-      if (!init) {
-        setThreadName("wf/sibling-worker");
-        init = true;
-      }
-      connectSibling();
-      while (true) {
-        std::string msg;
-        {
-          std::unique_lock<std::mutex> lock(queue_mutx);
-          while ((queue.size() == 0) && queue_thread_run) {
-            queue_cv.wait(lock);
-          }
-          if (!queue_thread_run)
-            return;
-          msg = std::move(queue.front());
-          queue.pop();
+  if (proto != Protocol::NONE) {
+    // std::thread is moveable
+    queue_thread = std::thread([this]() {
+        thread_local bool init=false;
+        if (!init) {
+          setThreadName("wf/sibling-worker");
+          init = true;
         }
-        send(msg);
-      }
-    });
+        connectSibling();
+        while (true) {
+          std::string msg;
+          {
+            std::unique_lock<std::mutex> lock(queue_mutx);
+            while ((queue.size() == 0) && queue_thread_run) {
+              queue_cv.wait(lock);
+            }
+            if (!queue_thread_run)
+              return;
+            msg = std::move(queue.front());
+            queue.pop();
+          }
+          send(msg);
+        }
+      });
+  }
 }
 
 Sibling::~Sibling()
 {
-  {
-    std::lock_guard<std::mutex> lock(queue_mutx);
-    queue_thread_run = false;
+  if (proto != Protocol::NONE) {
+    {
+      std::lock_guard<std::mutex> lock(queue_mutx);
+      queue_thread_run = false;
+    }
+    queue_cv.notify_one();
+    queue_thread.join();
   }
-  queue_cv.notify_one();
-  queue_thread.join();
 }
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)
@@ -136,19 +141,24 @@ void Sibling::send(const std::string& msg)
   else if (proto == Protocol::TCP) {
     // This needs protecting with a mutex because of the reconnect logic
     std::lock_guard<std::mutex> lock(mutx);
-
-    uint16_t nsize = htons(msg.length());
-    try {
-      sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
-      sockp->writen(msg);
-      ++success;
-      incPrometheusReplicationSent(rem.toStringWithPort(), true);
-    }
-    catch (const NetworkError& e) {
-      ++failures;
-      incPrometheusReplicationSent(rem.toStringWithPort(), false);
-      errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
-      connectSibling();
+    // Try to send. In case of error, try to reconnect (but only once) and then try to send again
+    for (int i=0; i<2; ++i) {
+      uint16_t nsize = htons(msg.length());
+      try {
+        sockp->writen(std::string((char*)&nsize, sizeof(nsize)));
+        sockp->writen(msg);
+        ++success;
+        incPrometheusReplicationSent(rem.toStringWithPort(), true);
+        break;
+      }
+      catch (const NetworkError& e) {
+        if (i == 0) {
+          ++failures;
+          incPrometheusReplicationSent(rem.toStringWithPort(), false);
+          errlog("Error writing to Sibling %s, reconnecting (%s)", rem.toStringWithPort(), e.what());
+          connectSibling();
+        }
+      }
     }
   }
 }

@@ -1,0 +1,12 @@
+# First do the source builds
+@INCLUDE Dockerfile.target.sdist
+
+FROM debian:buster as dist-base
+ARG APT_URL
+RUN apt-get update && apt-get -y dist-upgrade
+
+@INCLUDE Dockerfile.debbuild
+
+# Do a test install and verify
+# Can be skipped with skiptests=1 in the environment
+#@EXEC [ "$skiptests" = "" ] && include Dockerfile.debtest

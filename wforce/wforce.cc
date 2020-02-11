@@ -157,13 +157,13 @@ string g_key;
 void controlClientThread(int fd, ComboAddress client)
 try
 {
+  Socket sock(fd);
   SodiumNonce theirs, ours, readingNonce, writingNonce;
   ours.init();
   readn2(fd, (char*)theirs.value, sizeof(theirs.value));
   writen2(fd, (char*)ours.value, sizeof(ours.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
-  Socket sock(fd);
   
   setThreadName("wf/ctrl-client");
 

@@ -484,6 +484,127 @@ Json callWforcePostURL(const std::string& url, const std::string& password, cons
   }
 }
 
+unsigned int dumpEntriesToNetwork(const ComboAddress& ca)
+{
+  Socket sock(ca.sin4.sin_family, SOCK_STREAM, 0); // This will be automatically closed when the function ends
+  sock.connect(ca);
+  unsigned num_synced = 0;
+  
+  // loop through the DBs
+  std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
+  {
+    std::lock_guard<std::mutex> lock(dbMap_mutx);
+    // copy (this is safe - everything important is in a shared ptr)
+    my_dbmap = dbMap;
+  }
+  sock.writen("{");
+  for (auto& i : dbMap) {
+    TWStringStatsDBWrapper sdb = i.second;
+    std::string db_name = i.first;
+    sock.writen("\"" + db_name + "\": {");
+    for (auto vi = sdb.begin(); vi != sdb.end(); ++vi) {
+      for (auto it = sdb.startDBDump(vi); it != sdb.DBDumpIteratorEnd(vi); ++it) {
+        try {
+          TWStatsDBEntry entry;
+          std::string key;
+          if (sdb.DBGetEntry(vi, it, entry, key)) {
+            Json::array windows;
+            Json::object fields;
+            for (auto& fit : entry) {
+              for (auto& wit : fit.second) {
+                windows.push_back(wit);
+              }
+              fields.emplace(make_pair(fit.first, windows));
+            }
+            sock.writen("\"" + key + "\": ");
+            sock.writen(Json(fields).dump());
+            auto dupe_it = it;
+            if (++dupe_it != sdb.DBDumpIteratorEnd(vi)) {
+              sock.writen(",");
+            }
+            num_synced++;
+          }
+        }
+        catch(const std::exception& e) {
+          sdb.endDBDump(vi);
+          auto eptr = std::current_exception();
+          std::rethrow_exception(eptr);
+        }
+      }
+      sdb.endDBDump(vi);
+    }
+    sock.writen("}");
+  }
+  sock.writen("}");
+  return num_synced;
+}
+
+void dumpEntriesThread(const ComboAddress& ca)
+{
+  unsigned int num_synced = 0;
+  
+  noticelog("Dumping Entries to: %s", ca.toStringWithPort());
+
+  try {
+    num_synced = dumpEntriesToNetwork(ca);
+    infolog("Dump of Entries to: %s was completed. Dumped %d entries.", ca.toStringWithPort(), num_synced);
+  }
+  catch (NetworkError& e) {
+    errlog("Dump of Entries to: %s did not complete. [Network Error: %s]", ca.toStringWithPort(), e.what());
+  }
+  catch(const WforceException& e) {
+    errlog("Dump of Entries to: %s did not complete. [Wforce Error: %s]", ca.toStringWithPort(), e.reason);
+  }
+  catch (const std::exception& e) {
+    errlog("Dump of Entries to: %s did not complete. [exception Error: %s]", ca.toStringWithPort(), e.what());
+  }
+}
+
+unsigned int dumpDBToNetwork(const ComboAddress& ca)
+{
+  Socket rep_sock(ca.sin4.sin_family, SOCK_STREAM, 0); // This will be automatically closed when the function ends
+  rep_sock.connect(ca);
+  unsigned num_synced = 0;
+  
+  // loop through the DBs
+  std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
+  {
+    std::lock_guard<std::mutex> lock(dbMap_mutx);
+    // copy (this is safe - everything important is in a shared ptr)
+    my_dbmap = dbMap;
+  }
+  for (auto& i : dbMap) {
+    TWStringStatsDBWrapper sdb = i.second;
+    std::string db_name = i.first;
+    for (auto vi = sdb.begin(); vi != sdb.end(); ++vi) {
+      for (auto it = sdb.startDBDump(vi); it != sdb.DBDumpIteratorEnd(vi); ++it) {
+        try {
+          TWStatsDBDumpEntry entry;
+          std::string key;
+          if (sdb.DBDumpEntry(vi, it, entry, key)) {
+            std::shared_ptr<SDBReplicationOperation> sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSyncKey, key, entry);
+            ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
+            string msg = rep_op.serialize();
+            string packet;
+            encryptMsg(msg, packet);
+            uint16_t nsize = htons(packet.length());
+            rep_sock.writen(std::string((char*)&nsize, sizeof(nsize)));
+            rep_sock.writen(packet);
+            num_synced++;
+          }
+        }
+        catch(const std::exception& e) {
+          sdb.endDBDump(vi);
+          auto eptr = std::current_exception();
+          std::rethrow_exception(eptr);
+        }
+      }
+      sdb.endDBDump(vi);
+    }
+  }
+  return num_synced;
+}
+
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
                   const std::string& callback_pw)
 {
@@ -493,45 +614,7 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
             ca.toStringWithPort(), callback_url);
 
   try {
-    Socket rep_sock(ca.sin4.sin_family, SOCK_STREAM, 0);
-    rep_sock.connect(ca);
-  
-    // loop through the DBs
-    std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
-    {
-      std::lock_guard<std::mutex> lock(dbMap_mutx);
-      // copy (this is safe - everything important is in a shared ptr)
-      my_dbmap = dbMap;
-    }
-    for (auto& i : dbMap) {
-      TWStringStatsDBWrapper sdb = i.second;
-      std::string db_name = i.first;
-      for (auto vi = sdb.begin(); vi != sdb.end(); ++vi) {
-        for (auto it = sdb.startDBDump(vi); it != sdb.DBDumpIteratorEnd(vi); ++it) {
-          try {
-            TWStatsDBDumpEntry entry;
-            std::string key;
-            if (sdb.DBDumpEntry(vi, it, entry, key)) {
-              std::shared_ptr<SDBReplicationOperation> sdb_rop = std::make_shared<SDBReplicationOperation>(db_name, SDBOperation_SDBOpType_SDBOpSyncKey, key, entry);
-              ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
-              string msg = rep_op.serialize();
-              string packet;
-              encryptMsg(msg, packet);
-              uint16_t nsize = htons(packet.length());
-              rep_sock.writen(std::string((char*)&nsize, sizeof(nsize)));
-              rep_sock.writen(packet);
-              num_synced++;
-            }
-          }
-          catch(const std::exception& e) {
-            sdb.endDBDump(vi);
-            auto eptr = std::current_exception();
-            std::rethrow_exception(eptr);
-          }
-        }
-        sdb.endDBDump(vi);
-      }
-    }
+    num_synced = dumpDBToNetwork(ca);
     infolog("Synchronizing DBs to: %s was completed. Synced %d entries.", ca.toStringWithPort(), num_synced);
   }
   catch (NetworkError& e) {

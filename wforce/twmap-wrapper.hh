@@ -83,6 +83,10 @@ public:
                    std::list<std::string>::const_iterator& i,
                    TWStatsDBDumpEntry& entry,
                    std::string& key) const;
+  bool DBGetEntry(VTWPtr::const_iterator& sdbp,
+                   std::list<std::string>::const_iterator& i,
+                   TWStatsDBEntry& entry,
+                   std::string& key) const;
   const std::list<std::string>::const_iterator DBDumpIteratorEnd(VTWPtr::const_iterator& sdbp) const;
   void endDBDump(VTWPtr::const_iterator& sdbp) const;
   void restoreEntry(const std::string& key, TWStatsDBDumpEntry& entry);

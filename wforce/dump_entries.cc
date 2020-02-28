@@ -131,7 +131,6 @@ int main(int argc, char** argv)
     cerr << "Error parsing local address and port " << local_addr << ", " << local_port << ". Make sure to use IP addresses not hostnames" << endl;
     exit(EXIT_FAILURE);
   }
-  cout << "Listening on " << local_ca.toStringWithPort() << endl;
   
   int listen_sock = socket(local_ca.sin4.sin_family, SOCK_STREAM, 0);
   SSetsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, 1);

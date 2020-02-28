@@ -370,6 +370,35 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/Error"
+  /?command=dumpEntries:
+    post:
+      description: This is a request to dump StatsDB entries (consisting of the values of each of the time windows for each field) to a specified IP address and port over TCP.
+      operationId: dumpEntries
+      produces:
+        - application/json
+      parameters:
+        - name: "dumpEntries"
+          in: body
+          description: "The ip and port to dump to"
+          required: true
+          schema:
+            $ref: "#/definitions/dumpEntriesParams"
+      responses:
+        "200":
+          description: "dumpEntries response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /?command=customEndpoint:
     post:
       description: Extensible mechanism allows custom REST endpoints to be defined - this is an example
@@ -747,3 +776,13 @@ definitions:
         type: string
       callback_auth_pw:
         type: string
+  dumpEntriesParams:
+    type: object
+    required:
+      - dump_host
+      - dump_port
+    properties:
+      dump_host:
+        type: string
+      dump_port:
+        type: integer

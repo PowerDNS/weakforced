@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.2.2]
+
+### Added
+- Support building debian buster packages
+- StatsDBs can now be sharded for better performance
+- StatsDB expiry thread now runs more often by default
+- StatsDB expiry thread sleep time is now configurable
+
+### Changed
+- Fix control socket leak when client closes connection immediately
+
+
 ## [2.2.1]
 
 ### Changed

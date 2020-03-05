@@ -119,6 +119,14 @@ setting. The following configuration keys can be used for all events:
 
         config_key["api-key"] = "myapikeysecret"
 
+* kafka - When this is set to "true" then the webhook will be
+  sent with a Content-Type of "application/vnd.kafka.json.v2+json"
+  and the json will be wrapped according to the Kafka REST Proxy
+  requirements (https://docs.confluent.io/current/kafka-rest/api.html). 
+  The webhook "url" config key should be set to
+  the correct topic, e.g. "http://kafka-rest:8082/topics/foo"
+  for the topic named "foo".
+
 The following configuration keys are custom to specific events:
 
 * allow_filter - Filters allow webhooks based on the allow response

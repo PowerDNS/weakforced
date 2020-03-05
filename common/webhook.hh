@@ -486,8 +486,9 @@ public:
   void setTimeout(uint64_t timeout_seconds);
   // synchronously run the ping command for the hook
   bool pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg);
-  // asynchronously run the hook with the supplied data (must be in json format)
+  // asynchronously run the hook with the supplied data
   void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data);
+  void runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const json11::Json& json_data);
   void startThreads();
 protected:
   void _runHookThread(unsigned int num_conns);

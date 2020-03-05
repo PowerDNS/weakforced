@@ -71,7 +71,7 @@ bool WebHookRunner::pingHook(std::shared_ptr<const WebHook> hook, std::string er
   return _runHooks(wqi, mcm);
 }
 
-// asynchronously run the hook with the supplied data (must be a string in json format)
+// asynchronously run the hook with the supplied data
 void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data)
 {
   std::string err_msg;
@@ -97,6 +97,17 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
       }
     }
     cv.notify_one();
+  }
+}
+
+void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const json11::Json& json_data)
+{
+  if (hook->getConfigKey("kafka") == "true") {
+    Json kobj = Json::object{{"records", Json(Json::array{Json(Json::object{{"value", json_data}})})}};
+    runHook(event_name, hook, kobj.dump());
+  }
+  else {
+    runHook(event_name, hook, json_data.dump());
   }
 }
 

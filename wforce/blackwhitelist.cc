@@ -155,10 +155,9 @@ void BlackWhiteListDB::addEntryInternal(const std::string& key, time_t seconds, 
   // only generate webhook for this event for the first add, not for replicas
   if (replicate == true) {
     Json jobj = Json::object{{"key", key}, {type_name, BLWLTypeToName(blwl_type)}, {"reason", reason}, {"expire_secs", (int)seconds}, {"type", "wforce_addblwl"}};
-    std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent(event_name)) {
       if (auto hs = h.lock())
-	g_webhook_runner.runHook(event_name, hs, hook_data);
+	g_webhook_runner.runHook(event_name, hs, jobj);
     }
   }
 }
@@ -350,10 +349,9 @@ void BlackWhiteListDB::deleteEntryInternal(const std::string& key, BLWLType blwl
   // only generate webhook for this event for the first delete, not for replicas
   if (replicate == true) {
     Json jobj = Json::object{{"key", key}, {type_name, BLWLTypeToName(blwl_type)}, {"type", "wforce_delblwl"}};
-    std::string hook_data = jobj.dump();
     for (const auto& h : g_webhook_db.getWebHooksForEvent(event_name)) {
       if (auto hs = h.lock())
-	g_webhook_runner.runHook(event_name, hs, hook_data);
+	g_webhook_runner.runHook(event_name, hs, jobj);
     }
   }
 
@@ -460,10 +458,9 @@ void BlackWhiteListDB::_purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitel
   for (auto tit = timeindex.begin(); tit != timeindex.end();) {
     if (tit->expiration <= now) {
       Json jobj = Json::object{{"key", tit->key}, {type_name, BLWLTypeToName(blwl_type)}, {"type", "wforce_expireblwl"}};
-      std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent(event_name)) {
 	if (auto hs = h.lock())
-	  g_webhook_runner.runHook(event_name, hs, hook_data);
+	  g_webhook_runner.runHook(event_name, hs, jobj);
       }
       expireEntryLog(blt, tit->key);
       if (blwl_type == IP_BLWL)

@@ -973,6 +973,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         for (const auto& ck : ck_vec) {
           config_keys.insert(ck);
         }
+        auto i = config_keys.find("kafka");
+        if (i != config_keys.end()) {
+          if (i->second == "true")
+            config_keys.insert(make_pair("content-type", "application/vnd.kafka.json.v2+json"));
+        }
         auto ret = g_webhook_db.addWebHook(WebHook(id, events, true, config_keys), err);
         if (ret != true) {
           errlog("Registering webhook id=%d from Lua failed [%s]", id, err);

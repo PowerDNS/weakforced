@@ -471,6 +471,13 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}) 
 
+    def kafkaProducer(self):
+        payload = {"records": [ { "value": { "foo": "bar" }}]}
+        return self.session.post(
+            "http://kafka-rest:8082/topics/wforce",
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/vnd.kafka.json.v2+json'})
+    
     def reportAPI(self, path, attrs):
         return self.session.post(
             self.report_url(path),

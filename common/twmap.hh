@@ -653,7 +653,7 @@ void TWStatsDB<T>::expireEntries()
       unsigned int num_expire = stats_db.size() - map_size_soft;
       unsigned int num_expired = num_expire;
 
-      infolog("About to expire %d entries from stats db %s", num_expire, db_name);
+      vinfolog("About to expire %d entries from stats db %s", num_expire, db_name);
 
       // this just uses the front of the key tracker list, which always contains the Least Recently Modified keys
       while (num_expire--) {
@@ -663,7 +663,7 @@ void TWStatsDB<T>::expireEntries()
 	  key_tracker.pop_front();
 	}
       }
-      infolog("Finished expiring %d entries from stats db %s", num_expired, db_name);
+      vinfolog("Finished expiring %d entries from stats db %s", num_expired, db_name);
     }
   }
 }

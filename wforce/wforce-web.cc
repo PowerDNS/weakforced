@@ -393,10 +393,10 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       }
       // generate webhook events
       Json jobj = Json::object{{"login", en_login}, {"ip", en_ca.toString()}, {"type", "wforce_reset"}};
-      std::string hook_data = jobj.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
-	if (auto hs = h.lock())
-	  g_webhook_runner.runHook("reset", hs, hook_data);
+	if (auto hs = h.lock()) {
+            g_webhook_runner.runHook("reset", hs, jobj);
+        }
       }
     }
     catch(LuaContext::ExecutionErrorException& e) {
@@ -451,10 +451,9 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       Json msg = lt.to_json();
       Json::object jobj = msg.object_items();
       jobj.insert(make_pair("type", "wforce_report"));
-      std::string hook_data = msg.dump();
       for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
 	if (auto hs = h.lock())
-	  g_webhook_runner.runHook("report", hs, hook_data);
+	  g_webhook_runner.runHook("report", hs, jobj);
       }
 
       resp.status=200;
@@ -505,7 +504,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
 
 #define OX_PROTECT_NOTIFY 0
 
-std::string genProtectHookData(const Json& lt, const std::string& msg)
+void genProtectHookData(const Json& lt, const std::string& msg, Json& ret_json)
 {
   Json::object jobj;
 
@@ -523,7 +522,7 @@ std::string genProtectHookData(const Json& lt, const std::string& msg)
   jobj.insert(std::make_pair("code", OX_PROTECT_NOTIFY));
   jobj.insert(std::make_pair("application", "wforce"));
 
-  return Json(jobj).dump();
+  ret_json = Json(std::move(jobj));
 }
 
 bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
@@ -547,15 +546,20 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
 void runAllowWebHook(const Json& request, const Json& response, int status)
 {
   Json jobj = Json::object{{"request", request}, {"response", response}, {"type", "wforce_allow"}};
-  std::string hook_data = jobj.dump();
   for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
     if (auto hs = h.lock()) {
+      Json pj;
       if (hs->hasConfigKey("ox-protect")) {
-        hook_data = genProtectHookData(jobj["request"],
-                                       hs->getConfigKey("ox-protect"));
+        genProtectHookData(jobj["request"],
+                           hs->getConfigKey("ox-protect"),
+                           pj);
+        if (allow_filter(hs, status))
+          g_webhook_runner.runHook("allow", hs, pj);
       }
-      if (allow_filter(hs, status))
-        g_webhook_runner.runHook("allow", hs, hook_data);
+      else {
+        if (allow_filter(hs, status))
+          g_webhook_runner.runHook("allow", hs, jobj);
+      }
     }
   }
 }

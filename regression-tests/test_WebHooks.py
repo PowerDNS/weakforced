@@ -3,6 +3,7 @@ import mmap
 import re
 import time
 import os
+import json
 from test_helper import ApiTestCase
 
 class TestWebHooks(ApiTestCase):
@@ -27,6 +28,16 @@ class TestWebHooks(ApiTestCase):
         s.close()
         logfile.close()
 
+    def test_kafka_webhooks(self):
+        self.writeCmdToConsole("addWebHook(events, kafka_ck)")
+        self.reportFunc('kafkawebhooktest', '4.4.3.1', '1234', False)
+        self.reportFunc('kafkawebhooktest', '4.4.3.1', '1234', False)
+        time.sleep(5)
+        r = self.kafkaProducer()
+        j = r.json()
+        print(json.dumps(j))
+        self.assertGreater(j['offsets'][0]['offset'], 0)
+        
     def test_customwebhooks(self):
         self.writeCmdToConsole("addCustomWebHook(\"customwebhook\", ck)")
         r = self.customFunc("custom1")

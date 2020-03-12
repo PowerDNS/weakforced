@@ -7,6 +7,10 @@ Bug Fixes/Changes
 New Features
 ----------
 * Support building debian buster packages
-* StatsDBs can now be sharded for better performance
+* StatsDBs can now be sharded for better performance (man wforce.conf
+  for more info)
 * StatsDB expiry thread now runs more often by default
-* StatsDB expiry thread sleep time is now configurable
+* StatsDB expiry thread sleep time is now configurable (man
+  wforce.conf for more info)
+* Support for Kafka REST Proxy in webhooks (man wforce_webhook for
+  more info)

@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - StatsDBs can now be sharded for better performance
 - StatsDB expiry thread now runs more often by default
 - StatsDB expiry thread sleep time is now configurable
+- Support for Kafka REST Proxy in webhooks
 
 ### Changed
 - Fix control socket leak when client closes connection immediately

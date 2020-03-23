@@ -48,6 +48,7 @@ WORKDIR /wforce/
 RUN mkdir /sdist
 
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
+RUN cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0
 RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/

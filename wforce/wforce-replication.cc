@@ -40,6 +40,7 @@
 #include "iputils.hh"
 #include "ext/threadname.hh"
 #include "wforce-replication.hh"
+#include "wforce-prometheus.hh"
 
 using std::atomic;
 using std::thread;
@@ -121,6 +122,11 @@ bool checkConnFromSibling(const ComboAddress& remote,
 
 void startReplicationWorkerThreads()
 {
+  // Tell prometheus how to get the recv queue size
+  setPrometheusReplRecvQueueRetrieveFunc([]() -> int {
+      std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
+      return g_sibling_queue.size();
+    });
   for (size_t i=0; i<g_num_sibling_threads; i++) {
     std::thread t([]() {
         thread_local bool init=false;
@@ -142,10 +148,15 @@ void startReplicationWorkerThreads()
           if (rep_op.unserialize(sqi.msg) != false) {
             rep_op.applyOperation();
             sqi.recv_sibling->rcvd_success++;
+            // note no port because it can be ephemeral
+            // (thus rcvd stats are tracked only on a per-IP basis)
+            incPrometheusReplicationRcvd(sqi.remote.toString(), true);
           }
           else {
             errlog("Invalid replication operation received from %s", sqi.remote.toString());
             sqi.recv_sibling->rcvd_fail++;
+            incPrometheusReplicationRcvd(sqi.remote.toString(), false);
+
           }
         }
       });

@@ -78,6 +78,7 @@ public:
         .Register(*d_registry);
       repl_recv_queue_size = &(repl_recv_queue_family.Add({}));
     }
+    repl_queue_func = [](){ return 0; };
   }
 
   void addAllowStatusMetric(const std::string& name);
@@ -103,6 +104,19 @@ public:
   {
     repl_recv_queue_size->Set(value);
   }
+
+  void setReplRecvQueueRetrieveFunc(int (*func)())
+  {
+    repl_queue_func = func;
+  }
+  
+  std::string serialize() override
+  {
+    // We want to retrieve the value of the worker thread queue only when metrics
+    // are asked for. The promethus-cpp library doesn't allow this itself
+    setReplRecvQueueSize(repl_queue_func());
+    return PrometheusMetrics::serialize();
+  }
   
 private:
   Family<Counter>* allow_status_family;
@@ -126,6 +140,7 @@ private:
   Gauge* wl_entries_login;
   Gauge* wl_entries_iplogin;
   Gauge* repl_recv_queue_size;
+  int (*repl_queue_func)();
 };
 
 void initWforcePrometheusMetrics(std::shared_ptr<WforcePrometheus> wpmp);
@@ -149,3 +164,4 @@ void setPrometheusBLIPLoginEntries(int);
 void setPrometheusWLIPLoginEntries(int);
 
 void setPrometheusReplRecvQueueSize(int value);
+void setPrometheusReplRecvQueueRetrieveFunc(int (*func)());

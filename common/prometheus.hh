@@ -130,7 +130,7 @@ public:
     webhook_queue_size->Set(value);
   }
 
-  std::string serialize()
+  virtual std::string serialize()
   {
     return d_textSerializer.Serialize(d_registry->Collect());
   }

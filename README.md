@@ -17,6 +17,8 @@ Wforce is a project by Dovecot, PowerDNS and Open-Xchange. For historical
 reasons, it lives in the PowerDNS github tree. If you have any questions, email
 neil.cook@open-xchange.com.
 
+For detailed technical documentation, please go to [https://powerdns.github.io/weakforced/](https://powerdns.github.io/weakforced/).
+
 Here is how it works:
  * Report successful logins via JSON http-api
  * Report unsuccessful logins via JSON http-api

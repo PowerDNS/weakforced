@@ -269,3 +269,10 @@ void setPrometheusReplRecvQueueSize(int value)
     wforce_prom_metrics->setReplRecvQueueSize(value);
   }
 }
+
+void setPrometheusReplRecvQueueRetrieveFunc(int (*func)())
+{
+  if (wforce_prom_metrics) {
+    wforce_prom_metrics->setReplRecvQueueRetrieveFunc(func);
+  }
+}

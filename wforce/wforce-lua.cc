@@ -263,7 +263,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 	  return;
 	}
 	g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
+        // This is for sending when we know the port
         addPrometheusReplicationSibling(ca.toStringWithPort());
+        // This is for receiving when the port may be ephemeral
+        addPrometheusReplicationSibling(ca.toString());
       });
   }
   else {
@@ -280,7 +283,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
             parseSiblingString(p.second, ca_string, proto);
             v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
+            // This is for sending when we know the port
             addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
+            // This is for receiving when the port may be ephemeral
+            addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
           }
           catch (const WforceException& e) {
             const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();

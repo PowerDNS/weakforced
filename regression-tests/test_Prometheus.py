@@ -42,7 +42,7 @@ class TestPrometheus(ApiTestCase):
         return self.parsePrometheusResponse(r.text)
     
     def checkWforceValues(self, values):
-        for key in ['wforce_worker_queue_duration_seconds_bucket{le="0.001000"}', 'wforce_worker_response_duration_seconds_bucket{le="0.001000"}', 'wforce_commands_total{cmd="ping"}', 'wforce_custom_stats_total{metric="customStat"}', 'wforce_allow_status_total{status="denied"}', 'wforce_replication_sent_total{sibling="127.0.0.1:4001",status="ok"}', 'wforce_replication_tcp_connfailed_total{sibling="127.0.0.1:4001"}', 'wforce_redis_wlbl_updates_total{type="bl"}', 'wforce_redis_wlbl_connfailed_total{type="wl"}', 'wforce_bl_entries{type="iplogin"}', 'wforce_wl_entries{type="ip"}', 'wforce_web_queue_size', 'wforce_webhook_queue_size']:
+        for key in ['wforce_worker_queue_duration_seconds_bucket{le="0.001000"}', 'wforce_worker_response_duration_seconds_bucket{le="0.001000"}', 'wforce_commands_total{cmd="ping"}', 'wforce_custom_stats_total{metric="customStat"}', 'wforce_allow_status_total{status="denied"}', 'wforce_replication_sent_total{sibling="127.0.0.1:4001",status="ok"}', 'wforce_replication_rcvd_total{sibling="127.0.0.1",status="ok"}', 'wforce_replication_tcp_connfailed_total{sibling="127.0.0.1:4001"}', 'wforce_redis_wlbl_updates_total{type="bl"}', 'wforce_redis_wlbl_connfailed_total{type="wl"}', 'wforce_bl_entries{type="iplogin"}', 'wforce_wl_entries{type="ip"}', 'wforce_web_queue_size', 'wforce_webhook_queue_size']:
             self.assertIn(key, values)
             self.assertGreaterEqual(float(values[key]), 0)
 
@@ -56,14 +56,18 @@ class TestPrometheus(ApiTestCase):
         self.checkWforceValues(values)
 
         allow_count = float(values['wforce_commands_total{cmd="allow"}'])
-        
+        repl_rcvd_count = float(values['wforce_replication_rcvd_total{sibling="127.0.0.1",status="ok"}'])
         # add one message before checking stats again
         self.allowFunc("foobar", "99.22.33.11", "1234")
+        self.reportFuncReplica("foobar", "99.22.33.11", "1234", False)
 
+        time.sleep(1)
+        
         values = self.getWforcePrometheusValues()
 
         self.assertGreater(float(values['wforce_commands_total{cmd="allow"}']), allow_count)
         self.assertGreater(float(values['wforce_worker_response_duration_seconds_bucket{le="+Inf"}']), 0)
+        self.assertGreater(float(values['wforce_replication_rcvd_total{sibling="127.0.0.1",status="ok"}']), repl_rcvd_count)
 
     def test_TrackalertMetrics(self):
         values = self.getTrackalertPrometheusValues()

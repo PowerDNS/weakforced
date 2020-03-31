@@ -136,6 +136,7 @@ int main(int argc, char** argv)
   SSetsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, 1);
   SBind(listen_sock, local_ca);
   SListen(listen_sock, 1024);
+  Socket listen_sock_wrapper(listen_sock); // This ensures the socket gets closed
 
   // Connect to the specified wforce address and port
   // and request to dump entries to our local address and port

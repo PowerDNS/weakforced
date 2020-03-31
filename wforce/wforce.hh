@@ -92,7 +92,7 @@ extern std::shared_ptr<UserAgentParser> g_ua_parser_p;
 
 extern bool g_allowlog_verbose; // Whether to log allow returns of 0
 
-void dumpEntriesThread(const ComboAddress& ca);
+void dumpEntriesThread(const ComboAddress& ca, std::unique_lock<std::mutex> lock);
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
                   const std::string& calback_pw);
 

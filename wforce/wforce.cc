@@ -539,7 +539,9 @@ unsigned int dumpEntriesToNetwork(const ComboAddress& ca)
   return num_synced;
 }
 
-void dumpEntriesThread(const ComboAddress& ca)
+// This function is only called once the lock on the mutex is acquired
+// The lock is released automatically once this function finishes
+void dumpEntriesThread(const ComboAddress& ca, std::unique_lock<std::mutex> lock)
 {
   unsigned int num_synced = 0;
   

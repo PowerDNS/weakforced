@@ -147,6 +147,8 @@ bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
   return retval;
 }
 
+static std::mutex dump_mutex;
+
 void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
@@ -171,8 +173,17 @@ void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
       string myip = msg["dump_host"].string_value();
       int myport = msg["dump_port"].int_value();
       ComboAddress replication_ca(myip, myport);
-      thread t(dumpEntriesThread, replication_ca);
-      t.detach();
+      std::unique_lock<std::mutex> lock(dump_mutex, std::defer_lock);
+      if (lock.try_lock()) {
+        thread t(dumpEntriesThread, replication_ca, std::move(lock));
+        t.detach();
+      }
+      else {
+        resp.status = 503;
+        std::stringstream ss;
+        ss << "{\"status\":\"failure\", \"reason\":\"A DB dump is already in progress\"}";
+        resp.body=ss.str();
+      }
     }
     catch(const WforceException& e) {
       resp.status=500;

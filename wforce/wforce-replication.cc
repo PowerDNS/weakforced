@@ -186,7 +186,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
 
   infolog("New TCP Replication connection from %s", remote.toString());
   uint16_t size;
-  size_t ssize = sizeof(size);
+  ssize_t ssize = static_cast<ssize_t>(sizeof(size));
   char buffer[65535];
   ssize_t len;
   unsigned int num_rcvd=0;

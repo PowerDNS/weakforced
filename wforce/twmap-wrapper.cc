@@ -409,6 +409,14 @@ bool TWStringStatsDBWrapper::DBDumpEntry(VTWPtr::const_iterator& sdbp,
   return (*sdbp)->DBDumpEntry(i, entry, key);
 }
 
+bool TWStringStatsDBWrapper::DBGetEntry(VTWPtr::const_iterator& sdbp,
+                                        std::list<std::string>::const_iterator& i,
+                                        TWStatsDBEntry& entry,
+                                        std::string& key) const
+{
+  return (*sdbp)->DBGetEntry(i, entry, key);
+}
+
 const std::list<std::string>::const_iterator TWStringStatsDBWrapper::DBDumpIteratorEnd(VTWPtr::const_iterator& sdbp) const
 {
   return (*sdbp)->DBDumpIteratorEnd();

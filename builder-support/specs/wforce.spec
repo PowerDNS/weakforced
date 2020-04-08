@@ -328,12 +328,14 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/wf_dump_entries
 %ghost %{_sysconfdir}/%{name}.conf
 %attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}/%{name}.conf
 %{_sysconfdir}/%{name}/regexes.yaml
 %{_docdir}/%{name}-%{version}/*
 %{_unitdir}/%{name}.service
 %{_mandir}/man1/%{name}.1.gz
+%{_mandir}/man1/wf_dump_entries.1.gz
 %{_mandir}/man5/%{name}.conf.5.gz
 %{_mandir}/man5/%{name}_webhook.5.gz
 %doc CHANGELOG.md README.md

@@ -147,6 +147,58 @@ bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
   return retval;
 }
 
+static std::mutex dump_mutex;
+
+void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+{
+  using namespace json11;
+  Json msg;
+  string err;
+
+  resp.status = 200;
+
+  msg = Json::parse(req.body, err);
+  if (msg.is_null()) {
+    resp.status=500;
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
+    resp.body=ss.str();
+  }
+  else {
+    try {
+      if (msg["dump_host"].is_null() ||
+          msg["dump_port"].is_null()) {
+        throw WforceException("One of mandatory parameters [dump_host, dump_port] is missing");
+      }
+      string myip = msg["dump_host"].string_value();
+      int myport = msg["dump_port"].int_value();
+      ComboAddress replication_ca(myip, myport);
+      std::unique_lock<std::mutex> lock(dump_mutex, std::defer_lock);
+      if (lock.try_lock()) {
+        thread t(dumpEntriesThread, replication_ca, std::move(lock));
+        t.detach();
+      }
+      else {
+        resp.status = 503;
+        std::stringstream ss;
+        ss << "{\"status\":\"failure\", \"reason\":\"A DB dump is already in progress\"}";
+        resp.body=ss.str();
+      }
+    }
+    catch(const WforceException& e) {
+      resp.status=500;
+      std::stringstream ss;
+      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
+      resp.body=ss.str();
+      errlog("Exception in command [%s] exception: %s", command, e.reason);
+    }
+  }
+  if (resp.status == 200)
+    resp.body=R"({"status":"ok"})";
+  incCommandStat("dumpEntries");
+  incPrometheusCommandMetric("dumpEntries");
+}
+
 void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
 {
   using namespace json11;
@@ -1221,4 +1273,7 @@ void registerWebserverCommands()
   addCommandStat("syncDone");
   addPrometheusCommandMetric("syncDone");
   g_webserver.registerFunc("syncDone", HTTPVerb::GET, WforceWSFunc(parseSyncDoneCmd));
+  addCommandStat("dumpEntries");
+  addPrometheusCommandMetric("dumpEntries");
+  g_webserver.registerFunc("dumpEntries", HTTPVerb::POST, WforceWSFunc(parseDumpEntriesCmd));
 }

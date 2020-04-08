@@ -29,7 +29,8 @@ distclean-local:
 
 sysconf_DATA= wforce.conf wforce.conf.example $(UAP_REGEX_FILE)
 
-bin_PROGRAMS = wforce
+bin_PROGRAMS =  wforce \
+		wf_dump_entries
 
 wforce_SOURCES = \
 	wforce.cc wforce.hh \
@@ -60,6 +61,18 @@ wforce_LDADD = \
 
 EXTRA_wforce_DEPENDENCIES = \
 	$(EXT_LIBS) $(WFORCE_LIBS)
+
+wf_dump_entries_SOURCES = \
+	dump_entries.cc
+
+wf_dump_entries_LDFLAGS = \
+	$(AM_LDFLAGS)
+
+wf_dump_entries_LDADD = \
+	$(WFORCE_LIBS) $(LIBCURL) ${libsodium_LIBS}
+
+EXTRA_wf_dump_entries_DEPENDENCIES = \
+	$(WFORCE_LIBS)
 
 noinst_HEADERS = \
 	blackwhitelist.hh \

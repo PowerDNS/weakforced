@@ -4,7 +4,7 @@ if WITH_TRACKALERT
 TRACKALERT_MANPAGES_TARGET = trackalert.1 trackalert.conf.5
 TRACKALERT_APIDOC = trackalert_api.7
 endif
-MANPAGES_TARGET = wforce.1 wforce.conf.5 wforce_webhook.5 $(TRACKALERT_MANPAGES_TARGET)
+MANPAGES_TARGET = wforce.1 wforce.conf.5 wforce_webhook.5 wf_dump_entries.1 $(TRACKALERT_MANPAGES_TARGET)
 
 APIDOC = wforce_api.7 report_api.7 $(TRACKALERT_APIDOC)
 SWAG2MD_PROG = swag2md.pl

@@ -472,6 +472,8 @@ typedef std::unique_ptr<TWStatsEntry> TWStatsEntryP;
 typedef std::map<std::string, std::string> FieldMap;
 // key is field name, value is a start time and a bunch of time windows
 typedef std::map<std::string, std::pair<std::time_t, TWStatsBufSerial>> TWStatsDBDumpEntry;
+// A vector of field name plus the count from each of the windows
+typedef std::vector<std::pair<std::string, std::vector<int>>> TWStatsDBEntry;
 
 const unsigned int ctwstats_map_size_soft = 524288;
 
@@ -521,6 +523,7 @@ public:
   bool get_windows(const T& key, const std::string& field_name, std::vector<int>& ret_vec); // gets each window value returned in a vector
   bool get_windows(const T& key, const std::string& field_name, const std::string& s, std::vector<int>& ret_vec); // gets each window value returned in a vector for a particular value
   bool get_all_fields(const T& key,  std::vector<std::pair<std::string, int>>& ret_vec);
+  bool get_all_fields_windows(const T& key,  TWStatsDBEntry& ret_vec) const;
   void reset(const T&key); // Reset to zero all fields for a given key
   void reset_field(const T&key, const std::string& field_name); // Reset to zero a particular field
   void set_map_size_soft(unsigned int size);
@@ -559,6 +562,20 @@ public:
     }
     return false;
   }
+  // This returns counts for each of the windows rather than the serialized
+  // internal data which DBDumpEntry returns
+  bool DBGetEntry(typename TWKeyTrackerType::const_iterator& i,
+                  TWStatsDBEntry& ret_vec,
+                  T& key) const
+  {
+    const auto it = stats_db.find(*i);
+    if (it != stats_db.end()) {
+      key = it->first;
+      get_all_fields_windows_unsafe(key, ret_vec);
+      return true;
+    }
+    return false;
+  }
   const typename TWKeyTrackerType::const_iterator DBDumpIteratorEnd() const
   {
     return key_tracker.cend();
@@ -588,8 +605,10 @@ protected:
   template<typename Fn>
   bool _find_create_key_field(const T& key, const std::string& field_name,
 					   Fn fn, bool create);
-
-  void update_write_timestamp(typename TWKeyTrackerType::iterator& kt)
+  // This function does not lock the mutex
+  bool get_all_fields_windows_unsafe(const T& key,  TWStatsDBEntry& ret_vec) const;
+  
+void update_write_timestamp(typename TWKeyTrackerType::iterator& kt)
   {
     // this is always called from a mutex lock (or should be)
     // move this key to the end of the key tracker list
@@ -886,6 +905,32 @@ bool TWStatsDB<T>::get_all_fields(const T& key, std::vector<std::pair<std::strin
     // go through all the fields, get them and add to a vector
     for (auto it = myfm.begin(); it != myfm.end(); ++it) {
       ret_vec.push_back(make_pair(it->first, it->second->sum()));
+    }
+  }
+  return true;
+}
+
+template <typename T>
+bool TWStatsDB<T>::get_all_fields_windows(const T& key, TWStatsDBEntry& ret_vec) const
+{
+  std::lock_guard<std::mutex> lock(mutx);
+  return get_all_fields_windows_unsafe(key, ret_vec);
+}
+
+template <typename T>
+bool TWStatsDB<T>::get_all_fields_windows_unsafe(const T& key, TWStatsDBEntry& ret_vec) const
+{
+  auto mysdb = stats_db.find(key);
+  if (mysdb == stats_db.end()) {
+    return false;
+  }
+  else {
+    auto& myfm = mysdb->second.second;
+    // go through all the fields, get them and add to a vector
+    for (auto fit = myfm.begin(); fit != myfm.end(); ++fit) {
+      std::vector<int> ivec;
+      fit->second->get_windows(ivec);
+      ret_vec.push_back(make_pair(fit->first, ivec));
     }
   }
   return true;

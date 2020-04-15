@@ -1,4 +1,4 @@
-FROM ubuntu:bionic as wforce
+FROM ubuntu:bionic as wforce_regression
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -33,7 +33,7 @@ RUN apt-get update && \
                geoip-database \
                geoipupdate \
                net-tools \
-               clang-4.0 \
+               clang \
                cmake
 
 # Disable Ipv6 for redis

@@ -37,7 +37,16 @@ services:
       - elasticsearch
       - logstash
       - kafka-rest
-
+  # This is the optimized image that will go onto Docker Hub
+  image:
+    build:
+      context: weakforced
+      dockerfile: docker/image/Dockerfile
+      args:
+        - build_date=${BUILD_DATE}
+        - license=${LICENSE}
+        - git_revision=${GIT_REVISION}
+        - version=${VERSION}
   # The following three images are for kafka regression testing
   zookeeper:
     image: confluentinc/cp-zookeeper:latest

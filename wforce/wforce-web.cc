@@ -72,6 +72,7 @@ void reportLog(const LoginTuple& lt)
     os << "pwhash=\"" << std::hex << std::uppercase << lt.pwhash << "\" ";
     os << "protocol=\"" << lt.protocol << "\" ";
     os << "device_id=\"" << lt.device_id << "\" ";
+    os << "session_id=\"" << lt.session_id << "\" ";
     os << DeviceAttrsToString(lt);
     os << LtAttrsToString(lt);
     infolog(os.str().c_str());
@@ -90,6 +91,7 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt, const st
     os << "login=\"" << lt.login << "\" ";
     os << "protocol=\"" << lt.protocol << "\" ";
     os << "device_id=\"" << lt.device_id << "\" ";
+    os << "session_id=\"" << lt.session_id << "\" ";
     os << DeviceAttrsToString(lt);
     os << LtAttrsToString(lt);
     os << "rattrs={";

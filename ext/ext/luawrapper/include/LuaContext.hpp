@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 #include <unordered_map>
 #include <boost/any.hpp>
+#include <boost/format.hpp>
 #include <boost/mpl/distance.hpp>
 #include <boost/mpl/transform.hpp>
 #include <boost/optional.hpp>
@@ -64,6 +65,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #   define ATTR_UNUSED
 #endif
 
+#define LUACONTEXT_GLOBAL_EQ "e5ddced079fc405aa4937b386ca387d2"
+#define EQ_FUNCTION_NAME "__eq"
+#define TOSTRING_FUNCTION_NAME "__tostring"
+
 /**
  * Defines a Lua context
  * A Lua context is used to interpret Lua code. Since everything in Lua is a variable (including functions),
@@ -73,12 +78,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * your function to std::function (not directly std::bind or a lambda function) so the class can detect which argument types
  * it wants. These arguments may only be of basic types (int, float, etc.) or std::string.
  */
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
 class LuaContext {
     struct ValueInRegistry;
     template<typename TFunctionObject, typename TFirstParamType> struct Binder;
@@ -106,7 +105,31 @@ public:
         // opening default library if required to do so
         if (openDefaultLibs)
             luaL_openlibs(mState);
+
+         writeGlobalEq();
     }
+
+    void writeGlobalEq() {
+      const auto eqFunction = [](lua_State* lua) -> int {
+        try {
+          lua_pushstring(lua, "__eq");
+          lua_gettable(lua, -2);
+          /* if not found, return false */
+          if (lua_isnil(lua, -1)) {
+            lua_pop(lua, -2);
+            lua_pushboolean(lua, false);
+            return 1;
+          }
+          lua_insert(lua, lua_gettop(lua)-2);
+          return callRaw(lua, PushedObject{lua, 3}, 1).release();
+        } catch(...) {
+          Pusher<std::exception_ptr>::push(lua, std::current_exception()).release();
+          luaError(lua);
+        }
+      };
+      lua_pushcfunction(mState, eqFunction);
+      lua_setglobal(mState, LUACONTEXT_GLOBAL_EQ);
+    };
 
     /**
      * Move constructor
@@ -193,17 +216,6 @@ public:
      */
     template<typename TFunctionType>
     class LuaFunctionCaller;
-
-    /**
-     * Opaque type that identifies a Lua object
-     */
-    struct LuaObject {
-        LuaObject() = default;
-        LuaObject(lua_State* state, int index=-1) {
-            this->objectInRegistry = std::make_shared<LuaContext::ValueInRegistry>(state, index);
-        }
-        std::shared_ptr<LuaContext::ValueInRegistry> objectInRegistry;
-    };
 
     /**
      * Opaque type that identifies a Lua thread
@@ -398,6 +410,56 @@ public:
     {
         static_assert(std::is_function<TFunctionType>::value, "registerFunction must take a function type as template parameter");
         registerFunctionImpl(functionName, std::move(fn), tag<TObject>{}, tag<TFunctionType>{});
+    }
+
+    /**
+     * Wrappers for registering "__eq" function in case we want to change this to something else some day
+     */
+
+    template<typename TPointerToMemberFunction>
+    auto registerEqFunction(TPointerToMemberFunction pointer)
+        -> typename std::enable_if<std::is_member_function_pointer<TPointerToMemberFunction>::value>::type
+    {
+        registerFunctionImpl(EQ_FUNCTION_NAME, std::mem_fn(pointer), tag<TPointerToMemberFunction>{});
+    }
+
+    template<typename TFunctionType, typename TType>
+    void registerEqFunction(TType fn)
+    {
+        static_assert(std::is_member_function_pointer<TFunctionType>::value, "registerFunction must take a member function pointer type as template parameter");
+        registerFunctionImpl(EQ_FUNCTION_NAME, std::move(fn), tag<TFunctionType>{});
+    }
+
+    template<typename TObject, typename TFunctionType, typename TType>
+    void registerEqFunction(TType fn)
+       {
+        static_assert(std::is_function<TFunctionType>::value, "registerFunction must take a function type as template parameter");
+        registerFunctionImpl(EQ_FUNCTION_NAME, std::move(fn), tag<TObject>{}, tag<TFunctionType>{});
+    }
+
+    /**
+     * Wrappers for registering "__tostring" function in case we want to change this to something else some day
+     */
+
+    template<typename TPointerToMemberFunction>
+    auto registerToStringFunction(TPointerToMemberFunction pointer)
+        -> typename std::enable_if<std::is_member_function_pointer<TPointerToMemberFunction>::value>::type
+    {
+        registerFunctionImpl(TOSTRING_FUNCTION_NAME, std::mem_fn(pointer), tag<TPointerToMemberFunction>{});
+    }
+
+    template<typename TFunctionType, typename TType>
+    void registerToStringFunction(TType fn)
+    {
+        static_assert(std::is_member_function_pointer<TFunctionType>::value, "registerFunction must take a member function pointer type as template parameter");
+        registerFunctionImpl(TOSTRING_FUNCTION_NAME, std::move(fn), tag<TFunctionType>{});
+    }
+
+    template<typename TObject, typename TFunctionType, typename TType>
+    void registerToStringFunction(TType fn)
+       {
+        static_assert(std::is_function<TFunctionType>::value, "registerFunction must take a function type as template parameter");
+        registerFunctionImpl(TOSTRING_FUNCTION_NAME, std::move(fn), tag<TObject>{}, tag<TFunctionType>{});
     }
 
     /**
@@ -1337,15 +1399,47 @@ private:
         return readTopAndPop<TReturnType>(state, std::move(outArguments));
     }
     
+    static int gettraceback(lua_State* L) {
+        lua_getglobal(L, "debug"); // stack: error, "debug"
+        lua_getfield(L, -1, "traceback"); // stack: error, "debug", debug.traceback
+        lua_remove(L, -2); // stack: error, debug.traceback
+        lua_pushstring(L, ""); // stack: error, debug.traceback, ""
+        lua_pushinteger(L, 2); // stack: error, debug.traceback, "", 2
+        lua_call(L, 2, 1); // stack: error, traceback
+        lua_createtable(L, 2, 0); // stack: error, traceback, {}
+        lua_insert(L, 1); // stack: {}, error, traceback
+        lua_rawseti(L, 1, 2); // stack: {[2]=traceback}, error
+        lua_rawseti(L, 1, 1); // stack: {[1]=error,[2]=traceback}
+        return 1; // return the table
+    }
+
     // this function just calls lua_pcall and checks for errors
     static PushedObject callRaw(lua_State* state, PushedObject functionAndArguments, const int outArguments)
     {
+        // provide traceback handler
+        int tbindex = lua_gettop(state) - (functionAndArguments.getNum() - 1);
+        lua_pushcfunction(state, gettraceback);
+
+        // move it back up, before our function and arguments
+        lua_insert(state, tbindex);
+
         // calling pcall automatically pops the parameters and pushes output
-        const auto pcallReturnValue = lua_pcall(state, functionAndArguments.getNum() - 1, outArguments, 0);
+        const auto pcallReturnValue = lua_pcall(state, functionAndArguments.getNum() - 1, outArguments, tbindex);
         functionAndArguments.release();
+
+        lua_remove(state, tbindex); // remove traceback function
+
 
         // if pcall failed, analyzing the problem and throwing
         if (pcallReturnValue != 0) {
+
+            // stack top: {error, traceback}
+            lua_rawgeti(state, -1, 1); // stack top: {error, traceback}, error
+            lua_rawgeti(state, -2, 2); // stack top: {error, traceback}, error, traceback
+            lua_remove(state, -3); // stack top: error, traceback
+
+            PushedObject traceBackRef{state, 1};
+            const auto traceBack = readTopAndPop<std::string>(state, std::move(traceBackRef)); // stack top: error
             PushedObject errorCode{state, 1};
 
             // an error occured during execution, either an error message or a std::exception_ptr was pushed on the stack
@@ -1356,19 +1450,16 @@ private:
                 if (lua_isstring(state, 1)) {
                     // the error is a string
                     const auto str = readTopAndPop<std::string>(state, std::move(errorCode));
-                    throw ExecutionErrorException{str};
+                    throw ExecutionErrorException{str+traceBack};
 
                 } else {
                     // an exception_ptr was pushed on the stack
                     // rethrowing it with an additional ExecutionErrorException
                     try {
-                        if (const auto exp = readTopAndPop<std::exception_ptr>(state, std::move(errorCode))) {
-                            std::rethrow_exception(exp);
-                        }
+                        std::rethrow_exception(readTopAndPop<std::exception_ptr>(state, std::move(errorCode)));
                     } catch(...) {
-                        std::throw_with_nested(ExecutionErrorException{"Exception thrown by a callback function called by Lua"});
+                        std::throw_with_nested(ExecutionErrorException{"Exception thrown by a callback function called by Lua. "+traceBack});
                     }
-                    throw ExecutionErrorException{"Unknown Lua error"};
                 }
             }
         }
@@ -1502,6 +1593,28 @@ private:
                 }
             };
 
+            const auto toStringFunction = [](lua_State* lua) -> int {
+               try {
+                    assert(lua_gettop(lua) == 1);
+                    assert(lua_isuserdata(lua, 1));
+                    lua_pushstring(lua, "__tostring");
+                    lua_gettable(lua, 1);
+                    if (lua_isnil(lua, -1))
+                    {
+                        const void *ptr = lua_topointer(lua, -2);
+                        lua_pop(lua, 1);
+                        lua_pushstring(lua, (boost::format("userdata 0x%08x") % reinterpret_cast<intptr_t>(ptr)).str().c_str());
+                        return 1;
+                    }
+                    lua_pushvalue(lua, 1);
+		    return callRaw(lua, PushedObject{lua, 2}, 1).release();
+                } catch (...) {
+                    Pusher<std::exception_ptr>::push(lua, std::current_exception()).release();
+                    luaError(lua);
+                }
+            };
+
+
             // writing structure for this type into the registry
             checkTypeRegistration(state, &typeid(TType));
 
@@ -1540,6 +1653,15 @@ private:
             lua_pushstring(state, "__newindex");
             lua_pushcfunction(state, newIndexFunction);
             lua_settable(state, -3);
+
+            lua_pushstring(state, "__tostring");
+            lua_pushcfunction(state, toStringFunction);
+            lua_settable(state, -3);
+
+            lua_pushstring(state, "__eq");
+            lua_getglobal(state, LUACONTEXT_GLOBAL_EQ);
+            lua_settable(state, -3);
+
 
             // at this point, the stack contains the object at offset -2 and the metatable at offset -1
             // lua_setmetatable will bind the two together and pop the metatable
@@ -1849,23 +1971,6 @@ private:
 /*                PUSH FUNCTIONS                  */
 /**************************************************/
 // specializations of the Pusher structure
-
-// opaque Lua references
-template<>
-struct LuaContext::Pusher<LuaContext::LuaObject> {
-    static const int minSize = 1;
-    static const int maxSize = 1;
-
-    static PushedObject push(lua_State* state, const LuaContext::LuaObject& value) noexcept {
-        if (value.objectInRegistry.get()) {
-            PushedObject obj = value.objectInRegistry->pop();
-            return obj;
-        } else {
-            lua_pushnil(state);
-            return PushedObject{state, 1};
-        }
-    }
-};
 
 // boolean
 template<>
@@ -2428,18 +2533,6 @@ private:
 /**************************************************/
 // specializations of the Reader structures
 
-// opaque Lua references
-template<>
-struct LuaContext::Reader<LuaContext::LuaObject>
-{
-    static auto read(lua_State* state, int index)
-        -> boost::optional<LuaContext::LuaObject>
-    {
-        LuaContext::LuaObject obj(state, index);
-        return obj;
-    }
-};
-
 // reading null
 template<>
 struct LuaContext::Reader<std::nullptr_t>
@@ -2613,7 +2706,7 @@ struct LuaContext::Reader<std::vector<std::pair<TType1,TType2>>>
                     return {};
                 }
 
-                result.push_back({ std::move(val1.get()), std::move(val2.get()) });
+                result.push_back({ val1.get(), val2.get() });
                 lua_pop(state, 1);      // we remove the value but keep the key for the next iteration
 
             } catch(...) {
@@ -2651,7 +2744,7 @@ struct LuaContext::Reader<std::map<TKey,TValue>>
                     return {};
                 }
 
-                result.insert({ std::move(key.get()), std::move(value.get()) });
+                result.insert({ key.get(), value.get() });
                 lua_pop(state, 1);      // we remove the value but keep the key for the next iteration
 
             } catch(...) {
@@ -2689,7 +2782,7 @@ struct LuaContext::Reader<std::unordered_map<TKey,TValue>>
                     return {};
                 }
 
-                result.insert({ std::move(key.get()), std::move(value.get()) });
+                result.insert({ key.get(), value.get() });
                 lua_pop(state, 1);      // we remove the value but keep the key for the next iteration
 
             } catch(...) {

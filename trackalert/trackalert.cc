@@ -59,6 +59,7 @@ bool g_verbose=false;
 
 struct TrackalertStats g_stats;
 bool g_console;
+bool g_docker;
 
 string g_outputBuffer;
 

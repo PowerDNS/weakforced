@@ -24,6 +24,9 @@
 #include <iostream>
 #include <sstream>
 #include <syslog.h>
+#include <chrono>
+#include <time.h>
+#include <iomanip>
 
 /* This file is intended not to be metronome specific, and is simple example of C++2011
    variadic templates in action.
@@ -69,15 +72,30 @@ void dolog(std::ostream& os, const char* s, T value, Args... args)
 
 extern bool g_console;
 extern bool g_verbose;
+extern bool g_docker;
 
 template<typename... Args>
 void genlog(int level, const char* s, Args... args)
 {
+  using namespace std::chrono;
   std::ostringstream str;
   dolog(str, s, args...);
   syslog(level, "%s", str.str().c_str());
-  if(g_console) 
+  if(g_console) {
+    // For docker we include a datetime string
+    if (g_docker) {
+      auto now = system_clock::now();
+      std::time_t ct = system_clock::to_time_t(now);
+      auto ms = duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+      struct tm currentLocalTime;
+      localtime_r(&ct, &currentLocalTime);
+      // The format means that it cannot be longer than 24 bytes (including null byte)
+      char timebuf[24];
+      std::strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S", &currentLocalTime);
+      std::cout << "[" << timebuf << "," << std::setfill('0') << std::setw(3) << ms.count() % 1000 << "] ";
+    }
     std::cout<<str.str()<<std::endl;
+  }
 }
 
 

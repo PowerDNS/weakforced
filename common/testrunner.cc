@@ -8,3 +8,4 @@
 #include <boost/test/unit_test.hpp>
 
 bool g_console = false;
+bool g_docker = false;

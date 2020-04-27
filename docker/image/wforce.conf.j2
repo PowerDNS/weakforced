@@ -1,0 +1,90 @@
+-- This configuration file is provided as an example
+-- It only scratches the surface of what weakforced policy can do
+
+webserver("0.0.0.0:{{env['WFORCE_HTTP_PORT']}}", "{{env['WFORCE_HTTP_PASSWORD']}}")
+controlSocket("0.0.0.0:4004")
+
+-- This controls access to the webserver
+-- By default wforce allows access to all private IPv4/6 address ranges
+-- addACL("127.0.0.0/8")
+
+{% if env['WFORCE_LOGSTASH_URL'] != '' %}
+-- Register a webhook for "report" events
+local config_keys={}
+config_keys["url"] = "{{env['WFORCE_LOGSTASH_URL']}}"
+config_keys["secret"] = "verysecretcode"
+local events = { "report" }
+addWebHook(events, config_keys)
+{% endif %}
+
+local bulkRetrievers = newNetmaskGroup()
+
+newGeoIP2DB("CityDB", "/usr/share/GeoIP/GeoLite2-City.mmdb")
+
+local string_find = string.find
+
+local field_map = {}
+field_map["diffFailedPasswords"] = "hll"
+newStringStatsDB("OneHourDB", 600, 6, field_map)
+
+function twreport(lt)
+   if (not lt.success and not lt.policy_reject)
+   then
+      local sdb = getStringStatsDB("OneHourDB")
+      sdb:twAdd(lt.remote, "diffFailedPasswords", lt.pwhash)
+      addrlogin = lt.remote:tostring() .. ":" .. lt.login
+      sdb:twAdd(addrlogin, "diffFailedPasswords", lt.pwhash)
+   end
+end
+
+setReport(twreport)
+
+function allow(lt)
+   local sdb = getStringStatsDB("OneHourDB")
+
+   if(bulkRetrievers:match(lt.remote))
+   then
+      -- return <return value>, <message for client>, <log message>, <log key-values>
+      return 0, "", "bulkRetrievers match", {}
+   end
+
+   if(sdb:twGet(lt.remote, "diffFailedPasswords") > 50)
+   then
+      return -1, "", "too many different failed password attempts by IP", { attempts=50 }
+   end
+
+   local addrlogin = lt.remote:tostring() .. ":" .. lt.login
+
+   if(sdb:twGet(addrlogin, "diffFailedPasswords") > 3)
+   then
+      return 3, "", "too many different failed password attempts by IP/login", { attempts=3 }
+   end
+
+   -- you *must* return with 4 arguments like this:  <return value>, <message for client>, <log message>, <log key-values>
+   return 0, "", "", { defaultReturn=1 }
+end
+
+setAllow(allow)
+
+function reset(type, login, ip)
+   local sdb = getStringStatsDB("OneHourDB")
+   if (string_find(type, "ip"))
+   then
+      sdb:twReset(ip)
+      -- if you set a non-default prefix for IP addresses, then reset will not necessarily do what you expect
+      -- for example if v4Prefix==24 and you reset an IP address it will reset the stats for all IPs in that range
+   end
+   if (string_find(type, "login"))
+   then
+      -- we do not actually set any login-only keys
+      sdb:twReset(login)
+   end
+   if (string_find(type, "ip") and string_find(type, "login"))
+   then
+      local iplogin = ip:tostring() .. ":" .. login
+      sdb:twReset(iplogin)
+   end
+   return true
+end
+
+setReset(reset)

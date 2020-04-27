@@ -39,6 +39,7 @@ services:
       - kafka-rest
   # This is the optimized image that will go onto Docker Hub
   image:
+    image: powerdns/wforce:${VERSION}
     build:
       context: weakforced
       dockerfile: docker/image/Dockerfile
@@ -47,6 +48,14 @@ services:
         - license=${LICENSE}
         - git_revision=${GIT_REVISION}
         - version=${VERSION}
+    environment:
+      - WFORCE_VERBOSE
+      - WFORCE_HTTP_PORT=18084
+      - WFORCE_HTTP_PASSWORD=secret
+      - WFORCE_LOGSTASH_URL
+      - WFORCE_CONFIG_FILE
+    ports:
+      - "18084:18084"
   # The following three images are for kafka regression testing
   zookeeper:
     image: confluentinc/cp-zookeeper:latest

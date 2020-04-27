@@ -961,6 +961,7 @@ try
       cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
+      cout<<"-D,--docker           Enable logging for docker\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-f,--facility name    Use log facility 'name'\n";
       cout<<"-h,--help             Display this helpful message\n";

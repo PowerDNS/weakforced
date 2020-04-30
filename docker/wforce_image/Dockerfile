@@ -92,9 +92,9 @@ RUN groupadd -g 1000 wforce && \
     chmod -R 0775 /etc/wforce && \
     chgrp -R 1000 /etc/wforce
 
-COPY docker/image/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
-COPY docker/image/create_config.sh /usr/bin/create_config.sh
-COPY docker/image/wforce.conf.j2 /etc/wforce
+COPY docker/wforce_image/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
+COPY docker/wforce_image/create_config.sh /usr/bin/create_config.sh
+COPY docker/wforce_image/wforce.conf.j2 /etc/wforce
 
 RUN chmod 0775 /usr/bin/docker-entrypoint.sh
 RUN chmod 0775 /usr/bin/create_config.sh

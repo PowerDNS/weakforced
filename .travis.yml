@@ -69,3 +69,8 @@ script:
  - cd ..
  - $BUILDER $BUILDER_TARGET
  - ./trigger_policy_build.sh
+deploy:
+  provider: script
+  script: bash docker/docker_push.sh
+  on:
+    branch: master

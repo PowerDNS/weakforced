@@ -35,6 +35,8 @@ class ApiTestCase(unittest.TestCase):
         self.ta_server_port = 8090
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
+        self.docker_image_server_url = 'http://%s:%s/' % ("wforce_image", 18084)
+        
         self.report_server_port = 5000
         self.report_server_url = 'http://%s:%s' % (self.server_address, self.report_server_port)
         
@@ -161,7 +163,18 @@ class ApiTestCase(unittest.TestCase):
             self.ta_url("/?command=report"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
-        
+
+    def dockerImageReportFunc(self, login, remote, pwhash, success):
+        payload = dict()
+        payload['login'] = login
+        payload['remote'] = remote
+        payload['pwhash'] = pwhash
+        payload['success'] = success
+        return self.session.post(
+            self.docker_image_url("/?command=report"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+    
     def resetFunc(self, login, ip):
         return self.resetFuncInternal(login, ip, False)
 
@@ -507,6 +520,9 @@ class ApiTestCase(unittest.TestCase):
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)
 
+    def docker_image_url(self, relative_url):
+        return urljoin(self.docker_image_server_url, relative_url)
+    
     def report_url(self, relative_url):
         return urljoin(self.report_server_url, relative_url)
     

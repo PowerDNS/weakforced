@@ -1,22 +1,15 @@
 import os
 from setuptools import setup, find_packages
+from pkg_resources import parse_requirements
+import pathlib
 
 install_reqs = list()
 
-# Use pipenv for dependencies, setuptools otherwise.
-# This makes the installation for the packages easier (no pipenv needed)
-try:
-    from pipenv.project import Project
-    from pipenv.utils import convert_deps_to_pip
-    pfile = Project(chdir=False).parsed_pipfile
-    install_reqs = convert_deps_to_pip(pfile['packages'], r=False)
-except ImportError:
-    try:
-        from pip.req import parse_requirements
-    except ImportError:
-        from pip._internal.req import parse_requirements
-    install_reqs = [str(ir.req) for ir in parse_requirements(
-        './requirements.txt', session=False)]
+with pathlib.Path('requirements.txt').open() as requirements_txt:
+    install_reqs = [
+        str(r)
+        for r
+        in parse_requirements(requirements_txt)]
 
 
 def exists(fname):

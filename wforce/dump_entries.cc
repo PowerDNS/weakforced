@@ -52,6 +52,7 @@ void print_help()
 }
 
 bool g_console = true;
+bool g_docker = false;
 
 int main(int argc, char** argv)
 {

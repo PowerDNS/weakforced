@@ -219,6 +219,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
         resp.headers["Date"] = datebuf;
         resp.headers["Last-Modified"] = datebuf;
       }
+      resp.headers["Cache-Control"] = "no-cache";
       resp.headers["Content-Type"] = wws->d_content_type;
       if (closeConnection)
         resp.headers["Connection"] = "close";

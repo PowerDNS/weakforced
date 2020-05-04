@@ -141,17 +141,14 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     bool keepalive = false;
     bool closeConnection=true;
     bool validRequest = true;
-
+    bool eof = false;
+    
     if (!wfc)
       continue;
   
     auto start_time = std::chrono::steady_clock::now();
     auto wait_time = start_time - wfc->q_entry_time;
     auto i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(wait_time);
-    addWTWStat(i_millis.count());
-    observePrometheusWQD(std::chrono::duration<float>(wait_time).count());
-
-    vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
     YaHTTP::AsyncRequestLoader yarl;
     yarl.initialize(&req);
@@ -166,8 +163,13 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
         if (bytes > 0) {
           string data(buf, bytes);
           complete = yarl.feed(data);
-        } else {
-          // read error OR EOF
+        }
+        else if (bytes == 0) {
+          eof = true;
+          validRequest = false;
+          break;
+        }
+        else {
           validRequest = false;
           break;
         }
@@ -183,6 +185,8 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     }
 
     if (validRequest) {
+      vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
+
       string conn_header = req.headers["Connection"];
       if (conn_header.compare("keep-alive") == 0)
         keepalive = true;
@@ -300,8 +304,14 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     auto end_time = std::chrono::steady_clock::now();
     auto run_time = end_time - start_time;
     i_millis = std::chrono::duration_cast<std::chrono::milliseconds>(run_time);
-    addWTRStat(i_millis.count());
-    observePrometheusWRD(std::chrono::duration<float>(run_time).count());
+    // Sometimes we get a POLLIN and then read() returns EOF and so we don't want to
+    // increment the stats for that
+    if (!eof) {
+      addWTWStat(i_millis.count());
+      addWTRStat(i_millis.count());
+      observePrometheusWQD(std::chrono::duration<float>(wait_time).count());
+      observePrometheusWRD(std::chrono::duration<float>(run_time).count());
+    }
     wfc->inConnectionThread = false;
   }
 }

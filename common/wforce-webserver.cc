@@ -212,11 +212,13 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
       char datebuf[WFORCE_MAX_DATE_STRING_LEN];
       time_t now = time(0);
       struct tm tm = *gmtime(&now);
-      std::strftime(datebuf, sizeof datebuf, "%a, %d %b %Y %H:%M:%S GMT", &tm);
+      auto datelen = std::strftime(datebuf, sizeof datebuf, "%a, %d %b %Y %H:%M:%S GMT", &tm);
 
       YaHTTP::Response resp;
-      resp.headers["Date"] = datebuf;
-      resp.headers["Last-Modified"] = datebuf;
+      if (datelen != 0) {
+        resp.headers["Date"] = datebuf;
+        resp.headers["Last-Modified"] = datebuf;
+      }
       resp.headers["Content-Type"] = wws->d_content_type;
       if (closeConnection)
         resp.headers["Connection"] = "close";

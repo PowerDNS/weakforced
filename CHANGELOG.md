@@ -5,14 +5,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [2.4.0]
+
 ### Added
 - New wf_dump_entries tool to dump stats DBs to file
-- Support building debian buster packages
 - Support for new "forwarding" type in replication messages
 - Support for Prometheus via the new /metrics REST endpoint
+
+### Changed
+- Fix duplicate command stats under some circumstances
+
+## [2.2.2]
+
+### Added
+- Support building debian buster packages
 - StatsDBs can now be sharded for better performance
 - StatsDB expiry thread now runs more often by default
 - StatsDB expiry thread sleep time is now configurable
+- Support for Kafka REST Proxy in webhooks
 
 ### Changed
 - Fix control socket leak when client closes connection immediately

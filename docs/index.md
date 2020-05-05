@@ -6,6 +6,8 @@ Here you will find all the manpages for weakforced, which are the primary docume
 
 These pages are for detailed technical documentation; for details about building, getting started, and testing see the main repo [README](https://github.com/PowerDNS/weakforced/blob/master/README.md).
 
+To see documentation on the wforce docker image, go [here](docker/wforce_docker.md)
+
 Go [here](https://github.com/PowerDNS/weakforced/releases) for release information.
 
 # Wforce Daemon

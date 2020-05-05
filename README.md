@@ -72,6 +72,11 @@ The most recent versions also require:
  * libcurl-dev (OpenSSL version)
  * libhiredis-dev
  * libssl-dev
+ * libprometheus-cpp (https://github.com/jupp0r/prometheus-cpp)
+ * libmaxminddb-dev
+ * libyaml-cpp-dev
+ * docker for regression testing
+ * python3 rather than python2
  * python-bottle for regression testing of webhooks
 
 To build on OS X, `brew install readline gcc` and use

@@ -71,6 +71,8 @@ enum class HTTPVerb { GET, POST, PUT, DELETE };
 
 #define WFORCE_NUM_WORKER_THREADS 4
 #define WFORCE_MAX_WS_CONNS 10000
+// Max length of an HTTP Date string
+#define WFORCE_MAX_DATE_STRING_LEN 30
 
 struct WebserverQueueItem
 {

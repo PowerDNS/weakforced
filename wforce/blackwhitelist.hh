@@ -78,6 +78,7 @@ public:
     redis_context = NULL;
     redis_port = 6379;
     redis_timeout=1;
+    redis_rw_timeout_usecs = 100000;
   }
   BlackWhiteListDB(const BlackWhiteListDB&) = delete;
 
@@ -123,6 +124,7 @@ public:
   std::vector<BlackWhiteListEntry> getIPLoginEntries() const;
 
   void setConnectTimeout(int timeout);
+  void setRWTimeout(int timeout_secs, int timeout_usecs);
 
   const std::string& getIPRetMsg() const { return ip_ret_msg;}
   const std::string& getLoginRetMsg() const { return login_ret_msg; }
@@ -161,6 +163,8 @@ private:
   unsigned int redis_port;
   redisContext* redis_context;
   std::atomic<int> redis_timeout;
+  std::atomic<int> redis_rw_timeout_secs;
+  std::atomic<int> redis_rw_timeout_usecs;
   std::string redis_prefix = {"wfbl"};
   BLWLDBType db_type;
   std::string ip_ret_msg;

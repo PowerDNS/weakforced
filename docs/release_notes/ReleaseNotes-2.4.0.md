@@ -8,6 +8,8 @@
 * Add Date, Last-Modified and Cache-Control headers to all responses
 * Session-ID now logged for allow/report commands
 * Improved logging to show line numbers for Lua errors
+* Enable TCP keepalive for redis connections
+* Configurable timeout for R/W on redis connections
 
 ## Bug Fixes/Changes
 * Fix duplicate command stats under some circumstances
@@ -64,6 +66,20 @@ The allow and report logs will now contain session_id information.
 The Lua wrapper code has been updated to provide better traceback
 information, including line numbers, for Lua errors. This helps when
 writing Lua policy that triggers a Lua exception.
+
+## Enable TCP keepalive for redis connections
+
+Redis connections could be timed-out by middleboxes, which would not
+be detected because keepalive was not enabled for Redis
+connections. Now it is enabled (always).
+
+## Configurable timeout for R/W on redis connections
+
+Previously reads from and writes to Redis were subject to the
+underlying socket timeout defaults. Now the timeout defaults to 100000
+microseconds, and is configurable with new Lua functions:
+blacklistPersistRWTimeout() and whitelistPersistRWTimeout(). See
+wforce.conf for more details.
 
 ## Fix Duplicate Command Stats
 

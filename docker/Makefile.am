@@ -2,12 +2,10 @@ DCMP = docker-compose
 COMPOSE_SOURCE = docker-compose.yml elasticsearch/Dockerfile logstash/Dockerfile logstash/config/logstash.conf logstash/templates/wforce_template.json regression/Dockerfile wforce_image/Dockerfile wforce_image/docker-entrypoint.sh wforce_image/wforce.conf.j2 wforce_image/create_config.sh
 COMPOSE_TARGET = .docker
 REGRESSION_SERVICE = regression
-export BUILD_DATE= $(shell date)
-export LICENSE= $(shell echo GPLv3)
-export GIT_REVISION= $(shell git rev-parse --short HEAD)
-export VERSION = $(shell git describe --tags)
 
-$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f) $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find wforce_image -type f) $(shell find regression -type f)  $(shell find logstash -type f)  $(shell find elasticsearch -type f)
+SUBDIRS= wforce_image
+
+$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f)  $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find regression -type f)  $(shell find logstash -type f)  $(shell find elasticsearch -type f)
 	$(DCMP) down -v
 	$(DCMP) build
 	touch $(COMPOSE_TARGET)

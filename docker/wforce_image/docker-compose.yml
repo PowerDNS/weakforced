@@ -1,0 +1,21 @@
+version: '2'
+services:
+  # This is the optimized image that will go onto Docker Hub
+  wforce_image:
+    image: powerdns/wforce:${VERSION}
+    build:
+      context: weakforced
+      dockerfile: docker/wforce_image/Dockerfile
+      args:
+        - build_date=${BUILD_DATE}
+        - license=${LICENSE}
+        - git_revision=${GIT_REVISION}
+        - version=${VERSION}
+    environment:
+      - WFORCE_VERBOSE
+      - WFORCE_HTTP_PORT=18084
+      - WFORCE_HTTP_PASSWORD=super
+      - WFORCE_LOGSTASH_URL
+      - WFORCE_CONFIG_FILE
+    ports:
+      - "18084:18084"

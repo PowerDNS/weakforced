@@ -138,6 +138,7 @@ string g_key;
 void controlClientThread(int fd, ComboAddress client)
 try
 {
+  Socket sock(fd);
   SodiumNonce theirs, ours, readingNonce, writingNonce;
   ours.init();
   readn2(fd, (char*)theirs.value, sizeof(theirs.value));
@@ -146,7 +147,9 @@ try
   writingNonce.merge(theirs, ours);
 
   setThreadName("wf/ctrl-client");
-  
+
+  sock.setKeepAlive();
+
   for(;;) {
     uint16_t len;
     if(!getMsgLen(fd, &len))
@@ -168,7 +171,7 @@ try
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
 	std::lock_guard<std::mutex> lock((*it)->lua_mutex);
-      (*it)->lua_context.executeCode<	
+        (*it)->lua_context.executeCode<
 	  boost::optional<
 	    boost::variant<
 	      string
@@ -216,15 +219,12 @@ try
     putMsgLen(fd, response.length());
     writen2(fd, response.c_str(), (uint16_t)response.length());
   }
+  // The Socket class wrapper will close the socket for us
   infolog("Closed control connection from %s", client.toStringWithPort());
-  close(fd);
-  fd=-1;
 }
 catch(std::exception& e)
 {
   errlog("Got an exception in client connection from %s: %s", client.toStringWithPort(), e.what());
-  if(fd >= 0)
-    close(fd);
 }
 
 
@@ -253,6 +253,10 @@ void doClient(ComboAddress server, const std::string& command)
 {
   cout<<"Connecting to "<<server.toStringWithPort()<<endl;
   int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
+  if (fd < 0) {
+    cout << "Could not open socket" << endl;
+    return;
+  }
   SConnect(fd, server);
 
   SodiumNonce theirs, ours, readingNonce, writingNonce;
@@ -355,7 +359,7 @@ void doConsole()
       {
 	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
 	  std::lock_guard<std::mutex> lock((*it)->lua_mutex);
-	(*it)->lua_context.executeCode<	
+	(*it)->lua_context.executeCode<
 	    boost::optional<
 	      boost::variant<
 		string

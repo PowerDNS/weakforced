@@ -184,7 +184,7 @@ try
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt client command: %s", e.what());
-      continue;
+      return;
     }
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;

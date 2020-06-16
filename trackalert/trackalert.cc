@@ -222,7 +222,7 @@ try
   // The Socket class wrapper will close the socket for us
   infolog("Closed control connection from %s", client.toStringWithPort());
 }
-catch(std::exception& e)
+catch(const std::exception& e)
 {
   errlog("Got an exception in client connection from %s: %s", client.toStringWithPort(), e.what());
 }
@@ -243,7 +243,7 @@ try
     t.detach();
   }
 }
-catch(std::exception& e) 
+catch(const std::exception& e) 
 {
   close(fd);
   errlog("Control connection died: %s", e.what());

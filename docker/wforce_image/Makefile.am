@@ -31,7 +31,9 @@ build_wforce_image: $(WFORCE_IMAGE_COMPOSE_TARGET)
 test_wforce_image: build_wforce_image
 	$(DCMP) up -d
 	$(DCMP) exec $(WFORCE_IMAGE_SERVICE) test -f /usr/bin/wforce
+	$(DCMP) exec $(WFORCE_IMAGE_SERVICE) test -f /usr/bin/trackalert
 	$(DCMP) exec $(WFORCE_IMAGE_SERVICE) test -f /etc/wforce/wforce.conf
+	$(DCMP) exec $(WFORCE_IMAGE_SERVICE) test -f /etc/wforce/trackalert.conf
 	$(DCMP) exec $(WFORCE_IMAGE_SERVICE) wforce -e 'showStringStatsDB()'
 	$(DCMP) stop
 

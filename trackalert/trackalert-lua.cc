@@ -180,7 +180,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("setNumSchedulerThreads", [](int numThreads) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) {
 	g_bg_schedulerp->cron(cron_str, [func_name] {
 	    try {
@@ -205,7 +205,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("intervalScheduleBackgroundFunc", [](const std::string& duration_str, const std::string& func_name) {
 	std::stringstream ss(duration_str);
 	boost::posix_time::time_duration td;
@@ -288,7 +288,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   else {
     c_lua.writeFunction("showVersion", []() { });
   }
-    
+  
   std::ifstream ifs(config);
   if(!ifs) 
     warnlog("Unable to read configuration from '%s'", config);

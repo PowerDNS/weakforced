@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - New wf_dump_entries tool to dump stats DBs to file
 - Support for new "forwarding" type in replication messages
 - Support for Prometheus via the new /metrics REST endpoint
+- Enable TCP keepalive for redis connections
+- Configurable timeout for R/W on redis connections
 
 ### Changed
 - Fix duplicate command stats under some circumstances

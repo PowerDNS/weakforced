@@ -309,6 +309,11 @@ cannot be called inside the allow/report/reset functions:
 
 		blacklistPersistConnectTimeout(2)
 
+* blacklistPersistRWTimeout(<timeout secs>, <timeout usecs>) - Set the
+  timeout for reading from/writing to the Redis DB. For example:
+
+        blacklistPersistRWTimeout(0, 50000)
+
 * disableBuiltinWhitelists() - Disable the built-in whitelisting checks,
   enabling them to be checked from Lua instead. For example:
 
@@ -339,6 +344,11 @@ cannot be called inside the allow/report/reset functions:
   error will be logged. For example:
 
 		whitelistPersistConnectTimeout(2)
+
+* whitelistPersistRWTimeout(<timeout secs>, <timeout usecs>) - Set the
+  timeout for reading from/writing to the Redis DB. For example:
+
+        whitelistPersistRWTimeout(0, 50000)
 
 * setBlacklistIPRetMsg(<msg>) - Set the message to be returned to
   clients whose IP address is blacklisted. For example:

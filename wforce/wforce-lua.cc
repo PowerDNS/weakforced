@@ -735,6 +735,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       });
     c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) { g_bl_db.setConnectTimeout(timeout_secs); });
+    c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_bl_db.setRWTimeout(timeout_secs, timeout_usecs); });
     c_lua.writeFunction("setBlacklistIPRetMsg", [](const std::string& msg) {
         g_bl_db.setIPRetMsg(msg);
       });
@@ -749,7 +750,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
-    c_lua.writeFunction("setBlacklistIPRetMsg", [](const std::string& msg) {});
+    c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});
     c_lua.writeFunction("setBlacklistLoginRetMsg", [](const std::string& msg) {});
     c_lua.writeFunction("setBlacklistIPLoginRetMsg", [](const std::string& msg) {});
   }
@@ -866,11 +867,14 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       });
     c_lua.writeFunction("whitelistPersistReplicated", []() { g_wl_db.persistReplicated(); });
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) { g_wl_db.setConnectTimeout(timeout_secs); });
+    c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_wl_db.setRWTimeout(timeout_secs, timeout_usecs); });
+
   }
   else {
     c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("whitelistPersistReplicated", []() {});
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) {});
+    c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});
   }
   // End whitelists
   

@@ -558,6 +558,12 @@ void BlackWhiteListDB::setConnectTimeout(int timeout)
   redis_timeout = timeout; // atomic
 }
 
+void BlackWhiteListDB::setRWTimeout(int timeout_secs, int timeout_usecs)
+{
+  redis_rw_timeout_usecs = timeout_usecs; // atomic
+  redis_rw_timeout_secs = timeout_secs; // atomic
+}
+
 bool BlackWhiteListDB::checkSetupContext()
 {
   if (redis_context == NULL || redis_context->err) {
@@ -579,6 +585,22 @@ bool BlackWhiteListDB::checkSetupContext()
       else
         incPrometheusRedisWLConnFailed();
       return false;
+    }
+    else {
+      struct timeval tv;
+      tv.tv_sec = static_cast<time_t>(redis_rw_timeout_secs);
+      tv.tv_usec = static_cast<suseconds_t>(redis_rw_timeout_usecs);
+      if (redisSetTimeout(redis_context, tv) == REDIS_ERR) {
+        errlog("Could not set Redis Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
+        throw WforceException("Error: could not set Redis Timeout in BlackWhitelist");
+      }
+      else {
+        infolog("Set Redis RW Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
+      }
+      if (redisEnableKeepAlive(redis_context) == REDIS_ERR) {
+        errlog("Could not enable Redis KeepAlive");
+        throw WforceException("Error: Could not enable Redis KeepAlive in BlackWhitelist");
+      }
     }
   }
   return true;

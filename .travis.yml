@@ -37,26 +37,37 @@ matrix:
       - COMPILER=gcc
       - BUILDER=true 
       - BUILDER_TARGET=
+      - WFORCE_IMAGE=
   - name: "Clang Regression"
     env:
       - COMPILER=clang
       - BUILDER=true 
       - BUILDER_TARGET=
+      - WFORCE_IMAGE=
   - name: "Package Centos-7"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=centos-7
+      - WFORCE_IMAGE=
   - name: "Package Debian-stretch"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=debian-stretch
+      - WFORCE_IMAGE=
   - name: "Package Debian-buster"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=debian-buster
+      - WFORCE_IMAGE=
+  - name: "Wforce Docker Image"
+    env:
+      - COMPILER=none
+      - BUILDER=true
+      - BUILDER_TARGET=
+      - WFORCE_IMAGE=test_wforce_image
 before_script:
  - git clone https://github.com/jupp0r/prometheus-cpp.git
  - ( cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 )
@@ -66,7 +77,9 @@ script:
  - ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
  - cd docker
  - make regression-$COMPILER
- - cd ..
+ - cd wforce_image
+ - make $WFORCE_IMAGE
+ - cd ../..
  - $BUILDER $BUILDER_TARGET
  - ./trigger_policy_build.sh
 deploy:

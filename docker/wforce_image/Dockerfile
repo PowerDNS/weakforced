@@ -95,6 +95,7 @@ RUN groupadd -g 1000 wforce && \
 COPY docker/wforce_image/docker-entrypoint.sh /usr/bin/docker-entrypoint.sh
 COPY docker/wforce_image/create_config.sh /usr/bin/create_config.sh
 COPY docker/wforce_image/wforce.conf.j2 /etc/wforce
+COPY docker/wforce_image/trackalert.conf.j2 /etc/wforce
 
 RUN chmod 0775 /usr/bin/docker-entrypoint.sh
 RUN chmod 0775 /usr/bin/create_config.sh
@@ -117,6 +118,10 @@ ENV WFORCE_HTTP_PASSWORD=
 ENV WFORCE_HTTP_PORT=8084
 ENV WFORCE_LOGSTASH_URL=
 ENV WFORCE_CONFIG_FILE=
+ENV TRACKALERT=
+ENV TRACKALERT_HTTP_PORT=8085
+ENV TRACKALERT_HTTP_PASSWORD=
+ENV TRACKALERT_CONFIG_FILE=
 
 LABEL org.label-schema.build-date="${build_date}" \
   org.label-schema.license="${license}" \

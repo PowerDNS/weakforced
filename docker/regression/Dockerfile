@@ -28,7 +28,6 @@ RUN apt-get update && \
                python3-pip \
                python3-venv \
                prometheus \
-               redis \
                geoip-bin \
                geoip-database \
                geoipupdate \
@@ -37,13 +36,11 @@ RUN apt-get update && \
                cmake
 
 # Disable Ipv6 for redis
-RUN sed -i "s/bind .*/bind 127.0.0.1/g" /etc/redis/redis.conf
 RUN echo "AccountID 164476\nLicenseKey W68a2SACgoSv\nEditionIDs GeoLite2-ASN GeoLite2-City GeoLite2-Country" >/etc/GeoIP.conf
 RUN echo "DatabaseDirectory /usr/share/GeoIP" >>/etc/GeoIP.conf
 RUN cat /etc/GeoIP.conf
 RUN geoipupdate -v
 RUN pip3 install bottle virtualenv
-RUN update-rc.d redis-server enable
 
 WORKDIR /wforce/
 RUN mkdir /sdist
@@ -66,4 +63,4 @@ COPY elk/ /wforce/elk/
 
 RUN rm -rf regression-tests/.venv  
 
-CMD redis-server
+CMD ["sleep", "infinity"]

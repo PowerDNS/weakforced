@@ -45,4 +45,3 @@ regression-none:
 
 regression: regression-gcc regression-clang
 
-all: build_image start

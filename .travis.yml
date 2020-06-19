@@ -27,7 +27,6 @@ addons:
       - protobuf-compiler
       - libhiredis-dev
       - libcurl4-openssl-dev
-      - redis-server
       - libyaml-cpp-dev
       - wget
 matrix:

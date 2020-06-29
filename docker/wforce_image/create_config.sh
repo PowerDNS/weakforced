@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python -c 'import os
+python3 -c 'import os
 import sys
 import jinja2
 sys.stdout.write(

@@ -7,7 +7,7 @@ export LICENSE= $(shell echo GPLv3)
 export GIT_REVISION= $(shell git rev-parse --short HEAD)
 export VERSION = $(shell git describe --tags)
 
-$(WFORCE_IMAGE_COMPOSE_TARGET): $(shell find weakforced/common -type f) $(shell find weakforced/wforce -type f) $(shell find weakforced/trackalert -type f) $(shell find weakforced/ext -type f) $(COMPOSE_SOURCE)
+$(WFORCE_IMAGE_COMPOSE_TARGET): $(shell find weakforced/common -type f) $(shell find weakforced/wforce -type f) $(shell find weakforced/trackalert -type f) $(shell find weakforced/ext -type f) $(shell find weakforced/report_api -type f) $(COMPOSE_SOURCE)
 	$(DCMP) down -v
 	$(DCMP) build
 	touch $(WFORCE_IMAGE_COMPOSE_TARGET)

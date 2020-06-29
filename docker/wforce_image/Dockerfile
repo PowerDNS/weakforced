@@ -63,7 +63,11 @@ RUN make install DESTDIR=/wforce/install
 
 FROM debian:buster as wforce_image
 
+WORKDIR /wforce/
+
 COPY --from=wforce_build /wforce/install/ /
+
+COPY --from=wforce_build /wforce/report_api /wforce/report_api
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -85,7 +89,9 @@ RUN apt-get update && \
                libyaml-cpp0.6 \
                gnupg \
                python3 \
-               python-jinja2
+               python3-pip \
+               python3-venv \
+               python3-jinja2
 
 RUN groupadd -g 1000 wforce && \
     useradd --uid 1000 -N -M -r --gid 1000 wforce && \
@@ -99,6 +105,16 @@ COPY docker/wforce_image/trackalert.conf.j2 /etc/wforce
 
 RUN chmod 0775 /usr/bin/docker-entrypoint.sh
 RUN chmod 0775 /usr/bin/create_config.sh
+
+ARG VENV_DIR=/usr/share/wforce-report-api
+RUN python3 -m venv --symlinks $VENV_DIR
+RUN cd report_api && $VENV_DIR/bin/python $VENV_DIR/bin/pip install .
+RUN mkdir /etc/wforce-report-api
+RUN cp report_api/helpers/wforce-report-api-webserver /usr/bin/wforce-report-api-webserver && chmod 755 /usr/bin/wforce-report-api-webserver 
+RUN cp report_api/instance/report.cfg /etc/wforce-report-api/wforce-report-api-instance.conf && chmod 644 /etc//wforce-report-api/wforce-report-api-instance.conf
+RUN cp report_api/helpers/wforce-report-api-docker.conf /etc/wforce-report-api/wforce-report-api-web.conf && chmod 755 /etc/wforce-report-api/wforce-report-api-web.conf
+RUN export python3_version=$(python3 -V | awk '{print $2}' | awk 'BEGIN{FS="."};{print $1"."$2}') && sed -i -e s:\<python_version\>:$python3_version: /etc/wforce-report-api/wforce-report-api-web.conf
+RUN rm -rf /wforce/*
 
 # We use tini to handle signals, reaping etc.
 ENV TINI_VERSION v0.18.0

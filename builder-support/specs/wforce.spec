@@ -155,7 +155,7 @@ find %{venv_dir} -type f -exec sed -e 's!%{venv_dir}!%{venv_install_dir}!g' -i {
 %{__install} -D -m 644 report_api/helpers/wforce-report-api.conf %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
 %{__install} -D -m 644 report_api/instance/report.cfg %{buildroot}/%{_sysconfdir}/%{name}-report-api/%{name}-report-api-instance.conf
 %{__install} -D -m 644 report_api/helpers/wforce-report-api.service %{buildroot}/%{_unitdir}/wforce-report-api.service
-sed -i -e :\<python_version\>:%{python3_version}: %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
+sed -i -e s:\<python_version\>:%{python3_version}: %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
 
 %clean
 rm -rf %{buildroot}

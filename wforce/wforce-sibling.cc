@@ -69,6 +69,7 @@ void Sibling::connectSibling()
 Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p), queue_thread_run(true), d_ignoreself(false)
 {
   if (proto != Protocol::NONE) {
+    connectSibling();
     // std::thread is moveable
     queue_thread = std::thread([this]() {
         thread_local bool init=false;
@@ -76,7 +77,6 @@ Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p),
           setThreadName("wf/sibling-worker");
           init = true;
         }
-        connectSibling();
         while (true) {
           std::string msg;
           {

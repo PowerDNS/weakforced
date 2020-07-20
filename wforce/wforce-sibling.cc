@@ -109,17 +109,19 @@ Sibling::~Sibling()
 
 void Sibling::checkIgnoreSelf(const ComboAddress& ca)
 {
-  ComboAddress actualLocal;
-  actualLocal.sin4.sin_family = ca.sin4.sin_family;
-  socklen_t socklen = actualLocal.getSocklen();
-
-  if(getsockname(sockp->getHandle(), (struct sockaddr*) &actualLocal, &socklen) < 0) {
-    return;
-  }
-
-  actualLocal.sin4.sin_port = ca.sin4.sin_port;
-  if(actualLocal == rem) {
-    d_ignoreself=true;
+  if (proto != Protocol::NONE) {
+    ComboAddress actualLocal;
+    actualLocal.sin4.sin_family = ca.sin4.sin_family;
+    socklen_t socklen = actualLocal.getSocklen();
+    
+    if(getsockname(sockp->getHandle(), (struct sockaddr*) &actualLocal, &socklen) < 0) {
+      return;
+    }
+    
+    actualLocal.sin4.sin_port = ca.sin4.sin_port;
+    if(actualLocal == rem) {
+      d_ignoreself=true;
+    }
   }
 }
 

@@ -1,13 +1,17 @@
 import requests
 import time
 import os
-import requests
+import subprocess
 from urllib.parse import urlparse
 from urllib.parse import urljoin
 
 from prometheus_client.parser import text_string_to_metric_families
 from prometheus_client.samples import Sample
 from test_helper import ApiTestCase
+
+PROMETHEUS_PORT="9090"
+PROMETHEUS_URL="http://localhost:%s" % PROMETHEUS_PORT
+PROMETHEUS_CONF="./prometheus-wforce.yml"
 
 class TestPrometheus(ApiTestCase):
 
@@ -83,3 +87,21 @@ class TestPrometheus(ApiTestCase):
         self.assertGreater(float(values['trackalert_commands_total{cmd="custom"}']), custom_count)
         self.assertGreater(float(values['trackalert_worker_response_duration_seconds_bucket{le="+Inf"}']), 0)
 
+    def test_RealPrometheus(self):
+        cmd = ["prometheus", "--config.file=%s" % PROMETHEUS_CONF]
+        prometheus = subprocess.Popen(cmd, close_fds=True)
+        prometheus_tries = 20
+        try:
+            for i in range(prometheus_tries+1):
+                try:
+                    r = requests.get('%s/api/v1/label/__name__/values' %
+                                     PROMETHEUS_URL)
+                    assert 'wforce_commands_total' in r.text, r.text
+                    break
+                except:
+                    if i == prometheus_tries:
+                        raise
+                    time.sleep(4)
+        finally:
+            prometheus.terminate()
+            prometheus.wait()

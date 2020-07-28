@@ -27,6 +27,7 @@ RUN apt-get update && \
                docker-compose \
                python3-pip \
                python3-venv \
+               prometheus \
                redis \
                geoip-bin \
                geoip-database \

@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: "2.4.0-alpha2"
+  version: "2.4.0-rc1"
   title: "OX Abuse Shield (Trackalert)"
   description: "An API to the trackalert daemon to prevent brute-force and abuse of mail systems"
   contact:

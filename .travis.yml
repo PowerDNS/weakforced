@@ -1,5 +1,4 @@
 language: cpp
-sudo: required
 dist: trusty
 env:
   global:
@@ -29,9 +28,10 @@ addons:
       - libcurl4-openssl-dev
       - libyaml-cpp-dev
       - wget
-matrix:
+jobs:
   include:
-  - name: "GCC Regression"
+  - stage: "test"
+    name: "GCC Regression"
     env:
       - COMPILER=gcc
       - BUILDER=true 
@@ -43,7 +43,14 @@ matrix:
       - BUILDER=true 
       - BUILDER_TARGET=
       - WFORCE_IMAGE=
-  - name: "Package Centos-7"
+  - name: "Test Wforce Docker Image"
+    env:
+      - COMPILER=none
+      - BUILDER=true
+      - BUILDER_TARGET=
+      - WFORCE_IMAGE=test_wforce_image
+  - stage: "build"
+    name: "Package Centos-7"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
@@ -61,12 +68,20 @@ matrix:
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=debian-buster
       - WFORCE_IMAGE=
-  - name: "Wforce Docker Image"
-    env:
-      - COMPILER=none
-      - BUILDER=true
-      - BUILDER_TARGET=
-      - WFORCE_IMAGE=test_wforce_image
+  - stage: deploy
+    name: "Deploy Wforce Docker Image"
+    script:
+      - autoreconf -i
+      - ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
+      - cd docker/wforce_image
+      - make build_wforce_image
+      - cd ..
+      - bash docker_push.sh
+stages:
+  - build
+  - test
+  - name: deploy
+    #if: branch = master
 before_script:
  - git clone https://github.com/jupp0r/prometheus-cpp.git
  - ( cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 )
@@ -82,8 +97,3 @@ script:
  - $BUILDER $BUILDER_TARGET
 after_success:
  - ./trigger_policy_build.sh
-deploy:
-  provider: script
-  script: bash docker/docker_push.sh
-  on:
-    branch: master

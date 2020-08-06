@@ -78,6 +78,7 @@ jobs:
       - cd ..
       - bash docker_push.sh
       - cd ..
+      - ./trigger_policy_build.sh
 stages:
   - build
   - test
@@ -96,5 +97,3 @@ script:
  - make $WFORCE_IMAGE
  - cd ../..
  - $BUILDER $BUILDER_TARGET
-after_success:
- - ./trigger_policy_build.sh

@@ -77,11 +77,12 @@ jobs:
       - make build_wforce_image
       - cd ..
       - bash docker_push.sh
+      - cd ..
 stages:
   - build
   - test
   - name: deploy
-    #if: branch = master
+    if: branch = master
 before_script:
  - git clone https://github.com/jupp0r/prometheus-cpp.git
  - ( cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 )

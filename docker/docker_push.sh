@@ -1,4 +1,5 @@
 #!/bin/bash
 TAG=`git describe --tags`
-echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+echo "Docker username is: '"$DOCKER_USERNAME"'"
+echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
 docker push powerdns/wforce:$TAG

@@ -83,7 +83,7 @@ stages:
   - build
   - test
   - name: deploy
-    if: branch = master
+    if: branch = master AND env(DOCKER_USERNAME) IS present AND env(DOCKER_PASSWORD) IS present
 before_script:
  - git clone https://github.com/jupp0r/prometheus-cpp.git
  - ( cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 )

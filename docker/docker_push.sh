@@ -17,3 +17,5 @@ then
     docker_login
     docker push powerdns/wforce:$TAG
 fi
+
+exit 0

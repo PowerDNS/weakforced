@@ -58,7 +58,8 @@ using std::thread;
 bool g_verbose=false;
 
 struct TrackalertStats g_stats;
-bool g_console;
+bool g_console=false;
+bool g_docker=false;
 
 string g_outputBuffer;
 
@@ -137,6 +138,7 @@ string g_key;
 void controlClientThread(int fd, ComboAddress client)
 try
 {
+  Socket sock(fd);
   SodiumNonce theirs, ours, readingNonce, writingNonce;
   ours.init();
   readn2(fd, (char*)theirs.value, sizeof(theirs.value));
@@ -145,7 +147,9 @@ try
   writingNonce.merge(theirs, ours);
 
   setThreadName("wf/ctrl-client");
-  
+
+  sock.setKeepAlive();
+
   for(;;) {
     uint16_t len;
     if(!getMsgLen(fd, &len))
@@ -159,7 +163,7 @@ try
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt client command: %s", e.what());
-      continue;
+      return;
     }
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
@@ -167,7 +171,7 @@ try
       // execute the supplied lua code for all the allow/report lua states
       for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
 	std::lock_guard<std::mutex> lock((*it)->lua_mutex);
-      (*it)->lua_context.executeCode<	
+        (*it)->lua_context.executeCode<
 	  boost::optional<
 	    boost::variant<
 	      string
@@ -215,15 +219,12 @@ try
     putMsgLen(fd, response.length());
     writen2(fd, response.c_str(), (uint16_t)response.length());
   }
+  // The Socket class wrapper will close the socket for us
   infolog("Closed control connection from %s", client.toStringWithPort());
-  close(fd);
-  fd=-1;
 }
-catch(std::exception& e)
+catch(const std::exception& e)
 {
   errlog("Got an exception in client connection from %s: %s", client.toStringWithPort(), e.what());
-  if(fd >= 0)
-    close(fd);
 }
 
 
@@ -242,7 +243,7 @@ try
     t.detach();
   }
 }
-catch(std::exception& e) 
+catch(const std::exception& e) 
 {
   close(fd);
   errlog("Control connection died: %s", e.what());
@@ -252,6 +253,10 @@ void doClient(ComboAddress server, const std::string& command)
 {
   cout<<"Connecting to "<<server.toStringWithPort()<<endl;
   int fd=socket(server.sin4.sin_family, SOCK_STREAM, 0);
+  if (fd < 0) {
+    cout << "Could not open socket" << endl;
+    return;
+  }
   SConnect(fd, server);
 
   SodiumNonce theirs, ours, readingNonce, writingNonce;
@@ -354,7 +359,7 @@ void doConsole()
       {
 	for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
 	  std::lock_guard<std::mutex> lock((*it)->lua_mutex);
-	(*it)->lua_context.executeCode<	
+	(*it)->lua_context.executeCode<
 	    boost::optional<
 	      boost::variant<
 		string
@@ -490,6 +495,7 @@ struct
 {
   bool beDaemon{false};
   bool underSystemd{false};
+  bool underDocker{false};
   bool beClient{false};
   string command;
   string config;
@@ -521,13 +527,14 @@ try
     {"client", optional_argument, 0, 'c'},
     {"systemd",  optional_argument, 0, 's'},
     {"daemon", optional_argument, 0, 'd'},
+    {"docker", optional_argument, 0, 'D'},
     {"facility", required_argument, 0, 'f'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:R:f:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdDc:e:C:R:f:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -555,6 +562,10 @@ try
       break;
     case 'd':
       g_cmdLine.beDaemon=true;
+      break;
+    case 'D':
+      g_cmdLine.underDocker=true;
+      g_docker = true;
       break;
     case 's':
       g_cmdLine.underSystemd=true;
@@ -584,7 +595,9 @@ try
       cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
+      cout<<"-D,--docker           Enable logging for docker\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
+      cout<<"-f,--facility name    Use log facility 'name'\n";
       cout<<"-h,--help             Display this helpful message\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
@@ -680,7 +693,7 @@ try
 
   g_configurationDone = true;
   
-  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd)) {
+  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd || g_cmdLine.underDocker)) {
     doConsole();
   } 
   else {

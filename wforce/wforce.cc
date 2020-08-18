@@ -63,6 +63,7 @@
 using std::atomic;
 using std::thread;
 bool g_verbose=false;
+bool g_docker=false;
 
 struct WForceStats g_stats;
 bool g_console;
@@ -88,6 +89,7 @@ struct
 {
   bool beDaemon{false};
   bool underSystemd{false};
+  bool underDocker{false};
   bool beClient{false};
   string command;
   string config;
@@ -182,7 +184,7 @@ try
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt client command: %s", e.what());
-      continue;
+      return;
     }
     //cerr<<"Have decrypted line: "<<line<<endl;
     string response;
@@ -887,13 +889,14 @@ try
     {"client", optional_argument, 0, 'c'},
     {"systemd",  optional_argument, 0, 's'},
     {"daemon", optional_argument, 0, 'd'},
+    {"docker", optional_argument, 0, 'D'},
     {"facility", required_argument, 0, 'f'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdc:e:C:R:f:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdDc:e:C:R:f:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -928,6 +931,10 @@ try
     case 's':
       g_cmdLine.underSystemd=true;
       break;
+    case 'D':
+      g_cmdLine.underDocker=true;
+      g_docker = true;
+      break;
     case 'e':
       g_cmdLine.command=optarg;
       break;
@@ -954,6 +961,7 @@ try
       cout<<"-c [file],            Operate as a client, connect to wforce, loading config from 'file' if specified\n";
       cout<<"-s,                   Operate under systemd control.\n";
       cout<<"-d,--daemon           Operate as a daemon\n";
+      cout<<"-D,--docker           Enable logging for docker\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-f,--facility name    Use log facility 'name'\n";
       cout<<"-h,--help             Display this helpful message\n";
@@ -1088,7 +1096,7 @@ try
   sd_notify(0, "READY=1");
 #endif
 
-  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd)) {
+  if(!(g_cmdLine.beDaemon || g_cmdLine.underSystemd || g_cmdLine.underDocker)) {
     doConsole();
   } 
   else {

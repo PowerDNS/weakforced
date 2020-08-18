@@ -180,7 +180,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("setNumSchedulerThreads", [](int numThreads) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) {
 	g_bg_schedulerp->cron(cron_str, [func_name] {
 	    try {
@@ -205,7 +205,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("cronScheduleBackgroundFunc", [](const std::string& cron_str, const std::string& func_name) { });
   }
 
-  if (!multi_lua) {
+  if (!multi_lua && !client) {
     c_lua.writeFunction("intervalScheduleBackgroundFunc", [](const std::string& duration_str, const std::string& func_name) {
 	std::stringstream ss(duration_str);
 	boost::posix_time::time_duration td;
@@ -288,7 +288,37 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   else {
     c_lua.writeFunction("showVersion", []() { });
   }
-    
+
+  if (!multi_lua) {
+    c_lua.writeFunction("testCrypto", [](string testmsg)
+			{
+			  try {
+			    SodiumNonce sn, sn2;
+			    sn.init();
+			    sn2=sn;
+			    string encrypted = sodEncryptSym(testmsg, g_key, sn);
+			    string decrypted = sodDecryptSym(encrypted, g_key, sn2);
+       
+			    sn.increment();
+			    sn2.increment();
+
+			    encrypted = sodEncryptSym(testmsg, g_key, sn);
+			    decrypted = sodDecryptSym(encrypted, g_key, sn2);
+
+			    if(testmsg == decrypted)
+			      g_outputBuffer="Everything is ok!\n";
+			    else
+			      g_outputBuffer="Crypto failed..\n";
+       
+			  }
+			  catch(...) {
+			    g_outputBuffer="Crypto failed..\n";
+			  }});
+  }
+  else {
+    c_lua.writeFunction("testCrypto", [](string testmsg) {});
+  }
+  
   std::ifstream ifs(config);
   if(!ifs) 
     warnlog("Unable to read configuration from '%s'", config);

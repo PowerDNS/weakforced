@@ -1,5 +1,4 @@
 language: cpp
-sudo: required
 dist: trusty
 env:
   global:
@@ -27,36 +26,64 @@ addons:
       - protobuf-compiler
       - libhiredis-dev
       - libcurl4-openssl-dev
-      - redis-server
       - libyaml-cpp-dev
       - wget
-matrix:
+jobs:
   include:
-  - name: "GCC Regression"
+  - stage: "test"
+    name: "GCC Regression"
     env:
       - COMPILER=gcc
       - BUILDER=true 
       - BUILDER_TARGET=
+      - WFORCE_IMAGE=
   - name: "Clang Regression"
     env:
       - COMPILER=clang
       - BUILDER=true 
       - BUILDER_TARGET=
-  - name: "Package Centos-7"
+      - WFORCE_IMAGE=
+  - name: "Test Wforce Docker Image"
+    env:
+      - COMPILER=none
+      - BUILDER=true
+      - BUILDER_TARGET=
+      - WFORCE_IMAGE=test_wforce_image
+  - stage: "build"
+    name: "Package Centos-7"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=centos-7
+      - WFORCE_IMAGE=
   - name: "Package Debian-stretch"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=debian-stretch
+      - WFORCE_IMAGE=
   - name: "Package Debian-buster"
     env:
       - COMPILER=none
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=debian-buster
+      - WFORCE_IMAGE=
+  - stage: deploy
+    name: "Deploy Wforce Docker Image"
+    script:
+      - autoreconf -i
+      - ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
+      - cd docker/wforce_image
+      - make build_wforce_image
+      - cd ..
+      - bash docker_push.sh
+      - cd ..
+      - ./trigger_policy_build.sh
+stages:
+  - build
+  - test
+  - name: deploy
+    if: branch = master AND env(DOCKER_USERNAME) IS present AND env(DOCKER_PASSWORD) IS present
 before_script:
  - git clone https://github.com/jupp0r/prometheus-cpp.git
  - ( cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 )
@@ -66,6 +93,7 @@ script:
  - ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
  - cd docker
  - make regression-$COMPILER
- - cd ..
+ - cd wforce_image
+ - make $WFORCE_IMAGE
+ - cd ../..
  - $BUILDER $BUILDER_TARGET
- - ./trigger_policy_build.sh

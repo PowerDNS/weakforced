@@ -149,6 +149,7 @@ AC_CONFIG_FILES([Makefile
 	common/Makefile
 	docs/Makefile
 	docker/Makefile
+        docker/wforce_image/Makefile
 	report_api/Makefile
 	trackalert/Makefile
         wforce/Makefile])

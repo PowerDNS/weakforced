@@ -37,7 +37,6 @@ services:
       - elasticsearch
       - logstash
       - kafka-rest
-
   # The following three images are for kafka regression testing
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -71,6 +70,11 @@ services:
     depends_on:
       - zookeeper
       - kafka
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
 
 volumes:
   esdata:

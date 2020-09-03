@@ -23,6 +23,7 @@
 #pragma once
 
 #include "prometheus.hh"
+#include "wforce_exception.hh"
 
 class WforcePrometheus : public PrometheusMetrics
 {
@@ -77,6 +78,9 @@ public:
         .Help("How full is the replication recv worker thread queue?")
         .Register(*d_registry);
       repl_recv_queue_size = &(repl_recv_queue_family.Add({}));
+    }
+    else {
+      throw WforceException("Could not allocate memory for Prometheus Registry");
     }
     repl_queue_func = [](){ return 0; };
   }

@@ -73,6 +73,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       }
       try {
         int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
+        if (sock < 0) {
+          throw std::runtime_error("Failed to create webserver socket");
+        }
         SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
         SBind(sock, local);
         SListen(sock, 1024);
@@ -87,6 +90,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       }
       catch(std::exception& e) {
         errlog("Unable to bind to webserver socket on %s: %s", local.toStringWithPort(), e.what());
+        _exit(EXIT_FAILURE);
       }
 
     });
@@ -112,6 +116,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 
       try {
         int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
+        if (sock < 0) {
+          throw std::runtime_error("Failed to create control socket");
+        }
         SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
         SBind(sock, local);
         SListen(sock, 5);
@@ -127,6 +134,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       }
       catch(std::exception& e) {
         errlog("Unable to bind to control socket on %s: %s", local.toStringWithPort(), e.what());
+        _exit(EXIT_FAILURE);
       }
     });
   }

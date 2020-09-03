@@ -28,6 +28,7 @@
 #include <netinet/tcp.h>
 #include <limits>
 #include "minicurl.hh"
+#include "wforce_exception.hh"
 #include <iostream>
 #include <fstream>
 #include "iputils.hh"
@@ -58,14 +59,14 @@ int main(int argc, char** argv)
 {
   string uri, local_addr, password, filename;
   int local_port=0;
-  struct option longopts[]={ 
-    {"uri", required_argument, 0, 'u'},
-    {"local-addr", required_argument, 0, 'l'},
-    {"local-port", required_argument, 0, 'p'},
-    {"wforce-pwd", required_argument, 0, 'w'},
-    {"filename", required_argument, 0, 'f'},
-    {"help", 0, 0, 'h'},
-    {0,0,0,0}
+  struct option longopts[]={
+      {"uri", required_argument, 0, 'u'},
+      {"local-addr", required_argument, 0, 'l'},
+      {"local-port", required_argument, 0, 'p'},
+      {"wforce-pwd", required_argument, 0, 'w'},
+      {"filename", required_argument, 0, 'f'},
+      {"help", 0, 0, 'h'},
+      {0,0,0,0}
   };
   int longindex=0;
   for(;;) {
@@ -73,31 +74,31 @@ int main(int argc, char** argv)
     if(c==-1)
       break;
     switch(c) {
-    case 'u':
-      uri = optarg;
-      break;
-    case 'l':
-      local_addr = optarg;
-      break;
-    case 'p':
-      try {
-        local_port = stoi(optarg);
-      }
-      catch (const std::exception& e) {
-        cerr << "Could not parse local port - must be an integer" << endl;
-        exit(EXIT_FAILURE);
-      }
-      break;
-    case 'w':
-      password = optarg;
-      break;
-    case 'f':
-      filename = optarg;
-      break;
-    case 'h':
-      print_help();
-      exit(EXIT_SUCCESS);
-      break;
+      case 'u':
+        uri = optarg;
+        break;
+      case 'l':
+        local_addr = optarg;
+        break;
+      case 'p':
+        try {
+          local_port = stoi(optarg);
+        }
+        catch (const std::exception& e) {
+          cerr << "Could not parse local port - must be an integer" << endl;
+          exit(EXIT_FAILURE);
+        }
+        break;
+      case 'w':
+        password = optarg;
+        break;
+      case 'f':
+        filename = optarg;
+        break;
+      case 'h':
+        print_help();
+        exit(EXIT_SUCCESS);
+        break;
     }
   }
   argc-=optind;
@@ -122,7 +123,7 @@ int main(int argc, char** argv)
       exit(EXIT_FAILURE);
     }
   }
-  
+
   // Listen on local IP and port
   ComboAddress local_ca;
   try {
@@ -132,32 +133,34 @@ int main(int argc, char** argv)
     cerr << "Error parsing local address and port " << local_addr << ", " << local_port << ". Make sure to use IP addresses not hostnames" << endl;
     exit(EXIT_FAILURE);
   }
-  
-  int listen_sock = socket(local_ca.sin4.sin_family, SOCK_STREAM, 0);
-  SSetsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, 1);
-  SBind(listen_sock, local_ca);
-  SListen(listen_sock, 1024);
-  Socket listen_sock_wrapper(listen_sock); // This ensures the socket gets closed
 
-  // Connect to the specified wforce address and port
-  // and request to dump entries to our local address and port
-  MiniCurl mc;
-  MiniCurlHeaders mch;
-  string error_msg;
-  mch.insert(make_pair("Authorization", "Basic " + Base64Encode("wforce:"+password)));
-  mch.insert(make_pair("Content-Type", "application/json"));
-  Json::object post_json = {{"dump_host", local_addr},
-                            {"dump_port", local_port}};
-  if (uri.find("dumpEntries") == string::npos) {
-    uri += "/?command=dumpEntries";
-  }
-  if (mc.postURL(uri, Json(post_json).dump(), mch, error_msg) != true) {
-    cerr << "Post to wforce URI [" << uri << "] failed, error=" << error_msg;
-    exit(EXIT_FAILURE);
-  }
-  
-  // Finally wait for the dumped entries and print them out
   try {
+    int listen_sock = socket(local_ca.sin4.sin_family, SOCK_STREAM, 0);
+    if (listen_sock < 0)
+      throw std::runtime_error("Failed to create socket");
+    SSetsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, 1);
+    SBind(listen_sock, local_ca);
+    SListen(listen_sock, 1024);
+    Socket listen_sock_wrapper(listen_sock); // This ensures the socket gets closed
+
+    // Connect to the specified wforce address and port
+    // and request to dump entries to our local address and port
+    MiniCurl mc;
+    MiniCurlHeaders mch;
+    string error_msg;
+    mch.insert(make_pair("Authorization", "Basic " + Base64Encode("wforce:"+password)));
+    mch.insert(make_pair("Content-Type", "application/json"));
+    Json::object post_json = {{"dump_host", local_addr},
+                              {"dump_port", local_port}};
+    if (uri.find("dumpEntries") == string::npos) {
+      uri += "/?command=dumpEntries";
+    }
+    if (mc.postURL(uri, Json(post_json).dump(), mch, error_msg) != true) {
+      cerr << "Post to wforce URI [" << uri << "] failed, error=" << error_msg;
+      exit(EXIT_FAILURE);
+    }
+
+    // Finally wait for the dumped entries and print them out
     ComboAddress remote(local_ca);
     int fd = SAccept(listen_sock, remote);
     Socket sock(fd);
@@ -178,8 +181,12 @@ int main(int argc, char** argv)
       cerr << e.what() << endl;
     }
   }
-  catch(std::exception& e) {
-    cerr << "dump_entries: error accepting new connection: " << e.what();
+  catch (const std::exception& e) {
+    cerr << "dump_entries: error: " << e.what() << endl;
+    exit(EXIT_FAILURE);
+  }
+  catch (const WforceException& e){
+    cerr << "dump_entries: error: " << e.reason << endl;
     exit(EXIT_FAILURE);
   }
   if (filename.empty())

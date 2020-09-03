@@ -44,7 +44,8 @@ MiniCurl::MiniCurl() : d_id(0)
   if (init_cg) {
     d_curl = curl_easy_init();
     if (d_curl) {
-      curl_easy_setopt(d_curl, CURLOPT_ERRORBUFFER, d_error_buf);
+      if (curl_easy_setopt(d_curl, CURLOPT_ERRORBUFFER, d_error_buf) != CURLE_OK)
+        throw WforceException("Could not setup curl error buffer");
     }
   }
   else
@@ -68,10 +69,10 @@ void MiniCurl::setURLData(const std::string& url, const MiniCurlHeaders& headers
 {
   if (d_curl) {
     clearCurlHeaders();
-    curl_easy_setopt(d_curl, CURLOPT_HTTPGET, 1);
-    curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
+    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPGET, 1);
+    (void) curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
+    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
+    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
     setCurlHeaders(headers);
     d_data.clear();
     d_error_buf[0] = '\0';
@@ -110,7 +111,7 @@ void MiniCurl::setTimeout(uint64_t timeout_secs)
 void MiniCurl::clearCurlHeaders()
 {
   if (d_curl) {
-    curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, NULL);
+    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, NULL);
     if (d_header_list != nullptr) {
       curl_slist_free_all(d_header_list);
       d_header_list = nullptr;
@@ -126,7 +127,7 @@ void MiniCurl::setCurlHeaders(const MiniCurlHeaders& headers)
       header_ss << header.first << ": " << header.second;
       d_header_list = curl_slist_append(d_header_list, header_ss.str().c_str());
     }
-    curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, d_header_list);
+    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, d_header_list);
   }
 }
 
@@ -156,14 +157,14 @@ void MiniCurl::setPostData(const std::string& url,
   if (d_curl) {
     d_post_body = std::istringstream(post_body);
     clearCurlHeaders();
-        
-    curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(d_curl, CURLOPT_POST, 1);
-    curl_easy_setopt(d_curl, CURLOPT_POSTFIELDSIZE, post_body.length());
-    curl_easy_setopt(d_curl, CURLOPT_READFUNCTION, read_callback);
-    curl_easy_setopt(d_curl, CURLOPT_READDATA, &d_post_body);
-    curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
+
+    (void) curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
+    (void) curl_easy_setopt(d_curl, CURLOPT_POST, 1);
+    (void) curl_easy_setopt(d_curl, CURLOPT_POSTFIELDSIZE, post_body.length());
+    (void) curl_easy_setopt(d_curl, CURLOPT_READFUNCTION, read_callback);
+    (void) curl_easy_setopt(d_curl, CURLOPT_READDATA, &d_post_body);
+    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
+    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
     setCurlHeaders(headers);
     d_error_buf[0] = '\0';
     d_data.clear();

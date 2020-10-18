@@ -11,6 +11,7 @@ services:
         - license=${LICENSE}
         - git_revision=${GIT_REVISION}
         - version=${VERSION}
+        - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     environment:
       - WFORCE_VERBOSE
       - WFORCE_HTTP_PORT=18084

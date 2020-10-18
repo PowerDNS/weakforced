@@ -36,10 +36,16 @@ RUN apt-get update && \
                cmake
 
 # Disable Ipv6 for redis
-RUN echo "AccountID 164476\nLicenseKey W68a2SACgoSv\nEditionIDs GeoLite2-ASN GeoLite2-City GeoLite2-Country" >/etc/GeoIP.conf
-RUN echo "DatabaseDirectory /usr/share/GeoIP" >>/etc/GeoIP.conf
-RUN cat /etc/GeoIP.conf
-RUN geoipupdate -v
+ARG MAXMIND_LICENSE_KEY
+RUN wget -O GeoLite2-City.mmdb.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz"
+RUN wget -O GeoLite2-Country.mmdb.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz"
+RUN wget -O GeoLite2-ASN.mmdb.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-ASN&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz"
+RUN gunzip GeoLite2-*.mmdb.tar.gz
+RUN tar xvf GeoLite2-City.mmdb.tar
+RUN tar xvf GeoLite2-Country.mmdb.tar
+RUN tar xvf GeoLite2-ASN.mmdb.tar
+RUN mv GeoLite2*/GeoLite2-*.mmdb /usr/share/GeoIP
+
 RUN pip3 install bottle virtualenv
 
 WORKDIR /wforce/

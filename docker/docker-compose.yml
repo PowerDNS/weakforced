@@ -1,7 +1,10 @@
 version: '2'
 services:
   logstash:
-    build: logstash
+    build:
+      context: logstash
+      args:
+        - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     ports:
       - "4501:4501/udp"
       - "8080:8080/tcp"
@@ -28,6 +31,8 @@ services:
     build:
       context: weakforced
       dockerfile: docker/regression/Dockerfile
+      args:
+        - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     volumes:
       - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
     links:

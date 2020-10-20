@@ -34,13 +34,6 @@ RUN apt-get update && \
 WORKDIR /wforce/
 RUN mkdir /wforce/install
 
-RUN wget -O GeoLite2-City.mmdb.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=SPdi9BhAhMj6oOpw&suffix=tar.gz"
-RUN gunzip GeoLite2-City.mmdb.tar.gz
-RUN tar xvf GeoLite2-City.mmdb.tar
-RUN mkdir -p /wforce/install/usr/share/GeoIP
-RUN mv GeoLite2*/GeoLite2-City.mmdb /wforce/install/usr/share/GeoIP
-RUN chmod -R 755 /wforce/install/usr/share
-
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
 RUN cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0
 RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install

@@ -22,4 +22,4 @@ class TestDumpEntries(ApiTestCase):
                     found = True
                     break
 
-            selfAssertTrue(found)
+            self.assertTrue(found)

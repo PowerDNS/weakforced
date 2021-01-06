@@ -28,6 +28,7 @@
 #include "prometheus/gauge.h"
 #include "prometheus/histogram.h"
 #include "wforce_ns.hh"
+#include "wforce_exception.hh"
 #include <string>
 
 using namespace prometheus;
@@ -88,6 +89,9 @@ public:
                                  .Name(d_prefix+"_custom_webhook_events_total")
                                  .Help("How many custom webhook events occurred?")
                                  .Register(*d_registry));
+    }
+    else {
+      throw WforceException("Could not allocate memory for Prometheus Registry");
     }
   }
   virtual ~PrometheusMetrics() = default;

@@ -35,7 +35,6 @@ BuildRequires: readline-devel
 BuildRequires: gcc-c++
 BuildRequires: lua-devel
 BuildRequires: libidn-devel
-BuildRequires: libuv-devel
 BuildRequires: GeoIP-devel
 BuildRequires: libmaxminddb-devel
 BuildRequires: boost-devel 
@@ -65,9 +64,11 @@ Requires(postun): systemd
 Requires: initscripts
 Requires(postun): /sbin/service
 %endif
-%if %{?centos} == 7 || %{?rhel} == 7
+%if %{?centos}0 == 7 || %{?rhel} == 7
 BuildRequires: devtoolset-7-gcc-c++
-%define scl devtoolset-7
+%define scl scl enable devtoolset-7
+%else
+%define scl bash
 %endif
 AutoReqProv: yes
 
@@ -103,7 +104,7 @@ Requires: python%{python3_pkgversion}-pip
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
 %build
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl: %{scl} - << \EOF}
 %configure                       \
     --disable-dependency-tracking \
     --docdir=%{_docdir}/%{name}-%{getenv:BUILDER_VERSION} \
@@ -111,7 +112,7 @@ Requires: python%{python3_pkgversion}-pip
     --enable-trackalert
 %{?scl:EOF}
 
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl: %{scl} - << \EOF}
 make %{?_smp_mflags}
 %{?scl:EOF}
 

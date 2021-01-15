@@ -1,5 +1,5 @@
-FROM ubuntu:bionic as wforce
-
+FROM ubuntu:focal as wforce
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get -y -f install \
@@ -23,7 +23,8 @@ RUN apt-get update && \
                pandoc \
                wget \
                cmake \
-               git
+               git \
+               g++
 
 WORKDIR /wforce/
 RUN mkdir /sdist
@@ -34,8 +35,8 @@ RUN echo 'include(CPack)' >> prometheus-cpp/CMakeLists.txt
 RUN cat prometheus-cpp/CMakeLists.txt
 RUN cd prometheus-cpp && git submodule init && git submodule update && \
 mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off \
--DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off && make \
-&& make install && make package_source
+-DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+-DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && make install && make package_source
 RUN cd prometheus-cpp/_build && cp prometheus-cpp*Source.tar.gz /sdist/
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/

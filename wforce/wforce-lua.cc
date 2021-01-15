@@ -274,6 +274,60 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
 
   if (!multi_lua && !client) {
+    c_lua.writeFunction("removeSibling", [](const std::string& address) {
+      ComboAddress ca;
+      std::string ca_str;
+      Sibling::Protocol proto;
+      parseSiblingString(address, ca_str, proto);
+      try {
+        ca = ComboAddress(ca_str, 4001);
+      }
+      catch (const WforceException& e) {
+        const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "removeSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+        errlog(errstr.c_str());
+        g_outputBuffer += errstr;
+        return;
+      }
+      g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
+        for (auto i = v.begin(); i != v.end();) {
+          if ((i->get()->rem == ca) && (i->get()->proto == proto)) {
+            i = v.erase(i);
+            break;
+          }
+          else {
+            i++;
+          }
+        }
+      });
+
+      bool found = false;
+      auto siblings = g_siblings.getLocal();
+      for (auto &s : *siblings) {
+        if (s->rem == ca) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        removePrometheusReplicationSibling(ca.toStringWithPort());
+      }
+      found = false;
+      for (auto &s : *siblings) {
+        if (ComboAddress::addressOnlyEqual()(s->rem, ca)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        removePrometheusReplicationSibling(ca.toString());
+      }
+    });
+  }
+  else {
+    c_lua.writeFunction("removeSibling", [](const std::string& address) { });
+  }
+
+  if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
       vector<shared_ptr<Sibling>> v;
       for(const auto& p : parts) {

@@ -47,6 +47,7 @@ void WforcePrometheus::incAllowStatusMetric(const std::string& name)
 
 void WforcePrometheus::addReplicationSibling(const std::string& name)
 {
+  std::lock_guard<std::mutex> lock(repl_mutx);
   Counter* c = &(repl_sent_family->Add({{"sibling", name}, {"status", "ok"}}));
   repl_sent_ok_metrics.insert(std::make_pair(name, c));
   c = &(repl_sent_family->Add({{"sibling", name}, {"status", "error"}}));
@@ -59,8 +60,39 @@ void WforcePrometheus::addReplicationSibling(const std::string& name)
   repl_connfail_metrics.insert(std::make_pair(name, c));
 }
 
+void WforcePrometheus::removeReplicationSibling(const std::string& name)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  auto c = repl_sent_ok_metrics.find(name);
+  if (c != repl_sent_ok_metrics.end()) {
+    repl_sent_family->Remove(c->second);
+    repl_sent_ok_metrics.erase(name);
+  }
+  c = repl_sent_err_metrics.find(name);
+  if (c != repl_sent_err_metrics.end()) {
+    repl_sent_family->Remove(c->second);
+    repl_sent_err_metrics.erase(name);
+  }
+  c = repl_rcvd_ok_metrics.find(name);
+  if (c != repl_rcvd_ok_metrics.end()) {
+    repl_rcvd_family->Remove(c->second);
+    repl_rcvd_ok_metrics.erase(name);
+  }
+  c = repl_rcvd_err_metrics.find(name);
+  if (c != repl_rcvd_err_metrics.end()) {
+    repl_rcvd_family->Remove(c->second);
+    repl_rcvd_err_metrics.erase(name);
+  }
+  c = repl_connfail_metrics.find(name);
+  if (c != repl_connfail_metrics.end()) {
+    repl_connfail_family->Remove(c->second);
+    repl_connfail_metrics.erase(name);
+  }
+}
+
 void WforcePrometheus::incReplicationSent(const std::string& name, bool success)
 {
+  std::lock_guard<std::mutex> lock(repl_mutx);
   if (success == true) {
     auto i = repl_sent_ok_metrics.find(name);
     if (i != repl_sent_ok_metrics.end()) {
@@ -74,8 +106,10 @@ void WforcePrometheus::incReplicationSent(const std::string& name, bool success)
     }
   }
 }
+
 void WforcePrometheus::incReplicationRcvd(const std::string& name, bool success)
 {
+  std::lock_guard<std::mutex> lock(repl_mutx);
   if (success == true) {
     auto i = repl_rcvd_ok_metrics.find(name);
     if (i != repl_rcvd_ok_metrics.end()) {
@@ -92,6 +126,7 @@ void WforcePrometheus::incReplicationRcvd(const std::string& name, bool success)
 
 void WforcePrometheus::incReplicationConnFail(const std::string& name)
 {
+  std::lock_guard<std::mutex> lock(repl_mutx);
   auto i = repl_connfail_metrics.find(name);
   if (i != repl_connfail_metrics.end()) {
     i->second->Increment();
@@ -176,6 +211,13 @@ void addPrometheusReplicationSibling(const std::string& name)
 {
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->addReplicationSibling(name);
+  }
+}
+
+void removePrometheusReplicationSibling(const std::string& name)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->removeReplicationSibling(name);
   }
 }
 

@@ -89,6 +89,7 @@ public:
   void incAllowStatusMetric(const std::string& name);
 
   void addReplicationSibling(const std::string& name);
+  void removeReplicationSibling(const std::string& name);
   void incReplicationSent(const std::string& name, bool success);
   void incReplicationRcvd(const std::string& name, bool success);
   void incReplicationConnFail(const std::string& name);
@@ -125,6 +126,9 @@ public:
 private:
   Family<Counter>* allow_status_family;
   std::map<std::string, Counter*> allow_status_metrics;
+  // This mutex is because replication siblings are allowed to change dynamically
+  // unlike the other mutexes
+  std::mutex repl_mutx;
   Family<Counter>* repl_sent_family;
   std::map<std::string, Counter*> repl_sent_ok_metrics;
   std::map<std::string, Counter*> repl_sent_err_metrics;
@@ -152,6 +156,7 @@ void addPrometheusAllowStatusMetric(const std::string& name);
 void incPrometheusAllowStatusMetric(const std::string& name);
 
 void addPrometheusReplicationSibling(const std::string& name);
+void removePrometheusReplicationSibling(const std::string& name);
 void incPrometheusReplicationSent(const std::string& name, bool success);
 void incPrometheusReplicationRcvd(const std::string& name, bool success);
 void incPrometheusReplicationConnFail(const std::string& name);

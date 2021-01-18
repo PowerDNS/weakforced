@@ -35,6 +35,7 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdexcept>
 #include "dolog.hh"
 
@@ -180,6 +181,40 @@ public:
       throw NetworkError(strerror(errno));
   }
 
+  //! Connecto the socket to a specific endpoint with a configurable timeout in milliseconds
+  void connectWithTimeout(const ComboAddress &ep, int timeout)
+  {
+    long arg;
+    // Set non-blocking
+    if((arg = fcntl(d_socket, F_GETFL, NULL)) < 0) {
+      throw NetworkError(strerror(errno));
+    }
+    arg |= O_NONBLOCK;
+    if(fcntl(d_socket, F_SETFL, arg) < 0) {
+      throw NetworkError(strerror(errno));
+    }
+    if(::connect(d_socket,(struct sockaddr *)&ep, ep.getSocklen()) < 0) {
+      if (errno != EINPROGRESS) {
+        throw NetworkError(strerror(errno));
+      }
+      else {
+        struct pollfd pf = { d_socket, POLLRDNORM, 0 };
+        int poll_ret;
+        poll_ret = poll(&pf, 1, timeout);
+        int saved_errno = errno;
+        if((arg = fcntl(d_socket, F_GETFL, NULL)) < 0) {
+          throw NetworkError(strerror(errno));
+        }
+        arg &= (~O_NONBLOCK);
+        if(fcntl(d_socket, F_SETFL, arg) < 0) {
+          throw NetworkError(strerror(errno));
+        }
+        if (poll_ret <=0) {
+          throw NetworkError(strerror(saved_errno));
+        }
+      }
+    }
+  }
 
   //! For datagram sockets, receive a datagram and learn where it came from
   /** For datagram sockets, receive a datagram and learn where it came from

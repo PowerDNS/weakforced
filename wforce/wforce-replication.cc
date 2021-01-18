@@ -54,7 +54,7 @@ struct SiblingQueueItem {
 static std::mutex g_sibling_queue_mutex;
 static std::queue<SiblingQueueItem> g_sibling_queue;
 static std::condition_variable g_sibling_queue_cv;
-size_t max_sibling_queue_size = 5000;
+static size_t max_sibling_queue_size = 5000;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
@@ -291,7 +291,7 @@ void receiveReplicationOperations(const ComboAddress& local)
   }
 }
 
-void setMaxSiblingQueueSize(size_t size)
+void setMaxSiblingRecvQueueSize(size_t size)
 {
   max_sibling_queue_size = size;
 }

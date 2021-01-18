@@ -220,7 +220,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua) {
     c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {
-      setMaxSiblingQueueSize(size);
+      setMaxSiblingRecvQueueSize(size);
+      setMaxSiblingSendQueueSize(static_cast<size_t>(size));
     });
   }
   else {
@@ -253,6 +254,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
   else {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) { });
+  }
+
+  if (!multi_lua && !client) {
+    c_lua.writeFunction("setSiblingConnectTimeout", [](int timeout_ms) {
+      setSiblingConnectTimeout(timeout_ms);
+    });
+  }
+  else {
+    c_lua.writeFunction("setSiblingConnectTimeout", [](int timeout_ms) { });
   }
 
   if (!multi_lua && !client) {

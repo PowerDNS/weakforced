@@ -43,6 +43,9 @@
 using std::atomic;
 using std::thread;
 
+static std::atomic<int> sibling_connect_timeout(5000); // milliseconds
+static std::atomic<size_t> sibling_queue_size(5000);
+
 Sibling::Sibling(const ComboAddress& ca) : Sibling(ca, Protocol::UDP)
 {
 }
@@ -57,7 +60,7 @@ void Sibling::connectSibling()
     if (!d_ignoreself) {
       try {
         sockp->setKeepAlive();
-        sockp->connect(rem);
+        sockp->connectWithTimeout(rem, connect_timeout);
       }
       catch (const NetworkError& e) {
         errlog("TCP Connect to Sibling %s failed (%s)", rem
@@ -68,11 +71,32 @@ void Sibling::connectSibling()
   }
 }
 
-Sibling::Sibling(const ComboAddress& ca, const Protocol& p) : rem(ca), proto(p), queue_thread_run(true),
-                                                              d_ignoreself(false)
+void Sibling::setConnectTimeout(int timeout)
+{
+  std::lock_guard<std::mutex> lock(mutx);
+  connect_timeout = timeout;
+}
+
+void Sibling::setMaxQueueSize(size_t queue_size)
+{
+  std::lock_guard<std::mutex> lock(queue_mutx);
+  max_queue_size = queue_size;
+}
+
+Sibling::Sibling(const ComboAddress& ca,
+                 const Protocol& p,
+                 int timeout,
+                 size_t queue_size) : rem(ca), proto(p),
+                                      connect_timeout(timeout),
+                                      max_queue_size(queue_size),
+                                      queue_thread_run(true),
+                                      d_ignoreself(false)
 {
   if (proto != Protocol::NONE) {
-    connectSibling();
+    {
+      std::lock_guard<std::mutex> lock(mutx);
+      connectSibling();
+    }
     // std::thread is moveable
     queue_thread = std::thread([this]() {
       thread_local bool init = false;
@@ -277,7 +301,9 @@ void addSibling(const std::string& address,
   addPrometheusReplicationSibling(ca.toStringWithPort());
   // This is for receiving when the port may be ephemeral
   addPrometheusReplicationSibling(ca.toString());
-  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
+  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
+    v.push_back(std::make_shared<Sibling>(ca, proto, sibling_connect_timeout, sibling_queue_size));
+  });
 }
 
 void setSiblings(const vector<pair<int, string>>& parts,
@@ -297,7 +323,7 @@ void setSiblings(const vector<pair<int, string>>& parts,
       // This is for receiving when the port may be ephemeral
       addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
       // Create the sibling after the Prometheus metrics so connfail stats get updated
-      v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
+      v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto, sibling_connect_timeout, sibling_queue_size));
     }
     catch (const WforceException& e) {
       const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
@@ -307,4 +333,14 @@ void setSiblings(const vector<pair<int, string>>& parts,
     }
   }
   siblings.setState(v);
+}
+
+void setMaxSiblingSendQueueSize(size_t queue_size)
+{
+  sibling_queue_size.store(queue_size);
+}
+
+void setSiblingConnectTimeout(int timeout)
+{
+  sibling_connect_timeout.store(timeout);
 }

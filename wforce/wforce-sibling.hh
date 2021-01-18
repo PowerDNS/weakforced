@@ -33,17 +33,20 @@
 #include "sholder.hh"
 #include "sstuff.hh"
 
+// Represents a replication destination/source
+// All methods in this class are thread-safe
 struct Sibling
 {
   enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM, NONE=-1 };
   explicit Sibling(const ComboAddress& ca);
-  explicit Sibling(const ComboAddress& ca, const Protocol& p);
+  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout=1000, size_t queue_size=5000);
   ~Sibling();
   Sibling(const Sibling&) = delete;
   ComboAddress rem;
   std::mutex mutx;
   std::unique_ptr<Socket> sockp;
   Protocol proto = Protocol::UDP;
+  int connect_timeout; // milliseconds
 
   // The queue is used to process messages in a separate thread
   // so that replication delays/timeouts don't affect the caller.
@@ -52,7 +55,7 @@ struct Sibling
   std::mutex queue_mutx;
   std::queue<std::string> queue;
   std::condition_variable queue_cv;
-  const size_t max_queue_size = 5000; // XXX Arbitrary
+  size_t max_queue_size;
   std::thread queue_thread; // We hang on to this so that the queue thread can be terminated in the destructor
   bool queue_thread_run;
   
@@ -64,6 +67,8 @@ struct Sibling
   void queueMsg(const std::string& msg);
   void checkIgnoreSelf(const ComboAddress& ca);
   void connectSibling();
+  void setConnectTimeout(int timeout);
+  void setMaxQueueSize(size_t queue_size);
   static Protocol stringToProtocol(const std::string& s) {
     if (s.compare("tcp") == 0)
       return Sibling::Protocol::TCP;
@@ -79,6 +84,8 @@ struct Sibling
   bool d_ignoreself{false};
 };
 
+void setMaxSiblingSendQueueSize(size_t queue_size);
+void setSiblingConnectTimeout(int timeout); // milliseconds
 void parseSiblingString(const std::string &str, std::string &ca_str, Sibling::Protocol &proto);
 void removeSibling(const std::string& address,
                     GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,

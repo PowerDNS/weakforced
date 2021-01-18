@@ -51,25 +51,6 @@ using std::thread;
 
 static vector<std::function<void(void)>>* g_launchWork;
 
-void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto)
-{
-  std::vector<std::string> sres;
-  boost::split(sres, str, boost::is_any_of(":"));
-
-  if (sres.size() > 3) {
-    throw WforceException("Malformed sibling string: " + str + "(Format is <host>[:<port>[:<protocol>]]");
-  }
-  else if (sres.size() == 3) {
-    proto = Sibling::stringToProtocol(sres.back());
-    sres.pop_back();
-    ca_str = boost::join(sres, ":");
-  }
-  else {
-    proto = Sibling::Protocol::UDP;
-    ca_str = str;
-  }
-}
-
 std::vector<std::map<std::string, std::string>> getWLBLKeys(const std::vector<BlackWhiteListEntry>& blv, const char* key_name) {
   std::vector<std::map<std::string, std::string>> ret_vec;
   for (const auto& i : blv) {
@@ -249,24 +230,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
-      ComboAddress ca;
-      std::string ca_str;
-      Sibling::Protocol proto;
-      parseSiblingString(address, ca_str, proto);
-      try {
-        ca = ComboAddress(ca_str, 4001);
-      }
-      catch (const WforceException& e) {
-        const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
-        errlog(errstr.c_str());
-        g_outputBuffer += errstr;
-        return;
-      }
-      g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
-      // This is for sending when we know the port
-      addPrometheusReplicationSibling(ca.toStringWithPort());
-      // This is for receiving when the port may be ephemeral
-      addPrometheusReplicationSibling(ca.toString());
+      addSibling(address, g_siblings, g_outputBuffer);
     });
   }
   else {
@@ -275,52 +239,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("removeSibling", [](const std::string& address) {
-      ComboAddress ca;
-      std::string ca_str;
-      Sibling::Protocol proto;
-      parseSiblingString(address, ca_str, proto);
-      try {
-        ca = ComboAddress(ca_str, 4001);
-      }
-      catch (const WforceException& e) {
-        const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "removeSibling() error parsing address/port" % address % "Make sure to use IP addresses not hostnames" % e.reason).str();
-        errlog(errstr.c_str());
-        g_outputBuffer += errstr;
-        return;
-      }
-      g_siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
-        for (auto i = v.begin(); i != v.end();) {
-          if ((i->get()->rem == ca) && (i->get()->proto == proto)) {
-            i = v.erase(i);
-            break;
-          }
-          else {
-            i++;
-          }
-        }
-      });
-
-      bool found = false;
-      auto siblings = g_siblings.getLocal();
-      for (auto &s : *siblings) {
-        if (s->rem == ca) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        removePrometheusReplicationSibling(ca.toStringWithPort());
-      }
-      found = false;
-      for (auto &s : *siblings) {
-        if (ComboAddress::addressOnlyEqual()(s->rem, ca)) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        removePrometheusReplicationSibling(ca.toString());
-      }
+      removeSibling(address, g_siblings, g_outputBuffer);
     });
   }
   else {
@@ -329,26 +248,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
-      vector<shared_ptr<Sibling>> v;
-      for(const auto& p : parts) {
-        try {
-          std::string ca_string;
-          Sibling::Protocol proto;
-
-          parseSiblingString(p.second, ca_string, proto);
-          v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
-          // This is for sending when we know the port
-          addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
-          // This is for receiving when the port may be ephemeral
-          addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
-        }
-        catch (const WforceException& e) {
-          const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" % p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
-          errlog(errstr.c_str());
-          g_outputBuffer += errstr;
-        }
-      }
-      g_siblings.setState(v);
+      setSiblings(parts, g_siblings, g_outputBuffer);
     });
   }
   else {

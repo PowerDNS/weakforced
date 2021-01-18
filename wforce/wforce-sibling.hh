@@ -78,3 +78,14 @@ struct Sibling
   }
   bool d_ignoreself{false};
 };
+
+void parseSiblingString(const std::string &str, std::string &ca_str, Sibling::Protocol &proto);
+void removeSibling(const std::string& address,
+                    GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
+                    std::string &output_buffer);
+void addSibling(const std::string& address,
+                 GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
+                 std::string &output_buffer);
+void setSiblings(const vector<pair<int, string>> &parts,
+                 GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
+                 std::string &output_buffer);

@@ -182,3 +182,129 @@ void Sibling::queueMsg(const std::string& msg)
   }
   queue_cv.notify_one();
 }
+
+void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto)
+{
+  std::vector<std::string> sres;
+  boost::split(sres, str, boost::is_any_of(":"));
+
+  if (sres.size() > 3) {
+    throw WforceException("Malformed sibling string: " + str + "(Format is <host>[:<port>[:<protocol>]]");
+  }
+  else if (sres.size() == 3) {
+    proto = Sibling::stringToProtocol(sres.back());
+    sres.pop_back();
+    ca_str = boost::join(sres, ":");
+  }
+  else {
+    proto = Sibling::Protocol::UDP;
+    ca_str = str;
+  }
+}
+
+void removeSibling(const std::string& address,
+                   GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                   std::string& output_buffer)
+{
+  ComboAddress ca;
+  std::string ca_str;
+  Sibling::Protocol proto;
+  parseSiblingString(address, ca_str, proto);
+  try {
+    ca = ComboAddress(ca_str, 4001);
+  }
+  catch (const WforceException& e) {
+    const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "removeSibling() error parsing address/port" %
+                                address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+    errlog(errstr.c_str());
+    output_buffer += errstr;
+    return;
+  }
+  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
+    for (auto i = v.begin(); i != v.end();) {
+      if ((i->get()->rem == ca) && (i->get()->proto == proto)) {
+        i = v.erase(i);
+        break;
+      }
+      else {
+        i++;
+      }
+    }
+  });
+
+  bool found = false;
+  auto local_siblings = siblings.getLocal();
+  for (auto& s : *local_siblings) {
+    if (s->rem == ca) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    removePrometheusReplicationSibling(ca.toStringWithPort());
+  }
+  found = false;
+  for (auto& s : *local_siblings) {
+    if (ComboAddress::addressOnlyEqual()(s->rem, ca)) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    removePrometheusReplicationSibling(ca.toString());
+  }
+}
+
+void addSibling(const std::string& address,
+                GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                std::string& output_buffer)
+{
+  ComboAddress ca;
+  std::string ca_str;
+  Sibling::Protocol proto;
+  parseSiblingString(address, ca_str, proto);
+  try {
+    ca = ComboAddress(ca_str, 4001);
+  }
+  catch (const WforceException& e) {
+    const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
+                                address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+    errlog(errstr.c_str());
+    output_buffer += errstr;
+    return;
+  }
+  // This is for sending when we know the port
+  addPrometheusReplicationSibling(ca.toStringWithPort());
+  // This is for receiving when the port may be ephemeral
+  addPrometheusReplicationSibling(ca.toString());
+  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) { v.push_back(std::make_shared<Sibling>(ca, proto)); });
+}
+
+void setSiblings(const vector<pair<int, string>>& parts,
+                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                 std::string& output_buffer)
+{
+  removeAllPrometheusReplicationSiblings();
+  vector<shared_ptr<Sibling>> v;
+  for (const auto& p : parts) {
+    try {
+      std::string ca_string;
+      Sibling::Protocol proto;
+
+      parseSiblingString(p.second, ca_string, proto);
+      // This is for sending when we know the port
+      addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
+      // This is for receiving when the port may be ephemeral
+      addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
+      // Create the sibling after the Prometheus metrics so connfail stats get updated
+      v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto));
+    }
+    catch (const WforceException& e) {
+      const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
+                                  p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+      errlog(errstr.c_str());
+      output_buffer += errstr;
+    }
+  }
+  siblings.setState(v);
+}

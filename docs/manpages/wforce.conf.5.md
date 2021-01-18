@@ -64,18 +64,27 @@ cannot be called inside the allow/report/reset functions:
 * setSiblings(\<list of IP[:port[:protocol]]\>) - Set the list of siblings to which
   stats db and blacklist/whitelist data should be replicated. If port
   is not specified it defaults to 4001.  If protocol is not specified
-  it defaults to udp. For example:
+  it defaults to udp. This function is safe to call while wforce is running. For example:
   
 		setSiblings({"127.0.1.2", "127.0.1.3:4004", "127.0.2.23:4004:tcp"})
 
 * addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated.  If port
   is not specified it defaults to 4001. If protocol is not specified
-  it defaults to udp. For example:
+  it defaults to udp. This function is safe to call while wforce is running. For example:
   
 		addSibling("192.168.1.23")
 		addSibling("192.168.1.23:4001:udp")
 		addSibling("192.168.1.23:4003:tcp")
+
+* removeSibling(\<IP[:port[:protocol]]\>) - Remove a sibling to the list to which all
+  stats db and blacklist/whitelist data should be replicated.  If port
+  is not specified it defaults to 4001. If protocol is not specified
+  it defaults to udp. This function is safe to call while wforce is running. For example:
+
+  	removeSibling("192.168.1.23")
+  	removeSibling("192.168.1.23:4001:udp")
+  	removeSibling("192.168.1.23:4003:tcp")
 
 * siblingListener(\<IP[:port]\>) - Listen for reports from siblings on
   the specified IP address and port.  If port is not specified
@@ -84,10 +93,15 @@ cannot be called inside the allow/report/reset functions:
   
 		siblingListener("0.0.0.0:4001")
 
+* setSiblingConnectTimeout(\<timeout ms\>) - Sets a timeout in milliseconds 
+  for new connections to siblings. Defaults to 5000 ms (5 seconds). For example:
+
+        setSiblingConnectTimeout(1000)
+
 * setMaxSiblingQueueSize(\<size\>) - Sets the maximum size of the
-  queue for replication events waiting to be processed. Defaults
-  to 5000. This is only to handle short-term spikes in load/latency -
-  if error messages relating to the queue max size being reached are
+  send and receive queues for replication events waiting to be processed.
+  Defaults to 5000. This is only to handle short-term spikes in load/latency -
+  if error messages relating to the recv queue max size being reached are
   seen, then you should consider using sharded string stats dbs
   (newShardedStringStatsDB), and/or tuning the stats db expiry sleep
   time (twSetExpireSleep).

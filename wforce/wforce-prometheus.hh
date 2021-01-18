@@ -90,6 +90,7 @@ public:
 
   void addReplicationSibling(const std::string& name);
   void removeReplicationSibling(const std::string& name);
+  void removeAllReplicationSiblings();
   void incReplicationSent(const std::string& name, bool success);
   void incReplicationRcvd(const std::string& name, bool success);
   void incReplicationConnFail(const std::string& name);
@@ -122,7 +123,8 @@ public:
     setReplRecvQueueSize(repl_queue_func());
     return PrometheusMetrics::serialize();
   }
-  
+protected:
+  void removeReplicationSiblingNoLock(const std::string& name);
 private:
   Family<Counter>* allow_status_family;
   std::map<std::string, Counter*> allow_status_metrics;
@@ -157,6 +159,7 @@ void incPrometheusAllowStatusMetric(const std::string& name);
 
 void addPrometheusReplicationSibling(const std::string& name);
 void removePrometheusReplicationSibling(const std::string& name);
+void removeAllPrometheusReplicationSiblings();
 void incPrometheusReplicationSent(const std::string& name, bool success);
 void incPrometheusReplicationRcvd(const std::string& name, bool success);
 void incPrometheusReplicationConnFail(const std::string& name);

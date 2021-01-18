@@ -48,21 +48,24 @@ void WforcePrometheus::incAllowStatusMetric(const std::string& name)
 void WforcePrometheus::addReplicationSibling(const std::string& name)
 {
   std::lock_guard<std::mutex> lock(repl_mutx);
-  Counter* c = &(repl_sent_family->Add({{"sibling", name}, {"status", "ok"}}));
+  Counter* c = &(repl_sent_family->Add({{"sibling", name},
+                                        {"status",  "ok"}}));
   repl_sent_ok_metrics.insert(std::make_pair(name, c));
-  c = &(repl_sent_family->Add({{"sibling", name}, {"status", "error"}}));
+  c = &(repl_sent_family->Add({{"sibling", name},
+                               {"status",  "error"}}));
   repl_sent_err_metrics.insert(std::make_pair(name, c));
-  c = &(repl_rcvd_family->Add({{"sibling", name}, {"status", "ok"}}));
+  c = &(repl_rcvd_family->Add({{"sibling", name},
+                               {"status",  "ok"}}));
   repl_rcvd_ok_metrics.insert(std::make_pair(name, c));
-  c = &(repl_rcvd_family->Add({{"sibling", name}, {"status", "error"}}));
+  c = &(repl_rcvd_family->Add({{"sibling", name},
+                               {"status",  "error"}}));
   repl_rcvd_err_metrics.insert(std::make_pair(name, c));
   c = &(repl_connfail_family->Add({{"sibling", name}}));
   repl_connfail_metrics.insert(std::make_pair(name, c));
 }
 
-void WforcePrometheus::removeReplicationSibling(const std::string& name)
+void WforcePrometheus::removeReplicationSiblingNoLock(const std::string& name)
 {
-  std::lock_guard<std::mutex> lock(repl_mutx);
   auto c = repl_sent_ok_metrics.find(name);
   if (c != repl_sent_ok_metrics.end()) {
     repl_sent_family->Remove(c->second);
@@ -87,6 +90,24 @@ void WforcePrometheus::removeReplicationSibling(const std::string& name)
   if (c != repl_connfail_metrics.end()) {
     repl_connfail_family->Remove(c->second);
     repl_connfail_metrics.erase(name);
+  }
+}
+
+void WforcePrometheus::removeReplicationSibling(const std::string& name)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  removeReplicationSiblingNoLock(name);
+}
+
+void WforcePrometheus::removeAllReplicationSiblings()
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  std::vector<std::string> keys;
+  for (auto& i : repl_sent_ok_metrics) {
+    keys.emplace_back(i.first);
+  }
+  for (auto& key : keys) {
+    removeReplicationSiblingNoLock(key);
   }
 }
 
@@ -130,7 +151,7 @@ void WforcePrometheus::incReplicationConnFail(const std::string& name)
   auto i = repl_connfail_metrics.find(name);
   if (i != repl_connfail_metrics.end()) {
     i->second->Increment();
-  }  
+  }
 }
 
 void WforcePrometheus::incRedisBLUpdates()
@@ -221,18 +242,29 @@ void removePrometheusReplicationSibling(const std::string& name)
   }
 }
 
-void incPrometheusReplicationSent(const std::string& name, bool success) {
+void removeAllPrometheusReplicationSiblings()
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->removeAllReplicationSiblings();
+  }
+}
+
+void incPrometheusReplicationSent(const std::string& name, bool success)
+{
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->incReplicationSent(name, success);
   }
 }
 
-void incPrometheusReplicationRcvd(const std::string& name, bool success) {
+void incPrometheusReplicationRcvd(const std::string& name, bool success)
+{
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->incReplicationRcvd(name, success);
   }
 }
-void incPrometheusReplicationConnFail(const std::string& name) {
+
+void incPrometheusReplicationConnFail(const std::string& name)
+{
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->incReplicationConnFail(name);
   }
@@ -251,6 +283,7 @@ void incPrometheusRedisBLConnFailed()
     wforce_prom_metrics->incRedisBLConnFailed();
   }
 }
+
 void incPrometheusRedisWLUpdates()
 {
   if (wforce_prom_metrics != nullptr) {
@@ -260,7 +293,7 @@ void incPrometheusRedisWLUpdates()
 
 void incPrometheusRedisWLConnFailed()
 {
-if (wforce_prom_metrics != nullptr) {
+  if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->incRedisWLConnFailed();
   }
 }
@@ -271,12 +304,14 @@ void setPrometheusBLIPEntries(int num_entries)
     wforce_prom_metrics->setBLIPEntries(num_entries);
   }
 }
+
 void setPrometheusWLIPEntries(int num_entries)
 {
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->setWLIPEntries(num_entries);
   }
 }
+
 void setPrometheusBLLoginEntries(int num_entries)
 {
   if (wforce_prom_metrics != nullptr) {
@@ -312,7 +347,7 @@ void setPrometheusReplRecvQueueSize(int value)
   }
 }
 
-void setPrometheusReplRecvQueueRetrieveFunc(int (*func)())
+void setPrometheusReplRecvQueueRetrieveFunc(int (* func)())
 {
   if (wforce_prom_metrics) {
     wforce_prom_metrics->setReplRecvQueueRetrieveFunc(func);

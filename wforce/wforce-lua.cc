@@ -193,9 +193,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSyncHost", [](const std::string& address, const std::string password, const std::string& sync_address, const std::string& webserver_address) {
       try {
-        g_sync_data.sync_hosts.push_back(std::make_pair(ComboAddress(address, 8084), password));
+        g_sync_data.sync_hosts.push_back(make_pair(address, password));
         g_sync_data.sibling_listen_addr = ComboAddress(sync_address, 4001);
-        g_sync_data.webserver_listen_addr = ComboAddress(webserver_address, 8084);
+        g_sync_data.webserver_listen_addr = webserver_address;
       }
       catch (const WforceException& e) {
         const std::string errstr = (boost::format("%s (%s)\n") % "addSyncHost(): Error parsing address/port. Make sure to use IP addresses not hostnames" % e.reason).str();
@@ -228,14 +228,22 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {});
   }
 
-
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
-      addSibling(address, g_siblings, g_outputBuffer);
+      (void)addSibling(address, g_siblings, g_outputBuffer);
     });
   }
   else {
     c_lua.writeFunction("addSibling", [](const std::string& address) { });
+  }
+
+  if (!multi_lua && !client) {
+    c_lua.writeFunction("addSiblingWithKey", [](const std::string& address, const std::string& key) {
+      (void)addSiblingWithKey(address, g_siblings, g_outputBuffer, key);
+    });
+  }
+  else {
+    c_lua.writeFunction("addSiblingWithKey", [](const std::string& address, const std::string& key) { });
   }
 
   if (!multi_lua && !client) {
@@ -248,8 +256,17 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
 
   if (!multi_lua && !client) {
+    c_lua.writeFunction("setSiblingsWithKey", [](const vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts) {
+      (void)setSiblingsWithKey(parts, g_siblings, g_outputBuffer);
+    });
+  }
+  else {
+    c_lua.writeFunction("setSiblingsWithKey", [](const vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts) { });
+  }
+
+  if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
-      setSiblings(parts, g_siblings, g_outputBuffer);
+      (void)setSiblings(parts, g_siblings, g_outputBuffer);
     });
   }
   else {

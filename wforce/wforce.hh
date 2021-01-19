@@ -94,13 +94,13 @@ extern bool g_allowlog_verbose; // Whether to log allow returns of 0
 
 void dumpEntriesThread(const ComboAddress& ca, std::unique_lock<std::mutex> lock);
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
-                  const std::string& calback_pw);
+                  const std::string& calback_pw, const std::string& encryption_key);
 
 struct syncData {
-  std::vector<std::pair<ComboAddress, std::string>> sync_hosts;
+  std::vector<std::pair<std::string, std::string>> sync_hosts;
   unsigned int min_sync_host_uptime;
   ComboAddress sibling_listen_addr;
-  ComboAddress webserver_listen_addr;
+  std::string  webserver_listen_addr;
   std::string  webserver_password;
 };
 

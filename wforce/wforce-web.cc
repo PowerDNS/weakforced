@@ -229,7 +229,14 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
       ComboAddress replication_ca(myip, myport);
       std::string callback_url = msg["callback_url"].string_value();
       std::string callback_pw = msg["callback_auth_pw"].string_value();
-      thread t(syncDBThread, replication_ca, callback_url, callback_pw);
+      std::string encryption_key;
+      if (!msg["encryption_key"].is_null()) {
+        encryption_key = msg["encryption_key"].string_value();
+      }
+      else {
+        encryption_key = g_key;
+      }
+      thread t(syncDBThread, replication_ca, callback_url, callback_pw, encryption_key);
       t.detach();
     }
     catch(const WforceException& e) {

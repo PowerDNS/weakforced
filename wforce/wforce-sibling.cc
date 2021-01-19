@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include "sodcrypto.hh"
 #include "iputils.hh"
+#include "base64.hh"
 #include "ext/threadname.hh"
 #include "wforce-prometheus.hh"
 
@@ -47,6 +48,13 @@ static std::atomic<int> sibling_connect_timeout(5000); // milliseconds
 static std::atomic<size_t> sibling_queue_size(5000);
 
 Sibling::Sibling(const ComboAddress& ca) : Sibling(ca, Protocol::UDP)
+{
+}
+
+Sibling::Sibling(const ComboAddress& ca,
+                 const Protocol& p,
+                 int timeout,
+                 size_t queue_size) : Sibling(ca, p, std::string(), timeout, queue_size)
 {
 }
 
@@ -71,27 +79,20 @@ void Sibling::connectSibling()
   }
 }
 
-void Sibling::setConnectTimeout(int timeout)
-{
-  std::lock_guard<std::mutex> lock(mutx);
-  connect_timeout = timeout;
-}
-
-void Sibling::setMaxQueueSize(size_t queue_size)
-{
-  std::lock_guard<std::mutex> lock(queue_mutx);
-  max_queue_size = queue_size;
-}
-
 Sibling::Sibling(const ComboAddress& ca,
                  const Protocol& p,
+                 const std::string& key,
                  int timeout,
                  size_t queue_size) : rem(ca), proto(p),
                                       connect_timeout(timeout),
                                       max_queue_size(queue_size),
                                       queue_thread_run(true),
-                                      d_ignoreself(false)
+                                      d_ignoreself(false),
+                                      d_key(key)
 {
+  if (!d_key.empty()) {
+    d_has_key = true;
+  }
   if (proto != Protocol::NONE) {
     {
       std::lock_guard<std::mutex> lock(mutx);
@@ -279,13 +280,29 @@ void removeSibling(const std::string& address,
   }
 }
 
-void addSibling(const std::string& address,
+bool addSibling(const std::string& address,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                 std::string& output_buffer)
+{
+  return addSiblingWithKey(address, siblings, output_buffer, std::string());
+}
+
+bool addSiblingWithKey(const std::string& address,
+                       GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                       std::string& output_buffer,
+                       const std::string& key)
 {
   ComboAddress ca;
   std::string ca_str;
   Sibling::Protocol proto;
+
+  string raw_key;
+  if(B64Decode(key, raw_key) < 0) {
+    output_buffer+=string("Unable to decode ")+key+" as Base64";
+    errlog("%s", output_buffer);
+    return false;
+  }
+
   parseSiblingString(address, ca_str, proto);
   try {
     ca = ComboAddress(ca_str, 4001);
@@ -295,44 +312,71 @@ void addSibling(const std::string& address,
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
-    return;
+    return false;
   }
   // This is for sending when we know the port
   addPrometheusReplicationSibling(ca.toStringWithPort());
   // This is for receiving when the port may be ephemeral
   addPrometheusReplicationSibling(ca.toString());
-  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
-    v.push_back(std::make_shared<Sibling>(ca, proto, sibling_connect_timeout, sibling_queue_size));
+  siblings.modify([ca, proto, raw_key](vector<shared_ptr<Sibling>>& v) {
+    v.push_back(std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size));
   });
+  return true;
 }
 
-void setSiblings(const vector<pair<int, string>>& parts,
+bool setSiblings(const vector<std::pair<int, string>>& parts,
                  GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                  std::string& output_buffer)
+{
+  std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>> t_vec;
+  for (auto& i : parts) {
+    t_vec.emplace_back(std::pair<int, std::vector<std::pair<int, std::string>>>{i.first, { { 0, i.second }, { 1, std::string()}}});
+  }
+  return setSiblingsWithKey(t_vec, siblings, output_buffer);
+}
+
+bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts,
+                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                        std::string& output_buffer)
 {
   removeAllPrometheusReplicationSiblings();
   vector<shared_ptr<Sibling>> v;
   for (const auto& p : parts) {
+    if (p.second.size() != 2) {
+      errlog("setSiblings[WithKey](): Invalid values - was expecting 2 args, got %d", p.second.size());
+      output_buffer += "Invalid number of args to setSiblings[WithKey] - was expecting 2 (sibling address & key)";
+      return false;
+    }
     try {
       std::string ca_string;
       Sibling::Protocol proto;
 
-      parseSiblingString(p.second, ca_string, proto);
+      string raw_key;
+      if(B64Decode(p.second[1].second, raw_key) < 0) {
+        output_buffer+=string("Unable to decode ")+p.second[1].second+" as Base64";
+        errlog("%s", output_buffer);
+        return false;
+      }
+      parseSiblingString(p.second[0].second, ca_string, proto);
       // This is for sending when we know the port
       addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
       // This is for receiving when the port may be ephemeral
       addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
       // Create the sibling after the Prometheus metrics so connfail stats get updated
-      v.push_back(std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto, sibling_connect_timeout, sibling_queue_size));
+      v.push_back(
+          std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto, raw_key, sibling_connect_timeout,
+                                    sibling_queue_size));
     }
     catch (const WforceException& e) {
-      const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
-                                  p.second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+      const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "setSiblings() error parsing address/port" %
+                                  p.second[0].second % "Make sure to use IP addresses not hostnames" % e.reason).str();
       errlog(errstr.c_str());
       output_buffer += errstr;
+      return false;
     }
   }
   siblings.setState(v);
+  return true;
 }
 
 void setMaxSiblingSendQueueSize(size_t queue_size)

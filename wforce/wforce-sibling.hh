@@ -21,6 +21,7 @@
  */
 
 #pragma once
+
 #include "ext/luawrapper/include/LuaContext.hpp"
 #include <time.h>
 #include "misc.hh"
@@ -32,16 +33,26 @@
 #include <atomic>
 #include "sholder.hh"
 #include "sstuff.hh"
+#include "sodcrypto.hh"
 
 // Represents a replication destination/source
 // All methods in this class are thread-safe
-struct Sibling
-{
-  enum class Protocol : int { UDP=SOCK_DGRAM, TCP=SOCK_STREAM, NONE=-1 };
+struct Sibling {
+  enum class Protocol : int {
+    UDP = SOCK_DGRAM, TCP = SOCK_STREAM, NONE = -1
+  };
+
   explicit Sibling(const ComboAddress& ca);
-  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout=1000, size_t queue_size=5000);
+
+  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000);
+
+  explicit Sibling(const ComboAddress& ca, const Protocol& p, const std::string& key, int timeout = 1000,
+                   size_t queue_size = 5000);
+
   ~Sibling();
+
   Sibling(const Sibling&) = delete;
+
   ComboAddress rem;
   std::mutex mutx;
   std::unique_ptr<Socket> sockp;
@@ -58,41 +69,68 @@ struct Sibling
   size_t max_queue_size;
   std::thread queue_thread; // We hang on to this so that the queue thread can be terminated in the destructor
   bool queue_thread_run;
-  
+
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};
   std::atomic<unsigned int> rcvd_fail{0};
   std::atomic<unsigned int> rcvd_success{0};
+
   void send(const std::string& msg);
+
   void queueMsg(const std::string& msg);
+
   void checkIgnoreSelf(const ComboAddress& ca);
+
   void connectSibling();
-  void setConnectTimeout(int timeout);
-  void setMaxQueueSize(size_t queue_size);
-  static Protocol stringToProtocol(const std::string& s) {
+
+  static Protocol stringToProtocol(const std::string& s)
+  {
     if (s.compare("tcp") == 0)
       return Sibling::Protocol::TCP;
     else
       return Sibling::Protocol::UDP;
   }
-  static std::string protocolToString(const Protocol& p) {
+
+  static std::string protocolToString(const Protocol& p)
+  {
     if (p == Protocol::TCP)
       return std::string("tcp");
     else
       return std::string("udp");
   }
+
   bool d_ignoreself{false};
+
+  // Optional per-sibling encryption - if key is not empty then
+  // it and the nonce will be used, otherwise global key & nonce are used
+  bool d_has_key = false;
+  std::string d_base64_key;
+  std::string d_key;
+  SodiumNonce d_nonce;
 };
 
 void setMaxSiblingSendQueueSize(size_t queue_size);
+
 void setSiblingConnectTimeout(int timeout); // milliseconds
-void parseSiblingString(const std::string &str, std::string &ca_str, Sibling::Protocol &proto);
+void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto);
+
 void removeSibling(const std::string& address,
-                    GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
-                    std::string &output_buffer);
-void addSibling(const std::string& address,
-                 GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
-                 std::string &output_buffer);
-void setSiblings(const vector<pair<int, string>> &parts,
-                 GlobalStateHolder<vector<shared_ptr<Sibling>>> &siblings,
-                 std::string &output_buffer);
+                   GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                   std::string& output_buffer);
+
+bool addSibling(const std::string& address,
+                GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                std::string& output_buffer);
+
+bool addSiblingWithKey(const std::string& address,
+                       GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                       std::string& output_buffer,
+                       const std::string& key);
+
+bool setSiblings(const vector<pair<int, string>>& parts,
+                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                 std::string& output_buffer);
+
+bool setSiblingsWithKey(const vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts,
+                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                        std::string& output_buffer);

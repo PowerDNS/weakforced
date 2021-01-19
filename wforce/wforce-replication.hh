@@ -39,6 +39,7 @@ void receiveReplicationOperations(const ComboAddress& local);
 void startReplicationWorkerThreads();
 
 void encryptMsg(const std::string& msg, std::string& packet);
+void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex);
 bool decryptMsg(const char* buf, size_t len, std::string& msg);
 
 void setMaxSiblingRecvQueueSize(size_t size);

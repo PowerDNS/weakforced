@@ -68,6 +68,13 @@ void encryptMsg(const std::string& msg, std::string& packet)
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);
 }
 
+void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  packet=nonce.toString();
+  packet+=sodEncryptSym(msg, key, nonce);
+}
+
 bool decryptMsg(const char* buf, size_t len, std::string& msg)
 {
   SodiumNonce nonce;
@@ -97,6 +104,11 @@ void replicateOperation(const ReplicationOperation& rep_op)
   encryptMsg(msg, packet);
 
   for(auto& s : *siblings) {
+    if (s->d_has_key) {
+      if (s->d_key != g_key) {
+        encryptMsgWithKey(msg, packet, s->d_key, s->d_nonce, s->mutx);
+      }
+    }
     s->queueMsg(packet);
   }
 }

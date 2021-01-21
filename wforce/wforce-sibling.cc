@@ -25,6 +25,7 @@
 #include "wforce_exception.hh"
 #include "wforce_ns.hh"
 #include <stddef.h>
+#include <netdb.h>
 
 #define SYSLOG_NAMES
 
@@ -208,47 +209,114 @@ void Sibling::queueMsg(const std::string& msg)
   queue_cv.notify_one();
 }
 
-void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto)
+std::string siblingHostToAddress(const std::string& host)
+{
+  std::string sibling_address;
+  struct addrinfo* res, * res0;
+  int error = getaddrinfo(host.c_str(), nullptr, nullptr, &res0);
+  if (error) {
+    throw WforceException(std::string("Error calling getaddrinfo() for sibling host: ") + gai_strerror(error));
+  }
+  bool found_addr = false;
+  for (res = res0; res != nullptr; res = res->ai_next) {
+    sibling_address =
+        ComboAddress(res->ai_addr, res->ai_addrlen).toString();
+    found_addr = true;
+    break;
+  }
+  if (!found_addr) {
+    throw WforceException(std::string("Could not determine IP address for sibling host: ") + host);
+  }
+  freeaddrinfo(res0);
+  return sibling_address;
+}
+
+std::string createSiblingAddress(const std::string& host, int port, Sibling::Protocol proto)
+{
+  std::string address;
+  if (host.find(':') != string::npos) { // IPv6 needs special handling because it needs []
+    address = ComboAddress(host, port).toStringWithPort() + ":" + Sibling::protocolToString(proto);
+  }
+  else {
+    address = host + ":" + itoa(port) + ":" + Sibling::protocolToString(proto);
+  }
+  return address;
+}
+
+void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Protocol& proto)
 {
   std::vector<std::string> sres;
   boost::split(sres, str, boost::is_any_of(":"));
+  std::string host_port;
+  std::string address;
 
-  if (sres.size() > 3) {
-    throw WforceException("Malformed sibling string: " + str + "(Format is <host>[:<port>[:<protocol>]]");
-  }
-  else if (sres.size() == 3) {
+  // Get the Protocol
+  if (Sibling::stringToProtocol(sres.back()) != Sibling::Protocol::NONE) {
     proto = Sibling::stringToProtocol(sres.back());
     sres.pop_back();
-    ca_str = boost::join(sres, ":");
+    host_port = boost::join(sres, ":");
   }
   else {
     proto = Sibling::Protocol::UDP;
-    ca_str = str;
+    host_port = str;
   }
+  // Split the host and port if necessary
+  // Possibilities are: v4 only (1.2.3.4), v6 only ([::1]), hostname only (host.example.com)
+  // v4 plus port (1.2.3.4:4001), v6 plus port ([::1]:4002), hostname plus port (host.example.com:4004)
+  boost::split(sres, host_port, boost::is_any_of(":"));
+  if (sres.size() == 1) { // 1 only matches bare v4 or hostnames
+    address = siblingHostToAddress(sres[0]);
+  }
+  else if (sres.size() == 2) { // 2 only v4 or hostname plus port
+    address = siblingHostToAddress(sres[0]) + ":" + sres[1];
+  }
+  else { // Everything else we can leave as it is
+    address = host_port;
+  }
+  ca = ComboAddress(address, 4001);
 }
 
-void removeSibling(const std::string& address,
+bool siblingAddressPortExists(GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings, const ComboAddress& address)
+{
+  auto local_siblings = siblings.getLocal();
+  for (auto& s : *local_siblings) {
+    if (s->rem == address) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool removeSibling(const std::string& host, int port,
+                   GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                   std::string& output_buffer)
+{
+  return removeSibling(createSiblingAddress(host, port, Sibling::Protocol::UDP), siblings, output_buffer);
+}
+
+bool removeSibling(const std::string& address,
                    GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                    std::string& output_buffer)
 {
   ComboAddress ca;
-  std::string ca_str;
   Sibling::Protocol proto;
-  parseSiblingString(address, ca_str, proto);
+  bool retval = false;
+
   try {
-    ca = ComboAddress(ca_str, 4001);
+    parseSiblingString(address, ca, proto);
   }
   catch (const WforceException& e) {
     const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "removeSibling() error parsing address/port" %
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
-    return;
+    return retval;
   }
-  siblings.modify([ca, proto](vector<shared_ptr<Sibling>>& v) {
+  siblings.modify([ca, &retval](vector<shared_ptr<Sibling>>& v) {
     for (auto i = v.begin(); i != v.end();) {
-      if ((i->get()->rem == ca) && (i->get()->proto == proto)) {
+      if ((i->get()->rem == ca)) {
         i = v.erase(i);
+        retval = true;
         break;
       }
       else {
@@ -257,19 +325,11 @@ void removeSibling(const std::string& address,
     }
   });
 
-  bool found = false;
-  auto local_siblings = siblings.getLocal();
-  for (auto& s : *local_siblings) {
-    if (s->rem == ca) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
+  if (!siblingAddressPortExists(siblings, ca)) {
     removePrometheusReplicationSibling(ca.toStringWithPort());
   }
-  found = false;
-  for (auto& s : *local_siblings) {
+  auto found = false;
+  for (auto& s : *siblings.getLocal()) {
     if (ComboAddress::addressOnlyEqual()(s->rem, ca)) {
       found = true;
       break;
@@ -278,6 +338,7 @@ void removeSibling(const std::string& address,
   if (!found) {
     removePrometheusReplicationSibling(ca.toString());
   }
+  return retval;
 }
 
 bool addSibling(const std::string& address,
@@ -287,29 +348,50 @@ bool addSibling(const std::string& address,
   return addSiblingWithKey(address, siblings, output_buffer, std::string());
 }
 
+bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
+                GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                std::string& output_buffer)
+{
+  return addSibling(createSiblingAddress(host, port, proto), siblings, output_buffer);
+}
+
+bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol proto,
+                       GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                       std::string& output_buffer,
+                       const std::string& key)
+{
+  return addSiblingWithKey(createSiblingAddress(host, port, proto), siblings, output_buffer, key);
+}
+
 bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
                        const std::string& key)
 {
   ComboAddress ca;
-  std::string ca_str;
   Sibling::Protocol proto;
 
   string raw_key;
-  if(B64Decode(key, raw_key) < 0) {
-    output_buffer+=string("Unable to decode ")+key+" as Base64";
+  if (B64Decode(key, raw_key) < 0) {
+    output_buffer += string("Unable to decode ") + key + " as Base64";
     errlog("%s", output_buffer);
     return false;
   }
 
-  parseSiblingString(address, ca_str, proto);
   try {
-    ca = ComboAddress(ca_str, 4001);
+    parseSiblingString(address, ca, proto);
   }
   catch (const WforceException& e) {
     const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
+    errlog(errstr.c_str());
+    output_buffer += errstr;
+    return false;
+  }
+  // Ensure the Sibling isn't already there
+  if (siblingAddressPortExists(siblings, ca)) {
+    const std::string errstr = (boost::format("%s [%s]\n") % "addSibling() cannot add duplicate sibling" %
+                                ca.toStringWithPort()).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
     return false;
@@ -330,7 +412,8 @@ bool setSiblings(const vector<std::pair<int, string>>& parts,
 {
   std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>> t_vec;
   for (auto& i : parts) {
-    t_vec.emplace_back(std::pair<int, std::vector<std::pair<int, std::string>>>{i.first, { { 0, i.second }, { 1, std::string()}}});
+    t_vec.emplace_back(
+        std::pair<int, std::vector<std::pair<int, std::string>>>{i.first, {{0, i.second}, {1, std::string()}}});
   }
   return setSiblingsWithKey(t_vec, siblings, output_buffer);
 }
@@ -348,28 +431,34 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       return false;
     }
     try {
-      std::string ca_string;
+      ComboAddress ca;
       Sibling::Protocol proto;
 
       string raw_key;
-      if(B64Decode(p.second[1].second, raw_key) < 0) {
-        output_buffer+=string("Unable to decode ")+p.second[1].second+" as Base64";
+      if (B64Decode(p.second[1].second, raw_key) < 0) {
+        output_buffer += string("Unable to decode ") + p.second[1].second + " as Base64";
         errlog("%s", output_buffer);
         return false;
       }
-      parseSiblingString(p.second[0].second, ca_string, proto);
+      parseSiblingString(p.second[0].second, ca, proto);
+
+      for (auto& s : v) {
+        if (s->rem == ca) {
+          throw WforceException("Two siblings with the same address and port are not allowed");
+        }
+      }
       // This is for sending when we know the port
-      addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toStringWithPort());
+      addPrometheusReplicationSibling(ca.toStringWithPort());
       // This is for receiving when the port may be ephemeral
-      addPrometheusReplicationSibling(ComboAddress(ca_string, 4001).toString());
+      addPrometheusReplicationSibling(ca.toString());
       // Create the sibling after the Prometheus metrics so connfail stats get updated
       v.push_back(
-          std::make_shared<Sibling>(ComboAddress(ca_string, 4001), proto, raw_key, sibling_connect_timeout,
+          std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
                                     sibling_queue_size));
     }
     catch (const WforceException& e) {
       const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "setSiblings() error parsing address/port" %
-                                  p.second[0].second % "Make sure to use IP addresses not hostnames" % e.reason).str();
+                                  p.second[0].second % "Reason: " % e.reason).str();
       errlog(errstr.c_str());
       output_buffer += errstr;
       return false;

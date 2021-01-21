@@ -87,8 +87,10 @@ struct Sibling {
   {
     if (s.compare("tcp") == 0)
       return Sibling::Protocol::TCP;
-    else
+    else if (s.compare("udp") == 0)
       return Sibling::Protocol::UDP;
+    else
+      return Sibling::Protocol::NONE;
   }
 
   static std::string protocolToString(const Protocol& p)
@@ -112,15 +114,29 @@ struct Sibling {
 void setMaxSiblingSendQueueSize(size_t queue_size);
 
 void setSiblingConnectTimeout(int timeout); // milliseconds
-void parseSiblingString(const std::string& str, std::string& ca_str, Sibling::Protocol& proto);
 
-void removeSibling(const std::string& address,
+std::string createSiblingAddress(const std::string& host, int port, Sibling::Protocol proto);
+
+bool removeSibling(const std::string& host, int port,
+                   GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                   std::string& output_buffer);
+
+bool removeSibling(const std::string& address,
                    GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                    std::string& output_buffer);
 
 bool addSibling(const std::string& address,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                 std::string& output_buffer);
+
+bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
+                GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                std::string& output_buffer);
+
+bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol proto,
+                       GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                       std::string& output_buffer,
+                       const std::string& key);
 
 bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,

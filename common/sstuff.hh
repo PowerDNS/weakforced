@@ -198,7 +198,7 @@ public:
         throw NetworkError(strerror(errno));
       }
       else {
-        struct pollfd pf = { d_socket, POLLRDNORM, 0 };
+        struct pollfd pf = { d_socket, POLLWRNORM, 0 };
         int poll_ret;
         poll_ret = poll(&pf, 1, timeout);
         int saved_errno = errno;
@@ -211,6 +211,11 @@ public:
         }
         if (poll_ret <=0) {
           throw NetworkError(strerror(saved_errno));
+        }
+        else {
+          if (!(pf.revents & POLLWRNORM)) {
+            throw NetworkError("Connection timed out");
+          }
         }
       }
     }

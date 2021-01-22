@@ -434,6 +434,93 @@ paths:
           description: unexpected error
           schema:
             $ref: "#/definitions/CustomError"
+  /?command=addSibling:
+    post:
+      description: This is a request to add a new Sibling for replication purposes.
+      operationId: addSibling
+      produces:
+        - application/json
+      parameters:
+        - name: "addSibling"
+          in: body
+          description: "Details about the Sibling to add"
+          required: true
+          schema:
+            $ref: "#/definitions/addSiblingParams"
+      responses:
+        "200":
+          description: "addSibling response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=removeSibling:
+    post:
+      description: This is a request to add remove a Sibling for replication purposes.
+      operationId: removeSibling
+      produces:
+        - application/json
+      parameters:
+        - name: "removeSibling"
+          in: body
+          description: "Details about the Sibling to remove"
+          required: true
+          schema:
+            $ref: "#/definitions/removeSiblingParams"
+      responses:
+        "200":
+          description: "removeSibling response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=setSiblings:
+    post:
+      description: This is a request to set the Siblings for replication purposes.
+      operationId: setSiblings
+      produces:
+        - application/json
+      parameters:
+        - name: "setSiblings"
+          in: body
+          description: "Details about the Sibling to add"
+          required: true
+          schema:
+            $ref: "#/definitions/setSiblingsParams"
+      responses:
+        "200":
+          description: "setSiblings response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
   /metrics:
     get:
       description: "Retrieve prometheus metrics"
@@ -776,6 +863,8 @@ definitions:
         type: string
       callback_auth_pw:
         type: string
+      encryption_key:
+        type: string
   dumpEntriesParams:
     type: object
     required:
@@ -786,3 +875,48 @@ definitions:
         type: string
       dump_port:
         type: integer
+  addSiblingParams:
+    type: object
+    required:
+      - sibling_host
+      - sibling_port
+    properties:
+      sibling_host:
+        type: string
+      sibling_port:
+        type: integer
+      sibling_protocol:
+        type: string
+        enum: [tcp, udp]
+      encryption_key:
+        type: string
+  removeSiblingParams:
+    type: object
+    required:
+      - sibling_host
+      - sibling_port
+    properties:
+      sibling_host:
+        type: string
+      sibling_port:
+        type: integer
+  setSiblingsParams:
+    type: object
+    properties:
+      siblings:
+        type: array
+        items:
+          type: object
+          required:
+            - sibling_host
+            - sibling_port
+          properties:
+            sibling_host:
+              type: string
+            sibling_port:
+              type: integer
+            sibling_protocol:
+              type: string
+              enum: [ tcp, udp ]
+            encryption_key:
+              type: string

@@ -34,6 +34,7 @@
 #include "misc.hh"
 #include <netinet/tcp.h>
 #include <limits>
+#include <boost/lexical_cast.hpp>
 #include "dolog.hh"
 #include <unistd.h>
 #include "sodcrypto.hh"
@@ -349,30 +350,30 @@ bool removeSibling(const std::string& address,
 
 bool addSibling(const std::string& address,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
-                std::string& output_buffer)
+                std::string& output_buffer, bool send_sdb, bool send_wlbl)
 {
-  return addSiblingWithKey(address, siblings, output_buffer, std::string());
+  return addSiblingWithKey(address, siblings, output_buffer, std::string(), send_sdb, send_wlbl);
 }
 
 bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
-                std::string& output_buffer)
+                std::string& output_buffer, bool send_sdb, bool send_wlbl)
 {
-  return addSibling(createSiblingAddress(host, port, proto), siblings, output_buffer);
+  return addSibling(createSiblingAddress(host, port, proto), siblings, output_buffer, send_sdb, send_wlbl);
 }
 
 bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol proto,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
-                       const std::string& key)
+                       const std::string& key, bool send_sdb, bool send_wlbl)
 {
-  return addSiblingWithKey(createSiblingAddress(host, port, proto), siblings, output_buffer, key);
+  return addSiblingWithKey(createSiblingAddress(host, port, proto), siblings, output_buffer, key, send_sdb, send_wlbl);
 }
 
 bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
-                       const std::string& key)
+                       const std::string& key, bool send_sdb, bool send_wlbl)
 {
   ComboAddress ca;
   Sibling::Protocol proto;
@@ -406,8 +407,8 @@ bool addSiblingWithKey(const std::string& address,
   addPrometheusReplicationSibling(ca.toStringWithPort());
   // This is for receiving when the port may be ephemeral
   addPrometheusReplicationSibling(ca.toString());
-  siblings.modify([ca, proto, raw_key](vector<shared_ptr<Sibling>>& v) {
-    v.push_back(std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size));
+  siblings.modify([ca, proto, raw_key, send_sdb, send_wlbl](vector<shared_ptr<Sibling>>& v) {
+    v.push_back(std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size, send_sdb, send_wlbl));
   });
   return true;
 }
@@ -428,39 +429,23 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
                         GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                         std::string& output_buffer)
 {
-  removeAllPrometheusReplicationSiblings();
-  vector<shared_ptr<Sibling>> v;
+  // Before we do anything, make sure we don't get any errors parsing the input
   for (const auto& p : parts) {
-    if (p.second.size() != 2) {
-      errlog("setSiblings[WithKey](): Invalid values - was expecting 2 args, got %d", p.second.size());
-      output_buffer += "Invalid number of args to setSiblings[WithKey] - was expecting 2 (sibling address & key)";
-      return false;
-    }
     try {
       ComboAddress ca;
       Sibling::Protocol proto;
-
+      parseSiblingString(p.second[0].second, ca, proto);
+      if ((p.second.size() != 2) && (p.second.size() != 4)) {
+        errlog("setSiblings[WithKey](): Invalid values - was expecting 2 or 4 args, got %d", p.second.size());
+        output_buffer += "Invalid number of args to setSiblings[WithKey] - was expecting 2 args (sibling address & key) or 4 (sibling address, key, replicate sdb, replicate wlbl)";
+        return false;
+      }
       string raw_key;
       if (B64Decode(p.second[1].second, raw_key) < 0) {
         output_buffer += string("Unable to decode ") + p.second[1].second + " as Base64";
         errlog("%s", output_buffer);
         return false;
       }
-      parseSiblingString(p.second[0].second, ca, proto);
-
-      for (auto& s : v) {
-        if (s->rem == ca) {
-          throw WforceException("Two siblings with the same address and port are not allowed");
-        }
-      }
-      // This is for sending when we know the port
-      addPrometheusReplicationSibling(ca.toStringWithPort());
-      // This is for receiving when the port may be ephemeral
-      addPrometheusReplicationSibling(ca.toString());
-      // Create the sibling after the Prometheus metrics so connfail stats get updated
-      v.push_back(
-          std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
-                                    sibling_queue_size));
     }
     catch (const WforceException& e) {
       const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "setSiblings() error parsing address/port" %
@@ -469,6 +454,42 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       output_buffer += errstr;
       return false;
     }
+  }
+
+  // Now we can safely remove all the prometheus metrics
+  removeAllPrometheusReplicationSiblings();
+
+  // Construct the new siblings
+  vector<shared_ptr<Sibling>> v;
+  for (const auto& p : parts) {
+    bool send_sdb = true;
+    bool send_wlbl = true;
+
+    ComboAddress ca;
+    Sibling::Protocol proto;
+
+    string raw_key;
+    B64Decode(p.second[1].second, raw_key);
+    parseSiblingString(p.second[0].second, ca, proto);
+
+    if (p.second.size() == 4) {
+      send_sdb = boost::lexical_cast<bool>(p.second[2].second);
+      send_wlbl = boost::lexical_cast<bool>(p.second[3].second);
+    }
+
+    for (auto& s : v) {
+      if (s->rem == ca) {
+        errlog("setSiblings(): Two siblings with the same address and port are not allowed, ignoring the duplicate (%s)", p.second[0].second);
+      }
+    }
+    // This is for sending when we know the port
+    addPrometheusReplicationSibling(ca.toStringWithPort());
+    // This is for receiving when the port may be ephemeral
+    addPrometheusReplicationSibling(ca.toString());
+    // Create the sibling after the Prometheus metrics so connfail stats get updated
+    v.push_back(
+        std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
+                                  sibling_queue_size, send_sdb, send_wlbl));
   }
   siblings.setState(v);
   return true;

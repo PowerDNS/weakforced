@@ -131,21 +131,21 @@ bool removeSibling(const std::string& address,
 
 bool addSibling(const std::string& address,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
-                std::string& output_buffer);
+                std::string& output_buffer, bool send_sdb=true, bool send_wlbl=true);
 
 bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
-                std::string& output_buffer);
+                std::string& output_buffer, bool send_sdb=true, bool send_wlbl=true);
 
 bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol proto,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
-                       const std::string& key);
+                       const std::string& key, bool send_sdb=true, bool send_wlbl=true);
 
 bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
-                       const std::string& key);
+                       const std::string& key, bool send_sdb=true, bool send_wlbl=true);
 
 bool setSiblings(const vector<pair<int, string>>& parts,
                  GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,

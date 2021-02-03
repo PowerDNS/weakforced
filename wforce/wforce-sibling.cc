@@ -56,8 +56,8 @@ Sibling::Sibling(const ComboAddress& ca,
                  const Protocol& p,
                  int timeout,
                  size_t queue_size,
-                 bool repl_send,
-                 bool wlbl_send) : Sibling(ca, p, std::string(), timeout, queue_size, repl_send, wlbl_send)
+                 bool sdb_send,
+                 bool wlbl_send) : Sibling(ca, p, std::string(), timeout, queue_size, sdb_send, wlbl_send)
 {
 }
 
@@ -87,12 +87,12 @@ Sibling::Sibling(const ComboAddress& ca,
                  const std::string& key,
                  int timeout,
                  size_t queue_size,
-                 bool send_repl,
+                 bool send_sdb,
                  bool send_wlbl) : rem(ca), proto(p),
                                       connect_timeout(timeout),
                                       max_queue_size(queue_size),
                                       queue_thread_run(true),
-                                      repl_send(send_repl),
+                                      sdb_send(send_sdb),
                                       wlbl_send(send_wlbl),
                                       d_ignoreself(false),
                                       d_key(key)

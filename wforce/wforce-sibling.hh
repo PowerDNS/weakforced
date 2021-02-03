@@ -44,10 +44,10 @@ struct Sibling {
 
   explicit Sibling(const ComboAddress& ca);
 
-  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000, bool repl_send=true, bool wlbl_send=true);
+  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000, bool sdb_send=true, bool wlbl_send=true);
 
   explicit Sibling(const ComboAddress& ca, const Protocol& p, const std::string& key, int timeout = 1000,
-                   size_t queue_size = 5000, bool repl_send=true, bool wlbl_send=true);
+                   size_t queue_size = 5000, bool sdb_send=true, bool wlbl_send=true);
 
   ~Sibling();
 
@@ -71,7 +71,7 @@ struct Sibling {
   bool queue_thread_run;
 
   // Whether to send replication and/or wlbl events
-  bool repl_send;
+  bool sdb_send;
   bool wlbl_send;
 
   std::atomic<unsigned int> success{0};

@@ -44,10 +44,10 @@ struct Sibling {
 
   explicit Sibling(const ComboAddress& ca);
 
-  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000);
+  explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000, bool repl_send=true, bool wlbl_send=true);
 
   explicit Sibling(const ComboAddress& ca, const Protocol& p, const std::string& key, int timeout = 1000,
-                   size_t queue_size = 5000);
+                   size_t queue_size = 5000, bool repl_send=true, bool wlbl_send=true);
 
   ~Sibling();
 
@@ -69,6 +69,10 @@ struct Sibling {
   size_t max_queue_size;
   std::thread queue_thread; // We hang on to this so that the queue thread can be terminated in the destructor
   bool queue_thread_run;
+
+  // Whether to send replication and/or wlbl events
+  bool repl_send;
+  bool wlbl_send;
 
   std::atomic<unsigned int> success{0};
   std::atomic<unsigned int> failures{0};

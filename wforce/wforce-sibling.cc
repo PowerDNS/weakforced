@@ -425,6 +425,15 @@ bool setSiblings(const vector<std::pair<int, string>>& parts,
   return setSiblingsWithKey(t_vec, siblings, output_buffer);
 }
 
+bool toBool(const std::string& bool_str) {
+  std::string str(bool_str);
+  std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+  std::istringstream is(str);
+  bool b;
+  is >> std::boolalpha >> b;
+  return b;
+}
+
 bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts,
                         GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                         std::string& output_buffer)
@@ -473,8 +482,8 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
     parseSiblingString(p.second[0].second, ca, proto);
 
     if (p.second.size() == 4) {
-      send_sdb = boost::lexical_cast<bool>(p.second[2].second);
-      send_wlbl = boost::lexical_cast<bool>(p.second[3].second);
+      send_sdb = toBool(p.second[2].second);
+      send_wlbl = toBool(p.second[3].second);
     }
 
     for (auto& s : v) {

@@ -129,7 +129,7 @@ private:
   Family<Counter>* allow_status_family;
   std::map<std::string, Counter*> allow_status_metrics;
   // This mutex is because replication siblings are allowed to change dynamically
-  // unlike the other mutexes
+  // unlike the other metrics
   std::mutex repl_mutx;
   Family<Counter>* repl_sent_family;
   std::map<std::string, Counter*> repl_sent_ok_metrics;

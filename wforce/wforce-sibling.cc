@@ -216,12 +216,19 @@ void Sibling::queueMsg(const std::string& msg)
   queue_cv.notify_one();
 }
 
+// Utility functions for managings siblings
+
+// siblingHostToAddress takes string representing either a hostname or an IP address
+// and returns a string representing the IP address.
+// Throws a WforceException if no valid IP address could be determined
 std::string siblingHostToAddress(const std::string& host)
 {
   std::string sibling_address;
-  struct addrinfo* res, * res0;
+  struct addrinfo* res=nullptr, *res0=nullptr;
   int error = getaddrinfo(host.c_str(), nullptr, nullptr, &res0);
   if (error) {
+    if (res0)
+      freeaddrinfo(res0);
     throw WforceException(std::string("Error calling getaddrinfo() for sibling host: ") + gai_strerror(error));
   }
   bool found_addr = false;
@@ -232,12 +239,19 @@ std::string siblingHostToAddress(const std::string& host)
     break;
   }
   if (!found_addr) {
+    if (res0)
+      freeaddrinfo(res0);
     throw WforceException(std::string("Could not determine IP address for sibling host: ") + host);
   }
-  freeaddrinfo(res0);
+  if (res0)
+    freeaddrinfo(res0);
   return sibling_address;
 }
 
+// createSiblingAddress returns a string that combines the host, port and protocol
+// using ":" as the separator (this is the format used for Lua functions)
+// For example "[::1]:8081:tcp"
+// Both the ComboAddress constructor and Sibling::protocolToString can throw WforceException on error
 std::string createSiblingAddress(const std::string& host, int port, Sibling::Protocol proto)
 {
   std::string address;
@@ -250,6 +264,11 @@ std::string createSiblingAddress(const std::string& host, int port, Sibling::Pro
   return address;
 }
 
+// parseSiblingString takes a string (as constructed by parseSiblingAddress() for example) representing
+// a sibling IP address, port and protocol, and sets the ComboAddress and SiblingProtocol parameters
+// based on the values in the string
+// The ComboAddress contructor will throw a WforceException if the resulting ComboAddress is not valid
+// If an invalid protocol is supplied, then UDP will be assumed
 void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Protocol& proto)
 {
   std::vector<std::string> sres;
@@ -258,12 +277,12 @@ void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Proto
   std::string address;
 
   // Get the Protocol
-  if (Sibling::stringToProtocol(sres.back()) != Sibling::Protocol::NONE) {
+  try {
     proto = Sibling::stringToProtocol(sres.back());
     sres.pop_back();
     host_port = boost::join(sres, ":");
   }
-  else {
+  catch (const WforceException& e) {
     proto = Sibling::Protocol::UDP;
     host_port = str;
   }
@@ -283,7 +302,9 @@ void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Proto
   ca = ComboAddress(address, 4001);
 }
 
-bool siblingAddressPortExists(GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings, const ComboAddress& address)
+// siblingAddressPortExists returns true if a sibling already exists in the supplied siblings vector
+// with the same address and port as supplied in address, otherwise it returns false
+bool siblingAddressPortExists(const GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings, const ComboAddress& address)
 {
   auto local_siblings = siblings.getLocal();
   for (auto& s : *local_siblings) {
@@ -294,6 +315,10 @@ bool siblingAddressPortExists(GlobalStateHolder<vector<shared_ptr<Sibling>>>& si
   return false;
 }
 
+// removeSibling removes a sibling from the supplied vector.
+// Only host and port are supplied, as protocol is irrelevant when removing
+// If the removal was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool removeSibling(const std::string& host, int port,
                    GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                    std::string& output_buffer)
@@ -301,6 +326,10 @@ bool removeSibling(const std::string& host, int port,
   return removeSibling(createSiblingAddress(host, port, Sibling::Protocol::UDP), siblings, output_buffer);
 }
 
+// removeSibling removes a sibling from the supplied vector.
+// Address parameter should be in the form created by createSiblingAddress()
+// If the removal was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool removeSibling(const std::string& address,
                    GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                    std::string& output_buffer)
@@ -332,29 +361,27 @@ bool removeSibling(const std::string& address,
     }
   });
 
-  if (!siblingAddressPortExists(siblings, ca)) {
-    removePrometheusReplicationSibling(ca.toStringWithPort());
-  }
-  auto found = false;
-  for (auto& s : *siblings.getLocal()) {
-    if (ComboAddress::addressOnlyEqual()(s->rem, ca)) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    removePrometheusReplicationSibling(ca.toString());
-  }
+  // We don't remove any existing prometheus metrics for this sibling, otherwise we might cut off metrics before they are scraped
+  // This means that of sibling membership is highly dynamic, the mwtrics for siblings will "grow"; this is considered to be acceptable.
+
   return retval;
 }
 
+// addSibling adds a sibling to the supplied vector.
+// Address parameter should be in the form created by createSiblingAddress()
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool addSibling(const std::string& address,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                 std::string& output_buffer, bool send_sdb, bool send_wlbl)
 {
+  // Empty key string means no key for this sibling (i.e. global key will be used as previously)
   return addSiblingWithKey(address, siblings, output_buffer, std::string(), send_sdb, send_wlbl);
 }
 
+// addSibling adds a sibling to the supplied vector.
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
                 GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                 std::string& output_buffer, bool send_sdb, bool send_wlbl)
@@ -362,6 +389,9 @@ bool addSibling(const std::string& host, int port, Sibling::Protocol proto,
   return addSibling(createSiblingAddress(host, port, proto), siblings, output_buffer, send_sdb, send_wlbl);
 }
 
+// addSiblingWithKey adds a sibling to the supplied vector, with a supplied key for encrypting traffic to that sibling
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol proto,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
@@ -370,6 +400,10 @@ bool addSiblingWithKey(const std::string& host, int port, Sibling::Protocol prot
   return addSiblingWithKey(createSiblingAddress(host, port, proto), siblings, output_buffer, key, send_sdb, send_wlbl);
 }
 
+// addSiblingWithKey adds a sibling to the supplied vector, with a supplied key for encrypting traffic to that sibling
+// Address parameter should be in the form created by createSiblingAddress()
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
@@ -413,6 +447,11 @@ bool addSiblingWithKey(const std::string& address,
   return true;
 }
 
+// setSiblings sets the siblings in the siblings vector using the arguments in the parts vector
+// The parts vector is converted from the former simple list of index/address string pairs (from Lua, hence the index)
+// to the new more complex list of lists which is designed to handle keys in addition to addresses
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool setSiblings(const vector<std::pair<int, string>>& parts,
                  GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                  std::string& output_buffer)
@@ -420,11 +459,13 @@ bool setSiblings(const vector<std::pair<int, string>>& parts,
   std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>> t_vec;
   for (auto& i : parts) {
     t_vec.emplace_back(
+        // Note that an empty string indicates no key hence the std::string() here
         std::pair<int, std::vector<std::pair<int, std::string>>>{i.first, {{0, i.second}, {1, std::string()}}});
   }
   return setSiblingsWithKey(t_vec, siblings, output_buffer);
 }
 
+// Utility function to convert strings to boolean
 bool toBool(const std::string& bool_str) {
   std::string str(bool_str);
   std::transform(str.begin(), str.end(), str.begin(), ::tolower);
@@ -434,6 +475,13 @@ bool toBool(const std::string& bool_str) {
   return b;
 }
 
+// setSiblings sets the siblings in the siblings vector using the arguments in the parts vector
+// The parts vector is the new more complex list of lists which is designed to handle keys (and other parameters)
+// in addition to addresses.
+// The inner vector can contain 2 or 4 parameters (2 means address+key, 4 means address+key+send_sdb+send_wlbl)
+// Any prometheus metrics associated with previously created siblings will not be removed
+// If the add was successful, returns true.
+// If unsuccessful, returns false and output_buffer contains an error string
 bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts,
                         GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                         std::string& output_buffer)
@@ -465,9 +513,6 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
     }
   }
 
-  // Now we can safely remove all the prometheus metrics
-  removeAllPrometheusReplicationSiblings();
-
   // Construct the new siblings
   vector<shared_ptr<Sibling>> v;
   for (const auto& p : parts) {
@@ -486,11 +531,18 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       send_wlbl = toBool(p.second[3].second);
     }
 
+    bool skip = false;
     for (auto& s : v) {
       if (s->rem == ca) {
         errlog("setSiblings(): Two siblings with the same address and port are not allowed, ignoring the duplicate (%s)", p.second[0].second);
+        skip = true;
+        break;
       }
     }
+    // Skip over duplicates
+    if (skip)
+      continue;
+
     // This is for sending when we know the port
     addPrometheusReplicationSibling(ca.toStringWithPort());
     // This is for receiving when the port may be ephemeral

@@ -93,16 +93,26 @@ struct Sibling {
       return Sibling::Protocol::TCP;
     else if (s.compare("udp") == 0)
       return Sibling::Protocol::UDP;
-    else
+    else if (s.compare("none") == 0)
       return Sibling::Protocol::NONE;
+    else if (s.empty())
+      return Sibling::Protocol::UDP; // Default to UDP if no protocol supplied
+    else {
+      std::string err = "Sibling::stringToProtocol(): Unknown protocol " + s;
+      throw WforceException(err);
+    }
   }
 
   static std::string protocolToString(const Protocol& p)
   {
     if (p == Protocol::TCP)
       return std::string("tcp");
-    else
+    else if (p == Protocol::UDP)
       return std::string("udp");
+    else if (p == Protocol::NONE)
+      return std::string("none");
+    else
+      throw WforceException("Sibling::protocolToString(): unknown protocol");
   }
 
   bool d_ignoreself{false};

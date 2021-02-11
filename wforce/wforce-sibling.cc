@@ -429,20 +429,28 @@ bool addSiblingWithKey(const std::string& address,
     output_buffer += errstr;
     return false;
   }
+
+  auto sibling = std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size, send_sdb, send_wlbl);
+  return addSibling(sibling, siblings, output_buffer);
+}
+
+// addSibling performs the actual modification of the siblings vector
+bool addSibling(std::shared_ptr<Sibling> sibling, GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings, std::string& output_buffer)
+{
   // Ensure the Sibling isn't already there
-  if (siblingAddressPortExists(siblings, ca)) {
+  if (siblingAddressPortExists(siblings, sibling->rem)) {
     const std::string errstr = (boost::format("%s [%s]\n") % "addSibling() cannot add duplicate sibling" %
-                                ca.toStringWithPort()).str();
+                                sibling->rem.toStringWithPort()).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
     return false;
   }
   // This is for sending when we know the port
-  addPrometheusReplicationSibling(ca.toStringWithPort());
+  addPrometheusReplicationSibling(sibling->rem.toStringWithPort());
   // This is for receiving when the port may be ephemeral
-  addPrometheusReplicationSibling(ca.toString());
-  siblings.modify([ca, proto, raw_key, send_sdb, send_wlbl](vector<shared_ptr<Sibling>>& v) {
-    v.push_back(std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size, send_sdb, send_wlbl));
+  addPrometheusReplicationSibling(sibling->rem.toString());
+  siblings.modify([sibling](vector<shared_ptr<Sibling>>& v) {
+    v.push_back(sibling);
   });
   return true;
 }

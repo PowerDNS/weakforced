@@ -129,6 +129,8 @@ void setMaxSiblingSendQueueSize(size_t queue_size);
 
 void setSiblingConnectTimeout(int timeout); // milliseconds
 
+void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Protocol& proto);
+
 std::string createSiblingAddress(const std::string& host, int port, Sibling::Protocol proto);
 
 bool removeSibling(const std::string& host, int port,
@@ -156,6 +158,10 @@ bool addSiblingWithKey(const std::string& address,
                        GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
                        std::string& output_buffer,
                        const std::string& key, bool send_sdb=true, bool send_wlbl=true);
+
+bool addSibling(std::shared_ptr<Sibling> sibling,
+                GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,
+                std::string& output_buffer);
 
 bool setSiblings(const vector<pair<int, string>>& parts,
                  GlobalStateHolder<vector<shared_ptr<Sibling>>>& siblings,

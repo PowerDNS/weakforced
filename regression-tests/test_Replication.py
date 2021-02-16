@@ -326,9 +326,9 @@ class TestTimeWindowsReplication(ApiTestCase):
         self.assertNotEqual(str.find(json.dumps(j), '13.13.13.13'), -1)
 
     def test_AddRemoveSiblings(self):
-        self.removeSibling("127.0.0.1", 4002)
-        self.addSibling("127.0.0.1", 4002, "udp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0=")
-        self.addBLEntryIP('9.2.4.6', 60, "remove and add sibling test")
+        self.assertEqual(self.removeSibling("127.0.0.1", 4002).ok, True)
+        self.assertEqual(self.addSibling("127.0.0.1", 4002, "udp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0=").ok, True)
+        self.assertEqual(self.addBLEntryIP('9.2.4.6', 60, "remove and add sibling test").ok, True)
 
         time.sleep(1)
 
@@ -337,12 +337,12 @@ class TestTimeWindowsReplication(ApiTestCase):
         self.assertNotEqual(str.find(json.dumps(j), '9.2.4.6'), -1)
 
     def test_SetSiblings(self):
-        self.setSiblings({"siblings": [
+        self.assertEqual(self.setSiblings({"siblings": [
             {"sibling_host": "127.0.0.1", "sibling_port": 4001, "sibling_proto": "udp"},
             {"sibling_host": "127.0.0.1", "sibling_port": 4002, "sibling_proto": "udp", "encryption_key": "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="},
             {"sibling_host": "127.0.0.1", "sibling_port": 4004, "sibling_proto": "tcp", "encryption_key": "lykfkV/07VPMK80nLNOTWtlMsLz9y7X0r6t9zcFNTmE="}
-        ]})
-        self.addBLEntryIP('10.2.4.6', 60, "remove and add sibling test")
+        ]}).ok, True)
+        self.assertEqual(self.addBLEntryIP('10.2.4.6', 60, "remove and add sibling test").ok, True)
 
         time.sleep(1)
 

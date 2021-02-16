@@ -197,7 +197,7 @@ class ApiTestCase(unittest.TestCase):
 
     def setSiblings(self, payload):
         return self.session.post(
-            self.url("/?command=addSibling"),
+            self.url("/?command=setSiblings"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 

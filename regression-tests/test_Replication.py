@@ -338,9 +338,9 @@ class TestTimeWindowsReplication(ApiTestCase):
 
     def test_SetSiblings(self):
         self.assertEqual(self.setSiblings({"siblings": [
-            {"sibling_host": "127.0.0.1", "sibling_port": 4001, "sibling_proto": "udp"},
-            {"sibling_host": "127.0.0.1", "sibling_port": 4002, "sibling_proto": "udp", "encryption_key": "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="},
-            {"sibling_host": "127.0.0.1", "sibling_port": 4004, "sibling_proto": "tcp", "encryption_key": "lykfkV/07VPMK80nLNOTWtlMsLz9y7X0r6t9zcFNTmE="}
+            {"sibling_host": "127.0.0.1", "sibling_port": 4001, "sibling_protocol": "udp"},
+            {"sibling_host": "127.0.0.1", "sibling_port": 4002, "sibling_protocol": "udp", "encryption_key": "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="},
+            {"sibling_host": "127.0.0.1", "sibling_port": 4004, "sibling_protocol": "tcp", "encryption_key": "lykfkV/07VPMK80nLNOTWtlMsLz9y7X0r6t9zcFNTmE="}
         ]}).ok, True)
         self.assertEqual(self.addBLEntryIP('10.2.4.6', 60, "remove and add sibling test").ok, True)
 

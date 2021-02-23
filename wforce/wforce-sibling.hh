@@ -42,6 +42,8 @@ struct Sibling {
     UDP = SOCK_DGRAM, TCP = SOCK_STREAM, NONE = -1
   };
 
+  static const int defaultPort = 4001;
+
   explicit Sibling(const ComboAddress& ca);
 
   explicit Sibling(const ComboAddress& ca, const Protocol& p, int timeout = 1000, size_t queue_size = 5000, bool sdb_send=true, bool wlbl_send=true);

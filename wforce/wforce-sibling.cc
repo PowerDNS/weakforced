@@ -299,7 +299,7 @@ void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Proto
   else { // Everything else we can leave as it is
     address = host_port;
   }
-  ca = ComboAddress(address, 4001);
+  ca = ComboAddress(address, Sibling::defaultPort);
 }
 
 // siblingAddressPortExists returns true if a sibling already exists in the supplied siblings vector
@@ -342,7 +342,7 @@ bool removeSibling(const std::string& address,
     parseSiblingString(address, ca, proto);
   }
   catch (const WforceException& e) {
-    const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "removeSibling() error parsing address/port" %
+    const std::string errstr = (boost::format("%s [%s]. %s (%s)") % "removeSibling() error parsing address/port" %
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
@@ -423,7 +423,7 @@ bool addSiblingWithKey(const std::string& address,
     parseSiblingString(address, ca, proto);
   }
   catch (const WforceException& e) {
-    const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "addSibling() error parsing address/port" %
+    const std::string errstr = (boost::format("%s [%s]. %s (%s)") % "addSibling() error parsing address/port" %
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
@@ -439,7 +439,7 @@ bool addSibling(std::shared_ptr<Sibling> sibling, GlobalStateHolder<vector<share
 {
   // Ensure the Sibling isn't already there
   if (siblingAddressPortExists(siblings, sibling->rem)) {
-    const std::string errstr = (boost::format("%s [%s]\n") % "addSibling() cannot add duplicate sibling" %
+    const std::string errstr = (boost::format("%s [%s]") % "addSibling() cannot add duplicate sibling" %
                                 sibling->rem.toStringWithPort()).str();
     errlog(errstr.c_str());
     output_buffer += errstr;
@@ -502,7 +502,7 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       parseSiblingString(p.second[0].second, ca, proto);
       if ((p.second.size() != 2) && (p.second.size() != 4)) {
         errlog("setSiblings[WithKey](): Invalid values - was expecting 2 or 4 args, got %d", p.second.size());
-        output_buffer += "Invalid number of args to setSiblings[WithKey] - was expecting 2 args (sibling address & key) or 4 (sibling address, key, replicate sdb, replicate wlbl)";
+        output_buffer += "Invalid number of args - was expecting 2 args (sibling address & key) or 4 (sibling address, key, replicate sdb, replicate wlbl)";
         return false;
       }
       string raw_key;
@@ -513,7 +513,7 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       }
     }
     catch (const WforceException& e) {
-      const std::string errstr = (boost::format("%s [%s]. %s (%s)\n") % "setSiblings() error parsing address/port" %
+      const std::string errstr = (boost::format("%s [%s]. %s (%s)") % "setSiblings() error parsing address/port" %
                                   p.second[0].second % "Reason: " % e.reason).str();
       errlog(errstr.c_str());
       output_buffer += errstr;

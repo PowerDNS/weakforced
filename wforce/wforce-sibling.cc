@@ -49,6 +49,8 @@ using std::thread;
 static std::atomic<int> sibling_connect_timeout(5000); // milliseconds
 static std::atomic<size_t> sibling_queue_size(5000);
 
+extern ComboAddress g_sibling_listen_addr;
+
 Sibling::Sibling(const ComboAddress& ca) : Sibling(ca, Protocol::UDP)
 {
 }
@@ -431,6 +433,7 @@ bool addSiblingWithKey(const std::string& address,
   }
 
   auto sibling = std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout, sibling_queue_size, send_sdb, send_wlbl);
+  sibling->checkIgnoreSelf(g_sibling_listen_addr);
   return addSibling(sibling, siblings, output_buffer);
 }
 
@@ -556,9 +559,10 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
     // This is for receiving when the port may be ephemeral
     addPrometheusReplicationSibling(ca.toString());
     // Create the sibling after the Prometheus metrics so connfail stats get updated
-    v.push_back(
-        std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
-                                  sibling_queue_size, send_sdb, send_wlbl));
+    auto sibling = std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
+                                              sibling_queue_size, send_sdb, send_wlbl);
+    sibling->checkIgnoreSelf(g_sibling_listen_addr);
+    v.push_back(sibling);
   }
   siblings.setState(v);
   return true;

@@ -50,6 +50,7 @@
 using std::thread;
 
 static vector<std::function<void(void)>>* g_launchWork;
+ComboAddress g_sibling_listen_addr;
 
 std::vector<std::map<std::string, std::string>> getWLBLKeys(const std::vector<BlackWhiteListEntry>& blv, const char* key_name) {
   std::vector<std::map<std::string, std::string>> ret_vec;
@@ -294,6 +295,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         g_outputBuffer += errstr;
         return;
       }
+      g_sibling_listen_addr = ca;
       auto launch = [ca]() {
         auto siblings = g_siblings.getLocal();
 

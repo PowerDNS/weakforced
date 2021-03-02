@@ -275,6 +275,10 @@ class TestTimeWindowsReplication(ApiTestCase):
         self.assertEquals(j['status'], 0)
         
     def test_resetField(self):
+        r = self.resetLogins("resetFieldTest")
+        j = r.json()
+        self.assertEquals(j['r_attrs']['countLogins'], '0')
+
         r = self.incLogins("resetFieldTest")
         j = r.json()
         self.assertEquals(j['r_attrs']['countLogins'], '1')

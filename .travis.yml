@@ -1,8 +1,5 @@
 language: cpp
 dist: trusty
-env:
-  global:
-    - secure: "LzLVM/dN1L/MCqBrU3oWXFg86L6denRTcH+CdxOZWu5Y5PxWTzmfxYvPQS+C7EsVp8cuaS54vPy39HihJIYG5wmBBZxRhq3pNSJt25+dxx4Qe/WXooxlkCQ6JKhJB8vBCHEFPFd5CKlZOd6QacauS18KAQNZx+D/wWtT+f19Mata+C/POGbIa4+JQ9imwSPDJg+wpTSbgjfvuf/UyQFMXIXI83fjFx90+c18iLjv8b0xyCvIieIxjFR5wyZCeoXvlQYLkmObxdFedQaiTzo5EJZwsYzfKfF1ltGf45/olMVsSjI/tOOGxmprCk2tS2q1GVd/H+Cz27SqgXJIRSUogCa0r3mSfQ8+SpiM1du6OEYf823/WpOO8H6VrokRmdnjvizBicjYVs93MSFWm73LVbRsHncBQvqKw4J1VEPQRlluCOwg+yFbHFFyH6wdtIvAfxvekVym717WlmDk9wmrielPRQ6YfQKp4nRkuu4bgWTO27vVo1MRdet7DaNOuqyoYRRfoINkL8LiHh1lM1DUdIVKMP1M0r1lzZVKritw45/GoLTfx1k2Muz/gCg9QczQmXnyX8CnsTtengNDcFfuQ2TeP77YqtGN1ewlpG8jYq5DZOvzOEzJCRxUyqlPCNEanpJXQkmRzMPsy0c6P2Ac7GIo4/Wmk+YHrvbCdCrtLtU="
 addons:
   apt:
     sources:

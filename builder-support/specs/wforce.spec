@@ -51,7 +51,6 @@ BuildRequires: luajit-devel
 BuildRequires: hiredis
 BuildRequires: hiredis-devel
 BuildRequires: openssl-devel
-BuildRequires: yaml-cpp-devel
 BuildRequires: boost-regex
 BuildRequires: wget
 BuildRequires: boost-system
@@ -64,9 +63,13 @@ Requires(postun): systemd
 Requires: initscripts
 Requires(postun): /sbin/service
 %endif
-%if %{?centos}0 == 7 || %{?rhel} == 7
+%if 0%{?centos} == 7 || 0%{?rhel} == 7
+%if 0%{?amzn} != 2
 BuildRequires: devtoolset-7-gcc-c++
 %define scl scl enable devtoolset-7
+%else
+%define scl bash
+%endif
 %else
 %define scl bash
 %endif

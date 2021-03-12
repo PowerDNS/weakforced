@@ -25,6 +25,10 @@ RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
 RUN cd prometheus-cpp/_build && make clean && make install
 
+RUN wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.tar.gz
+RUN tar xvf yaml-cpp-0.6.3.tar.gz
+RUN cd yaml-cpp-yaml-cpp* && mkdir build && cd build && cmake .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
+
 ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers
 

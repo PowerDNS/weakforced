@@ -6,7 +6,7 @@
 FROM centos:8 as dist-base
 RUN yum install -y epel-release
 RUN dnf -y install dnf-plugins-core
-RUN dnf config-manager --set-enabled PowerTools
+RUN dnf config-manager --set-enabled powertools
 
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild

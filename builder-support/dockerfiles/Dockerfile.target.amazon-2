@@ -1,14 +1,10 @@
 # First do the source builds
 @INCLUDE Dockerfile.target.sdist
 
-# This defines the dstribution base layer
+# This defines the distribution base layer
 # Put only the bare minimum of common commands here, without dev tools
 FROM amazonlinux:2 as dist-base
 RUN amazon-linux-extras install epel -y
 
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild
-
-# Do a test install and verify
-# Can be skipped with skiptests=1 in the environment
-# @EXEC [ "$skiptests" = "" ] && include Dockerfile.rpmtest

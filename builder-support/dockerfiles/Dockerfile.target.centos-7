@@ -9,7 +9,4 @@ RUN yum install -y epel-release centos-release-scl
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild
 
-# Do a test install and verify
-# Can be skipped with skiptests=1 in the environment
-#@EXEC [ "$skiptests" = "" ] && include Dockerfile.rpmtest
 

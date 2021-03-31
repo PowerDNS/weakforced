@@ -56,6 +56,20 @@ jobs:
       - BUILDER=./builder/build.sh
       - BUILDER_TARGET=centos-7
       - WFORCE_IMAGE=
+  - stage: "build"
+    name: "Package Centos-8"
+    env:
+      - COMPILER=none
+      - BUILDER=./builder/build.sh
+      - BUILDER_TARGET=centos-8
+      - WFORCE_IMAGE=
+  - stage: "build"
+    name: "Package Amazon Linux 2"
+    env:
+      - COMPILER=none
+      - BUILDER=./builder/build.sh
+      - BUILDER_TARGET=amazon-2
+      - WFORCE_IMAGE=
   - name: "Package Debian-stretch"
     env:
       - COMPILER=none

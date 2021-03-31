@@ -92,7 +92,6 @@ jobs:
       - cd ..
       - bash docker_push.sh
       - cd ..
-      - ./trigger_policy_build.sh
 stages:
   - build
   - test

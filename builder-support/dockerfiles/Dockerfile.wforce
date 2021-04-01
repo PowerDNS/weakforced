@@ -39,7 +39,7 @@ mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off 
 -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && make install && make package_source
 RUN cd prometheus-cpp/_build && cp prometheus-cpp*Source.tar.gz /sdist/
 
-ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE trigger_policy_build.sh /wforce/
+ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 @EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert report_api docker elk)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /wforce/$d/" ; done
 ADD builder/helpers/set-configure-ac-version.sh /wforce/builder/helpers/

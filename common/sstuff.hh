@@ -209,13 +209,11 @@ public:
         if(fcntl(d_socket, F_SETFL, arg) < 0) {
           throw NetworkError(strerror(errno));
         }
-        if (poll_ret <=0) {
+        if (poll_ret < 0) {
           throw NetworkError(strerror(saved_errno));
         }
-        else {
-          if (!(pf.revents & POLLWRNORM)) {
-            throw NetworkError("Connection timed out");
-          }
+        else if (poll_ret == 0) {
+          throw NetworkError("Connection timed out");
         }
       }
     }

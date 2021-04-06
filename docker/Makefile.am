@@ -26,13 +26,10 @@ clean_elastic: stop
 	docker volume rm docker_esdata
 	rm $(COMPOSE_TARGET)
 
-clean_geoip:
-	rm -rf logstash/geoip/*
-
 clean_docker:
 	docker-compose down -v
 
-clean: clean_docker clean_geoip
+clean: clean_docker
 
 regression-gcc: build_image start
 	$(DCMP) exec $(REGRESSION_SERVICE) docker/regression/regression.sh gcc g++

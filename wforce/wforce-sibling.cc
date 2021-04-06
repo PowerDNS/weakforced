@@ -240,13 +240,11 @@ std::string siblingHostToAddress(const std::string& host)
     found_addr = true;
     break;
   }
-  if (!found_addr) {
-    if (res0)
-      freeaddrinfo(res0);
-    throw WforceException(std::string("Could not determine IP address for sibling host: ") + host);
-  }
   if (res0)
     freeaddrinfo(res0);
+  if (!found_addr) {
+    throw WforceException(std::string("Could not determine IP address for sibling host: ") + host);
+  }
   return sibling_address;
 }
 

@@ -423,7 +423,7 @@ bool addSiblingWithKey(const std::string& address,
     parseSiblingString(address, ca, proto);
   }
   catch (const WforceException& e) {
-    const std::string errstr = (boost::format("%s [%s]. %s (%s)") % "addSibling() error parsing address/port" %
+    const std::string errstr = (boost::format("%s [%s]. %s (%s)") % "addSiblingWithKey() error parsing address/port" %
                                 address % "Make sure to use IP addresses not hostnames" % e.reason).str();
     errlog(errstr.c_str());
     output_buffer += errstr;

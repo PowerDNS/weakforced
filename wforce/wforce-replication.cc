@@ -99,17 +99,22 @@ void replicateOperation(const ReplicationOperation& rep_op)
 {
   auto siblings = g_siblings.getLocal();
   string msg = rep_op.serialize();
-  string packet;
+  string default_packet, sibling_packet;
 
-  encryptMsg(msg, packet);
+  encryptMsg(msg, default_packet);
 
   for(auto& s : *siblings) {
+    bool use_sibling_packet = false;
     if (s->d_has_key) {
       if (s->d_key != g_key) {
-        encryptMsgWithKey(msg, packet, s->d_key, s->d_nonce, s->mutx);
+        encryptMsgWithKey(msg, sibling_packet, s->d_key, s->d_nonce, s->mutx);
+        use_sibling_packet = true;
       }
     }
-    s->queueMsg(packet);
+    if (use_sibling_packet)
+      s->queueMsg(sibling_packet);
+    else
+      s->queueMsg(default_packet);
   }
 }
 

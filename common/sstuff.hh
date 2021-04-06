@@ -198,7 +198,7 @@ public:
         throw NetworkError(strerror(errno));
       }
       else {
-        struct pollfd pf = { d_socket, POLLWRNORM, 0 };
+        struct pollfd pf = { d_socket, POLLOUT, 0 };
         int poll_ret;
         poll_ret = poll(&pf, 1, timeout);
         int saved_errno = errno;

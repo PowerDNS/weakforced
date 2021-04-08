@@ -165,7 +165,7 @@ void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -215,7 +215,7 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -268,7 +268,7 @@ void parseAddSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, cons
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -332,7 +332,7 @@ void parseRemoveSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, c
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -376,7 +376,7 @@ void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -439,7 +439,7 @@ void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp,
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -579,7 +579,7 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   string err;
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -662,7 +662,7 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   string err;
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -823,7 +823,7 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -1142,7 +1142,7 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
   string err;
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();
@@ -1277,7 +1277,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
 
   msg = Json::parse(req.body, err);
   if (msg.is_null()) {
-    resp.status = 500;
+    resp.status = 400;
     std::stringstream ss;
     ss << "{\"success\":\"failure\", \"reason\":\"" << err << "\"}";
     resp.body = ss.str();

@@ -35,7 +35,6 @@ BuildRequires: readline-devel
 BuildRequires: gcc-c++
 BuildRequires: lua-devel
 BuildRequires: libidn-devel
-BuildRequires: libuv-devel
 BuildRequires: GeoIP-devel
 BuildRequires: libmaxminddb-devel
 BuildRequires: boost-devel 
@@ -52,7 +51,6 @@ BuildRequires: luajit-devel
 BuildRequires: hiredis
 BuildRequires: hiredis-devel
 BuildRequires: openssl-devel
-BuildRequires: yaml-cpp-devel
 BuildRequires: boost-regex
 BuildRequires: wget
 BuildRequires: boost-system
@@ -65,9 +63,15 @@ Requires(postun): systemd
 Requires: initscripts
 Requires(postun): /sbin/service
 %endif
-%if %{?centos} == 7 || %{?rhel} == 7
+%if 0%{?centos} == 7 || 0%{?rhel} == 7
+%if 0%{?amzn} != 2
 BuildRequires: devtoolset-7-gcc-c++
-%define scl devtoolset-7
+%define scl scl enable devtoolset-7
+%else
+%define scl bash
+%endif
+%else
+%define scl bash
 %endif
 AutoReqProv: yes
 
@@ -103,7 +107,7 @@ Requires: python%{python3_pkgversion}-pip
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
 %build
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl: %{scl} - << \EOF}
 %configure                       \
     --disable-dependency-tracking \
     --docdir=%{_docdir}/%{name}-%{getenv:BUILDER_VERSION} \
@@ -111,7 +115,7 @@ Requires: python%{python3_pkgversion}-pip
     --enable-trackalert
 %{?scl:EOF}
 
-%{?scl:scl enable %{scl} - << \EOF}
+%{?scl: %{scl} - << \EOF}
 make %{?_smp_mflags}
 %{?scl:EOF}
 

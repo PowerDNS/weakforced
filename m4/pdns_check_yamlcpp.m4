@@ -72,10 +72,10 @@ AC_DEFUN([PDNS_CHECK_YAMLCPP], [
     if ! $found; then
         YAMLCPP_INCLUDES=
         for yamlcppdir in $yamlcppdirs; do
-            AC_MSG_CHECKING([for yaml-cpp/yaml.h in $ssldir])
-            if test -f "$ssldir/include/yaml-cpp/yaml.h"; then
-                YAMLCPP_INCLUDES="-I$ssldir/include"
-                YAMLCPP_LDFLAGS="-L$ssldir/lib"
+            AC_MSG_CHECKING([for yaml-cpp/yaml.h in $yamlcppdir])
+            if test -f "$yamlcppdir/include/yaml-cpp/yaml.h"; then
+                YAMLCPP_INCLUDES="-I$yamlcppdir/include"
+                YAMLCPP_LDFLAGS="-L$yamlcppdir/lib"
                 YAMLCPP_LIBS="-lyaml-cpp"
                 found=true
                 AC_MSG_RESULT([yes])

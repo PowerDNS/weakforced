@@ -174,7 +174,33 @@ class ApiTestCase(unittest.TestCase):
             self.docker_image_url("/?command=report"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
-    
+
+    def addSibling(self, host, port, protocol, key):
+        payload = dict()
+        payload['sibling_host'] = host
+        payload['sibling_port'] = port
+        payload['sibling_proto'] = protocol
+        payload['encryption_key'] = key
+        return self.session.post(
+            self.url("/?command=addSibling"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def removeSibling(self, host, port):
+        payload = dict()
+        payload['sibling_host'] = host
+        payload['sibling_port'] = port
+        return self.session.post(
+            self.url("/?command=removeSibling"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def setSiblings(self, payload):
+        return self.session.post(
+            self.url("/?command=setSiblings"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def resetFunc(self, login, ip):
         return self.resetFuncInternal(login, ip, False)
 

@@ -564,12 +564,14 @@ void dumpEntriesThread(const ComboAddress& ca, std::unique_lock<std::mutex> lock
   }
 }
 
-unsigned int dumpDBToNetwork(const ComboAddress& ca)
+unsigned int dumpDBToNetwork(const ComboAddress& ca, const std::string& encryption_key)
 {
   Socket rep_sock(ca.sin4.sin_family, SOCK_STREAM, 0); // This will be automatically closed when the function ends
   rep_sock.connect(ca);
   unsigned num_synced = 0;
-  
+  SodiumNonce nonce;
+  std::mutex mutex;
+
   // loop through the DBs
   std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
   {
@@ -590,7 +592,7 @@ unsigned int dumpDBToNetwork(const ComboAddress& ca)
             ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
             string msg = rep_op.serialize();
             string packet;
-            encryptMsg(msg, packet);
+            encryptMsgWithKey(msg, packet, encryption_key, nonce, mutex);
             uint16_t nsize = htons(packet.length());
             rep_sock.writen(std::string((char*)&nsize, sizeof(nsize)));
             rep_sock.writen(packet);
@@ -610,7 +612,7 @@ unsigned int dumpDBToNetwork(const ComboAddress& ca)
 }
 
 void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
-                  const std::string& callback_pw)
+                  const std::string& callback_pw, const std::string& encryption_key)
 {
   unsigned int num_synced = 0;
   
@@ -618,7 +620,7 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
             ca.toStringWithPort(), callback_url);
 
   try {
-    num_synced = dumpDBToNetwork(ca);
+    num_synced = dumpDBToNetwork(ca, encryption_key);
     infolog("Synchronizing DBs to: %s was completed. Synced %d entries.", ca.toStringWithPort(), num_synced);
   }
   catch (NetworkError& e) {
@@ -673,19 +675,20 @@ void checkSyncHosts()
 {
   bool found_sync_host = false;
   for (auto i : g_sync_data.sync_hosts) {
-    std::string sync_host = i.first.toStringWithPort();
+    std::string sync_host = i.first;
     std::string password = i.second;
-    std::string stats_url = "http://" + sync_host + "/?command=stats";
+    std::string stats_url = sync_host + "/?command=stats";
     unsigned int uptime = checkHostUptime(stats_url, password);
     if (uptime > g_sync_data.min_sync_host_uptime) {
       // we have a winner, maybe
       std::string err;
-      std::string sync_url = "http://" + sync_host + "/?command=syncDBs";
-      std::string callback_url = "http://" + g_sync_data.webserver_listen_addr.toStringWithPort() + "/?command=syncDone";
+      std::string sync_url = sync_host + "/?command=syncDBs";
+      std::string callback_url = g_sync_data.webserver_listen_addr + "/?command=syncDone";
       Json post_json = Json::object{{"replication_host", g_sync_data.sibling_listen_addr.toString()},
                                     {"replication_port", ntohs(g_sync_data.sibling_listen_addr.sin4.sin_port)},
                                     {"callback_url", callback_url},
-                                    {"callback_auth_pw", g_sync_data.webserver_password}};
+                                    {"callback_auth_pw", g_sync_data.webserver_password},
+                                    {"encryption_key", g_key}};
       Json msg = callWforcePostURL(sync_url, password, post_json.dump(), err);
       if (!msg.is_null()) {
         if (!msg["status"].is_null()) {

@@ -54,7 +54,7 @@ struct SiblingQueueItem {
 static std::mutex g_sibling_queue_mutex;
 static std::queue<SiblingQueueItem> g_sibling_queue;
 static std::condition_variable g_sibling_queue_cv;
-size_t max_sibling_queue_size = 5000;
+static size_t max_sibling_queue_size = 5000;
 
 GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
 unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
@@ -66,6 +66,13 @@ void encryptMsg(const std::string& msg, std::string& packet)
     std::lock_guard<std::mutex> lock(sod_mutx);
     packet=g_sodnonce.toString();
     packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+}
+
+void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  packet=nonce.toString();
+  packet+=sodEncryptSym(msg, key, nonce);
 }
 
 bool decryptMsg(const char* buf, size_t len, std::string& msg)
@@ -92,12 +99,22 @@ void replicateOperation(const ReplicationOperation& rep_op)
 {
   auto siblings = g_siblings.getLocal();
   string msg = rep_op.serialize();
-  string packet;
+  string default_packet, sibling_packet;
 
-  encryptMsg(msg, packet);
+  encryptMsg(msg, default_packet);
 
   for(auto& s : *siblings) {
-    s->queueMsg(packet);
+    bool use_sibling_packet = false;
+    if (s->d_has_key) {
+      if (s->d_key != g_key) {
+        encryptMsgWithKey(msg, sibling_packet, s->d_key, s->d_nonce, s->mutx);
+        use_sibling_packet = true;
+      }
+    }
+    if (use_sibling_packet)
+      s->queueMsg(sibling_packet);
+    else
+      s->queueMsg(default_packet);
   }
 }
 
@@ -170,7 +187,7 @@ void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& rem
   {
     std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
     if (g_sibling_queue.size() >= max_sibling_queue_size) {
-      errlog("parseReceivedReplicationMsg: max sibling queue size (%d) reached - dropping replication msg", max_sibling_queue_size);
+      errlog("parseReceivedReplicationMsg: max sibling recv queue size (%d) reached - dropping replication msg", max_sibling_queue_size);
       return;
     }
     else {
@@ -291,7 +308,7 @@ void receiveReplicationOperations(const ComboAddress& local)
   }
 }
 
-void setMaxSiblingQueueSize(size_t size)
+void setMaxSiblingRecvQueueSize(size_t size)
 {
   max_sibling_queue_size = size;
 }

@@ -61,33 +61,63 @@ cannot be called inside the allow/report/reset functions:
 
         addCustomStat("custom_stat1")
 
-* setSiblings(\<list of IP[:port[:protocol]]\>) - Set the list of siblings to which
+* setSiblings(\<list of IP/Host[:port[:protocol]]\>) - Set the list of siblings to which
   stats db and blacklist/whitelist data should be replicated. If port
   is not specified it defaults to 4001.  If protocol is not specified
-  it defaults to udp. For example:
+  it defaults to udp. This function is safe to call while wforce is running. For example:
   
-		setSiblings({"127.0.1.2", "127.0.1.3:4004", "127.0.2.23:4004:tcp"})
+		setSiblings({"127.0.1.2", "sibling1.example.com:4004", "[::1]:4004:tcp"})
 
-* addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
-  stats db and blacklist/whitelist data should be replicated.  If port
+* setSiblingsWithKey(\<list of {IP/Host[:port[:protocol]], Encryption Key\>) - Identical
+  to setSiblings() except that it allows an encryption key to be specified for
+  each sibling. For example:
+
+  	setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
+
+* addSibling(\<IP/Hostname[:port[:protocol]]\>) - Add a sibling to the list to which all
+  stats db and blacklist/whitelist data should be replicated. Use [] to enclose
+  IPv6 addresses. If port is not specified it defaults to 4001. If protocol is not specified
+  it defaults to udp. This function is safe to call while wforce is running. For example:
+
+        addSibling("192.168.1.23")
+        addSibling("192.168.1.23:4001:udp")
+        addSibling("192.168.1.23:4003:tcp")
+        addSibling("[::1]:4003:tcp")
+        addSibling("sibling1.example.com")
+
+* addSiblingWithKey(\<IP[:port[:protocol]]\>, \<Encryption Key\>) - Identical 
+  to addSibling(), except that an encryption key is specified to enable per-sibling
+  encryption.For example:
+
+  	addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+
+* removeSibling(\<IP/Host[:port[:protocol]]\>) - Remove a sibling to the list to which all
+  stats db and blacklist/whitelist data should be replicated.  Use [] to enclose
+  IPv6 addresses. If port
   is not specified it defaults to 4001. If protocol is not specified
-  it defaults to udp. For example:
-  
-		addSibling("192.168.1.23")
-		addSibling("192.168.1.23:4001:udp")
-		addSibling("192.168.1.23:4003:tcp")
+  it defaults to udp. This function is safe to call while wforce is running. For example:
+
+  	removeSibling("192.168.1.23")
+  	removeSibling("sibling1.example.com:4001:udp")
+  	removeSibling("[::1]:4003:tcp")
 
 * siblingListener(\<IP[:port]\>) - Listen for reports from siblings on
   the specified IP address and port.  If port is not specified
   it defaults to 4001. Wforce will always listen on both UDP and TCP
   ports. For example:
   
-		siblingListener("0.0.0.0:4001")
+        siblingListener("0.0.0.0:4001")
+        siblingListener("[::1]:4001")
+
+* setSiblingConnectTimeout(\<timeout ms\>) - Sets a timeout in milliseconds 
+  for new connections to siblings. Defaults to 5000 ms (5 seconds). For example:
+
+        setSiblingConnectTimeout(1000)
 
 * setMaxSiblingQueueSize(\<size\>) - Sets the maximum size of the
-  queue for replication events waiting to be processed. Defaults
-  to 5000. This is only to handle short-term spikes in load/latency -
-  if error messages relating to the queue max size being reached are
+  send and receive queues for replication events waiting to be processed.
+  Defaults to 5000. This is only to handle short-term spikes in load/latency -
+  if error messages relating to the recv queue max size being reached are
   seen, then you should consider using sharded string stats dbs
   (newShardedStringStatsDB), and/or tuning the stats db expiry sleep
   time (twSetExpireSleep).
@@ -464,7 +494,10 @@ cannot be called inside the allow/report/reset functions:
   configured in siblingListener() and defaults to 4001), and when it
   is finished it will notify this instance of wforce using the
   callback address (this address should have the same port as
-  configured in webserver and defaults to 8084). For
+  configured in webserver and defaults to 8084). N.B. It should be noted
+  that the encryption key of the local instance is sent to the sync host,
+  so to protect the confidentiality of the key, you may want to consider
+  running an HTTPS reverse proxy in front of the sync host. For
   example:
 
         -- Add 10.2.3.1:8084 as a sync host,
@@ -472,6 +505,12 @@ cannot be called inside the allow/report/reset functions:
         -- Send the DB dump to 10.2.1.1:4001
         -- and let me know on 10.2.1.1:8084 when the dump is finished
         addSyncHost("10.2.3.1:8084", "super", "10.2.1.1:4001", "10.2.1.1:8084") 
+        -- Add https://10.2.3.1:8084 as a sync host,
+        -- and use the password "super"
+        -- Send the DB dump to https://10.2.1.1:4001
+        -- Note this config requires HTTPS reverse proxies in front of both
+        -- wforce instances
+        addSyncHost("https://10.2.3.1:8084", "super", "10.2.1.1:4001", "https://10.2.1.1:8084") 
 
 * setMinSyncHostUptime(\<seconds\>) - The minimum time that any sync
   host must have been up for it to be able to send me the contents of

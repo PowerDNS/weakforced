@@ -55,7 +55,7 @@ template<typename T>
 class LocalStateHolder
 {
 public:
-  explicit LocalStateHolder(GlobalStateHolder<T>* source) : d_source(source)
+  explicit LocalStateHolder(const GlobalStateHolder<T>* source) : d_source(source)
   {}
 
   const T* operator->()  // fast const-only access, but see "read-only" above
@@ -88,7 +88,7 @@ class GlobalStateHolder
 public:
   GlobalStateHolder() : d_state(std::make_shared<T>())
   {}
-  LocalStateHolder<T> getLocal()
+  LocalStateHolder<T> getLocal() const
   {
     return LocalStateHolder<T>(this);
   }

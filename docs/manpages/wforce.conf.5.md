@@ -2,6 +2,8 @@
 % Open-Xchange
 % 2018
 
+<!-- {% raw %} -->
+
 # NAME
 **wforce.conf** - configuration file for wforce daemon
 
@@ -72,7 +74,7 @@ cannot be called inside the allow/report/reset functions:
   to setSiblings() except that it allows an encryption key to be specified for
   each sibling. For example:
 
-  	setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
+  	    setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
 
 * addSibling(\<IP/Hostname[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated. Use [] to enclose
@@ -89,7 +91,7 @@ cannot be called inside the allow/report/reset functions:
   to addSibling(), except that an encryption key is specified to enable per-sibling
   encryption.For example:
 
-  	addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+  	    addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 
 * removeSibling(\<IP/Host[:port[:protocol]]\>) - Remove a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated.  Use [] to enclose
@@ -97,9 +99,9 @@ cannot be called inside the allow/report/reset functions:
   is not specified it defaults to 4001. If protocol is not specified
   it defaults to udp. This function is safe to call while wforce is running. For example:
 
-  	removeSibling("192.168.1.23")
-  	removeSibling("sibling1.example.com:4001:udp")
-  	removeSibling("[::1]:4003:tcp")
+        removeSibling("192.168.1.23")
+        removeSibling("sibling1.example.com:4001:udp")
+        removeSibling("[::1]:4003:tcp")
 
 * siblingListener(\<IP[:port]\>) - Listen for reports from siblings on
   the specified IP address and port.  If port is not specified
@@ -1080,3 +1082,5 @@ a Netmask. For example:
 
 # SEE ALSO
 wforce(1) wforce_webhook(5)
+
+<!-- {% endraw %} -->

@@ -17,7 +17,7 @@ The wforce daemon is the main point of integration with authentication systems, 
 * [Wforce Daemon](manpages/wforce.1.md)
 * [Wforce Config File](manpages/wforce.conf.5.md)
 * [Wforce Webhook Configuration](manpages/wforce_webhook.5.md)
-* [REST API](https://documentation.open-xchange.com/components/weakforce-core/2.0.0/)
+* [REST API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/PowerDNS/weakforced/master/docs/swagger/wforce_api.7.yml)
 
 ## Main Features
 

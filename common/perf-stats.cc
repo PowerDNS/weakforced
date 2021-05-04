@@ -227,7 +227,7 @@ Json perfStatsToJson()
 Json commandStatsToJson()
 {
   Json::object jattrs;
-  for (const auto i : command_stats) {
+  for (const auto& i : command_stats) {
     jattrs.insert(std::make_pair(i, getCommandStat(i)));
   }
   return jattrs;
@@ -236,7 +236,7 @@ Json commandStatsToJson()
 Json customStatsToJson()
 {
   Json::object jattrs;
-  for (const auto i : custom_stats) {
+  for (const auto& i : custom_stats) {
     jattrs.insert(std::make_pair(i, getCustomStat(i)));
   }
   return jattrs;

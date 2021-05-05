@@ -107,9 +107,9 @@ bool DeviceCache::readFromCache(const std::string& device_id, std::map<std::stri
   return false;
 }
 
-void DeviceCache::addToCache(const std::string& device_id, const std::map<std::string, std::string> device_attrs)
+void DeviceCache::addToCache(const std::string& device_id, std::map<std::string, std::string>&& device_attrs)
 {
   WriteLock wl(&d_rwlock);
 
-  d_devicemap.emplace(std::make_pair(device_id, std::move(device_attrs)));
+  d_devicemap.emplace(device_id, std::move(device_attrs));
 }

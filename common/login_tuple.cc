@@ -148,7 +148,7 @@ void LoginTuple::setDeviceAttrs(const json11::Json& msg, const std::shared_ptr<U
       device_attrs.insert(std::make_pair("app.minor", oxmad.app.minor));
       device_attrs.insert(std::make_pair("device.family", oxmad.device.family));
     }
-    dcache.addToCache(my_device_id, device_attrs);
+    dcache.addToCache(my_device_id, std::move(device_attrs));
   }
 }
 

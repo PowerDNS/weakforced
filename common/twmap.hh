@@ -707,7 +707,6 @@ template <typename Fn>
 bool TWStatsDB<T>::_find_create_key_field(const T& key, const std::string& field_name,
 					  Fn fn, bool create)
 {
-  TWStatsBuf myrv;
   bool retval = false;
 
   // first check if the field name is in the field map - if not we throw the query out straight away

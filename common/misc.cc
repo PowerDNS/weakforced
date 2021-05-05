@@ -567,8 +567,7 @@ int makeIPv6sockaddr(const std::string& addr, struct sockaddr_in6* ret)
     hints.ai_family = AF_INET6;
     hints.ai_flags = AI_NUMERICHOST;
     
-    int error;
-    if((error=getaddrinfo(ourAddr.c_str(), 0, &hints, &res))) { // this is correct
+    if (getaddrinfo(ourAddr.c_str(), 0, &hints, &res)) { // this is correct
       return -1;
     }
   

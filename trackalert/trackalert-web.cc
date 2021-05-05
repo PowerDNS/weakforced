@@ -157,7 +157,6 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }
   else {
     CustomFuncArgs cfa;
-    bool status = false;
     
     try {
       cfa.setAttrs(msg);
@@ -173,7 +172,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       {
 	cr=g_luamultip->custom_func(command, cfa);
       }
-      status = std::get<customRetStatus>(cr);
+      bool status = std::get<customRetStatus>(cr);
       KeyValVector ret_attrs = std::get<customRetAttrs>(cr);
       Json::object jattrs;
       for (auto& i : ret_attrs) {

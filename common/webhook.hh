@@ -107,8 +107,8 @@ public:
   const WHEvents& addEvent(const std::string& event_name)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    bool duplicate = false;
     if (validEventName(event_name)) {
+      bool duplicate = false;
       for (auto& i : events) {
 	if (i.compare(event_name) == 0) {
 	  duplicate = true;

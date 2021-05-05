@@ -139,7 +139,6 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     string line;
     string request;
     YaHTTP::Request req;
-    bool keepalive = false;
     bool closeConnection=true;
     bool validRequest = true;
     bool eof = false;
@@ -155,9 +154,9 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     yarl.initialize(&req);
     int timeout = 5; // XXX make this configurable
     wfc->s.setNonBlocking();
-    bool complete=false;
     try {
-      while(!complete) {
+      bool complete = false;
+      while (!complete) {
         int bytes;
         char buf[1024];
         bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
@@ -186,6 +185,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     }
 
     if (validRequest) {
+      bool keepalive = false;
       vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
       string conn_header = req.headers["Connection"];

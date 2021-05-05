@@ -55,9 +55,8 @@ int writen2(int fd, const void *buf, size_t count)
   const char *ptr = (char*)buf;
   const char *eptr = ptr + count;
   
-  int res;
   while(ptr != eptr) {
-    res = ::write(fd, ptr, eptr - ptr);
+    int res = ::write(fd, ptr, eptr - ptr);
     if(res < 0) {
       if (errno == EAGAIN)
         throw std::runtime_error("used writen2 on non-blocking socket, got EAGAIN");
@@ -76,9 +75,8 @@ int writen2(int fd, const void *buf, size_t count)
 int readn2(int fd, void* buffer, unsigned int len)
 {
   unsigned int pos=0;
-  int res;
   for(;;) {
-    res = read(fd, (char*)buffer + pos, len - pos);
+    int res = read(fd, (char*)buffer + pos, len - pos);
     if(res == 0) 
       throw runtime_error("EOF while writing message");
     if(res < 0) {

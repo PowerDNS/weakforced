@@ -1,3 +1,5 @@
+#pragma once
+
 namespace YaHTTP {
   /*! Implements a single cookie */
   class Cookie {
@@ -66,7 +68,11 @@ namespace YaHTTP {
     CookieJar(const CookieJar & rhs) {
       this->cookies = rhs.cookies;
     } //<! copy cookies from another cookie jar
-  
+
+    CookieJar& operator=(const CookieJar& rhs) {
+      this->cookies = rhs.cookies;
+      return *this;
+    }
     void clear() {
       this->cookies.clear();
     }

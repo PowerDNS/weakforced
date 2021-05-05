@@ -2,6 +2,9 @@
 
 namespace YaHTTP {
 
+  template class AsyncLoader<Request>;
+  template class AsyncLoader<Response>;
+
   bool isspace(char c) {
     return std::isspace(c) != 0;
   }
@@ -101,10 +104,11 @@ namespace YaHTTP {
           break;
         }
         // split headers
-        if ((pos1 = line.find(": ")) == std::string::npos)
+        if ((pos1 = line.find(":")) == std::string::npos) {
           throw ParseError("Malformed header line");
+        }
         key = line.substr(0, pos1);
-        value = line.substr(pos1+2);
+        value = line.substr(pos1 + 1);
         for(std::string::iterator it=key.begin(); it != key.end(); it++)
           if (YaHTTP::isspace(*it))
             throw ParseError("Header key contains whitespace which is not allowed by RFC");
@@ -169,7 +173,9 @@ namespace YaHTTP {
           buffer.copy(buf, pos);
           buf[pos]=0; // just in case...
           buffer.erase(buffer.begin(), buffer.begin()+pos+1); // remove line from buffer
-          sscanf(buf, "%x", &chunk_size);
+          if (sscanf(buf, "%x", &chunk_size) != 1) {
+            throw ParseError("Unable to parse chunk size");
+          }
           if (chunk_size == 0) { state = 3; break; } // last chunk
         } else {
           int crlf=1;
@@ -262,7 +268,7 @@ namespace YaHTTP {
             os << "; ";
           os << Utility::encodeURL(i->second.name) << "=" << Utility::encodeURL(i->second.value);
         }
-     } else if (kind == YAHTTP_TYPE_REQUEST) {
+     } else if (kind == YAHTTP_TYPE_RESPONSE) {
         for(strcookie_map_t::const_iterator i = jar.cookies.begin(); i != jar.cookies.end(); i++) {
           os << "Set-Cookie: ";
           os << i->second.str() << "\r\n";

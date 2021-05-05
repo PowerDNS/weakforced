@@ -28,10 +28,10 @@ using std::string;
 class WforceException
 {
 public:
-  WforceException(){reason="Unspecified";};
-  WforceException(string r){reason=r;};
+  WforceException() {};
+  WforceException(const string& r): reason(r) {};
   
-  string reason; //! Print this to tell the user what went wrong
+  string reason{"Unspecified"}; //! Print this to tell the user what went wrong
 };
 
 // This means we can use PDNS classes that emit PDNSException

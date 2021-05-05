@@ -272,11 +272,9 @@ typedef std::vector<std::pair<std::time_t, std::stringstream>> TWStatsBufSerial;
 class TWStatsEntry
 {
 public:
-  TWStatsEntry(int nw, int ws, std::time_t st, const std::string field_type) {
-    num_windows = nw;
-    start_time = st;
-    window_size = ws;
-    last_cleaned = 0;
+  TWStatsEntry(int nw, int ws, std::time_t st, const std::string& field_type) :
+    num_windows(nw), window_size(ws), start_time(st)
+  {
     auto& field_types = TWStatsTypeMap::getInstance();
     
     auto it = field_types.type_map.find(field_type);
@@ -459,7 +457,7 @@ private:
   int num_windows;
   int window_size;
   std::time_t start_time;
-  std::time_t last_cleaned;
+  std::time_t last_cleaned{0};
   bool sum_cache_valid = false;
   int sum_cache_value = 0;
   bool ssum_cache_valid = false;

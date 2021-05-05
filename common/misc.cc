@@ -282,9 +282,9 @@ DTime::DTime()
 //  set(); // saves lots of gettimeofday calls
 }
 
-DTime::DTime(const DTime &dt)
+DTime::DTime(const DTime &dt) :
+  d_set(dt.d_set)
 {
-  d_set=dt.d_set;
 }
 
 time_t DTime::time()

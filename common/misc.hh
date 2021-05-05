@@ -409,7 +409,7 @@ struct CIStringComparePOSIX
       while(a!=lhs.end()) {
           if (b==rhs.end() || std::tolower(*b,loc)<std::tolower(*a,loc)) return false;
           else if (std::tolower(*a,loc)<std::tolower(*b,loc)) return true;
-          a++;b++;
+          ++a;++b;
       }
       return (b!=rhs.end());
    }

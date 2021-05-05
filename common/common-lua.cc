@@ -363,7 +363,7 @@ void setupCommonLua(bool client,
   }
   
   if (!multi_lua) {
-    c_lua.writeFunction("testCrypto", [](string testmsg)
+    c_lua.writeFunction("testCrypto", [](const std::string& testmsg)
 			{
 			  try {
 			    SodiumNonce sn, sn2;
@@ -389,7 +389,7 @@ void setupCommonLua(bool client,
 			  }});
   }
   else {
-    c_lua.writeFunction("testCrypto", [](string testmsg) {});
+    c_lua.writeFunction("testCrypto", [](const string& testmsg) {});
   }
 
 #ifdef HAVE_GEOIP

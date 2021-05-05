@@ -172,7 +172,7 @@ try
   sock.setKeepAlive();
   
   for(;;) {
-    uint16_t len;
+    uint16_t len{0};
     if(!getMsgLen(fd, &len))
       break;
     char msg[len];
@@ -293,7 +293,7 @@ void doClient(ComboAddress server, const std::string& command)
     string msg=sodEncryptSym(command, g_key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
-    uint16_t len;
+    uint16_t len{0};
     getMsgLen(fd, &len);
     char resp[len];
     readn2(fd, resp, len);
@@ -335,7 +335,7 @@ void doClient(ComboAddress server, const std::string& command)
     string msg=sodEncryptSym(line, g_key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
-    uint16_t len;
+    uint16_t len{0};
     getMsgLen(fd, &len);
     char resp[len];
     readn2(fd, resp, len);

@@ -76,7 +76,7 @@ public:
 class DeviceCache {
 public:
   bool readFromCache(const std::string&, std::map<std::string, std::string>&) const;
-  void addToCache(const std::string&, std::map<std::string, std::string>&&);
+  void addToCache(const std::string&, const std::map<std::string, std::string>&);
 private:
   mutable pthread_rwlock_t d_rwlock = PTHREAD_RWLOCK_INITIALIZER;
   std::unordered_map<std::string, std::map<std::string, std::string>> d_devicemap;

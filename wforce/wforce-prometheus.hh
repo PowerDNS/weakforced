@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <functional>
 #include "prometheus.hh"
 #include "wforce_exception.hh"
 
@@ -111,7 +112,7 @@ public:
     repl_recv_queue_size->Set(value);
   }
 
-  void setReplRecvQueueRetrieveFunc(int (*func)())
+  void setReplRecvQueueRetrieveFunc(std::function<int()> func)
   {
     repl_queue_func = func;
   }
@@ -150,7 +151,7 @@ private:
   Gauge* wl_entries_login;
   Gauge* wl_entries_iplogin;
   Gauge* repl_recv_queue_size;
-  int (*repl_queue_func)();
+  std::function<int()> repl_queue_func;
 };
 
 void initWforcePrometheusMetrics(std::shared_ptr<WforcePrometheus> wpmp);
@@ -176,4 +177,4 @@ void setPrometheusBLIPLoginEntries(int);
 void setPrometheusWLIPLoginEntries(int);
 
 void setPrometheusReplRecvQueueSize(int value);
-void setPrometheusReplRecvQueueRetrieveFunc(int (*func)());
+void setPrometheusReplRecvQueueRetrieveFunc(std::function<int()> func);

@@ -210,10 +210,9 @@ inline char dns_tolower(char c)
 inline const string toLower(const string &upper)
 {
   string reply(upper);
-  char c;
   for(unsigned int i = 0; i < reply.length(); i++) {
-    c = dns_tolower(upper[i]);
-    if( c != upper[i])
+    char c = dns_tolower(upper[i]);
+    if (c != upper[i])
       reply[i] = c;
   }
   return reply;
@@ -224,10 +223,9 @@ inline const string toLowerCanonic(const string &upper)
   string reply(upper);
   if(!upper.empty()) {
     unsigned int i, limit= ( unsigned int ) reply.length();
-    char c;
     for(i = 0; i < limit ; i++) {
-      c = dns_tolower(upper[i]);
-      if(c != upper[i])
+      char c = dns_tolower(upper[i]);
+      if (c != upper[i])
         reply[i] = c;
     }   
     if(upper[i-1]=='.')
@@ -411,7 +409,7 @@ struct CIStringComparePOSIX
       while(a!=lhs.end()) {
           if (b==rhs.end() || std::tolower(*b,loc)<std::tolower(*a,loc)) return false;
           else if (std::tolower(*a,loc)<std::tolower(*b,loc)) return true;
-          a++;b++;
+          ++a;++b;
       }
       return (b!=rhs.end());
    }

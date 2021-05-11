@@ -347,7 +347,7 @@ void setPrometheusReplRecvQueueSize(int value)
   }
 }
 
-void setPrometheusReplRecvQueueRetrieveFunc(int (* func)())
+void setPrometheusReplRecvQueueRetrieveFunc(std::function<int()> func)
 {
   if (wforce_prom_metrics) {
     wforce_prom_metrics->setReplRecvQueueRetrieveFunc(func);

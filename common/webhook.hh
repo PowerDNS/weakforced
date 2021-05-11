@@ -41,14 +41,12 @@ using WHEventTypes = std::map<std::string, WHEventConfig>;
 
 class WebHook {
 public:
-  WebHook(unsigned int wh_id, const WHEvents& wh_events, bool wh_active,
-	  const WHConfigMap& wh_config_keys) : id(wh_id),  active(wh_active), num_success(0), num_failed(0)  {
+  WebHook(unsigned int wh_id, const WHEvents& wh_events, bool wh_active, const WHConfigMap& wh_config_keys) :
+    id(wh_id), active(wh_active), config_keys(wh_config_keys) {
     addEvents(wh_events);
-    config_keys = wh_config_keys;
   }
-  WebHook(unsigned int wh_id, bool wh_active, const WHConfigMap& wh_config_keys,
-	  const std::string& wh_name) : id(wh_id),  active(wh_active), num_success(0), num_failed(0), name(wh_name)  {
-    config_keys = wh_config_keys;
+  WebHook(unsigned int wh_id, bool wh_active, const WHConfigMap& wh_config_keys, const std::string& wh_name) :
+    id(wh_id), active(wh_active), config_keys(wh_config_keys), name(wh_name)  {
   }
   virtual ~WebHook() {}
   virtual bool operator==(const WebHook& rhs)
@@ -109,8 +107,8 @@ public:
   const WHEvents& addEvent(const std::string& event_name)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    bool duplicate = false;
     if (validEventName(event_name)) {
+      bool duplicate = false;
       for (auto& i : events) {
 	if (i.compare(event_name) == 0) {
 	  duplicate = true;
@@ -279,8 +277,8 @@ protected:
   std::vector<std::string> events;
   bool active;
   WHConfigMap config_keys;
-  mutable std::atomic<unsigned int> num_success;
-  mutable std::atomic<unsigned int> num_failed;
+  mutable std::atomic<unsigned int> num_success{0};
+  mutable std::atomic<unsigned int> num_failed{0};
   mutable std::mutex mutex;
   const WHEventTypes event_names = { { "report", {{ "url" }, {"secret", "basic-auth"}}},
 				     { "allow", {{ "url" }, {"secret", "allow_filter", "basic-auth"}}},

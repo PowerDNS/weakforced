@@ -35,11 +35,9 @@ using namespace prometheus;
 
 class PrometheusMetrics {
 public:
-  PrometheusMetrics(const std::string& prefix) : d_bb{0.001,0.01,0.1,1}, d_prefix(prefix)
+  PrometheusMetrics(const std::string& prefix) : d_registry(wforce::make_unique<Registry>()), d_bb{0.001,0.01,0.1,1}, d_prefix(prefix)
   {
-    d_registry = wforce::make_unique<Registry>();
-    if (d_registry != nullptr){
-      
+    if (d_registry != nullptr) {
       auto& wqd_family = BuildHistogram()
         .Name(d_prefix+"_worker_queue_duration_seconds")
         .Help("How many seconds do worker threads have to wait to run?")

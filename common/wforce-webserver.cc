@@ -139,7 +139,6 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     string line;
     string request;
     YaHTTP::Request req;
-    bool keepalive = false;
     bool closeConnection=true;
     bool validRequest = true;
     bool eof = false;
@@ -155,9 +154,9 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     yarl.initialize(&req);
     int timeout = 5; // XXX make this configurable
     wfc->s.setNonBlocking();
-    bool complete=false;
     try {
-      while(!complete) {
+      bool complete = false;
+      while (!complete) {
         int bytes;
         char buf[1024];
         bytes = wfc->s.readWithTimeout(buf, sizeof(buf), timeout);
@@ -186,6 +185,7 @@ void WforceWebserver::connectionThread(WforceWebserver* wws)
     }
 
     if (validRequest) {
+      bool keepalive = false;
       vinfolog("WforceWebserver: handling request from %s on fd=%d", wfc->remote.toStringWithPort(), wfc->fd);
 
       string conn_header = req.headers["Connection"];
@@ -416,7 +416,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
       warnlog("poll() system call returned error (%d)", errno);
     }
     else {
-      std::lock_guard<std::mutex> lock(wws->d_sock_vec_mutx);
+      std::lock_guard<std::mutex> vlock(wws->d_sock_vec_mutx);
       for (int i=0; i<num_fds; i++) {
 	// set close flag for connections that need closing
 	if (fds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
@@ -425,7 +425,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
 	// process any connections that have activity
 	else if (fds[i].revents & POLLIN) {
           {
-            std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
+            std::lock_guard<std::mutex> qlock(wws->d_queue_mutex);
             // If too many active connections, don't give the worker threads any more work
             // Also don't add the connection to the queue more than once
             if ((wws->d_queue.size() < wws->d_max_conns) &&
@@ -440,7 +440,7 @@ void WforceWebserver::pollThread(WforceWebserver* wws)
       }
       bool queue_empty = true;
       {
-        std::lock_guard<std::mutex> lock(wws->d_queue_mutex);
+        std::lock_guard<std::mutex> qlock(wws->d_queue_mutex);
         if (wws->d_queue.size() > 0)
           queue_empty = false;
         setPrometheusWebQueueSize(wws->d_queue.size());

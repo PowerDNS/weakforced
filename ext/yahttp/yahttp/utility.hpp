@@ -1,6 +1,4 @@
-#ifndef _YAHTTP_UTILITY_HPP
-#define _YAHTTP_UTILITY_HPP 1
-
+#pragma once
 namespace YaHTTP {
   static const char *MONTHS[] = {0,"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec",0}; //<! List of months 
   static const char *DAYS[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat",0}; //<! List of days
@@ -234,9 +232,9 @@ namespace YaHTTP {
            }
 
            if ('0' <= a && a <= '9') a = a - '0';
-           if ('a' <= a && a <= 'f') a = a - 'a' + 0x0a;
+           else if ('a' <= a && a <= 'f') a = a - 'a' + 0x0a;
            if ('0' <= b && b <= '9') b = b - '0';
-           if ('a' <= b && b <= 'f') b = b - 'a' + 0x0a;
+           else if ('a' <= b && b <= 'f') b = b - 'a' + 0x0a;
 
            c = (a<<4)+b;
            result = result.replace(pos1,3,1,c);
@@ -459,4 +457,3 @@ namespace YaHTTP {
    }; //<! camelizes headers, such as, content-type => Content-Type
   };
 };
-#endif

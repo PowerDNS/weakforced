@@ -1,5 +1,4 @@
-#ifndef _YAHTTP_EXCEPTION_HPP 
-#define _YAHTTP_EXCEPTION_HPP 1
+#pragma once
 
 #include <exception>
 
@@ -24,5 +23,3 @@ namespace YaHTTP {
     ParseError(const std::string& reason_): Error(reason_) {};
   };
 };
-
-#endif

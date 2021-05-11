@@ -5,6 +5,7 @@ RUN apt-get update && \
     apt-get -y -f install \
                autoconf \
                automake \
+               build-essential \
                libboost-all-dev \
                libcurl4-openssl-dev \
                libgeoip-dev \

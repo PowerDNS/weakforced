@@ -41,6 +41,7 @@
 #include <boost/multi_index/identity.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include "wforce-sibling.hh"
+#include "wforce-replication.hh"
 
 struct WForceStats
 {
@@ -65,6 +66,7 @@ extern std::mutex g_luamutex;
 extern LuaContext g_lua;
 extern std::string g_outputBuffer; // locking for this is ok, as locked by g_luamutex (functions using g_outputBuffer MUST NOT be enabled for the allow/report lua contexts)
 extern WforceWebserver g_webserver;
+extern WforceReplication g_replication;
 
 extern GlobalStateHolder<NetmaskGroup> g_ACL;
 extern ComboAddress g_sibling_listen;
@@ -103,6 +105,8 @@ struct syncData {
   std::string  webserver_listen_addr;
   std::string  webserver_password;
 };
+
+void replicateOperation(const ReplicationOperation& rep_op);
 
 extern syncData g_sync_data;
 extern bool g_builtin_bl_enabled;

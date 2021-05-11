@@ -189,7 +189,6 @@ ssize_t sendfromto(int sock, const char* data, size_t len, int flags, const Comb
 {
   struct msghdr msgh;
   struct iovec iov;
-  char cbuf[256];
 
   /* Set up iov and msgh structures. */
   memset(&msgh, 0, sizeof(struct msghdr));
@@ -201,6 +200,7 @@ ssize_t sendfromto(int sock, const char* data, size_t len, int flags, const Comb
   msgh.msg_namelen = to.getSocklen();
 
   if(from.sin4.sin_family) {
+    char cbuf[256];
     addCMsgSrcAddr(&msgh, cbuf, &from, 0);
   }
   else {
@@ -309,7 +309,6 @@ template class NetmaskTree<bool>;
 bool sendSizeAndMsgWithTimeout(int sock, uint16_t bufferLen, const char* buffer, int idleTimeout, const ComboAddress* dest, const ComboAddress* local, unsigned int localItf, int totalTimeout, int flags)
 {
   uint16_t size = htons(bufferLen);
-  char cbuf[256];
   struct msghdr msgh;
   struct iovec iov[2];
   int remainingTime = totalTimeout;
@@ -334,6 +333,7 @@ bool sendSizeAndMsgWithTimeout(int sock, uint16_t bufferLen, const char* buffer,
   msgh.msg_flags = 0;
 
   if (localItf != 0 && local) {
+    char cbuf[256];
     addCMsgSrcAddr(&msgh, cbuf, local, localItf);
   }
 

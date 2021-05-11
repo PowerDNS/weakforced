@@ -75,6 +75,7 @@ WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
 syncData g_sync_data;
+WforceReplication g_replication;
 
 struct SiblingQueueItem {
   std::string msg;
@@ -592,7 +593,7 @@ unsigned int dumpDBToNetwork(const ComboAddress& ca, const std::string& encrypti
             ReplicationOperation rep_op(sdb_rop, WforceReplicationMsg_RepType_SDBType);
             string msg = rep_op.serialize();
             string packet;
-            encryptMsgWithKey(msg, packet, encryption_key, nonce, mutex);
+            g_replication.encryptMsgWithKey(msg, packet, encryption_key, nonce, mutex);
             uint16_t nsize = htons(packet.length());
             rep_sock.writen(std::string((char*)&nsize, sizeof(nsize)));
             rep_sock.writen(packet);
@@ -714,6 +715,11 @@ void checkSyncHosts()
   // If we didn't find a sync host we can't warm up
   if (found_sync_host == false)
     g_ping_up = true;
+}
+
+void replicateOperation(const ReplicationOperation& rep_op)
+{
+  g_replication.replicateOperation(rep_op);
 }
 
 AllowReturn defaultAllowTuple(const LoginTuple& lp)
@@ -881,7 +887,6 @@ try
     cerr<<"Unable to initialize crypto library"<<endl;
     exit(EXIT_FAILURE);
   }
-  g_sodnonce.init();
 #endif
   g_cmdLine.config = findDefaultConfigFile();
   g_cmdLine.regexes = findUaRegexFile();
@@ -1077,7 +1082,7 @@ try
   }
 
   // Start the replication worker threads
-  startReplicationWorkerThreads();
+  g_replication.startReplicationWorkerThreads();
 
   // Start the StatsDB expire threads (this must be done after any daemonizing)
   {

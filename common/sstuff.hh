@@ -274,11 +274,10 @@ public:
       return;
 
     int toWrite=(int)data.length();
-    int res;
     const char *ptr=data.c_str();
 
     do {
-      res=::send(d_socket, ptr, toWrite, 0);
+      int res = ::send(d_socket, ptr, toWrite, 0);
       if(res<0) 
         throw NetworkError("Writing to a socket: "+string(strerror(errno)));
       toWrite-=res;
@@ -324,9 +323,8 @@ public:
   {
     unsigned int bytes=n;
     const char *ptr = (char*)buffer;
-    int ret;
     while(bytes) {
-      ret=::write(d_socket, ptr, bytes);
+      int ret = ::write(d_socket, ptr, bytes);
       if(ret < 0) {
         if(errno==EAGAIN) {
           ret=waitForRWData(d_socket, false, timeout, 0);

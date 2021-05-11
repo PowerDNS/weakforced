@@ -120,8 +120,8 @@ bool WFResolver::create_dns_context(getdns_context **context)
     return false;
 
   if (*context && resolver_list) {
-    getdns_return_t r;
-    if ((r = getdns_context_set_upstream_recursive_servers(*context, resolver_list)) == GETDNS_RETURN_GOOD) {
+    getdns_return_t r = getdns_context_set_upstream_recursive_servers(*context, resolver_list);
+    if (r == GETDNS_RETURN_GOOD) {
       return true;
     }
   }

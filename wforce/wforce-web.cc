@@ -298,12 +298,12 @@ void parseAddSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, cons
 
       std::string error_msg;
       if (!has_encryption_key) {
-        if (!addSibling(sibling_host, sibling_port, proto, g_siblings, error_msg)) {
+        if (!addSibling(sibling_host, sibling_port, proto, g_replication.getSiblings(), error_msg)) {
           throw WforceException(error_msg);
         }
       }
       else {
-        if (!addSiblingWithKey(sibling_host, sibling_port, proto, g_siblings, error_msg, encryption_key)) {
+        if (!addSiblingWithKey(sibling_host, sibling_port, proto, g_replication.getSiblings(), error_msg, encryption_key)) {
           throw WforceException(error_msg);
         }
       }
@@ -347,7 +347,7 @@ void parseRemoveSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, c
       int sibling_port = msg["sibling_port"].int_value();
 
       std::string error_msg;
-      if (!removeSibling(sibling_host, sibling_port, g_siblings, error_msg)) {
+      if (!removeSibling(sibling_host, sibling_port, g_replication.getSiblings(), error_msg)) {
         throw WforceException(error_msg);
       }
     }
@@ -411,7 +411,7 @@ void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
         new_siblings.emplace_back(std::pair<int, std::vector<std::pair<int, std::string>>>{0, {{0, createSiblingAddress(sibling_host, sibling_port, proto)}, {1, encryption_key}}});
       }
       std::string error_msg;
-      if (!setSiblingsWithKey(new_siblings, g_siblings, error_msg)) {
+      if (!setSiblingsWithKey(new_siblings, g_replication.getSiblings(), error_msg)) {
         throw WforceException(error_msg);
       }
     }

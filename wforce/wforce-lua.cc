@@ -221,7 +221,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua) {
     c_lua.writeFunction("setMaxSiblingQueueSize", [](unsigned int size) {
-      setMaxSiblingRecvQueueSize(size);
+      g_replication.setMaxSiblingRecvQueueSize(size);
       setMaxSiblingSendQueueSize(static_cast<size_t>(size));
     });
   }
@@ -231,7 +231,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSibling", [](const std::string& address) {
-      (void)addSibling(address, g_siblings, g_outputBuffer);
+      (void)addSibling(address, g_replication.getSiblings(), g_outputBuffer);
     });
   }
   else {
@@ -240,7 +240,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("addSiblingWithKey", [](const std::string& address, const std::string& key) {
-      (void)addSiblingWithKey(address, g_siblings, g_outputBuffer, key);
+      (void)addSiblingWithKey(address, g_replication.getSiblings(), g_outputBuffer, key);
     });
   }
   else {
@@ -249,7 +249,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("removeSibling", [](const std::string& address) {
-      removeSibling(address, g_siblings, g_outputBuffer);
+      removeSibling(address, g_replication.getSiblings(), g_outputBuffer);
     });
   }
   else {
@@ -258,7 +258,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblingsWithKey", [](const vector<std::pair<int, std::vector<std::pair<int, std::string>>>>& parts) {
-      (void)setSiblingsWithKey(parts, g_siblings, g_outputBuffer);
+      (void)setSiblingsWithKey(parts, g_replication.getSiblings(), g_outputBuffer);
     });
   }
   else {
@@ -267,7 +267,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("setSiblings", [](const vector<pair<int, string>>& parts) {
-      (void)setSiblings(parts, g_siblings, g_outputBuffer);
+      (void)setSiblings(parts, g_replication.getSiblings(), g_outputBuffer);
     });
   }
   else {
@@ -297,15 +297,15 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       }
       g_sibling_listen_addr = ca;
       auto launch = [ca]() {
-        auto siblings = g_siblings.getLocal();
+        auto siblings = g_replication.getSiblings().getLocal();
 
         for(auto& s : *siblings) {
           s->checkIgnoreSelf(ca);
         }
 
-        thread t1(receiveReplicationOperations, ca);
+        thread t1([ca]() { g_replication.receiveReplicationOperations(ca); });
         t1.detach();
-        thread t2(receiveReplicationOperationsTCP, ca);
+        thread t2([ca]() { g_replication.receiveReplicationOperationsTCP(ca); });
         t2.detach();
       };
       if(g_launchWork)
@@ -414,7 +414,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   if (!multi_lua) {
     c_lua.writeFunction("siblings", []() {
-      auto siblings = g_siblings.getCopy();
+      auto siblings = g_replication.getSiblings().getCopy();
       boost::format fmt("%-35s %-15d %-14d %-15d %-14d   %s\n");
       g_outputBuffer= (fmt % "Address" % "Send Successes" % "Send Failures" % "Rcv Successes" % "Rcv Failures" % "Note").str();
       for(const auto& s : siblings) {
@@ -457,7 +457,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   if (!multi_lua) {
     c_lua.writeFunction("setNumSiblingThreads", [](int numThreads) {
       // the number of threads used to process sibling reports
-      g_num_sibling_threads = numThreads;
+      g_replication.setNumSiblingThreads(numThreads);
     });
   }
   else {

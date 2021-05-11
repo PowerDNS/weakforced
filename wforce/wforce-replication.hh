@@ -28,18 +28,40 @@
 #include "sodcrypto.hh"
 #include "wforce-sibling.hh"
 
-extern GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
-extern unsigned int g_num_sibling_threads;
-extern SodiumNonce g_sodnonce;
+class WforceReplication {
+public:
+  WforceReplication() {
+    d_sodnonce.init();
+  }
+  virtual ~WforceReplication() = default;
 
-#define WFORCE_NUM_SIBLING_THREADS 2
-
-void receiveReplicationOperationsTCP(const ComboAddress& local);
-void receiveReplicationOperations(const ComboAddress& local);
-void startReplicationWorkerThreads();
-
-void encryptMsg(const std::string& msg, std::string& packet);
-void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex);
-bool decryptMsg(const char* buf, size_t len, std::string& msg);
-
-void setMaxSiblingRecvQueueSize(size_t size);
+  void receiveReplicationOperationsTCP(const ComboAddress& local);
+  void receiveReplicationOperations(const ComboAddress& local);
+  void startReplicationWorkerThreads();
+  void encryptMsg(const std::string& msg, std::string& packet);
+  void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce,
+                         std::mutex& mutex);
+  bool decryptMsg(const char* buf, size_t len, std::string& msg);
+  void setMaxSiblingRecvQueueSize(size_t size);
+  void setNumSiblingThreads(unsigned int num_threads) { d_num_sibling_threads = num_threads; }
+  GlobalStateHolder<vector<shared_ptr<Sibling>>>& getSiblings() { return d_siblings; }
+  void replicateOperation(const ReplicationOperation& rep_op);
+protected:
+  bool checkConnFromSibling(const ComboAddress& remote, shared_ptr<Sibling>& recv_sibling);
+  void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
+  void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
+private:
+  struct SiblingQueueItem {
+    std::string msg;
+    ComboAddress remote;
+    std::shared_ptr<Sibling> recv_sibling;
+  };
+  GlobalStateHolder<vector<shared_ptr<Sibling>>> d_siblings;
+  SodiumNonce d_sodnonce;
+  std::mutex d_sod_mutx;
+  std::mutex d_sibling_queue_mutex;
+  std::queue<SiblingQueueItem> d_sibling_queue;
+  std::condition_variable d_sibling_queue_cv;
+  size_t d_max_sibling_queue_size = 5000;
+  unsigned int d_num_sibling_threads = 2;
+};

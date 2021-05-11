@@ -45,37 +45,21 @@
 using std::atomic;
 using std::thread;
 
-struct SiblingQueueItem {
-  std::string msg;
-  ComboAddress remote;
-  std::shared_ptr<Sibling> recv_sibling;
-};
-
-static std::mutex g_sibling_queue_mutex;
-static std::queue<SiblingQueueItem> g_sibling_queue;
-static std::condition_variable g_sibling_queue_cv;
-static size_t max_sibling_queue_size = 5000;
-
-GlobalStateHolder<vector<shared_ptr<Sibling>>> g_siblings;
-unsigned int g_num_sibling_threads = WFORCE_NUM_SIBLING_THREADS;
-SodiumNonce g_sodnonce;
-std::mutex sod_mutx;
-
-void encryptMsg(const std::string& msg, std::string& packet)
+void WforceReplication::encryptMsg(const std::string& msg, std::string& packet)
 {
-    std::lock_guard<std::mutex> lock(sod_mutx);
-    packet=g_sodnonce.toString();
-    packet+=sodEncryptSym(msg, g_key, g_sodnonce);
+    std::lock_guard<std::mutex> lock(d_sod_mutx);
+    packet=d_sodnonce.toString();
+    packet+=sodEncryptSym(msg, g_key, d_sodnonce);
 }
 
-void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex)
+void WforceReplication::encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex)
 {
   std::lock_guard<std::mutex> lock(mutex);
   packet=nonce.toString();
   packet+=sodEncryptSym(msg, key, nonce);
 }
 
-bool decryptMsg(const char* buf, size_t len, std::string& msg)
+bool WforceReplication::decryptMsg(const char* buf, size_t len, std::string& msg)
 {
   SodiumNonce nonce;
 
@@ -95,9 +79,9 @@ bool decryptMsg(const char* buf, size_t len, std::string& msg)
   return true;
 }
 
-void replicateOperation(const ReplicationOperation& rep_op)
+void WforceReplication::replicateOperation(const ReplicationOperation& rep_op)
 {
-  auto siblings = g_siblings.getLocal();
+  auto siblings = d_siblings.getLocal();
   string msg = rep_op.serialize();
   string default_packet, sibling_packet;
 
@@ -118,10 +102,10 @@ void replicateOperation(const ReplicationOperation& rep_op)
   }
 }
 
-bool checkConnFromSibling(const ComboAddress& remote,
+bool WforceReplication::checkConnFromSibling(const ComboAddress& remote,
                           shared_ptr<Sibling>& recv_sibling)
 {
-  auto siblings = g_siblings.getLocal();
+  auto siblings = d_siblings.getLocal();
 
   for (auto &s : *siblings) {
     if (ComboAddress::addressOnlyEqual()(s->rem, remote) == true) {
@@ -137,15 +121,15 @@ bool checkConnFromSibling(const ComboAddress& remote,
   return true;
 }
 
-void startReplicationWorkerThreads()
+void WforceReplication::startReplicationWorkerThreads()
 {
   // Tell prometheus how to get the recv queue size
-  setPrometheusReplRecvQueueRetrieveFunc([]() -> int {
-      std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
-      return g_sibling_queue.size();
-    });
-  for (size_t i=0; i<g_num_sibling_threads; i++) {
-    std::thread t([]() {
+  setPrometheusReplRecvQueueRetrieveFunc(std::function<int()>([this]() -> int {
+      std::lock_guard<std::mutex> lock(this->d_sibling_queue_mutex);
+      return this->d_sibling_queue.size();
+    }));
+  for (size_t i=0; i<d_num_sibling_threads; i++) {
+    std::thread t([this]() {
         thread_local bool init=false;
         if (!init) {
           setThreadName("wf/repl-worker");
@@ -154,12 +138,12 @@ void startReplicationWorkerThreads()
         while (true) {
           SiblingQueueItem sqi;
           {
-            std::unique_lock<std::mutex> lock(g_sibling_queue_mutex);
-            while (g_sibling_queue.size() == 0) {
-              g_sibling_queue_cv.wait(lock);
+            std::unique_lock<std::mutex> lock(this->d_sibling_queue_mutex);
+            while (this->d_sibling_queue.size() == 0) {
+              this->d_sibling_queue_cv.wait(lock);
             }
-            sqi = std::move(g_sibling_queue.front());
-            g_sibling_queue.pop();
+            sqi = std::move(this->d_sibling_queue.front());
+            this->d_sibling_queue.pop();
           }
           ReplicationOperation rep_op;
           if (rep_op.unserialize(sqi.msg) != false) {
@@ -181,23 +165,23 @@ void startReplicationWorkerThreads()
   }
 }
 
-void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
+void WforceReplication::parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
 {
   SiblingQueueItem sqi = { msg, remote, recv_sibling };
   {
-    std::lock_guard<std::mutex> lock(g_sibling_queue_mutex);
-    if (g_sibling_queue.size() >= max_sibling_queue_size) {
-      errlog("parseReceivedReplicationMsg: max sibling recv queue size (%d) reached - dropping replication msg", max_sibling_queue_size);
+    std::lock_guard<std::mutex> lock(d_sibling_queue_mutex);
+    if (d_sibling_queue.size() >= d_max_sibling_queue_size) {
+      errlog("parseReceivedReplicationMsg: max sibling recv queue size (%d) reached - dropping replication msg", d_max_sibling_queue_size);
       return;
     }
     else {
-      g_sibling_queue.push(sqi);
+      d_sibling_queue.push(sqi);
     }
   }
-  g_sibling_queue_cv.notify_one();
+  d_sibling_queue_cv.notify_one();
 }
 
-void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
+void WforceReplication::parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling)
 {
   setThreadName("wf/repl-tcp");
 
@@ -245,7 +229,7 @@ void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remo
   }
 }
 
-void receiveReplicationOperationsTCP(const ComboAddress& local)
+void WforceReplication::receiveReplicationOperationsTCP(const ComboAddress& local)
 {
   Socket sock(local.sin4.sin_family, SOCK_STREAM, 0);
   ComboAddress remote=local;
@@ -266,7 +250,7 @@ void receiveReplicationOperationsTCP(const ComboAddress& local)
       if (connp->getRemote(remote) && !checkConnFromSibling(remote, recv_sibling)) {
         continue;
       }
-      thread t1(parseTCPReplication, connp, remote, recv_sibling);
+      thread t1([connp, remote, recv_sibling, this]() { this->parseTCPReplication(connp, remote, recv_sibling); });
       t1.detach();
     }
     catch(std::exception& e) {
@@ -275,7 +259,7 @@ void receiveReplicationOperationsTCP(const ComboAddress& local)
   }
 }
 
-void receiveReplicationOperations(const ComboAddress& local)
+void WforceReplication::receiveReplicationOperations(const ComboAddress& local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
   sock.bind(local);
@@ -283,7 +267,7 @@ void receiveReplicationOperations(const ComboAddress& local)
   ComboAddress remote=local;
   socklen_t remlen=remote.getSocklen();
   int len;
-  auto siblings = g_siblings.getLocal();
+  auto siblings = d_siblings.getLocal();
 
   setThreadName("wf/rcv-repl-udp");
   
@@ -308,7 +292,7 @@ void receiveReplicationOperations(const ComboAddress& local)
   }
 }
 
-void setMaxSiblingRecvQueueSize(size_t size)
+void WforceReplication::setMaxSiblingRecvQueueSize(size_t size)
 {
-  max_sibling_queue_size = size;
+  d_max_sibling_queue_size = size;
 }

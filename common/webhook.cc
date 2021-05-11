@@ -173,7 +173,6 @@ void WebHookRunner::_addHook(const std::string& event_name, std::shared_ptr<cons
 {
   // construct the necessary headers
   MiniCurlHeaders mch;
-  std::string error_msg;
 
   mch.insert(std::make_pair("X-Wforce-Event", event_name));
   if (hook->hasConfigKey("content-type")) {

@@ -39,11 +39,8 @@
 
 struct WFConnection
 {
-  WFConnection(int sock, const ComboAddress& ca, const std::string pass) : inConnectionThread{false}, closeConnection{false}, s(sock)
+  WFConnection(int sock, const ComboAddress& ca, const std::string& pass) : inConnectionThread{false}, closeConnection{false}, fd(sock), s(sock), remote(ca), password(pass)
   {
-    fd = sock;
-    remote = ca;
-    password = pass;
     s.setKeepAlive();
   }
   std::atomic<bool> inConnectionThread;
@@ -81,10 +78,7 @@ struct WebserverQueueItem
 
 class WforceWebserver {
 public:
-  WforceWebserver()
-  {	
-    d_content_type = "application/json";
-  }
+  WforceWebserver() {}
   // detect attempts to copy at compile time
   WforceWebserver(const WforceWebserver&) = delete;
   WforceWebserver& operator=(const WforceWebserver&) = delete;
@@ -115,7 +109,7 @@ protected:
 private:
   int d_poll_timeout = 5;
   unsigned int d_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
-  std::string d_content_type;
+  std::string d_content_type{"application/json"};
   std::unordered_map<std::string, WforceWSFunc> d_get_map;
   std::unordered_map<std::string, WforceWSFunc> d_post_map;
   std::unordered_map<std::string, WforceWSFunc> d_put_map;

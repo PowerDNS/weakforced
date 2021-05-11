@@ -55,9 +55,8 @@ int writen2(int fd, const void *buf, size_t count)
   const char *ptr = (char*)buf;
   const char *eptr = ptr + count;
   
-  int res;
   while(ptr != eptr) {
-    res = ::write(fd, ptr, eptr - ptr);
+    int res = ::write(fd, ptr, eptr - ptr);
     if(res < 0) {
       if (errno == EAGAIN)
         throw std::runtime_error("used writen2 on non-blocking socket, got EAGAIN");
@@ -76,9 +75,8 @@ int writen2(int fd, const void *buf, size_t count)
 int readn2(int fd, void* buffer, unsigned int len)
 {
   unsigned int pos=0;
-  int res;
   for(;;) {
-    res = read(fd, (char*)buffer + pos, len - pos);
+    int res = read(fd, (char*)buffer + pos, len - pos);
     if(res == 0) 
       throw runtime_error("EOF while writing message");
     if(res < 0) {
@@ -282,9 +280,9 @@ DTime::DTime()
 //  set(); // saves lots of gettimeofday calls
 }
 
-DTime::DTime(const DTime &dt)
+DTime::DTime(const DTime &dt) :
+  d_set(dt.d_set)
 {
-  d_set=dt.d_set;
 }
 
 time_t DTime::time()
@@ -569,8 +567,7 @@ int makeIPv6sockaddr(const std::string& addr, struct sockaddr_in6* ret)
     hints.ai_family = AF_INET6;
     hints.ai_flags = AI_NUMERICHOST;
     
-    int error;
-    if((error=getaddrinfo(ourAddr.c_str(), 0, &hints, &res))) { // this is correct
+    if (getaddrinfo(ourAddr.c_str(), 0, &hints, &res)) { // this is correct
       return -1;
     }
   

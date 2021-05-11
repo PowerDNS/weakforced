@@ -294,9 +294,9 @@ void setupCommonLua(bool client,
 	boost::format fmt("%-9d %-20.20s %-9d %-9d %-s\n");
 	g_outputBuffer= (fmt % "ID" % "Name" % "Successes" % "Failures" % "URL").str();
 	for(const auto& i : webhooks) {
-	  if (auto is = i.lock())
-	    if (is)
-	      g_outputBuffer += (fmt % is->getID() % is->getName() % is->getSuccess() % is->getFailed() % is->getConfigKey("url")).str();
+	  if (auto is = i.lock()) {
+            g_outputBuffer += (fmt % is->getID() % is->getName() % is->getSuccess() % is->getFailed() % is->getConfigKey("url")).str();
+          }
 	}
       });
   }
@@ -308,12 +308,7 @@ void setupCommonLua(bool client,
     c_lua.writeFunction("runCustomWebHook", [](const std::string& wh_name, const std::string& wh_data) {
 	auto whwp = g_custom_webhook_db.getWebHook(wh_name);
 	if (auto whp = whwp.lock()) {
-	  if (whp) {
-	    g_webhook_runner.runHook(wh_name, whp, wh_data);
-	  }
-	  else {
-	    errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 
-	  }
+          g_webhook_runner.runHook(wh_name, whp, wh_data);
 	} else {
 	  errlog("Attempting to run custom webhook with name %d but no such webhook exists!", wh_name); 	  
 	}
@@ -368,7 +363,7 @@ void setupCommonLua(bool client,
   }
   
   if (!multi_lua) {
-    c_lua.writeFunction("testCrypto", [](string testmsg)
+    c_lua.writeFunction("testCrypto", [](const std::string& testmsg)
 			{
 			  try {
 			    SodiumNonce sn, sn2;
@@ -394,7 +389,7 @@ void setupCommonLua(bool client,
 			  }});
   }
   else {
-    c_lua.writeFunction("testCrypto", [](string testmsg) {});
+    c_lua.writeFunction("testCrypto", [](const string& testmsg) {});
   }
 
 #ifdef HAVE_GEOIP

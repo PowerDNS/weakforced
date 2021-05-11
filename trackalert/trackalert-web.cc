@@ -146,7 +146,6 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   using namespace json11;
   Json msg;
   string err;
-  KeyValVector ret_attrs;
 
   msg=Json::parse(req.body, err);
   if (msg.is_null()) {
@@ -157,7 +156,6 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   }
   else {
     CustomFuncArgs cfa;
-    bool status = false;
     
     try {
       cfa.setAttrs(msg);
@@ -173,7 +171,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       {
 	cr=g_luamultip->custom_func(command, cfa);
       }
-      status = std::get<customRetStatus>(cr);
+      bool status = std::get<customRetStatus>(cr);
       KeyValVector ret_attrs = std::get<customRetAttrs>(cr);
       Json::object jattrs;
       for (auto& i : ret_attrs) {
@@ -186,9 +184,9 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
     }
     catch(LuaContext::ExecutionErrorException& e) {
       resp.status=500;
-      std::stringstream ss;
       try {
 	std::rethrow_if_nested(e);
+        std::stringstream ss;
 	ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
 	resp.body=ss.str();
 	errlog("Lua custom function [%s] exception: %s", command, e.what());

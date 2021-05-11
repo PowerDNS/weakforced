@@ -35,7 +35,7 @@ using namespace PerfStats;
 
 TWStatsDB<unsigned int> g_perfStats("perfStats", STATS_WINDOW_SIZE, STATS_NUM_WINDOWS);
 
-FieldMap fm = { { wtw_0_1_str, "int" },
+const static FieldMap fm = { { wtw_0_1_str, "int" },
                 { wtw_1_10_str, "int" },
                 { wtw_10_100_str, "int" },
                 { wtw_100_1000_str, "int" },

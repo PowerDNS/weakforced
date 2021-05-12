@@ -52,8 +52,6 @@ extern WebHookDB g_custom_webhook_db;
 
 extern int g_num_luastates;
 
-extern std::string g_key; // in theory needs locking
-
 void setupCommonLua(bool client,
                     bool multi_lua,
                     LuaContext& c_lua,

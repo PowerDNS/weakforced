@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include <stddef.h>
-#include "wforce.hh"
 #include "wforce_ns.hh"
 #include "sstuff.hh"
 #include "misc.hh"
@@ -49,7 +48,7 @@ void WforceReplication::encryptMsg(const std::string& msg, std::string& packet)
 {
     std::lock_guard<std::mutex> lock(d_sod_mutx);
     packet=d_sodnonce.toString();
-    packet+=sodEncryptSym(msg, g_key, d_sodnonce);
+    packet+=sodEncryptSym(msg, d_key, d_sodnonce);
 }
 
 void WforceReplication::encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce, std::mutex& mutex)
@@ -70,7 +69,7 @@ bool WforceReplication::decryptMsg(const char* buf, size_t len, std::string& msg
   memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
   string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
   try {
-    msg=sodDecryptSym(packet, g_key, nonce);
+    msg=sodDecryptSym(packet, d_key, nonce);
   }
   catch (std::runtime_error& e) {
     errlog("Could not decrypt replication operation: %s", e.what());
@@ -90,7 +89,7 @@ void WforceReplication::replicateOperation(const ReplicationOperation& rep_op)
   for(auto& s : *siblings) {
     bool use_sibling_packet = false;
     if (s->d_has_key) {
-      if (s->d_key != g_key) {
+      if (s->d_key != d_key) {
         encryptMsgWithKey(msg, sibling_packet, s->d_key, s->d_nonce, s->mutx);
         use_sibling_packet = true;
       }

@@ -155,8 +155,6 @@ double getDoubleTime()
   return 1.0*now.tv_sec + now.tv_usec/1000000.0;
 }
 
-string g_key;
-
 void controlClientThread(int fd, ComboAddress client)
 try
 {
@@ -167,7 +165,8 @@ try
   writen2(fd, (char*)ours.value, sizeof(ours.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
-  
+  std::string key = g_replication.getEncryptionKey();
+
   setThreadName("wf/ctrl-client");
 
   sock.setKeepAlive();
@@ -181,7 +180,7 @@ try
     
     string line(msg, len);
     try {
-      line = sodDecryptSym(line, g_key, readingNonce);
+      line = sodDecryptSym(line, key, readingNonce);
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt client command: %s", e.what());
@@ -237,7 +236,7 @@ try
     catch(const LuaContext::SyntaxErrorException& e) {
       response = "Error: " + string(e.what()) + ": ";
     }
-    response = sodEncryptSym(response, g_key, writingNonce);
+    response = sodEncryptSym(response, key, writingNonce);
     putMsgLen(fd, response.length());
     writen2(fd, response.c_str(), (uint16_t)response.length());
   }
@@ -288,10 +287,12 @@ void doClient(ComboAddress server, const std::string& command)
   readn2(fd, (char*)theirs.value, sizeof(theirs.value));
   readingNonce.merge(ours, theirs);
   writingNonce.merge(theirs, ours);
-  
+
+  std::string key = g_replication.getEncryptionKey();
+
   if(!command.empty()) {
     string response;
-    string msg=sodEncryptSym(command, g_key, writingNonce);
+    string msg=sodEncryptSym(command, key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
     uint16_t len{0};
@@ -299,7 +300,7 @@ void doClient(ComboAddress server, const std::string& command)
     char resp[len];
     readn2(fd, resp, len);
     msg.assign(resp, len);
-    msg=sodDecryptSym(msg, g_key, readingNonce);
+    msg=sodDecryptSym(msg, key, readingNonce);
     cout<<msg<<endl;
     close(fd);
     return; 
@@ -333,7 +334,7 @@ void doClient(ComboAddress server, const std::string& command)
       break;
 
     string response;
-    string msg=sodEncryptSym(line, g_key, writingNonce);
+    string msg=sodEncryptSym(line, key, writingNonce);
     putMsgLen(fd, msg.length());
     writen2(fd, msg);
     uint16_t len{0};
@@ -341,7 +342,7 @@ void doClient(ComboAddress server, const std::string& command)
     char resp[len];
     readn2(fd, resp, len);
     msg.assign(resp, len);
-    msg=sodDecryptSym(msg, g_key, readingNonce);
+    msg=sodDecryptSym(msg, key, readingNonce);
     cout<<msg<<endl;
   }
 }
@@ -675,6 +676,8 @@ unsigned int checkHostUptime(const std::string& url, const std::string& password
 void checkSyncHosts()
 {
   bool found_sync_host = false;
+  std::string key = g_replication.getEncryptionKey();
+
   for (auto i : g_sync_data.sync_hosts) {
     std::string sync_host = i.first;
     std::string password = i.second;
@@ -689,7 +692,7 @@ void checkSyncHosts()
                                     {"replication_port", ntohs(g_sync_data.sibling_listen_addr.sin4.sin_port)},
                                     {"callback_url", callback_url},
                                     {"callback_auth_pw", g_sync_data.webserver_password},
-                                    {"encryption_key", g_key}};
+                                    {"encryption_key", key}};
       Json msg = callWforcePostURL(sync_url, password, post_json.dump(), err);
       if (!msg.is_null()) {
         if (!msg["status"].is_null()) {

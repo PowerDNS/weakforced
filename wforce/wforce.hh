@@ -72,8 +72,6 @@ extern GlobalStateHolder<NetmaskGroup> g_ACL;
 extern ComboAddress g_sibling_listen;
 extern ComboAddress g_serverControl; // not changed during runtime
 
-extern std::string g_key; // in theory needs locking
-
 struct dnsheader;
 
 void controlThread(int fd, ComboAddress local);

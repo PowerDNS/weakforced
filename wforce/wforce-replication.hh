@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "luastate.hh"
 #include "sholder.hh"
 #include "iputils.hh"
 #include "sodcrypto.hh"
@@ -37,7 +36,8 @@ public:
 
   void receiveReplicationOperationsTCP(const ComboAddress& local);
   void receiveReplicationOperations(const ComboAddress& local);
-  void startReplicationWorkerThreads();
+
+  virtual void startReplicationWorkerThreads();
   void encryptMsg(const std::string& msg, std::string& packet);
   void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce,
                          std::mutex& mutex);
@@ -46,11 +46,12 @@ public:
   void setNumSiblingThreads(unsigned int num_threads) { d_num_sibling_threads = num_threads; }
   GlobalStateHolder<vector<shared_ptr<Sibling>>>& getSiblings() { return d_siblings; }
   void replicateOperation(const ReplicationOperation& rep_op);
+  void setEncryptionKey(const std::string& key) { d_key = key; }
+  std::string getEncryptionKey() { return d_key; }
 protected:
-  bool checkConnFromSibling(const ComboAddress& remote, shared_ptr<Sibling>& recv_sibling);
+  virtual bool checkConnFromSibling(const ComboAddress& remote, shared_ptr<Sibling>& recv_sibling);
   void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
   void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
-private:
   struct SiblingQueueItem {
     std::string msg;
     ComboAddress remote;
@@ -58,6 +59,7 @@ private:
   };
   GlobalStateHolder<vector<shared_ptr<Sibling>>> d_siblings;
   SodiumNonce d_sodnonce;
+  std::string d_key; // The default key to use if no per-sibling key
   std::mutex d_sod_mutx;
   std::mutex d_sibling_queue_mutex;
   std::queue<SiblingQueueItem> d_sibling_queue;

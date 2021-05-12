@@ -494,7 +494,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("showAddrByName", [](std::shared_ptr<WFResolver> resolvp, string name) {
       std::vector<std::string> retvec = resolvp->lookup_address_by_name(name, 1);
       boost::format fmt("%s %s\n");
-      for (const auto s : retvec) {
+      for (const auto& s : retvec) {
         g_outputBuffer += (fmt % name % s).str();
       }
     });
@@ -506,7 +506,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("showNameByAddr", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address) {
       std::vector<std::string> retvec = resolvp->lookup_name_by_address(address, 1);
       boost::format fmt("%s %s\n");
-      for (const auto s : retvec) {
+      for (const auto& s : retvec) {
         g_outputBuffer += (fmt % address.toString() % s).str();
       }
     });
@@ -519,7 +519,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("showRBL", [](std::shared_ptr<WFResolver> resolvp, ComboAddress address, string rblname) {
       std::vector<std::string> retvec = resolvp->lookupRBL(address, rblname, 1);
       boost::format fmt("%s\n");
-      for (const auto s : retvec) {
+      for (const auto& s : retvec) {
         g_outputBuffer += (fmt % s).str();
       }
     });

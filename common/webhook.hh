@@ -204,7 +204,7 @@ public:
   const WHConfigMap& addConfigKeys(const WHConfigMap& new_cfg)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    for (const auto i : new_cfg) {
+    for (const auto& i : new_cfg) {
       config_keys.insert(std::make_pair(i.first, i.second));
     }
     return config_keys;

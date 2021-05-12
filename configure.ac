@@ -1,4 +1,4 @@
-AC_INIT([wforce], [2.4.1-alpha1])
+AC_INIT([wforce],[2.4.1-alpha1])
 AM_INIT_AUTOMAKE([foreign dist-bzip2 parallel-tests 1.11 subdir-objects])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
@@ -47,7 +47,7 @@ AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
-AC_PROG_LIBTOOL
+LT_INIT
 # We need readline
 WFORCE_CHECK_READLINE
 # Boost-specific checks

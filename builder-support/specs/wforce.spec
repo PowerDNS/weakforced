@@ -23,7 +23,7 @@
 Summary: Weakforce daemon for detecting brute force attacts
 Name: wforce
 Version: %{getenv:BUILDER_RPM_VERSION}
-Release: %{getenv:BUILDER_RPM_RELEASE}
+Release: %{getenv:BUILDER_RPM_RELEASE}%{?dist}
 License: GPLv3
 Group: System Environment/Daemons
 URL: http://www.open-xchange.com/

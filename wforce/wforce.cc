@@ -574,6 +574,7 @@ unsigned int dumpDBToNetwork(const ComboAddress& ca, const std::string& encrypti
   SodiumNonce nonce;
   std::mutex mutex;
 
+  nonce.init();
   // loop through the DBs
   std::map<std::string, TWStringStatsDBWrapper> my_dbmap;
   {

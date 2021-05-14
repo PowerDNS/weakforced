@@ -103,6 +103,7 @@ Sibling::Sibling(const ComboAddress& ca,
   if (!d_key.empty()) {
     d_has_key = true;
   }
+  d_nonce.init();
   if (proto != Protocol::NONE) {
     {
       std::lock_guard<std::mutex> lock(mutx);

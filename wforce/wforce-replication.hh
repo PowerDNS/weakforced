@@ -47,7 +47,7 @@ public:
   GlobalStateHolder<vector<shared_ptr<Sibling>>>& getSiblings() { return d_siblings; }
   void replicateOperation(const ReplicationOperation& rep_op);
   void setEncryptionKey(const std::string& key) { d_key = key; }
-  std::string getEncryptionKey() { return d_key; }
+  std::string getEncryptionKey() const { return d_key; }
 protected:
   virtual bool checkConnFromSibling(const ComboAddress& remote, shared_ptr<Sibling>& recv_sibling);
   void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);

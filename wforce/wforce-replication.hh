@@ -34,24 +34,24 @@ public:
   }
   virtual ~WforceReplication() = default;
 
-  void receiveReplicationOperationsTCP(const ComboAddress& local);
-  void receiveReplicationOperations(const ComboAddress& local);
+  virtual void receiveReplicationOperationsTCP(const ComboAddress& local);
+  virtual void receiveReplicationOperations(const ComboAddress& local);
 
   virtual void startReplicationWorkerThreads();
-  void encryptMsg(const std::string& msg, std::string& packet);
-  void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce,
+  virtual void encryptMsg(const std::string& msg, std::string& packet);
+  virtual void encryptMsgWithKey(const std::string& msg, std::string& packet, const std::string& key, SodiumNonce& nonce,
                          std::mutex& mutex);
-  bool decryptMsg(const char* buf, size_t len, std::string& msg);
+  virtual bool decryptMsg(const char* buf, size_t len, std::string& msg);
   void setMaxSiblingRecvQueueSize(size_t size);
   void setNumSiblingThreads(unsigned int num_threads) { d_num_sibling_threads = num_threads; }
   GlobalStateHolder<vector<shared_ptr<Sibling>>>& getSiblings() { return d_siblings; }
-  void replicateOperation(const ReplicationOperation& rep_op);
+  virtual void replicateOperation(const ReplicationOperation& rep_op);
   void setEncryptionKey(const std::string& key) { d_key = key; }
   std::string getEncryptionKey() const { return d_key; }
 protected:
   virtual bool checkConnFromSibling(const ComboAddress& remote, shared_ptr<Sibling>& recv_sibling);
-  void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
-  void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
+  virtual void parseTCPReplication(std::shared_ptr<Socket> sockp, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
+  virtual void parseReceivedReplicationMsg(const std::string& msg, const ComboAddress& remote, std::shared_ptr<Sibling> recv_sibling);
   struct SiblingQueueItem {
     std::string msg;
     ComboAddress remote;

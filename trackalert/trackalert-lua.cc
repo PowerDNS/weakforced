@@ -298,6 +298,24 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
+    c_lua.writeFunction("setKey", [](const std::string& key) -> bool {
+      string newkey;
+      if(B64Decode(key, newkey) < 0) {
+        g_outputBuffer=string("Unable to decode ")+key+" as Base64";
+        errlog("%s", g_outputBuffer);
+        return false;
+      }
+      else {
+        g_key = newkey;
+        return true;
+      }
+    });
+  }
+  else {
+    c_lua.writeFunction("setKey", [](const std::string& key) { });
+  }
+
+  if (!multi_lua) {
     c_lua.writeFunction("testCrypto", [](string testmsg)
     {
       try {

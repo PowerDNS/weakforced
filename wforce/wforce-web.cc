@@ -239,7 +239,7 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
         encryption_key = msg["encryption_key"].string_value();
       }
       else {
-        encryption_key = g_key;
+        encryption_key = g_replication.getEncryptionKey();
       }
       thread t(syncDBThread, replication_ca, callback_url, callback_pw, encryption_key);
       t.detach();
@@ -398,7 +398,7 @@ void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
           encryption_key = i["encryption_key"].string_value();
         }
         else {
-          encryption_key = Base64Encode(g_key);
+          encryption_key = Base64Encode(g_replication.getEncryptionKey());
         }
 
         Sibling::Protocol proto = Sibling::Protocol::UDP;

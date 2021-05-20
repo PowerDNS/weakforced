@@ -340,56 +340,11 @@ void setupCommonLua(bool client,
 
   if (!multi_lua) {
     c_lua.writeFunction("makeKey", []() {
-	g_outputBuffer="setKey("+newKey()+")\n";
-      });
+      g_outputBuffer="setKey("+newKey()+")\n";
+    });
   }
   else {
-    c_lua.writeFunction("makeKey", []() { });    
-  }
-
-  if (!multi_lua) {
-    c_lua.writeFunction("setKey", [](const std::string& key) {
-	string newkey;
-	if(B64Decode(key, newkey) < 0) {
-	  g_outputBuffer=string("Unable to decode ")+key+" as Base64";
-	  errlog("%s", g_outputBuffer);
-	}
-	else
-	  g_key = newkey;
-      });
-  }
-  else {
-    c_lua.writeFunction("setKey", [](const std::string& key) { });
-  }
-  
-  if (!multi_lua) {
-    c_lua.writeFunction("testCrypto", [](const std::string& testmsg)
-			{
-			  try {
-			    SodiumNonce sn, sn2;
-			    sn.init();
-			    sn2=sn;
-			    string encrypted = sodEncryptSym(testmsg, g_key, sn);
-			    string decrypted = sodDecryptSym(encrypted, g_key, sn2);
-                            
-			    sn.increment();
-			    sn2.increment();
-                            
-			    encrypted = sodEncryptSym(testmsg, g_key, sn);
-			    decrypted = sodDecryptSym(encrypted, g_key, sn2);
-                            
-			    if(testmsg == decrypted)
-			      g_outputBuffer="Everything is ok!\n";
-			    else
-			      g_outputBuffer="Crypto failed..\n";
-                            
-			  }
-			  catch(...) {
-			    g_outputBuffer="Crypto failed..\n";
-			  }});
-  }
-  else {
-    c_lua.writeFunction("testCrypto", [](const string& testmsg) {});
+    c_lua.writeFunction("makeKey", []() { });
   }
 
 #ifdef HAVE_GEOIP

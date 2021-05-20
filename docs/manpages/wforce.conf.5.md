@@ -159,11 +159,15 @@ cannot be called inside the allow/report/reset functions:
 		controlSocket("0.0.0.0:4004")
 
 * setKey(\<key\>) - Use the specified key for authenticating 
-  connections from siblings. The key must be generated with makeKey()
+  connections from siblings. The key can be generated with makeKey()
   from the console. See *wforce(1)* for instructions on
-  running a console client. For example:
-  
-		setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+  running a console client.
+  Returns false if the key could not be set (e.g. invalid base64).
+  For example:
+
+        if not setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+            then
+              ...
 
 * setNumLuaStates(\<num states\>) - Set the number of Lua Contexts that
   will be created to run allow/report/reset commands. Defaults to 10

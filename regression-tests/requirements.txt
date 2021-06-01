@@ -10,7 +10,7 @@ itsdangerous==0.24
 Jinja2==2.11.3
 MarkupSafe==1.0
 pytz==2017.2
-urllib3==1.24.2
+urllib3==1.26.5
 Werkzeug==0.15.3
 bottle==0.12.19
 prometheus_client==0.7.1

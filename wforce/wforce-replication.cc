@@ -193,7 +193,7 @@ void WforceReplication::parseTCPReplication(std::shared_ptr<Socket> sockp, const
   
   try {
     while(true) {
-      len = sockp->read((char*)&size, ssize);
+      len = sockp->readAll((char*)&size, ssize);
       if (len != ssize) {
         if (len)
           errlog("parseTCPReplication: error reading size, got %d bytes, but was expecting %d bytes", len, ssize);

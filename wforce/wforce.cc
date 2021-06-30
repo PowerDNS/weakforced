@@ -502,7 +502,7 @@ unsigned int dumpEntriesToNetwork(const ComboAddress& ca)
     my_dbmap = dbMap;
   }
   sock.writen("{");
-  for (auto& i : dbMap) {
+  for (auto& i : my_dbmap) {
     TWStringStatsDBWrapper sdb = i.second;
     std::string db_name = i.first;
     sock.writen("\"" + db_name + "\": {");
@@ -582,7 +582,7 @@ unsigned int dumpDBToNetwork(const ComboAddress& ca, const std::string& encrypti
     // copy (this is safe - everything important is in a shared ptr)
     my_dbmap = dbMap;
   }
-  for (auto& i : dbMap) {
+  for (auto& i : my_dbmap) {
     TWStringStatsDBWrapper sdb = i.second;
     std::string db_name = i.first;
     for (auto vi = sdb.begin(); vi != sdb.end(); ++vi) {

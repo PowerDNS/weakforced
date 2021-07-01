@@ -1,4 +1,4 @@
-# Release Notes for OX Abuse Shield 2.4.1 (Alpha1)
+# Release Notes for OX Abuse Shield 2.4.1
 
 ## New Features
 
@@ -8,7 +8,7 @@
 
 ## Bug Fixes/Changes
 
-* None
+* Fix issue where replication length bytes can be truncated causing syncDB problems
 
 ## Dynamic Management of Siblings via Lua functions
 

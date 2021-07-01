@@ -3,10 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [2.4.1]
+
+### Added
 - New API and Lua commands to dynamically manage siblings
 - Siblings can now have unique encryption keys
 - Amazon Linux packaging target for pdns-builder
+
+### Changed
+- Fix issue where replication length bytes can be truncated causing syncDB problems
 
 ## [2.4.0]
 

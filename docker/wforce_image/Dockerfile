@@ -84,7 +84,8 @@ RUN apt-get update && \
                python3 \
                python3-pip \
                python3-venv \
-               python3-jinja2
+               python3-jinja2 \
+               tini
 
 RUN groupadd -g 1000 wforce && \
     useradd --uid 1000 -N -M -r --gid 1000 wforce && \
@@ -108,14 +109,6 @@ RUN cp report_api/instance/report.cfg /etc/wforce-report-api/wforce-report-api-i
 RUN cp report_api/helpers/wforce-report-api-docker.conf /etc/wforce-report-api/wforce-report-api-web.conf && chmod 755 /etc/wforce-report-api/wforce-report-api-web.conf
 RUN export python3_version=$(python3 -V | awk '{print $2}' | awk 'BEGIN{FS="."};{print $1"."$2}') && sed -i -e s:\<python_version\>:$python3_version: /etc/wforce-report-api/wforce-report-api-web.conf
 RUN rm -rf /wforce/*
-
-# We use tini to handle signals, reaping etc.
-ENV TINI_VERSION v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc /tini.asc
-RUN gpg --batch --keyserver hkps://peegeepee.com --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 \
- && gpg --batch --verify /tini.asc /tini
-RUN chmod 755 /tini
 
 ARG build_date
 ARG license
@@ -156,6 +149,6 @@ USER wforce:wforce
 
 EXPOSE 8084
 
-ENTRYPOINT ["/tini", "-v", "--", "/usr/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "-v", "--", "/usr/bin/docker-entrypoint.sh"]
 # Dummy overridable parameter parsed by entrypoint
 CMD ["wfwrapper"]

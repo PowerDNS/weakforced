@@ -1,0 +1,8 @@
+# First do the source builds
+@INCLUDE Dockerfile.target.sdist
+
+FROM debian:bullseye as dist-base
+ARG APT_URL
+RUN apt-get update && apt-get -y dist-upgrade
+
+@INCLUDE Dockerfile.debbuild

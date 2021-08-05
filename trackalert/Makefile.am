@@ -15,6 +15,7 @@ AM_CPPFLAGS = $(LUA_CFLAGS) \
 
 AM_LDFLAGS = \
 	$(PROGRAM_LDFLAGS) \
+	$(THREADFLAGS) \
 	$(SANITIZER_FLAGS)
 
 EXTRA_DIST= trackalert.conf README.md trackalert.service.in

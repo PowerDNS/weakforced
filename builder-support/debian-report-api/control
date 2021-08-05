@@ -4,8 +4,7 @@ Section: web
 Priority: optional
 Standards-Version: 3.9.2
 Build-Depends: cdbs,
-               debhelper (>= 9),
-               dh-systemd,
+               debhelper (>= 9.20160709),
                dh-virtualenv,
                dpkg-dev (>= 1.17.0~),
                python3,

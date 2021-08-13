@@ -178,6 +178,9 @@ public:
         if (f != map.end()) {
           resp->setContentTypeCode(f->second.d_ret_content_type);
           f->second.d_func_ptr(req, command, resp);
+        } else {
+          resp->setStatusCode(drogon::k404NotFound);
+          resp->setBody(R"({"status":"failure", "reason":"Not found"})");
         }
         callback(resp);
         updateWTR(start_time);

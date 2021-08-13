@@ -31,9 +31,8 @@
 #include <atomic>
 #include <thread>
 #include <sstream>
-#include "yahttp/yahttp.hpp"
 #include "namespaces.hh"
-#include <sys/time.h>
+#include <ctime>
 #include <sys/resource.h>
 #include "base64.hh"
 #include "perf-stats.hh"
@@ -44,7 +43,7 @@
 
 static int uptimeOfProcess()
 {
-  static time_t start=time(0);
+  static time_t start = time(0);
   return time(0) - start;
 }
 
@@ -66,7 +65,7 @@ void reportLog(const LoginTuple& lt)
   }
 }
 
-static void runReportLua(Json msg, std::string command)
+static void runReportLua(json11::Json msg, std::string command)
 {
   try {
     LoginTuple lt;
@@ -76,7 +75,7 @@ static void runReportLua(Json msg, std::string command)
     g_stats.reports++;
     g_luamultip->report(lt);
   }
-  catch(LuaContext::ExecutionErrorException& e) {
+  catch (LuaContext::ExecutionErrorException& e) {
     try {
       std::rethrow_if_nested(e);
       errlog("Lua function [%s] exception: %s", command, e.what());
@@ -88,129 +87,134 @@ static void runReportLua(Json msg, std::string command)
       errlog("Exception in command [%s] exception: %s", command, ne.reason);
     }
   }
-  catch(const std::exception& e) {
+  catch (const std::exception& e) {
     errlog("Exception in command [%s] exception: %s", command, e.what());
   }
-  catch(const WforceException& e) {
+  catch (const WforceException& e) {
     errlog("Exception in command [%s] exception: %s", command, e.reason);
   }
 }
 
-void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseReportCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  msg=Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status=500;
+    resp->setStatusCode(drogon::k500InternalServerError);
     std::stringstream ss;
     ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body=ss.str();
+    resp->setBody(ss.str());
   }
   else {
     runReportLua(msg, command);
-    resp.status=200;
-    resp.body=R"({"status":"ok"})";      
+    resp->setStatusCode(drogon::k200OK);
+    resp->setBody(R"({"status":"ok"})");
   }
   incCommandStat("report");
   incPrometheusCommandMetric("report");
 }
 
-void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseStatsCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
   struct rusage ru;
   getrusage(RUSAGE_SELF, &ru);
 
-  resp.status=200;
-  Json my_json = Json::object {
-    { "reports", (int)g_stats.reports },
-    { "user-msec", (int)(ru.ru_utime.tv_sec*1000ULL + ru.ru_utime.tv_usec/1000) },
-    { "sys-msec", (int)(ru.ru_stime.tv_sec*1000ULL + ru.ru_stime.tv_usec/1000) },
-    { "uptime", uptimeOfProcess()},
-    { "perfstats", perfStatsToJson()}
+  json11::Json my_json = json11::Json::object{
+      {"reports",   (int) g_stats.reports},
+      {"user-msec", (int) (ru.ru_utime.tv_sec * 1000ULL + ru.ru_utime.tv_usec / 1000)},
+      {"sys-msec",  (int) (ru.ru_stime.tv_sec * 1000ULL + ru.ru_stime.tv_usec / 1000)},
+      {"uptime",    uptimeOfProcess()},
+      {"perfstats", perfStatsToJson()}
   };
 
-  resp.status=200;
-  resp.body=my_json.dump();
+  resp->setStatusCode(drogon::k200OK);
+  resp->setBody(my_json.dump());
   incCommandStat("stats");
   incPrometheusCommandMetric("stats");
 }
 
-enum CustomReturnFields { customRetStatus=0, customRetAttrs=1 };
+enum CustomReturnFields {
+  customRetStatus = 0, customRetAttrs = 1
+};
 
-void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseCustomCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  msg=Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status=500;
+    resp->setStatusCode(drogon::k500InternalServerError);
     std::stringstream ss;
     ss << "{\"success\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body=ss.str();
+    resp->setBody(ss.str());
   }
   else {
     CustomFuncArgs cfa;
-    
+
     try {
       cfa.setAttrs(msg);
     }
-    catch(...) {
-      resp.status=500;
-      resp.body=R"({"success":false, "reason":"Could not parse input"})";
+    catch (...) {
+      resp->setStatusCode(drogon::k500InternalServerError);
+      resp->setBody(R"({"success":false, "reason":"Could not parse input"})");
       return;
     }
 
     try {
       CustomFuncReturn cr;
       {
-	cr=g_luamultip->custom_func(command, cfa);
+        cr = g_luamultip->custom_func(command, cfa);
       }
       bool status = std::get<customRetStatus>(cr);
       KeyValVector ret_attrs = std::get<customRetAttrs>(cr);
-      Json::object jattrs;
+      json11::Json::object jattrs;
       for (auto& i : ret_attrs) {
-	jattrs.insert(make_pair(i.first, Json(i.second)));
+        jattrs.insert(make_pair(i.first, json11::Json(i.second)));
       }
-      msg=Json::object{{"success", status}, {"r_attrs", jattrs}};
+      msg = json11::Json::object{{"success", status},
+                         {"r_attrs", jattrs}};
 
-      resp.status=200;
-      resp.body=msg.dump();
+      resp->setStatusCode(drogon::k200OK);
+      resp->setBody(msg.dump());
     }
-    catch(LuaContext::ExecutionErrorException& e) {
-      resp.status=500;
+    catch (LuaContext::ExecutionErrorException& e) {
+      resp->setStatusCode(drogon::k500InternalServerError);
       try {
-	std::rethrow_if_nested(e);
+        std::rethrow_if_nested(e);
         std::stringstream ss;
-	ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-	resp.body=ss.str();
-	errlog("Lua custom function [%s] exception: %s", command, e.what());
+        ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
+        resp->setBody(ss.str());
+        errlog("Lua custom function [%s] exception: %s", command, e.what());
       }
       catch (const std::exception& ne) {
-	resp.status=500;
-	std::stringstream ss;
-	ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
-	resp.body=ss.str();
-	errlog("Exception in command [%s] exception: %s", command, ne.what());
+        resp->setStatusCode(drogon::k500InternalServerError);
+        std::stringstream ss;
+        ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
+        resp->setBody(ss.str());
+        errlog("Exception in command [%s] exception: %s", command, ne.what());
       }
       catch (const WforceException& ne) {
-	resp.status=500;
-	std::stringstream ss;
-	ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
-	resp.body=ss.str();
-	errlog("Exception in command [%s] exception: %s", command, ne.reason);
+        resp->setStatusCode(drogon::k500InternalServerError);
+        std::stringstream ss;
+        ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
+        resp->setBody(ss.str());
+        errlog("Exception in command [%s] exception: %s", command, ne.reason);
       }
     }
-    catch(const std::exception& e) {
-      resp.status=500;
+    catch (const std::exception& e) {
+      resp->setStatusCode(drogon::k500InternalServerError);
       std::stringstream ss;
       ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-      resp.body=ss.str();
+      resp->setBody(ss.str());
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
   }

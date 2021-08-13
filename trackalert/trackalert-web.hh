@@ -20,8 +20,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "yahttp/yahttp.hpp"
+#include "wforce-webserver.hh"
 
 void setNumReportThreads(int numThreads);
 void registerWebserverCommands();
-void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
+void parseCustomCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp);

@@ -21,12 +21,16 @@
  */
 
 #include <atomic>
-#include "yahttp/yahttp.hpp"
+#include <drogon/drogon.h>
 
 // If false, then ping commands will return "warmup".
 // If true then ping commands will return "ok"
 extern std::atomic<bool> g_ping_up;
 
-void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
-void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command);
+void parseCustomCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp);
+void parseCustomGetCmd(const drogon::HttpRequestPtr& req,
+                       const std::string& command,
+                       const drogon::HttpResponsePtr& resp);
 void registerWebserverCommands();

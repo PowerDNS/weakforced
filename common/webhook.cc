@@ -104,7 +104,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
 void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const json11::Json& json_data)
 {
   if (hook->getConfigKey("kafka") == "true") {
-    Json kobj = Json::object{{"records", Json(Json::array{Json(Json::object{{"value", json_data}})})}};
+    json11::Json kobj = json11::Json::object{{"records", json11::Json(json11::Json::array{json11::Json(json11::Json::object{{"value", json_data}})})}};
     runHook(event_name, hook, kobj.dump());
   }
   else {

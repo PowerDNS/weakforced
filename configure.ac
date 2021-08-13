@@ -11,6 +11,8 @@ AC_CANONICAL_HOST
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
+# Check for C++ 2017 support
+AX_CXX_COMPILE_STDCXX_17(ext,mandatory)
 PDNS_CHECK_OS
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
@@ -23,6 +25,7 @@ AS_IF([test "x$enable_geoip" != "xno"], [
   AC_MSG_ERROR([libmaxmindb not found, libmaxmind is required"])
  ])
 ])
+PDNS_WITH_LIBSSL
 AC_ARG_ENABLE([dns],
 AS_HELP_STRING([--disable-dns], [ Disable getdns lookup feature ]))
 AS_IF([test "x$enable_dns" != "xno"], [
@@ -89,6 +92,20 @@ PDNS_CHECK_LIBCRYPTO([], [
   AC_MSG_ERROR([Libcrypto not found, libcrypto support is required])
   ]
 )
+# We need libdrogon for HTTP/HTTPS functions
+PDNS_CHECK_LIBDROGON([], [
+  AC_MSG_ERROR([Libdrogon not found, libdrogon support is required])
+  ]
+)
+# Drogon depends on libjsoncpp and libz
+PDNS_CHECK_LIBJSONCPP([], [
+  AC_MSG_ERROR([Libjsoncpp not found, libjsoncpp is required as a mandatory dependency of libdrogon])
+  ]
+)
+PDNS_CHECK_LIBZ([], [
+  AC_MSG_ERROR([Libz not found, libz support is required as a mandatory dependency of libdrogon])
+  ]
+)
 # Check for LuaJIT first then Lua
 PDNS_WITH_LUAJIT
 AS_IF([test "x$with_luajit" = "xno"], [
@@ -100,9 +117,7 @@ AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
 PDNS_CHECK_LUA_HPP
 # Need pandoc to build documentation
 PDNS_CHECK_PANDOC
-# Check for C++ 2011 support
-AX_CXX_COMPILE_STDCXX_11(ext,mandatory)
-AM_CONDITIONAL([CXX2011],[test "$HAVE_CXX11" = "1"])
+
 # We need prometheus-cpp
 PDNS_CHECK_LIBPROMETHEUS([], [
   AC_MSG_ERROR([Libprometheus not found, libprometheus-cpp support is required])
@@ -144,8 +159,6 @@ AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/ext/Makefile
 	ext/json11/Makefile
-	ext/yahttp/Makefile
-	ext/yahttp/yahttp/Makefile
 	common/Makefile
 	docs/Makefile
 	docker/Makefile

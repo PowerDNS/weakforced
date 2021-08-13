@@ -25,7 +25,7 @@
 
 static DeviceCache dcache;
 
-Json LoginTuple::to_json() const 
+json11::Json LoginTuple::to_json() const
 {
   using namespace json11;
   Json::object jattrs;
@@ -59,11 +59,11 @@ Json LoginTuple::to_json() const
 
 std::string LoginTuple::serialize() const
 {
-  Json msg=to_json();
+  json11::Json msg=to_json();
   return msg.dump();
 }
 
-void LoginTuple::from_json(const Json& msg, const std::shared_ptr<UserAgentParser> uap)
+void LoginTuple::from_json(const json11::Json& msg, const std::shared_ptr<UserAgentParser> uap)
 {
   login=msg["login"].string_value();
   pwhash=msg["pwhash"].string_value();

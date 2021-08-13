@@ -30,8 +30,6 @@
 #include "prometheus.hh"
 #include <queue>
 
-using namespace json11;
-
 using WHConfigMap = std::map<std::string, std::string>;
 using WHEvents = std::vector<std::string>;
 // Key = event name, value is a pair of config key vectors -
@@ -234,7 +232,7 @@ public:
   void toString(std::string& out) const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    Json my_object = to_json();
+    json11::Json my_object = to_json();
     my_object.dump(out);
   }
   std::string toString() const
@@ -243,11 +241,11 @@ public:
     toString(out);
     return out;
   }
-  virtual Json to_json() const
+  virtual json11::Json to_json() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    Json::array jevents;
-    Json my_object = Json::object {
+    json11::Json::array jevents;
+    json11::Json my_object = json11::Json::object {
       { "id", (int)id },
       { "events", events },
       { "config", config_keys }
@@ -323,11 +321,11 @@ public:
     num_failed++;
     incPrometheusWebhookMetric(id, false, true);
   }
-  Json to_json() const override
+  json11::Json to_json() const override
   {
     std::lock_guard<std::mutex> lock(mutex);
-    Json::array jevents;
-    Json my_object = Json::object {
+    json11::Json::array jevents;
+    json11::Json my_object = json11::Json::object {
       { "id", (int)id },
       { "name", name },
       { "config", config_keys }
@@ -432,12 +430,12 @@ public:
   void toString(std::string& out) const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    Json::array jarray;
+    json11::Json::array jarray;
 
     for (auto& i : webhooks) {
       jarray.push_back(i->to_json());
     }
-    Json my_array = Json(jarray);
+    json11::Json my_array = json11::Json(jarray);
     my_array.dump(out);
   }
   std::string toString() const

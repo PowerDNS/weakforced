@@ -816,7 +816,17 @@ char* my_generator(const char* text, int state)
       "checkWhitelistIP",
       "checkWhitelistLogin",
       "checkWhitelistIPLogin",
-      "reloadGeoIPDBs()"
+      "reloadGeoIPDBs()",
+      "addCustomStat",
+      "setSiblingsWithKey",
+      "addSiblingWithKey",
+      "removeSibling",
+      "setSiblingConnectTimeout",
+      "setMaxSiblingQueueSize",
+      "setCustomEndpoint",
+      "setCustomGetEndpoint",
+      "setVerboseAllowLog",
+      "incCustomStat"
       };
   static int s_counter=0;
   int counter=0;

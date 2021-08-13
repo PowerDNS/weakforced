@@ -276,7 +276,14 @@ union ComboAddress {
     else
       return "["+toString() + "]:" + std::to_string(ntohs(sin4.sin_port));
   }
-  
+
+  unsigned int getPort() const
+  {
+    if(sin4.sin_family==AF_INET)
+      return ntohs(sin4.sin_port);
+    return 0;
+  }
+
   void truncate(unsigned int bits) noexcept;
   void reset();
 };

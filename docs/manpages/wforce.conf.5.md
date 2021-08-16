@@ -25,12 +25,12 @@ cannot be called inside the allow/report/reset functions:
 * setACL(\<list of netmasks\>) - Set the access control list for the
   HTTP Server. For example, to allow access from any IP address, specify:
   
-		setACL({"0.0.0.0/0"}) 
+        setACL({"0.0.0.0/0"}) 
 
 * addACL(\<netmask\>) - Add a netmask to the access control list for the
   HTTP server. For example, to allow access from 127.0.0.0/8, specify:
   
-		addACL("127.0.0.0/8")
+        addACL("127.0.0.0/8")
 
 * addWebHook(\<list of events\>, \<config key map\>) - Add a webhook
   for the specified events, with the specified configuration keys. See
@@ -38,11 +38,11 @@ cannot be called inside the allow/report/reset functions:
   keys, and details of the HTTP(S) POST sent to webhook URLs. For
   example:
 
-		config_keys={}
-		config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
-		config_keys["secret"] = "verysecretcode"
-		events = { "report", "allow" }
-		addWebHook(events, config_keys)
+        config_keys={}
+        config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+        config_keys["secret"] = "verysecretcode"
+        events = { "report", "allow" }
+        addWebHook(events, config_keys)
 
 * addCustomWebHook(\<custom webhook name\>, \<config key map\>) - Add
   a custom webhook, i.e. one which can be called from Lua (using
@@ -51,10 +51,10 @@ cannot be called inside the allow/report/reset functions:
   supported config keys, and details of the HTTP(S) POST sent
   to webhook URLs. For example:
 
-		config_keys={}
-		config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
-		config_keys["secret"] = "verysecretcode"
-		addCustomWebHook("mycustomhook", config_keys)
+        config_keys={}
+        config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+        config_keys["secret"] = "verysecretcode"
+        addCustomWebHook("mycustomhook", config_keys)
 
 * addCustomStat(\<stat name\>) - Add a custom counter which can be
   used to track statistics. The stats for custom counters are logged
@@ -68,13 +68,13 @@ cannot be called inside the allow/report/reset functions:
   is not specified it defaults to 4001.  If protocol is not specified
   it defaults to udp. This function is safe to call while wforce is running. For example:
   
-		setSiblings({"127.0.1.2", "sibling1.example.com:4004", "[::1]:4004:tcp"})
+        setSiblings({"127.0.1.2", "sibling1.example.com:4004", "[::1]:4004:tcp"})
 
 * setSiblingsWithKey(\<list of {IP/Host[:port[:protocol]], Encryption Key\>) - Identical
   to setSiblings() except that it allows an encryption key to be specified for
   each sibling. For example:
 
-  	    setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
+          setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
 
 * addSibling(\<IP/Hostname[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated. Use [] to enclose
@@ -91,7 +91,7 @@ cannot be called inside the allow/report/reset functions:
   to addSibling(), except that an encryption key is specified to enable per-sibling
   encryption.For example:
 
-  	    addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+          addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 
 * removeSibling(\<IP/Host[:port[:protocol]]\>) - Remove a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated.  Use [] to enclose
@@ -134,7 +134,7 @@ cannot be called inside the allow/report/reset functions:
   port is not specified it defaults to 4501. Replaces the deprecated
   "setReportSinks()". For example: 
   
-		setNamedReportSinks("logstash", {"127.0.1.2", "127.0.1.3:4501"})
+        setNamedReportSinks("logstash", {"127.0.1.2", "127.0.1.3:4501"})
 
 * addNamedReportSink(\<name\>, \<IP[:port]\>) - Add a report sink to
   the named list to which all received reports should be forwarded
@@ -144,19 +144,35 @@ cannot be called inside the allow/report/reset functions:
   port is not specified it defaults to 4501. Replaces the deprecated
   "addReportSink()". For example:
   
-		addNamedReportSink("logstash", "192.168.1.23")
+        addNamedReportSink("logstash", "192.168.1.23")
 
-* webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
-  specified IP address and port. The password is used to authenticate
-  client connections using basic authentication. For example:
+* webserver(\<IP:port\>, \<password\>) - (*deprecated - see addListener() instead*) Listen for HTTP commands on the
+  specified IP address and port. The password is used to authenticate client connections using basic authentication. 
+  For example:
   
-		webserver("0.0.0.0:8084", "super")
+        webserver("0.0.0.0:8084", "super")
+
+* addListener(\<IP:port\>, \<useSSL\>, \<cert file\>, \<key file\>, \<options\>) - (*replacement for webserver()*) Listen
+  for HTTP commands on the specified IP address and port. If useSSL is true, then HTTPS must be used, and cert_file and
+  key file are used, otherwise they are empty. Options contains a list of key value pairs to configure the TLS connection;
+  these follow the command line option names in https://www.openssl.org/docs/manmaster/man3/SSL_CONF_cmd.html.
+  For example, "min_protocol" to set the minimum TLS protocol version. You can add as many listeners as you choose. For example:
+
+        addListener("0.0.0.0:8084", false, "", "", {})
+        addListener("1.2.3.4:1234", true, "/etc/wforce/cert.pem", "/etc/wforce/key.pem", {minimum_protocol="TLSv1.2"})
+        addListener("[::1]:9000", true, "/etc/wforce/cert.pem", "/etc/wforce/key.pem", {minimum_protocol="TLSv1.3"})
+
+* setWebserverPassword(\<Password\>) - (*replacement for webserver password parameter*) Sets the basic authentication
+  password for access to the webserver. This has been decoupled from the addListener() command because multiple listeners
+  can now be created, which was not previously possible. For example:
+
+        setWebserverPassword("foobar")
 
 * controlSocket(\<IP[:port]\>) - Listen for control connections on the
   specified IP address and port. If port is not specified it defaults
   to 5199. For example: 
   
-		controlSocket("0.0.0.0:4004")
+        controlSocket("0.0.0.0:4004")
 
 * setKey(\<key\>) - Use the specified key for authenticating 
   connections from siblings. The key can be generated with makeKey()
@@ -175,27 +191,27 @@ cannot be called inside the allow/report/reset functions:
   setNumSiblingThreads(). Should be at least equal to NumWorkerThreads
   \+ NumSiblingThreads. For example: 
   
-		setNumLuaStates(10)
+        setNumLuaStates(10)
 
 * setNumWorkerThreads(\<num threads\>) - Set the number of threads in
   the pool used to run allow/report/reset commands. Each thread uses a
   separate Lua Context, (see setNumLuaStates()). Defaults to 4 if not
   specified. For example:
   
-		setNumWorkerThreads(4)
+        setNumWorkerThreads(4)
 
 * setNumSiblingThreads(\<num threads\>) - Set the number of threads in
   the pool used to process reports received from siblings. Each thread
   uses a separate Lua Context, the number of which is set with
   setNumLuaStates(). Defaults to 2 if not specified. For example:
   
-		setNumSiblingThreads(2)
+        setNumSiblingThreads(2)
 
 * setNumWebHookThreads(\<num threads\>) - Set the number of threads in
   the pool used to send webhook events. Defaults to 5 if not
   specified. For example:
 
-		setNumWebHookThreads(2)
+        setNumWebHookThreads(2)
 
 * setMaxWebserverConns(\<max conns\>) - Set the maximum number of
   active connections to the webserver. This can be used to limit the
@@ -236,7 +252,7 @@ cannot be called inside the allow/report/reset functions:
   these databases is not installed, this command will fail and wforce
   will not start. For example:
   
-		initGeoIPDB()
+        initGeoIPDB()
 
 * initGeoIPCityDB() - (Deprecated - use newGeoIP2DB()) Initializes the
   city-level IPv4 and IPv6 GeoIP Legacy databases. If either of these
@@ -245,20 +261,20 @@ cannot be called inside the allow/report/reset functions:
   using the free/lite DBs - you may need to create symbolic links
   e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   
-		initGeoIPCityDB()
+        initGeoIPCityDB()
 
 * initGeoIPISPDB() - (Deprecated - use newGeoIP2DB()) Initializes the
   ISP-level IPv4 and IPv6 GeoIP Legacy databases. If either of these
   databases is not installed, this command will fail and wforce will
   not start. For example:
   
-		initGeoIPISPDB()
+        initGeoIPISPDB()
 
 * newDNSResolver(\<resolver name\>) - Create a new DNS resolver object with the
   specified name. Note this does not return the resolver object - that
   is achieved with the getDNSResolver() function. For example:
   
-		newDNSResolver("MyResolver")
+        newDNSResolver("MyResolver")
 
 * setHLLBits(\<num bits\>) - Set the accuracy of the HyperLogLog
   algorithm. The value can be between 4-30, with a high number being
@@ -279,11 +295,11 @@ cannot be called inside the allow/report/reset functions:
   the specified name. Note this does not return the object - that is
   achieved with the getStringStatsDB() function. For example:
   
-		field_map = {}
-		field_map["countLogins"] = "int"
-		field_map["diffPasswords"] = "hll"
-		field_map["countCountries"] = "countmin"
-		newStringStatsDB("OneHourDB", 900, 4, field_map)
+        field_map = {}
+        field_map["countLogins"] = "int"
+        field_map["diffPasswords"] = "hll"
+        field_map["countCountries"] = "countmin"
+        newStringStatsDB("OneHourDB", 900, 4, field_map)
 
 * newShardedStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,
   \<field map\>, \<num shards\>) - Identical to "newStringStatsDB"
@@ -295,24 +311,24 @@ cannot be called inside the allow/report/reset functions:
   any IPv4 ComboAddress keys stored in the db. For example, specify 24 to
   group statistics for class C networks. For example:
   
-		statsdb:twSetv4Prefix(24)
+        statsdb:twSetv4Prefix(24)
 
 * StringStatsDB:twSetv6Prefix(\<prefix\>) - Set the prefix to use for
   any IPv6 ComboAddress keys stored in the db. For example:
   
-		statsdb:twSetv4Prefix(64)
+        statsdb:twSetv4Prefix(64)
 
 * StringStatsDB:twSetMaxSize(\<size\>) - Set the maximum number of keys
   to be stored in the db. When the db reaches that size, keys will be
   expired on a LRU basis. The default size is 500K keys. For example:
   
-		statsdb:twSetMaxSize(1000000)
+        statsdb:twSetMaxSize(1000000)
 
 * StringStatsDB:twEnableReplication() - Enable replication for this
   db; only makes a difference if siblings have been configured. For
   example:
   
-		statsdb:twEnableReplication()
+        statsdb:twEnableReplication()
 
 * disableBuiltinBlacklists() - Disable the built-in blacklisting checks,
   enabling them to be checked from Lua instead. For example:
@@ -325,7 +341,7 @@ cannot be called inside the allow/report/reset functions:
   on a non-standard port. If this option is specified, wforce will
   read all the blacklist entries from the redis DB on startup. For example:
   
-		blacklistPersistDB("127.0.0.1", 6379)
+        blacklistPersistDB("127.0.0.1", 6379)
 
 * blacklistPersistReplicated() - Store blacklist entries that have
   been replicated in the redis DB. By default, replicated blacklist 
@@ -335,7 +351,7 @@ cannot be called inside the allow/report/reset functions:
   then you should not specify this option, as it will cause
   unnecessary writes to the redis DB. For example:
   
-		blacklistPersistReplicated()
+        blacklistPersistReplicated()
 
 * blacklistPersistConnectTimeout(<timeout secs>) - Set the connect
   timeout for connecting to the persistent redis DB. If the timeout is
@@ -343,7 +359,7 @@ cannot be called inside the allow/report/reset functions:
   otherwise during normal operation if the timeout is exceeded, an
   error will be logged. For example:
 
-		blacklistPersistConnectTimeout(2)
+        blacklistPersistConnectTimeout(2)
 
 * blacklistPersistRWTimeout(<timeout secs>, <timeout usecs>) - Set the
   timeout for reading from/writing to the Redis DB. For example:
@@ -361,7 +377,7 @@ cannot be called inside the allow/report/reset functions:
   on a non-standard port. If this option is specified, wforce will
   read all the whitelist entries from the redis DB on startup. For example:
   
-		whitelistPersistDB("127.0.0.1", 6379)
+        whitelistPersistDB("127.0.0.1", 6379)
 
 * whitelistPersistReplicated() - Store whitelist entries that have
   been replicated in the redis DB. By default, replicated whitelist 
@@ -371,7 +387,7 @@ cannot be called inside the allow/report/reset functions:
   then you should not specify this option, as it will cause
   unnecessary writes to the redis DB. For example:
   
-		whitelistPersistReplicated()
+        whitelistPersistReplicated()
 
 * whitelistPersistConnectTimeout(<timeout secs>) - Set the connect
   timeout for connecting to the persistent redis DB. If the timeout is
@@ -379,7 +395,7 @@ cannot be called inside the allow/report/reset functions:
   otherwise during normal operation if the timeout is exceeded, an
   error will be logged. For example:
 
-		whitelistPersistConnectTimeout(2)
+        whitelistPersistConnectTimeout(2)
 
 * whitelistPersistRWTimeout(<timeout secs>, <timeout usecs>) - Set the
   timeout for reading from/writing to the Redis DB. For example:
@@ -404,17 +420,17 @@ cannot be called inside the allow/report/reset functions:
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
   
-		setAllow(allow)
+        setAllow(allow)
 
 * setReport(\<report func\>) - Tell wforce to use the specified Lua
   function for handling all "report" commands. For example:
   
-		setReport(report)
+        setReport(report)
 
 * setReset(\<reset func\>) - Tell wforce to use the specified Lua
   function for handling all "reset" commands. For example:
   
-		setReset(reset)
+        setReset(reset)
 
 * setCanonicalize(\<canonicalize func\>) - Tell wforce to use the
   specified Lua function for handling all "canonicalisation"
@@ -425,7 +441,7 @@ cannot be called inside the allow/report/reset functions:
   LuaLDAP (luarocks install lualdap) to perform lookups in user
   databases. For example:
 
-		setCanonicalize(canonicalize)
+        setCanonicalize(canonicalize)
 
 * setCustomEndpoint(\<name of endpoint\>, \<boolean\>, \<custom lua function\>) -
   Create a new custom REST endpoint with the given name, which when
@@ -443,17 +459,17 @@ cannot be called inside the allow/report/reset functions:
   key-value pairs. See wforce.conf.example for an example. For
   example: 
 
-		function custom(args)
-		  for k,v in pairs(args.attrs) do
-		    infoLog("custom func argument attrs", { key=k, value=v });
-		  end
-		  -- return consists of a boolean, followed by { key-value pairs }
-		  return true, { key=value }
-		end
-		setCustomEndpoint("custom", false, custom)
-		-- Set boolean to true to enable arguments to be sent to all
-		-- report sinks
-		-- setCustomEndpoint("custom", true, custom)
+        function custom(args)
+          for k,v in pairs(args.attrs) do
+            infoLog("custom func argument attrs", { key=k, value=v });
+          end
+          -- return consists of a boolean, followed by { key-value pairs }
+          return true, { key=value }
+        end
+        setCustomEndpoint("custom", false, custom)
+        -- Set boolean to true to enable arguments to be sent to all
+        -- report sinks
+        -- setCustomEndpoint("custom", true, custom)
 
 * setCustomGetEndpoint(\<name of endpoint\>, \<custom lua
   function\>) - Create a new custom REST endpoint accessible via a GET
@@ -485,7 +501,7 @@ cannot be called inside the allow/report/reset functions:
   order to log allow requests returning 0, use this function. For
   example:
 
-		setVerboseAllowLog()
+        setVerboseAllowLog()
 
 * addSyncHost(\<sync host address\>, \<sync host password\>,
   \<replication address\>, \<callback address\>) - If you wish wforce

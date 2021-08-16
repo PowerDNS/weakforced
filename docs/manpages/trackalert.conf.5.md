@@ -23,12 +23,12 @@ cannot be called inside the report or background functions:
 * setACL(\<list of netmasks\>) - Set the access control list for the
   HTTP Server. For example, to allow access from any IP address, specify:
   
-		setACL({"0.0.0.0/0"}) 
+        setACL({"0.0.0.0/0"}) 
 
 * addACL(\<netmask\>) - Add a netmask to the access control list for the
   HTTP server. For example, to allow access from 127.0.0.0/8, specify:
   
-		addACL("127.0.0.0/8")
+        addACL("127.0.0.0/8")
 
 * addCustomWebHook(\<custom webhook name\>, \<config key map\>) - Add
   a custom webhook, i.e. one which can be called from Lua (using
@@ -37,10 +37,10 @@ cannot be called inside the report or background functions:
   supported config keys, and details of the HTTP(S) POST sent
   to webhook URLs. For example:
 
-		config_keys={}
-		config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
-		config_keys["secret"] = "verysecretcode"
-		addCustomWebHook("mycustomhook", config_keys)
+        config_keys={}
+        config_keys["url"] = "http://webhooks.example.com:8080/webhook/"
+        config_keys["secret"] = "verysecretcode"
+        addCustomWebHook("mycustomhook", config_keys)
 
 * addCustomStat(\<stat name\>) - Add a custom counter which can be
   used to track statistics. The stats for custom counters are logged
@@ -49,17 +49,33 @@ cannot be called inside the report or background functions:
 
         addCustomStat("custom_stat1")
 
-* webserver(\<IP:port\>, \<password\>) - Listen for HTTP commands on the
+* webserver(\<IP:port\>, \<password\>) - (*deprecated - see addListener() instead*) Listen for HTTP commands on the
   specified IP address and port. The password is used to authenticate
   client connections using basic authentication. For example:
   
-		webserver("0.0.0.0:8084", "super")
+        webserver("0.0.0.0:8084", "super")
+
+* addListener(\<IP:port\>, \<useSSL\>, \<cert file\>, \<key file\>, \<options\>) - (*replacement for webserver()*) Listen 
+  for HTTP commands on the specified IP address and port. If useSSL is true, then HTTPS must be used, and cert_file and
+  key file are used, otherwise they are empty. Options contains a list of key value pairs to configure the TLS connection;
+  these follow the command line option names in https://www.openssl.org/docs/manmaster/man3/SSL_CONF_cmd.html. 
+  For example, "min_protocol" to set the minimum TLS protocol version. You can add as many listeners as you choose. For example:
+
+        addListener("0.0.0.0:8084", false, "", "", {})
+        addListener("1.2.3.4:1234", true, "/etc/wforce/cert.pem", "/etc/wforce/key.pem", {minimum_protocol="TLSv1.2"})
+        addListener("[::1]:9000", true, "/etc/wforce/cert.pem", "/etc/wforce/key.pem", {minimum_protocol="TLSv1.3"})
+
+* setWebserverPassword(\<Password\>) - (*replacement for webserver password parameter*) Sets the basic authentication
+  password for access to the webserver. This has been decoupled from the addListener() command because multiple listeners
+  can now be created, which was not previously possible. For example:
+
+        setWebserverPassword("foobar")
 
 * controlSocket(\<IP[:port]\>) - Listen for control connections on the
   specified IP address and port. If port is not specified it defaults
   to 5199. For example: 
   
-		controlSocket("0.0.0.0:4004")
+        controlSocket("0.0.0.0:4004")
 
 * setKey(\<key\>) - Use the specified key for authenticating 
   connections from siblings. The key must be generated with makeKey()
@@ -78,7 +94,7 @@ cannot be called inside the report or background functions:
   setNumSchedulerThreads(). Should be at least equal to
   NumReportThreads \+ NumSchedulerThreads. For example:
   
-		setNumLuaStates(10)
+        setNumLuaStates(10)
 
 * setNumWorkerThreads(\<num threads\>) - Set the number of threads in
   the pool used to receive webserver commands. Note that the report
@@ -86,7 +102,7 @@ cannot be called inside the report or background functions:
   by setNumReportThreads(). Defaults to 4 if not specified. For
   example:
 
-		setNumWorkerThreads(4)
+        setNumWorkerThreads(4)
 
 * setMaxWebserverConns(\<max conns\>) - Set the maximum number of
   active connections to the webserver. This can be used to limit the
@@ -100,20 +116,20 @@ cannot be called inside the report or background functions:
   separate Lua Context, (see setNumLuaStates()). Defaults to 6 if not
   specified. For example:
   
-		setNumReportThreads(6)
+        setNumReportThreads(6)
 
 * setNumSchedulerThreads(\<num threads\>) - Set the number of threads
   in the pool used to run scheduled background Lua functions. Each
   thread uses a separate Lua Context, the number of which is set with
   setNumLuaStates(). Defaults to 4 if not specified. For example:
   
-		setNumSchedulerThreads(2)
+        setNumSchedulerThreads(2)
 
 * setNumWebHookThreads(\<num threads\>) - Set the number of threads in
   the pool used to send webhook events. Defaults to 4 if not
   specified. For example:
 
-		setNumWebHookThreads(2)
+        setNumWebHookThreads(2)
 
 * newGeoIP2DB(\<db name\>, \<filename\>) - Opens and initializes a
   GeoIP2 database. A name must be chosen, and the filename of the
@@ -128,7 +144,7 @@ cannot be called inside the report or background functions:
   databases is not installed, this command will fail and trackalert
   will not start. For example:
   
-		initGeoIPDB()
+        initGeoIPDB()
 
 * initGeoIPCityDB() - (Deprecated - use newGeoIP2DB()). Initializes
 the city-level IPv4 and IPv6 GeoIP databases. If either of these
@@ -137,20 +153,20 @@ not start. Ensure these databases have the right names if you're using
 the free/lite DBs - you may need to create symbolic links
 e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   
-		initGeoIPCityDB()
+        initGeoIPCityDB()
 
 * initGeoIPISPDB() - (Deprecated - use newGeoIP2DB()). Initializes the
   ISP-level IPv4 and IPv6 GeoIP databases. If either of these
   databases is not installed, this command will fail and trackalert
   will not start. For example:
   
-		initGeoIPISPDB()
+        initGeoIPISPDB()
 
 * setNumWebHookThreads(\<num threads\>) - Set the number of threads in
   the pool used to send webhook events. Defaults to 5 if not
   specified. For example:
 
-		setNumWebHookThreads(2)
+        setNumWebHookThreads(2)
 
 * setNumWebHookConnsPerThread(\<num conns\>) - Set the maximum number
   of connections used by each WebHook thread. Defaults to 10 if not
@@ -174,14 +190,14 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
 * setReport(\<report func\>) - Tell trackalert to use the specified
   Lua function for handling all "report" commands. For example:
   
-		setReport(report)
+        setReport(report)
 
 * setBackground(\<name\>, \<lua function\> - The setBackground
   function registers a background function with a given name. The name
   is used when scheduling the function using the
   xxxScheduleBackgroundFunc() functions.
 
-		setBackground("mybg", backgroundFunc)
+        setBackground("mybg", backgroundFunc)
 
 * cronScheduleBackgroundFunc(\<cron string\>, \<background function
   name\>) - Tells trackalert to run the specified function according
@@ -192,8 +208,8 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   different days of the week, then you would use two different calls
   to this function to achieve that. For example:
 
-		cronScheduleBackgroundFunc("0 0 1 * *", "mybg")
-		cronScheduleBackgroundFunc("0 0 6 * *", "mybg")
+        cronScheduleBackgroundFunc("0 0 1 * *", "mybg")
+        cronScheduleBackgroundFunc("0 0 6 * *", "mybg")
 
 * intervalScheduleBackgroundFunc(\<duration string\>, \<background
   function name\>) - Tells trackalert to run the specified function
@@ -203,8 +219,8 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   second, and "5:01" would indicate an interval of 5 hours and 1
   minute. For example:
 
-		intervalScheduleBackgroundFunc("00:30:00", "mybg") 
-		intervalScheduleBackgroundFunc("24", "mybg") 
+        intervalScheduleBackgroundFunc("00:30:00", "mybg") 
+        intervalScheduleBackgroundFunc("24", "mybg") 
 
 * setCustomEndpoint(\<name of endpoint\>, \<custom lua function\>) -
   Create a new custom REST endpoint with the given name, which when
@@ -219,14 +235,14 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
   boolean "success" and "r_attrs" json object containing return
   key-value pairs. For example:
 
-		function custom(args)
-		  for k,v in pairs(args.attrs) do
-		    infoLog("custom func argument attrs", { key=k, value=v });
-		  end
-		  -- return consists of a boolean, followed by { key-value pairs }
-		  return true, { key=value }
-		end
-		setCustomEndpoint("custom", custom)
+        function custom(args)
+          for k,v in pairs(args.attrs) do
+            infoLog("custom func argument attrs", { key=k, value=v });
+          end
+          -- return consists of a boolean, followed by { key-value pairs }
+          return true, { key=value }
+        end
+        setCustomEndpoint("custom", custom)
 
 # GENERAL FUNCTIONS
 

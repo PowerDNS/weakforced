@@ -13,7 +13,7 @@ class TestDumpEntries(ApiTestCase):
             r = self.reportFunc('dumpentries', '199.99.99.99', "1234'%s" % i, False)
 
         dumpfile = "/tmp/wfdb.txt"
-        result = call(["../wforce/wf_dump_entries", "-f", dumpfile, "-u", "http://127.0.0.1:8084/", "-l", "127.0.0.1", "-p", "9999", "-w", os.environ.get('APIKEY', 'super')])
+        result = call(["../wforce/wf_dump_entries", "-f", dumpfile, "-u", "http://127.0.0.1:8084", "-l", "127.0.0.1", "-p", "9999", "-w", os.environ.get('APIKEY', 'super')])
         if result:
             f = open(dumpfile, "r")
             found = False

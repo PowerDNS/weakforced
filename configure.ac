@@ -25,6 +25,8 @@ AS_IF([test "x$enable_geoip" != "xno"], [
   AC_MSG_ERROR([libmaxmindb not found, libmaxmind is required"])
  ])
 ])
+AC_CHECK_LIB(dl,dlopen,DLLIBS="-ldl",,)
+AC_SUBST(DLLIBS, $DLLIBS)
 PDNS_WITH_LIBSSL
 AC_ARG_ENABLE([dns],
 AS_HELP_STRING([--disable-dns], [ Disable getdns lookup feature ]))
@@ -97,9 +99,13 @@ PDNS_CHECK_LIBDROGON([], [
   AC_MSG_ERROR([Libdrogon not found, libdrogon support is required])
   ]
 )
-# Drogon depends on libjsoncpp and libz
+# Drogon depends on libjsoncpp, libuuid and libz
 PDNS_CHECK_LIBJSONCPP([], [
   AC_MSG_ERROR([Libjsoncpp not found, libjsoncpp is required as a mandatory dependency of libdrogon])
+  ]
+)
+PDNS_CHECK_LIBUUID([], [
+  AC_MSG_ERROR([Libuuid not found, libuuid is required as a mandatory dependency of libdrogon])
   ]
 )
 PDNS_CHECK_LIBZ([], [

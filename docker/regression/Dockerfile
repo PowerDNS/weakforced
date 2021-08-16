@@ -1,4 +1,6 @@
-FROM ubuntu:bionic as wforce_regression
+FROM ubuntu:focal as wforce_regression
+
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -20,6 +22,9 @@ RUN apt-get update && \
                libsystemd-dev \
                libyaml-cpp-dev \
                libtool \
+               libjsoncpp-dev \
+               libz-dev \
+               uuid-dev \
                pkg-config \
                protobuf-compiler \
                pandoc \
@@ -55,6 +60,10 @@ RUN mkdir /sdist
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
 RUN cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0
 RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 COPY m4/ /wforce/m4/

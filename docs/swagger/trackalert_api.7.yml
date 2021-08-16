@@ -12,6 +12,7 @@ host: "doesnotexist.open-xchange.com"
 basePath: "/"
 schemes:
   - "http"
+  - "https"
 consumes:
   - "application/json"
 produces:

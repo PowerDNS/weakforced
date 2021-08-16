@@ -48,12 +48,12 @@ AC_DEFUN([PDNS_CHECK_LIBJSONCPP], [
         ], [
             # if pkg-config is installed and jsoncpp has installed a .pc file,
             # then use that information and don't search jsoncppdirs
-            AC_CHECK_TOOL([PKG_CONFIG], [libjsoncpp pkg-config])
+            AC_CHECK_TOOL([PKG_CONFIG], [jsoncpp pkg-config])
             if test x"$PKG_CONFIG" != x""; then
-                LIBJSONCPP_LDFLAGS=`$PKG_CONFIG libjsoncpp --libs-only-L 2>/dev/null`
+                LIBJSONCPP_LDFLAGS=`$PKG_CONFIG jsoncpp --libs-only-L 2>/dev/null`
                 if test $? = 0; then
-                    LIBJSONCPP_LIBS=`$PKG_CONFIG libjsoncpp --libs-only-l 2>/dev/null`
-                    LIBJSONCPP_INCLUDES=`$PKG_CONFIG libjsoncpp --cflags-only-I 2>/dev/null`
+                    LIBJSONCPP_LIBS=`$PKG_CONFIG jsoncpp --libs-only-l 2>/dev/null`
+                    LIBJSONCPP_INCLUDES=`$PKG_CONFIG jsoncpp --cflags-only-I 2>/dev/null`
                     found=true
                 fi
             fi
@@ -86,7 +86,7 @@ AC_DEFUN([PDNS_CHECK_LIBJSONCPP], [
     fi
 
     if ! $found; then
-        AC_MSG_NOTICE([Did not find libjspcpp])
+        AC_MSG_NOTICE([Did not find libjsoncpp])
         $2
     else
         AC_MSG_NOTICE([Found libjsoncpp])

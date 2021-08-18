@@ -18,6 +18,9 @@ RUN apt-get update && \
                libsodium-dev \
                libsystemd-dev \
                libyaml-cpp-dev \
+               libjsoncpp-dev \
+               libz-dev \
+               uuid-dev \
                libtool \
                pkg-config \
                protobuf-compiler \
@@ -37,6 +40,10 @@ RUN mkdir /wforce/install
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
 RUN cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0
 RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 COPY m4/ /wforce/m4/
@@ -80,6 +87,9 @@ RUN apt-get update && \
                libssl1.1 \
                libsodium23 \
                libyaml-cpp0.6 \
+               libjsoncpp-dev \
+               libz-dev \
+               uuid-dev \
                gnupg \
                python3 \
                python3-pip \

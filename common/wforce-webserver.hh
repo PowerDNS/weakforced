@@ -71,9 +71,8 @@ public:
   virtual void doFilter(const drogon::HttpRequestPtr& req,
                         drogon::FilterCallback&& fcb,
                         drogon::FilterChainCallback&& fccb) override;
-
-  static bool compareAuthorization(const std::string& auth_header, const string& expected_password);
-
+protected:
+  bool compareAuthorization(const std::string& auth_header, const std::string& expected_password);
 private:
   const std::string d_password;
 };
@@ -146,6 +145,7 @@ public:
     if (init.test_and_set() == false) {
       drogon::app().disableSession();
       drogon::app().disableSigtermHandling();
+      drogon::app().setLogLevel(trantor::Logger::kWarn);
       // Set custom 404 response
       auto resp = drogon::HttpResponse::newHttpResponse();
       resp->setBody(R"({"status":"failure", "reason":"Not found"})");

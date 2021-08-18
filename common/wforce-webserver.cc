@@ -133,7 +133,7 @@ void WforceWebserver::addListener(const std::string& ip, unsigned int port, bool
   drogon::app().addListener(ip, port, use_ssl, cert_file, private_key, enable_oldtls, opts);
 }
 
-bool LoginFilter::compareAuthorization(const std::string& auth_header, const string& expected_password)
+bool LoginFilter::compareAuthorization(const std::string& auth_header, const std::string& expected_password)
 {
   // validate password
   bool auth_ok = false;

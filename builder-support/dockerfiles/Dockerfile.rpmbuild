@@ -2,13 +2,13 @@ FROM dist-base as package-builder
 RUN yum install -y rpm-build rpmdevtools python3-rpm-macros wget \
     /usr/bin/python3 /usr/bin/pip3 && \
     yum groupinstall -y "Development Tools"
-RUN yum install -y openssl-devel libuuid-devel zlib-devel centos-release-scl llvm-toolset-7.0
+RUN yum install -y openssl-devel libuuid-devel zlib-devel
 RUN rpmdev-setuptree
+
+SHELL ["bash", "--login", "-c"]
 
 ARG CC=clang
 ARG CXX=clang++
-RUN echo "source /opt/rh/llvm-toolset-7.0/enable" >> /etc/bashrc
-SHELL ["bash", "--login", "-c"]
 
 RUN mkdir /dist /wforce
 WORKDIR /wforce

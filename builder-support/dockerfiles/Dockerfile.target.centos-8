@@ -5,7 +5,7 @@
 # Put only the bare minimum of common commands here, without dev tools
 FROM centos:8 as dist-base
 RUN yum install -y epel-release
-RUN dnf -y install dnf-plugins-core
+RUN dnf -y install dnf-plugins-core clang
 RUN dnf config-manager --set-enabled powertools
 
 # Do the actual rpm build

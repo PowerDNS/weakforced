@@ -12,7 +12,6 @@ AM_CPPFLAGS = $(LUA_CFLAGS) \
 	$(LIBPROMETHEUS_INCLUDES) \
 	$(YAMLCPP_FLAGS) \
 	$(MMDB_CFLAGS) \
-	-pthread \
 	-DSYSCONFDIR='"$(sysconfdir)"' \
 	-I$(top_srcdir)/wforce
 
@@ -43,7 +42,6 @@ trackalert_LDFLAGS = \
     $(LIBCRYPTO_LDFLAGS) \
     $(LIBZ_LDFLAGS) \
     $(LIBUUID_LDFLAGS)
-	-pthread 
 
 trackalert_LDADD = \
 	-lreadline -ltermcap \

@@ -2,7 +2,13 @@ FROM dist-base as package-builder
 RUN yum install -y rpm-build rpmdevtools python3-rpm-macros wget \
     /usr/bin/python3 /usr/bin/pip3 && \
     yum groupinstall -y "Development Tools"
+RUN yum install -y openssl-devel libuuid-devel zlib-devel centos-release-scl llvm-toolset-7.0
 RUN rpmdev-setuptree
+
+ARG CC=clang
+ARG CXX=clang++
+RUN echo "source /opt/rh/llvm-toolset-7.0/enable" >> /etc/bashrc
+SHELL ["bash", "--login", "-c"]
 
 RUN mkdir /dist /wforce
 WORKDIR /wforce
@@ -28,6 +34,14 @@ RUN cd prometheus-cpp/_build && make clean && make install
 RUN wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.tar.gz
 RUN tar xvf yaml-cpp-0.6.3.tar.gz
 RUN cd yaml-cpp-yaml-cpp* && mkdir build && cd build && cmake .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
+
+RUN git clone https://github.com/open-source-parsers/jsoncpp
+RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
+RUN cd jsoncpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=OFF && make && make install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF && make && make install
 
 ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers

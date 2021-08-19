@@ -11,9 +11,24 @@ AC_CANONICAL_HOST
 AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
+PDNS_CHECK_OS
+LT_INIT
+
+# Do we want to do a docker-only build?
+AC_ARG_ENABLE([docker-only],
+[  --enable-docker-only         Build and run docker images only, don't check for compilation dependencies],
+[case "${enableval}" in
+  yes) docker_only=true ;;
+  no)  docker_only=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
+esac],[docker_only=false])
+
+# If docker-only then don't check for all the dependencies
+AS_IF([test "x$docker_only" = "xfalse"], [
+
 # Check for C++ 2017 support
 AX_CXX_COMPILE_STDCXX_17(ext,mandatory)
-PDNS_CHECK_OS
+
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 AC_ARG_ENABLE([geoip],
@@ -52,7 +67,7 @@ AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
-LT_INIT
+
 # We need readline
 WFORCE_CHECK_READLINE
 # Boost-specific checks
@@ -139,6 +154,28 @@ AS_IF([test "x$LIBCURL" = "x"], [
 ])
 
 PTHREAD_SET_NAME
+
+# Docker-only
+])
+
+AS_IF([ test "x$docker_only" = "xtrue" ], [
+AM_CONDITIONAL([HAVE_SYSTEMD], [ test x = x ])
+AM_CONDITIONAL([LIBSYSTEMD], [ test x = x ])
+AM_CONDITIONAL([HAVE_LIBSSL], [ test x = x ])
+AM_CONDITIONAL([HAVE_BOOST_GE_148], [ test x = x ])
+AM_CONDITIONAL([UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([HAVE_PROTOBUF], [ test x = x ])
+AM_CONDITIONAL([HAVE_PROTOC], [ test x = x ])
+AM_CONDITIONAL([LUA], [ test x = x ])
+AM_CONDITIONAL([HAVE_LUA_HPP], [ test x = x ])
+AM_CONDITIONAL([HAVE_PANDOC], [ test x = x ])
+AM_CONDITIONAL([HAVE_MANPAGES], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+])
 
 # Do we want the docker subdirectories to be built?
 AC_ARG_ENABLE([docker],

@@ -92,20 +92,23 @@ std::string MiniCurl::getURL(const std::string& url, const MiniCurlHeaders& head
   return std::string();
 }
 
-void MiniCurl::setCurlOption(int option, ...)
+void MiniCurl::setCurlOptionLong(int option, long l)
 {
   if (d_curl) {
-    va_list args;
+    (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), l);
+  }
+}
 
-    va_start(args, option);
-    (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), args);
-    va_end(args);
+void MiniCurl::setCurlOptionString(int option, const char* s)
+{
+  if (d_curl) {
+    (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), s);
   }
 }
 
 void MiniCurl::setTimeout(uint64_t timeout_secs)
 {
-  setCurlOption(CURLOPT_TIMEOUT, timeout_secs);
+  setCurlOptionLong(CURLOPT_TIMEOUT, static_cast<long>(timeout_secs));
 }
 
 void MiniCurl::clearCurlHeaders()
@@ -264,7 +267,7 @@ bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
 void MiniCurlMulti::setTimeout(uint64_t timeout_secs)
 {
   for (auto& i : d_ccs) {
-    i.setCurlOption(CURLOPT_TIMEOUT, timeout_secs);
+    i.setCurlOptionLong(CURLOPT_TIMEOUT, static_cast<long>(timeout_secs));
   }
 }
 

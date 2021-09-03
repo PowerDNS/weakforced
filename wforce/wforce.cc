@@ -76,6 +76,7 @@ WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
 syncData g_sync_data;
 WforceReplication g_replication;
+curlTLSOptions g_curl_tls_options;
 
 struct SiblingQueueItem {
   std::string msg;
@@ -460,11 +461,19 @@ void sendNamedReportSink(const std::string& msg)
   }
 }
 
+void setMiniCurlTLSOptions(MiniCurl& mc) {
+  mc.setCurlOptionLong(CURLOPT_SSL_VERIFYPEER, g_curl_tls_options.verifyPeer ? 1L : 0L);
+  mc.setCurlOptionLong(CURLOPT_SSL_VERIFYHOST, g_curl_tls_options.verifyHost ? 2L : 0L);
+  if (g_curl_tls_options.caCertBundleFile.length() != 0)
+    mc.setCurlOptionString(CURLOPT_CAINFO, g_curl_tls_options.caCertBundleFile.c_str());
+}
+
 json11::Json callWforceGetURL(const std::string& url, const std::string& password, std::string& err)
 {
   MiniCurl mc;
   MiniCurlHeaders mch;
   mc.setTimeout(5);
+  setMiniCurlTLSOptions(mc);
   mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
   std::string get_result = mc.getURL(url, mch);
   return json11::Json::parse(get_result, err);
@@ -477,6 +486,7 @@ json11::Json callWforcePostURL(const std::string& url, const std::string& passwo
   std::string post_res, post_err;
   
   mc.setTimeout(5);
+  setMiniCurlTLSOptions(mc);
   mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
   mch.insert(std::make_pair("Content-Type", "application/json"));
   if (mc.postURL(url, post_body, mch, post_res, post_err)) {

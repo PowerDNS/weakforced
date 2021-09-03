@@ -1121,6 +1121,36 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setCountMinBits", [](float gamma, float eps) { });
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("disableCurlPeerVerification", []() {
+      g_curl_tls_options.verifyPeer = false;
+      g_webhook_runner.disablePeerVerification();
+    });
+  }
+  else {
+    c_lua.writeFunction("disableCurlPeerVerification", []() { });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("disableCurlHostVerification", []() {
+      g_curl_tls_options.verifyHost = false;
+      g_webhook_runner.disableHostVerification();
+    });
+  }
+  else {
+    c_lua.writeFunction("disableCurlHostVerification", []() { });
+  }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setCurlCABundleFile", [](const std::string& filename) {
+      g_curl_tls_options.caCertBundleFile = filename;
+      g_webhook_runner.setCACertBundleFile(filename);
+    });
+  }
+  else {
+    c_lua.writeFunction("setCurlCABundleFile", [](const std::string& filename) { });
+  }
+
   std::ifstream ifs(config);
   if(!ifs)
     warnlog("Unable to read configuration from '%s'", config);

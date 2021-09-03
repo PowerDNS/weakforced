@@ -121,6 +121,10 @@ void WebHookRunner::_runHookThread(unsigned int num_conns)
   mcm.setCurlOptionLong(CURLOPT_SSL_VERIFYPEER, verify_peer ? 1L : 0L);
   if (caCertBundleFile.length() != 0)
     mcm.setCurlOptionString(CURLOPT_CAINFO, caCertBundleFile.c_str());
+  if (clientCertFile.length() != 0)
+    mcm.setCurlOptionString(CURLOPT_SSLCERT, clientCertFile.c_str());
+  if (clientKeyFile.length() != 0)
+    mcm.setCurlOptionString(CURLOPT_SSLKEY, clientKeyFile.c_str());
 
   while (true) {
     std::vector<WebHookQueueItem> events;

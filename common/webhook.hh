@@ -483,7 +483,9 @@ public:
   void disablePeerVerification() { verify_peer = false; }
   void disableHostVerification() { verify_host = false; }
   void setCACertBundleFile(const std::string& file) { caCertBundleFile = file; }
-
+  void setClientCertAndKey(const std::string& certfile,
+                           const std::string& keyfile)
+                           { clientCertFile = certfile; clientKeyFile = keyfile; }
   // synchronously run the ping command for the hook
   bool pingHook(std::shared_ptr<const WebHook> hook, std::string error_msg);
   // asynchronously run the hook with the supplied data
@@ -506,4 +508,6 @@ private:
   bool verify_peer = true;
   bool verify_host = true;
   std::string caCertBundleFile;
+  std::string clientCertFile;
+  std::string clientKeyFile;
 };

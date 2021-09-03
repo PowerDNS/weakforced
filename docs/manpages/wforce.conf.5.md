@@ -538,6 +538,22 @@ cannot be called inside the allow/report/reset functions:
 
         setMinSyncHostUptime(1800)
 
+* disableCurlPeerVerification() - Disable checking of peer certificates in all outbound HTTPS connections. This is not recommended except for debugging or development purposes. For example:
+
+        disableCurlPeerVerification()
+
+* disableCurlHostVerification() - Disable checking of the hostname in the peer certificate for all outbound HTTPS connections. This is not recommended except for debugging or development purposes.
+
+        disableCurlHostVerification()
+
+* setCurlCABundleFile(\<Path to CA File\>) - Gives the location of a file containing the certificate authorities to use for checking HTTPS server certificates. Use this if the standard installed root certs do not contain the certs you need. This should be a file containing 1:N certs in PEM format.
+
+        setCurlCABundleFile("/etc/ca/local_cas.pem")
+
+* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certifcate and key files to use for mutual TLS authentication (in PEM format).
+
+        setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
+
 # GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 

@@ -108,6 +108,8 @@ struct curlTLSOptions {
   bool verifyPeer = true;
   bool verifyHost = true;
   std::string caCertBundleFile;
+  std::string clientCertFile;
+  std::string clientKeyFile;
 };
 
 void replicateOperation(const ReplicationOperation& rep_op);

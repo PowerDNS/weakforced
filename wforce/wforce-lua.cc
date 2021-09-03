@@ -1151,6 +1151,17 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("setCurlCABundleFile", [](const std::string& filename) { });
   }
 
+  if (!multi_lua) {
+    c_lua.writeFunction("setCurlClientCertAndKey", [](const std::string& certfile, const std::string& keyfile) {
+      g_curl_tls_options.clientCertFile = certfile;
+      g_curl_tls_options.clientKeyFile = keyfile;
+      g_webhook_runner.setClientCertAndKey(certfile, keyfile);
+    });
+  }
+  else {
+    c_lua.writeFunction("setCurlClientCertAndKey", [](const std::string& certfile, const std::string& keyfile) { });
+  }
+
   std::ifstream ifs(config);
   if(!ifs)
     warnlog("Unable to read configuration from '%s'", config);

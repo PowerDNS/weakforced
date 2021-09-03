@@ -530,9 +530,7 @@ cannot be called inside the allow/report/reset functions:
         -- Add https://10.2.3.1:8084 as a sync host,
         -- and use the password "super"
         -- Send the DB dump to https://10.2.1.1:4001
-        -- Note this config requires HTTPS reverse proxies in front of both
-        -- wforce instances
-        addSyncHost("https://10.2.3.1:8084", "super", "10.2.1.1:4001", "https://10.2.1.1:8084") 
+        addSyncHost("https://host1.example.com:8084", "super", "10.2.1.1:4001", "https://host2.example.com:8084") 
 
 * setMinSyncHostUptime(\<seconds\>) - The minimum time that any sync
   host must have been up for it to be able to send me the contents of

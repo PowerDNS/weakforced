@@ -117,6 +117,11 @@ void WebHookRunner::_runHookThread(unsigned int num_conns)
   setThreadName("wf/wh-runhook");
   MiniCurlMulti mcm(num_conns);
   mcm.setTimeout(timeout_secs);
+  mcm.setCurlOptionLong(CURLOPT_SSL_VERIFYHOST, verify_host ? 2L : 0L);
+  mcm.setCurlOptionLong(CURLOPT_SSL_VERIFYPEER, verify_peer ? 1L : 0L);
+  if (caCertBundleFile.length() != 0)
+    mcm.setCurlOptionString(CURLOPT_CAINFO, caCertBundleFile.c_str());
+
   while (true) {
     std::vector<WebHookQueueItem> events;
     {

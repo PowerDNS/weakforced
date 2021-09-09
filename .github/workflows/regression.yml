@@ -29,7 +29,7 @@ jobs:
       - run: sudo sysctl -w vm.max_map_count=262144
       - run: autoreconf -i
       - run: ./configure --enable-trackalert
-      - run: cd docker && make regression-tests
+      - run: cd docker && make regression
         env:
           MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
       - run: make dist

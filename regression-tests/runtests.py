@@ -25,12 +25,12 @@ wait = ('--wait' in sys.argv)
 if wait:
     sys.argv.remove('--wait')
 
-cmd1 = ("../wforce/wforce -C ./wforce1.conf -R ../wforce/regexes.yaml").split()
-cmd2 = ("../wforce/wforce -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
-cmd4 = ("../wforce/wforce -C ./wforce4.conf -R ../wforce/regexes.yaml").split()
+cmd1 = ("../wforce/wforce -D -C ./wforce1.conf -R ../wforce/regexes.yaml").split()
+cmd2 = ("../wforce/wforce -D -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
+cmd4 = ("../wforce/wforce -D -C ./wforce4.conf -R ../wforce/regexes.yaml").split()
 webcmd = (".venv/bin/python ./webhook_server.py").split()
 udpsinkcmd = (".venv/bin/python ./udp_sink.py").split()
-ta_cmd = ("../trackalert/trackalert -C ./trackalert.conf").split()
+ta_cmd = ("../trackalert/trackalert -D -C ./trackalert.conf").split()
 report_cmd = (".venv/bin/python ../report_api/runreport.py").split()
 
 # Now run wforce and the tests.

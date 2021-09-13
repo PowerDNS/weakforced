@@ -17,7 +17,7 @@ class TestSyncDBs(ApiTestCase):
         
         time.sleep(11);
         
-        cmd3 = ("../wforce/wforce -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
+        cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
         proc3 = subprocess.Popen(cmd3, close_fds=True)
         time.sleep(5)
 

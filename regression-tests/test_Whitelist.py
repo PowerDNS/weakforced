@@ -164,7 +164,7 @@ class TestWhitelist(ApiTestCase):
         r.close()
 
     def test_PersistWhitelist(self):
-        cmd3 = ("../wforce/wforce -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
+        cmd3 = ("../wforce/wforce -D -C ./wforce3.conf -R ../wforce/regexes.yaml").split()
         proc3 = subprocess.Popen(cmd3, close_fds=True)
         time.sleep(1)
         

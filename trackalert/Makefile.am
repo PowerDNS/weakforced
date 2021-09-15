@@ -31,6 +31,7 @@ bin_PROGRAMS = trackalert
 trackalert_SOURCES = \
 	trackalert.cc trackalert.hh \
 	trackalert-lua.cc \
+	wforce-common-lua.cc wforce-common-lua.hh \
 	trackalert-web.cc trackalert-web.hh\
 	trackalert-luastate.hh
 

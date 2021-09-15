@@ -39,6 +39,7 @@ bin_PROGRAMS =  wforce \
 wforce_SOURCES = \
 	wforce.cc wforce.hh \
 	wforce-lua.cc \
+	wforce-common-lua.cc wforce-common-lua.hh \
 	wforce-web.cc wforce-web.hh\
 	wforce-sibling.cc wforce-sibling.hh \
 	twmap.cc \

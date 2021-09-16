@@ -21,12 +21,23 @@
  */
 
 #include "config.h"
-#include "wforce.hh"
+#include "iputils.hh"
+#include "sstuff.hh"
+#include "wforce_ns.hh"
+#include "dolog.hh"
+#include "webhook.hh"
+#include "wforce-webserver.hh"
 #include "wforce-common-lua.hh"
 #include "wforce-web.hh"
 #include <boost/filesystem.hpp>
 
 using std::thread;
+
+extern WforceWebserver  g_webserver;
+extern ComboAddress     g_serverControl;
+extern WebHookRunner g_webhook_runner;
+extern curlTLSOptions g_curl_tls_options;
+void controlThread(int fd, ComboAddress local);
 
 // These are Lua functions common to both wforce and trackalert (and crucially which have no differences in their
 // implementation)

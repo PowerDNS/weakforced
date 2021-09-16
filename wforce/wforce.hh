@@ -104,14 +104,6 @@ struct syncData {
   std::string  webserver_password;
 };
 
-struct curlTLSOptions {
-  bool verifyPeer = true;
-  bool verifyHost = true;
-  std::string caCertBundleFile;
-  std::string clientCertFile;
-  std::string clientKeyFile;
-};
-
 void replicateOperation(const ReplicationOperation& rep_op);
 
 extern syncData g_sync_data;

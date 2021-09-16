@@ -110,3 +110,10 @@ private:
   CURLM* d_mcurl = nullptr;
 };
 
+struct curlTLSOptions {
+  bool verifyPeer = true;
+  bool verifyHost = true;
+  std::string caCertBundleFile;
+  std::string clientCertFile;
+  std::string clientKeyFile;
+};

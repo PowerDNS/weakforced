@@ -64,6 +64,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
     c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) {
       if (client)
         return;
+      warnlog("Warning - webserver() configuration command is deprecated in favour of addListener() and will be removed in a future version");
       ComboAddress local;
       try {
         local = ComboAddress(address);

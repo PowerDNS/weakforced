@@ -595,8 +595,7 @@ void parseResetCmd(const drogon::HttpRequestPtr& req,
       }
 
       if (!haveLogin && !haveIP) {
-        resp->setStatusCode(drogon::k400BadRequest);
-        resp->setBody(R"({"status":"failure", "reason":"No ip or login field supplied"})");
+        setErrorCodeAndReason(drogon::k400BadRequest, "No ip or login field supplied", resp);
       }
       else {
         bool reset_ret;
@@ -608,8 +607,7 @@ void parseResetCmd(const drogon::HttpRequestPtr& req,
           resp->setBody(R"({"status":"ok"})");
         }
         else {
-          resp->setStatusCode(drogon::k500InternalServerError);
-          resp->setBody(R"({"status":"failure", "reason":"reset function returned false"})");
+          setErrorCodeAndReason(drogon::k500InternalServerError, "reset function returned false", resp);
         }
       }
       // generate webhook events

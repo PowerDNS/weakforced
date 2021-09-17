@@ -60,9 +60,11 @@ static time_t start = time(0);
 static inline void setErrorCodeAndReason(drogon::HttpStatusCode code, const std::string& reason, const drogon::HttpResponsePtr& resp)
 {
   resp->setStatusCode(code);
-  std::stringstream ss;
-  ss << "{\"success\":false, \"reason\":\"" << reason << "\"}";
-  resp->setBody(ss.str());
+  json11::Json j = json11::Json::object {
+    { "status", "failure" },
+    { "reason", reason },
+    };
+  resp->setBody(j.dump());
 }
 
 static int uptimeOfProcess()
@@ -149,8 +151,7 @@ bool canonicalizeLogin(std::string& login, const drogon::HttpResponsePtr& resp)
     retval = false;
   }
   catch (...) {
-    resp->setStatusCode(drogon::k500InternalServerError);
-    resp->setBody(R"({"status":"failure"})");
+    setErrorCodeAndReason(drogon::k500InternalServerError, "unknown", resp);
     retval = false;
   }
   return retval;

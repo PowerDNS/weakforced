@@ -68,5 +68,6 @@ bool ReplicationOperation::unserialize(const std::string& str)
 
 void ReplicationOperation::applyOperation()
 {
-  rep_op->applyOperation();
+  if (rep_op != nullptr)
+    rep_op->applyOperation();
 }

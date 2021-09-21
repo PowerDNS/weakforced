@@ -462,14 +462,14 @@ void sendNamedReportSink(const std::string& msg)
 }
 
 void setMiniCurlTLSOptions(MiniCurl& mc) {
-  mc.setCurlOptionLong(CURLOPT_SSL_VERIFYPEER, g_curl_tls_options.verifyPeer ? 1L : 0L);
-  mc.setCurlOptionLong(CURLOPT_SSL_VERIFYHOST, g_curl_tls_options.verifyHost ? 2L : 0L);
+  mc.setCurlOption(CURLOPT_SSL_VERIFYPEER, g_curl_tls_options.verifyPeer ? 1L : 0L);
+  mc.setCurlOption(CURLOPT_SSL_VERIFYHOST, g_curl_tls_options.verifyHost ? 2L : 0L);
   if (g_curl_tls_options.caCertBundleFile.length() != 0)
-    mc.setCurlOptionString(CURLOPT_CAINFO, g_curl_tls_options.caCertBundleFile.c_str());
+    mc.setCurlOption(CURLOPT_CAINFO, g_curl_tls_options.caCertBundleFile.c_str());
   if (g_curl_tls_options.clientCertFile.length() != 0)
-    mc.setCurlOptionString(CURLOPT_SSLCERT, g_curl_tls_options.clientCertFile.c_str());
+    mc.setCurlOption(CURLOPT_SSLCERT, g_curl_tls_options.clientCertFile.c_str());
   if (g_curl_tls_options.clientKeyFile.length() != 0)
-    mc.setCurlOptionString(CURLOPT_SSLKEY, g_curl_tls_options.clientKeyFile.c_str());
+    mc.setCurlOption(CURLOPT_SSLKEY, g_curl_tls_options.clientKeyFile.c_str());
 }
 
 json11::Json callWforceGetURL(const std::string& url, const std::string& password, std::string& err)

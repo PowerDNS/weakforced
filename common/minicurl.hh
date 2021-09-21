@@ -39,8 +39,11 @@ public:
   MiniCurl& operator=(const MiniCurl&&) = delete;
   void setURLData(const std::string& url, const MiniCurlHeaders& headers);
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
-  void setCurlOptionLong(int option, long l);
-  void setCurlOptionString(int option, const char* s);
+  template <class T> void setCurlOption(int option, T optval) {
+    if (d_curl) {
+      (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), optval);
+    }
+  }
   void setTimeout(uint64_t timeout_secs);
   void setPostData(const std::string& url, const std::string& post_body,
                    const MiniCurlHeaders& headers);

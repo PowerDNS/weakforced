@@ -26,10 +26,10 @@ jobs:
         run: cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && sudo make install
       - run: sudo sysctl -w vm.max_map_count=262144
       - run: autoreconf -i
-      - run ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
-      - run cd docker/wforce_image && make test_wforce_image
-      - run cd docker/wforce_image && make build_wforce_image
-      - run cd docker && bash docker_push.sh
+      - run: ./configure --enable-docker --disable-dns --disable-sodium --disable-geoip
+      - run: cd docker/wforce_image && make test_wforce_image
+      - run: cd docker/wforce_image && make build_wforce_image
+      - run: cd docker && bash docker_push.sh
         env:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

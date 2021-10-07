@@ -20,6 +20,7 @@ jobs:
           - amazon-2
           - debian-stretch
           - debian-buster
+          - debian-bullseye
     steps:
       - uses: actions/checkout@v2.3.4
         with:

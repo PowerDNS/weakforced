@@ -427,7 +427,7 @@ void setupCommonLua(bool client,
   c_lua.writeFunction("lookupISP", [](ComboAddress address) {
       return g_wfgeodb.lookupISP(address);
     });
-
+#endif // HAVE_GEOIP
 #ifdef HAVE_MMDB
 
   if (!multi_lua) {
@@ -465,6 +465,5 @@ void setupCommonLua(bool client,
   c_lua.registerFunction("lookupUIntValue", &WFGeoIP2DB::lookupUIntValue);
   c_lua.registerFunction("lookupBoolValue", &WFGeoIP2DB::lookupBoolValue);
   c_lua.registerFunction("lookupDoubleValue", &WFGeoIP2DB::lookupDoubleValue);
-#endif // HAVE_MMDB  
-#endif // HAVE_GEOIP  
+#endif // HAVE_MMDB
 }

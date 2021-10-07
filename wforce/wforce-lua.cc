@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "wforce.hh"
+#include "wforce-common-lua.hh"
 #include "wforce-replication.hh"
 #include <thread>
 #include "dolog.hh"
@@ -35,7 +36,9 @@
 #include "common-lua.hh"
 #include <fstream>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 #include "wforce-prometheus.hh"
+#include "drogon/drogon.h"
 
 #ifdef HAVE_GEOIP
 #include "wforce-geoip.hh"
@@ -49,7 +52,7 @@
 
 using std::thread;
 
-static vector<std::function<void(void)>>* g_launchWork;
+static vector<std::function<void(void)>>* launchWork;
 ComboAddress g_sibling_listen_addr;
 
 std::vector<std::map<std::string, std::string>> getWLBLKeys(const std::vector<BlackWhiteListEntry>& blv, const char* key_name) {
@@ -78,9 +81,10 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
                                            CustomGetFuncMap& custom_get_func_map,
                                            const std::string& config)
 {
-  g_launchWork= new vector<std::function<void(void)>>();
+  launchWork= new vector<std::function<void(void)>>();
 
   setupCommonLua(client, multi_lua, c_lua, config);
+  setupWforceCommonLua(client, multi_lua, c_lua, launchWork);
 
   if (!multi_lua && !client) {
     c_lua.writeFunction("addReportSink", [](const std::string& address) {
@@ -308,8 +312,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         thread t2([ca]() { g_replication.receiveReplicationOperationsTCP(ca); });
         t2.detach();
       };
-      if(g_launchWork)
-        g_launchWork->push_back(launch);
+      if(launchWork)
+        launchWork->push_back(launch);
       else
         launch();
     });
@@ -318,12 +322,11 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("siblingListener", [](const std::string& address) { });
   }
 
-  c_lua.writeFunction("shutdown", []() { _exit(0);} );
-
   if (!multi_lua) {
     c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) {
-      if(client)
+      if (client)
         return;
+      warnlog("Warning - webserver() configuration command is deprecated in favour of addListener() and will be removed in a future version");
       ComboAddress local;
       try {
         local = ComboAddress(address);
@@ -333,27 +336,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
         return;
       }
       g_sync_data.webserver_password = password;
-      try {
-        int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
-        if (sock < 0)
-          throw std::runtime_error("Failed to create webserver socket");
-        SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
-        SBind(sock, local);
-        SListen(sock, 1024);
-        auto launch=[sock, local, password]() {
-          thread t(WforceWebserver::start, sock, local, password, &g_webserver);
-          t.detach();
-        };
-        if(g_launchWork)
-          g_launchWork->push_back(launch);
-        else
-          launch();
-      }
-      catch(std::exception& e) {
-        errlog("Unable to bind to webserver socket on %s: %s", local.toStringWithPort(), e.what());
-        _exit(EXIT_FAILURE);
-      }
-
+      g_webserver.setBasicAuthPassword(password);
+      g_webserver.addSimpleListener(local.toString(), local.getPort());
+      auto launch =[]() {
+        thread t(WforceWebserver::start, &g_webserver);
+        t.detach();
+      };
+      if (launchWork)
+        launchWork->push_back(launch);
+      else
+        launch();
     });
   }
   else {
@@ -361,45 +353,13 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("controlSocket", [client](const std::string& str) {
-      ComboAddress local;
-      try {
-        local = ComboAddress(str, 4004);
-      }
-      catch (const WforceException& e) {
-        errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);
-        return;
-      }
-      if(client) {
-        g_serverControl = local;
-        return;
-      }
-
-      try {
-        int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
-        if (sock < 0)
-          throw std::runtime_error("Failed to create control socket");
-        SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
-        SBind(sock, local);
-        SListen(sock, 5);
-        auto launch=[sock, local]() {
-          thread t(controlThread, sock, local);
-          t.detach();
-        };
-        if(g_launchWork)
-          g_launchWork->push_back(launch);
-        else
-          launch();
-
-      }
-      catch(std::exception& e) {
-        errlog("Unable to bind to control socket on %s: %s", local.toStringWithPort(), e.what());
-        _exit(EXIT_FAILURE);
-      }
+    c_lua.writeFunction("setWebserverPassword", [](const std::string& password) {
+      g_webserver.setBasicAuthPassword(password);
+      g_sync_data.webserver_password = password;
     });
   }
   else {
-    c_lua.writeFunction("controlSocket", [](const std::string& str) { });
+    c_lua.writeFunction("setWebserverPassword", [](const std::string& password) { });
   }
 
   if (!multi_lua) {
@@ -927,7 +887,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
       addCommandStat(f_name+"_Get");
       addPrometheusCommandMetric(f_name+"_Get");
       // register a webserver command
-      g_webserver.registerFunc(f_name, HTTPVerb::GET, WforceWSFunc(parseCustomGetCmd, "text/plain"));
+      g_webserver.registerFunc(f_name, HTTPVerb::GET, WforceWSFunc(parseCustomGetCmd, drogon::CT_TEXT_PLAIN));
       noticelog("Registering custom GET endpoint [%s]", f_name);
     }
   });
@@ -1078,9 +1038,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
 
   c_lua.executeCode(ifs);
   if (!multi_lua) {
-    auto ret=*g_launchWork;
-    delete g_launchWork;
-    g_launchWork=0;
+    auto ret=*launchWork;
+    delete launchWork;
+    launchWork=0;
     return ret;
   }
   else {

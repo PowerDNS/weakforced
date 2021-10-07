@@ -104,7 +104,7 @@ void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const
 void WebHookRunner::runHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const json11::Json& json_data)
 {
   if (hook->getConfigKey("kafka") == "true") {
-    Json kobj = Json::object{{"records", Json(Json::array{Json(Json::object{{"value", json_data}})})}};
+    json11::Json kobj = json11::Json::object{{"records", json11::Json(json11::Json::array{json11::Json(json11::Json::object{{"value", json_data}})})}};
     runHook(event_name, hook, kobj.dump());
   }
   else {
@@ -117,6 +117,15 @@ void WebHookRunner::_runHookThread(unsigned int num_conns)
   setThreadName("wf/wh-runhook");
   MiniCurlMulti mcm(num_conns);
   mcm.setTimeout(timeout_secs);
+  mcm.setCurlOption(CURLOPT_SSL_VERIFYHOST, verify_host ? 2L : 0L);
+  mcm.setCurlOption(CURLOPT_SSL_VERIFYPEER, verify_peer ? 1L : 0L);
+  if (caCertBundleFile.length() != 0)
+    mcm.setCurlOption(CURLOPT_CAINFO, caCertBundleFile.c_str());
+  if (clientCertFile.length() != 0)
+    mcm.setCurlOption(CURLOPT_SSLCERT, clientCertFile.c_str());
+  if (clientKeyFile.length() != 0)
+    mcm.setCurlOption(CURLOPT_SSLKEY, clientKeyFile.c_str());
+
   while (true) {
     std::vector<WebHookQueueItem> events;
     {

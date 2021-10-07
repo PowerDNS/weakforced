@@ -81,4 +81,3 @@ extern bool g_configurationDone;
 #define NUM_SCHEDULER_THREADS 4
 extern int g_num_scheduler_threads;
 extern std::shared_ptr<Bosma::Scheduler> g_bg_schedulerp;
-

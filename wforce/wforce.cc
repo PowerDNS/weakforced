@@ -76,6 +76,7 @@ WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
 syncData g_sync_data;
 WforceReplication g_replication;
+curlTLSOptions g_curl_tls_options;
 
 struct SiblingQueueItem {
   std::string msg;
@@ -460,31 +461,44 @@ void sendNamedReportSink(const std::string& msg)
   }
 }
 
-Json callWforceGetURL(const std::string& url, const std::string& password, std::string& err)
+void setMiniCurlTLSOptions(MiniCurl& mc) {
+  mc.setCurlOption(CURLOPT_SSL_VERIFYPEER, g_curl_tls_options.verifyPeer ? 1L : 0L);
+  mc.setCurlOption(CURLOPT_SSL_VERIFYHOST, g_curl_tls_options.verifyHost ? 2L : 0L);
+  if (g_curl_tls_options.caCertBundleFile.length() != 0)
+    mc.setCurlOption(CURLOPT_CAINFO, g_curl_tls_options.caCertBundleFile.c_str());
+  if (g_curl_tls_options.clientCertFile.length() != 0)
+    mc.setCurlOption(CURLOPT_SSLCERT, g_curl_tls_options.clientCertFile.c_str());
+  if (g_curl_tls_options.clientKeyFile.length() != 0)
+    mc.setCurlOption(CURLOPT_SSLKEY, g_curl_tls_options.clientKeyFile.c_str());
+}
+
+json11::Json callWforceGetURL(const std::string& url, const std::string& password, std::string& err)
 {
   MiniCurl mc;
   MiniCurlHeaders mch;
   mc.setTimeout(5);
+  setMiniCurlTLSOptions(mc);
   mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
   std::string get_result = mc.getURL(url, mch);
-  return Json::parse(get_result, err);
+  return json11::Json::parse(get_result, err);
 }
 
-Json callWforcePostURL(const std::string& url, const std::string& password, const std::string& post_body, std::string& err)
+json11::Json callWforcePostURL(const std::string& url, const std::string& password, const std::string& post_body, std::string& err)
 {
   MiniCurl mc;
   MiniCurlHeaders mch;
   std::string post_res, post_err;
   
   mc.setTimeout(5);
+  setMiniCurlTLSOptions(mc);
   mch.insert(std::make_pair("Authorization", "Basic " + Base64Encode(std::string("wforce") + ":" + password)));
   mch.insert(std::make_pair("Content-Type", "application/json"));
   if (mc.postURL(url, post_body, mch, post_res, post_err)) {
-    return Json::parse(post_res, err);
+    return json11::Json::parse(post_res, err);
   }
   else {
     err = post_err;
-    return Json();
+    return json11::Json();
   }
 }
 
@@ -512,8 +526,8 @@ unsigned int dumpEntriesToNetwork(const ComboAddress& ca)
           TWStatsDBEntry entry;
           std::string key;
           if (sdb.DBGetEntry(vi, it, entry, key)) {
-            Json::array windows;
-            Json::object fields;
+            json11::Json::array windows;
+            json11::Json::object fields;
             for (auto& fit : entry) {
               for (auto& wit : fit.second) {
                 windows.push_back(wit);
@@ -521,7 +535,7 @@ unsigned int dumpEntriesToNetwork(const ComboAddress& ca)
               fields.emplace(make_pair(fit.first, windows));
             }
             sock.writen("\"" + key + "\": ");
-            sock.writen(Json(fields).dump());
+            sock.writen(json11::Json(fields).dump());
             auto dupe_it = it;
             if (++dupe_it != sdb.DBDumpIteratorEnd(vi)) {
               sock.writen(",");
@@ -638,7 +652,7 @@ void syncDBThread(const ComboAddress& ca, const std::string& callback_url,
   // Once we've finished replicating we need to let the requestor know we're
   // done by calling the callback URL
   std::string err;
-  Json msg = callWforceGetURL(callback_url, callback_pw, err);
+  json11::Json msg = callWforceGetURL(callback_url, callback_pw, err);
   if (msg.is_null()) {
     errlog("Synchronizing DBs callback to: %s failed due to no parseable result returned [Error: %s]", callback_url, err);
   }
@@ -658,7 +672,7 @@ unsigned int checkHostUptime(const std::string& url, const std::string& password
 {
   unsigned int ret_uptime = 0;
   std::string err;
-  Json msg = callWforceGetURL(url, password, err);
+  json11::Json msg = callWforceGetURL(url, password, err);
   if (!msg.is_null()) {
     if (!msg["uptime"].is_null()) {
       ret_uptime = msg["uptime"].int_value();
@@ -689,12 +703,12 @@ void checkSyncHosts()
       std::string err;
       std::string sync_url = sync_host + "/?command=syncDBs";
       std::string callback_url = g_sync_data.webserver_listen_addr + "/?command=syncDone";
-      Json post_json = Json::object{{"replication_host", g_sync_data.sibling_listen_addr.toString()},
+      json11::Json post_json = json11::Json::object{{"replication_host", g_sync_data.sibling_listen_addr.toString()},
                                     {"replication_port", ntohs(g_sync_data.sibling_listen_addr.sin4.sin_port)},
                                     {"callback_url", callback_url},
                                     {"callback_auth_pw", g_sync_data.webserver_password},
                                     {"encryption_key", key}};
-      Json msg = callWforcePostURL(sync_url, password, post_json.dump(), err);
+      json11::Json msg = callWforcePostURL(sync_url, password, post_json.dump(), err);
       if (!msg.is_null()) {
         if (!msg["status"].is_null()) {
           std::string status = msg["status"].string_value();
@@ -816,7 +830,17 @@ char* my_generator(const char* text, int state)
       "checkWhitelistIP",
       "checkWhitelistLogin",
       "checkWhitelistIPLogin",
-      "reloadGeoIPDBs()"
+      "reloadGeoIPDBs()",
+      "addCustomStat",
+      "setSiblingsWithKey",
+      "addSiblingWithKey",
+      "removeSibling",
+      "setSiblingConnectTimeout",
+      "setMaxSiblingQueueSize",
+      "setCustomEndpoint",
+      "setCustomGetEndpoint",
+      "setVerboseAllowLog",
+      "incCustomStat"
       };
   static int s_counter=0;
   int counter=0;

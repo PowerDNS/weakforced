@@ -26,8 +26,6 @@
 #include "json11.hpp"
 #include "device_parser.hh"
 
-using namespace json11;
-
 struct LoginTuple
 {
   double t;
@@ -43,9 +41,9 @@ struct LoginTuple
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
   bool policy_reject=false;
   std::string session_id;
-  Json to_json() const;
+  json11::Json to_json() const;
   std::string serialize() const;
-  void from_json(const Json& msg, const std::shared_ptr<UserAgentParser> uap=std::shared_ptr<UserAgentParser>());
+  void from_json(const json11::Json& msg, const std::shared_ptr<UserAgentParser> uap=std::shared_ptr<UserAgentParser>());
   void unserialize(const std::string& src);
   void setLtAttrs(const json11::Json& msg);
 

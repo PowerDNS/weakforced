@@ -1,7 +1,8 @@
 FROM dist-base as package-builder
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential wget curl \
-                       python3 python3-pip python3-setuptools
+                       python3 python3-pip python3-setuptools \
+                       libjsoncpp-dev uuid-dev libz-dev libssl-dev
 
 RUN mkdir -p /dist /wforce
 ADD builder/helpers/ /wforce/builder/helpers/
@@ -24,6 +25,10 @@ RUN sh cmake-3.15.4-Linux-x86_64.sh --skip-license --prefix=/usr
 RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
 RUN cd prometheus-cpp/_build && make install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
 
 RUN tar xvf /sdist/wforce-${BUILDER_VERSION}.tar.bz2
 COPY builder-support/debian wforce-${BUILDER_VERSION}/debian

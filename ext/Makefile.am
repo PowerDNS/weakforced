@@ -1,1 +1,1 @@
-SUBDIRS = yahttp json11 ext
+SUBDIRS = json11 ext

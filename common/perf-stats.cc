@@ -28,8 +28,8 @@
 #include "twmap.hh"
 #include "dolog.hh"
 
-#define STATS_NUM_WINDOWS 5
-#define STATS_WINDOW_SIZE 60
+#define STATS_NUM_WINDOWS 20
+#define STATS_WINDOW_SIZE 15
 
 using namespace PerfStats;
 

@@ -4,7 +4,9 @@
 # This defines the dstribution base layer
 # Put only the bare minimum of common commands here, without dev tools
 FROM centos:7 as dist-base
-RUN yum install -y epel-release centos-release-scl
+RUN yum install -y epel-release
+RUN yum install -y centos-release-scl && yum install -y llvm-toolset-7.0
+RUN echo "source /opt/rh/llvm-toolset-7.0/enable" >> /etc/bashrc
 
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild

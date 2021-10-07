@@ -34,7 +34,6 @@
 #include "wforce-webserver.hh"
 #include "wforce_exception.hh"
 #include "login_tuple.hh"
-#include "json11.hpp"
 #include "perf-stats.hh"
 #include "sodcrypto.hh"
 #include "base64.hh"

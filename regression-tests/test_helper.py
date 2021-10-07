@@ -16,15 +16,17 @@ class ApiTestCase(unittest.TestCase):
         """On inherited classes, run our `setUp` method"""
         if cls is not ApiTestCase and cls.setUp is not ApiTestCase.setUp:
             orig_setUp = cls.setUp
+
             def setUpOverride(self, *args, **kwargs):
                 ApiTestCase.setUp(self)
                 return orig_setUp(self, *args, **kwargs)
+
             cls.setUp = setUpOverride
 
     def setUp(self):
         # TODO: config
         self.server_address = '127.0.0.1'
-        self.server1_port = int(os.environ.get('WEBPORT', '8084'))
+        self.server1_port = int(os.environ.get('WEBPORT', '8184'))
         self.server1_url = 'http://%s:%s/' % (self.server_address, self.server1_port)
         self.server2_port = 8085
         self.server2_url = 'http://%s:%s/' % (self.server_address, self.server2_port)
@@ -36,13 +38,14 @@ class ApiTestCase(unittest.TestCase):
         self.ta_server_url = 'http://%s:%s/' % (self.server_address, self.ta_server_port)
 
         self.docker_image_server_url = 'http://%s:%s/' % ("wforce_image", 18084)
-        
+
         self.report_server_port = 5000
         self.report_server_url = 'http://%s:%s' % (self.server_address, self.report_server_port)
-        
+
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))
-        #self.session.keep_alive = False
+        self.session.verify = 'selfsigned.crt'
+        # self.session.keep_alive = False
         #        self.session.headers = {'X-API-Key': os.environ.get('APIKEY', 'changeme-key'), 'Origin': 'http://%s:%s' % (self.server_address, self.server_port)}
 
     def writeFileToConsole(self, file):
@@ -58,7 +61,7 @@ class ApiTestCase(unittest.TestCase):
 
     def writeCmdToConsole3(self, cmd):
         return check_output(["../wforce/wforce", "-c", "./wforce3.conf", "-R", "../wforce/regexes.yaml", "-e", cmd])
-    
+
     def writeFileToConsoleReplica(self, file):
         fp = open(file)
         cmds_nl = fp.read()
@@ -69,7 +72,7 @@ class ApiTestCase(unittest.TestCase):
 
     def writeCmdToConsoleReplica(self, cmd):
         return check_output(["../wforce/wforce", "-c", "./wforce2.conf", "-R", "../wforce/regexes.yaml", "-e", cmd])
-    
+
     def allowFunc(self, login, remote, pwhash):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", False)
 
@@ -78,19 +81,19 @@ class ApiTestCase(unittest.TestCase):
 
     def allowFuncReplica(self, login, remote, pwhash):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", True)
-    
+
     def allowFuncAttrsReplica(self, login, remote, pwhash, attrs):
         return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True)
 
     def allowFuncReplica2(self, login, remote, pwhash):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, "", "", True, True)
-    
+
     def allowFuncAttrsReplica2(self, login, remote, pwhash, attrs):
         return self.allowFuncAttrsInternal(login, remote, pwhash, attrs, "", "", True, True)
-    
+
     def allowFuncDeviceProtocol(self, login, remote, pwhash, device_id, protocol):
         return self.allowFuncAttrsInternal(login, remote, pwhash, {}, device_id, protocol, False)
-    
+
     def allowFuncAttrsInternal(self, login, remote, pwhash, attrs, device_id, protocol, replica, replica2=False):
         payload = dict()
         payload['login'] = login
@@ -116,13 +119,12 @@ class ApiTestCase(unittest.TestCase):
                 data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'})
 
-        
     def reportFunc(self, login, remote, pwhash, success):
         return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, "", "", False)
 
     def reportFuncReplica(self, login, remote, pwhash, success):
         return self.reportFuncAttrsInternal(login, remote, pwhash, success, {}, "", "", True)
-    
+
     def reportFuncAttrs(self, login, remote, pwhash, success, attrs):
         return self.reportFuncAttrsInternal(login, remote, pwhash, success, attrs, "", "", False)
 
@@ -150,7 +152,7 @@ class ApiTestCase(unittest.TestCase):
             return self.session.post(
                 self.url2("/?command=report"),
                 data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'})            
+                headers={'Content-Type': 'application/json'})
 
     def taReportFuncAttrs(self, login, remote, pwhash, success, attrs):
         payload = dict()
@@ -285,12 +287,12 @@ class ApiTestCase(unittest.TestCase):
     def customGetFunc(self, func):
         return self.session.get(
             self.url("/?command=" + func))
-    
+
     def customFuncWithName(self, custom_func_name, attrs):
         payload = dict()
         payload['attrs'] = attrs
         return self.session.post(
-            self.url("/?command="+custom_func_name),
+            self.url("/?command=" + custom_func_name),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
@@ -298,10 +300,10 @@ class ApiTestCase(unittest.TestCase):
         payload = dict()
         payload['attrs'] = attrs
         return self.session.post(
-            self.url2("/?command="+custom_func_name),
+            self.url2("/?command=" + custom_func_name),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
-    
+
     def trackalertCustomFunc(self, login):
         attrs = dict()
         attrs['login'] = login
@@ -311,7 +313,7 @@ class ApiTestCase(unittest.TestCase):
             self.ta_url("/?command=custom"),
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
-    
+
     def pingFunc(self):
         return self.session.get(self.url("/?command=ping"))
 
@@ -326,13 +328,13 @@ class ApiTestCase(unittest.TestCase):
 
     def getWLFuncReplica(self):
         return self.session.get(self.url2("/?command=getWL"))
-    
+
     def getBLFuncPersist(self):
         return self.session.get(self.url3("/?command=getBL"))
 
     def getWLFuncPersist(self):
         return self.session.get(self.url3("/?command=getWL"))
-    
+
     def addBLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -342,7 +344,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def addBLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
@@ -352,7 +354,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def addBLEntryNetmask(self, netmask, expire_secs, reason):
         payload = dict()
@@ -362,8 +364,8 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
-    
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIPPersist(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -372,8 +374,8 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url3("/?command=addBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
-    
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryLogin(self, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -382,7 +384,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delBLEntryIPLogin(self, ip, login):
         payload = dict()
@@ -391,7 +393,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delBLEntryIP(self, ip):
         payload = dict()
@@ -399,7 +401,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delBLEntryLogin(self, login):
         payload = dict()
@@ -407,7 +409,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delBLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def addWLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
@@ -418,7 +420,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def addWLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
@@ -428,7 +430,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def addWLEntryNetmask(self, netmask, expire_secs, reason):
         payload = dict()
@@ -438,8 +440,8 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
-    
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryIPPersist(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -448,8 +450,8 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url3("/?command=addWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
-    
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryLogin(self, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
@@ -458,7 +460,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=addWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delWLEntryIPLogin(self, ip, login):
         payload = dict()
@@ -467,7 +469,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delWLEntryIP(self, ip):
         payload = dict()
@@ -475,7 +477,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def delWLEntryLogin(self, login):
         payload = dict()
@@ -483,8 +485,8 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=delWLEntry"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
-    
+            headers={'Content-Type': 'application/json'})
+
     def getDBStatsIPLogin(self, ip, login):
         payload = dict()
         payload['login'] = login
@@ -492,7 +494,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=getDBStats"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def getDBStatsIP(self, ip):
         payload = dict()
@@ -500,7 +502,7 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=getDBStats"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def getDBStatsLogin(self, login):
         payload = dict()
@@ -508,15 +510,15 @@ class ApiTestCase(unittest.TestCase):
         return self.session.post(
             self.url("/?command=getDBStats"),
             data=json.dumps(payload),
-            headers={'Content-Type': 'application/json'}) 
+            headers={'Content-Type': 'application/json'})
 
     def kafkaProducer(self):
-        payload = {"records": [ { "value": { "foo": "bar" }}]}
+        payload = {"records": [{"value": {"foo": "bar"}}]}
         return self.session.post(
             "http://kafka-rest:8082/topics/wforce",
             data=json.dumps(payload),
             headers={'Content-Type': 'application/vnd.kafka.json.v2+json'})
-    
+
     def getWforceMetrics(self):
         return self.session.get(
             self.url("/metrics"))
@@ -524,13 +526,13 @@ class ApiTestCase(unittest.TestCase):
     def getTrackalertMetrics(self):
         return self.session.get(
             self.ta_url("/metrics"))
-    
+
     def reportAPI(self, path, attrs):
         return self.session.post(
             self.report_url(path),
             data=json.dumps(attrs),
             headers={'Content-Type': 'application/json'}, auth=('foo', 'secret'))
-    
+
     def url(self, relative_url):
         return urljoin(self.server1_url, relative_url)
 
@@ -542,16 +544,16 @@ class ApiTestCase(unittest.TestCase):
 
     def url4(self, relative_url):
         return urljoin(self.server4_url, relative_url)
-    
+
     def ta_url(self, relative_url):
         return urljoin(self.ta_server_url, relative_url)
 
     def docker_image_url(self, relative_url):
         return urljoin(self.docker_image_server_url, relative_url)
-    
+
     def report_url(self, relative_url):
         return urljoin(self.report_server_url, relative_url)
-    
+
     def assert_success_json(self, result):
         try:
             result.raise_for_status()

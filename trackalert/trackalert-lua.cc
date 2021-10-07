@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "trackalert.hh"
+#include "wforce-common-lua.hh"
 #include <thread>
 #include "dolog.hh"
 #include "sodcrypto.hh"
@@ -32,12 +33,13 @@
 #include "trackalert-web.hh"
 #include <fstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem.hpp>
 #include "common-lua.hh"
 #include "prometheus.hh"
 
 using std::thread;
 
-static vector<std::function<void(void)>>* g_launchWork;
+static vector<std::function<void(void)>>* launchWork;
 
 // lua functions are split into three groups:
 // 1) Those which are only applicable as "config/setup" (single global lua state) (they are defined as blank/empty functions otherwise) 
@@ -53,16 +55,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
                                            CustomFuncMap& custom_func_map,
                                            const std::string& config)
 {
-  g_launchWork= new vector<std::function<void(void)>>();
+  launchWork= new vector<std::function<void(void)>>();
 
   setupCommonLua(client, multi_lua, c_lua, config);
-
-  c_lua.writeFunction("shutdown", []() { _exit(0);} );
+  setupWforceCommonLua(client, multi_lua, c_lua, launchWork);
 
   if (!multi_lua) {
     c_lua.writeFunction("webserver", [client](const std::string& address, const std::string& password) {
-      if(client)
+      if (client)
         return;
+      warnlog("Warning - webserver() configuration command is deprecated in favour of addListener() and will be removed in a future version");
       ComboAddress local;
       try {
         local = ComboAddress(address);
@@ -71,28 +73,16 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
         errlog("webserver() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", address);
         return;
       }
-      try {
-        int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
-        if (sock < 0) {
-          throw std::runtime_error("Failed to create webserver socket");
-        }
-        SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
-        SBind(sock, local);
-        SListen(sock, 1024);
-        auto launch=[sock, local, password]() {
-          thread t(WforceWebserver::start, sock, local, password, &g_webserver);
-          t.detach();
-        };
-        if(g_launchWork)
-          g_launchWork->push_back(launch);
-        else
-          launch();
-      }
-      catch(std::exception& e) {
-        errlog("Unable to bind to webserver socket on %s: %s", local.toStringWithPort(), e.what());
-        _exit(EXIT_FAILURE);
-      }
-
+      g_webserver.setBasicAuthPassword(password);
+      g_webserver.addSimpleListener(local.toString(), local.getPort());
+      auto launch =[]() {
+        thread t(WforceWebserver::start, &g_webserver);
+        t.detach();
+      };
+      if (launchWork)
+        launchWork->push_back(launch);
+      else
+        launch();
     });
   }
   else {
@@ -100,46 +90,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
   }
 
   if (!multi_lua) {
-    c_lua.writeFunction("controlSocket", [client](const std::string& str) {
-      ComboAddress local;
-      try {
-        local = ComboAddress(str, 4005);
-      }
-      catch (const WforceException& e) {
-        errlog("controlSocket() error parsing address/port [%s]. Make sure to use IP addresses not hostnames", str);
-        return;
-      }
-      if(client) {
-        g_serverControl = local;
-        return;
-      }
-
-      try {
-        int sock = socket(local.sin4.sin_family, SOCK_STREAM, 0);
-        if (sock < 0) {
-          throw std::runtime_error("Failed to create control socket");
-        }
-        SSetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1);
-        SBind(sock, local);
-        SListen(sock, 5);
-        auto launch=[sock, local]() {
-          thread t(controlThread, sock, local);
-          t.detach();
-        };
-        if(g_launchWork)
-          g_launchWork->push_back(launch);
-        else
-          launch();
-
-      }
-      catch(std::exception& e) {
-        errlog("Unable to bind to control socket on %s: %s", local.toStringWithPort(), e.what());
-        _exit(EXIT_FAILURE);
-      }
+    c_lua.writeFunction("setWebserverPassword", [](const std::string& password) {
+      g_webserver.setBasicAuthPassword(password);
     });
   }
   else {
-    c_lua.writeFunction("controlSocket", [](const std::string& str) { });
+    c_lua.writeFunction("setWebserverPassword", [](const std::string& password) { });
   }
 
   if (!multi_lua) {
@@ -270,7 +226,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
       addCommandStat(f_name);
       addPrometheusCommandMetric(f_name);
       // register a webserver command
-      g_webserver.registerFunc(f_name, HTTPVerb::POST, parseCustomCmd);
+      g_webserver.registerFunc(f_name, HTTPVerb::POST, WforceWSFunc(parseCustomCmd));
       noticelog("Registering custom endpoint [%s]", f_name);
     }
   });
@@ -353,9 +309,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua,
 
   c_lua.executeCode(ifs);
   if (!multi_lua) {
-    auto ret=*g_launchWork;
-    delete g_launchWork;
-    g_launchWork=0;
+    auto ret=*launchWork;
+    delete launchWork;
+    launchWork=0;
     return ret;
   }
   else {

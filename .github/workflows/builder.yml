@@ -18,7 +18,6 @@ jobs:
           - centos-7
           - centos-8
           - amazon-2
-          - debian-stretch
           - debian-buster
           - debian-bullseye
     steps:

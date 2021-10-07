@@ -12,6 +12,23 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_LANG([C++])
 PDNS_CHECK_OS
+LT_INIT
+
+# Do we want to do a docker-only build?
+AC_ARG_ENABLE([docker-only],
+[  --enable-docker-only         Build and run docker images only, don't check for compilation dependencies],
+[case "${enableval}" in
+  yes) docker_only=true ;;
+  no)  docker_only=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
+esac],[docker_only=false])
+
+# If docker-only then don't check for all the dependencies
+AS_IF([test "x$docker_only" = "xfalse"], [
+
+# Check for C++ 2017 support
+AX_CXX_COMPILE_STDCXX_17(ext,mandatory)
+
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
 AC_ARG_ENABLE([geoip],
@@ -23,6 +40,9 @@ AS_IF([test "x$enable_geoip" != "xno"], [
   AC_MSG_ERROR([libmaxmindb not found, libmaxmind is required"])
  ])
 ])
+AC_CHECK_LIB(dl,dlopen,DLLIBS="-ldl",,)
+AC_SUBST(DLLIBS, $DLLIBS)
+PDNS_WITH_LIBSSL
 AC_ARG_ENABLE([dns],
 AS_HELP_STRING([--disable-dns], [ Disable getdns lookup feature ]))
 AS_IF([test "x$enable_dns" != "xno"], [
@@ -47,7 +67,7 @@ AS_IF([test "x$YAMLCPP_LIBS" = "x"], [
   AC_MSG_ERROR([yaml-cpp not found, yaml-cpp support is required])
 ])
 AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
-LT_INIT
+
 # We need readline
 WFORCE_CHECK_READLINE
 # Boost-specific checks
@@ -89,6 +109,24 @@ PDNS_CHECK_LIBCRYPTO([], [
   AC_MSG_ERROR([Libcrypto not found, libcrypto support is required])
   ]
 )
+# We need libdrogon for HTTP/HTTPS functions
+PDNS_CHECK_LIBDROGON([], [
+  AC_MSG_ERROR([Libdrogon not found, libdrogon support is required])
+  ]
+)
+# Drogon depends on libjsoncpp, libuuid and libz
+PDNS_CHECK_LIBJSONCPP([], [
+  AC_MSG_ERROR([Libjsoncpp not found, libjsoncpp is required as a mandatory dependency of libdrogon])
+  ]
+)
+PDNS_CHECK_LIBUUID([], [
+  AC_MSG_ERROR([Libuuid not found, libuuid is required as a mandatory dependency of libdrogon])
+  ]
+)
+PDNS_CHECK_LIBZ([], [
+  AC_MSG_ERROR([Libz not found, libz support is required as a mandatory dependency of libdrogon])
+  ]
+)
 # Check for LuaJIT first then Lua
 PDNS_WITH_LUAJIT
 AS_IF([test "x$with_luajit" = "xno"], [
@@ -100,9 +138,7 @@ AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
 PDNS_CHECK_LUA_HPP
 # Need pandoc to build documentation
 PDNS_CHECK_PANDOC
-# Check for C++ 2011 support
-AX_CXX_COMPILE_STDCXX_11(ext,mandatory)
-AM_CONDITIONAL([CXX2011],[test "$HAVE_CXX11" = "1"])
+
 # We need prometheus-cpp
 PDNS_CHECK_LIBPROMETHEUS([], [
   AC_MSG_ERROR([Libprometheus not found, libprometheus-cpp support is required])
@@ -118,6 +154,28 @@ AS_IF([test "x$LIBCURL" = "x"], [
 ])
 
 PTHREAD_SET_NAME
+
+# Docker-only
+])
+
+AS_IF([ test "x$docker_only" = "xtrue" ], [
+AM_CONDITIONAL([HAVE_SYSTEMD], [ test x = x ])
+AM_CONDITIONAL([LIBSYSTEMD], [ test x = x ])
+AM_CONDITIONAL([HAVE_LIBSSL], [ test x = x ])
+AM_CONDITIONAL([HAVE_BOOST_GE_148], [ test x = x ])
+AM_CONDITIONAL([UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([HAVE_PROTOBUF], [ test x = x ])
+AM_CONDITIONAL([HAVE_PROTOC], [ test x = x ])
+AM_CONDITIONAL([LUA], [ test x = x ])
+AM_CONDITIONAL([HAVE_LUA_HPP], [ test x = x ])
+AM_CONDITIONAL([HAVE_PANDOC], [ test x = x ])
+AM_CONDITIONAL([HAVE_MANPAGES], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
+])
 
 # Do we want the docker subdirectories to be built?
 AC_ARG_ENABLE([docker],
@@ -144,8 +202,6 @@ AC_CONFIG_FILES([Makefile
 	ext/Makefile
 	ext/ext/Makefile
 	ext/json11/Makefile
-	ext/yahttp/Makefile
-	ext/yahttp/yahttp/Makefile
 	common/Makefile
 	docs/Makefile
 	docker/Makefile

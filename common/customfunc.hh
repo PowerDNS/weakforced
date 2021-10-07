@@ -41,25 +41,24 @@ struct CustomFuncArgs {
     attrs_mv = std::move(lt.attrs_mv);
   }
 
-  Json to_json() const
+  json11::Json to_json() const
   {
-    using namespace json11;
-    Json::object jattrs;
+    json11::Json::object jattrs;
 
     for (auto& i : attrs_mv) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
+      jattrs.insert(make_pair(i.first, json11::Json(i.second)));
     }
     for (auto& i : attrs) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
+      jattrs.insert(make_pair(i.first, json11::Json(i.second)));
     }
-    return Json::object{
+    return json11::Json::object{
       {"attrs", jattrs},
-	};
+	  };
   }
 
   std::string serialize() const
   {
-    Json msg=to_json();
+    json11::Json msg=to_json();
     return msg.dump();
   }
 };

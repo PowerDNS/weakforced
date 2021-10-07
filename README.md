@@ -68,6 +68,8 @@ installed.  Secondly, we require (versions tagged up to 1.0.0):
  * pandoc for building the manpages
 
 The most recent versions also require:
+ * A compiler supporting C++ 17
+ * Boost 1.61+
  * Protobuf compiler and protobuf development libraries
  * libcurl-dev (OpenSSL version)
  * libhiredis-dev
@@ -75,6 +77,9 @@ The most recent versions also require:
  * libprometheus-cpp (https://github.com/jupp0r/prometheus-cpp)
  * libmaxminddb-dev
  * libyaml-cpp-dev
+ * libjsoncpp-dev
+ * libuuid-dev
+ * libz-dev
  * docker for regression testing
  * python3 rather than python2
  * python-bottle for regression testing of webhooks

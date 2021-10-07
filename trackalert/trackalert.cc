@@ -68,6 +68,7 @@ WebHookDB g_webhook_db;
 WebHookDB g_custom_webhook_db;
 WforceWebserver g_webserver;
 CustomFuncMap g_custom_func_map;
+curlTLSOptions g_curl_tls_options;
 
 std::string g_configDir; // where the config files are located
 bool g_configurationDone = false;
@@ -75,6 +76,7 @@ bool g_configurationDone = false;
 // The Scheduler class should be thread-safe
 std::shared_ptr<Bosma::Scheduler> g_bg_schedulerp;
 int g_num_scheduler_threads = NUM_SCHEDULER_THREADS;
+
 
 bool getMsgLen(int fd, uint16_t* len)
 try

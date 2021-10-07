@@ -55,6 +55,8 @@ BuildRequires: boost-regex
 BuildRequires: wget
 BuildRequires: boost-system
 BuildRequires: boost-filesystem
+BuildRequires: libuuid-devel
+BuildRequires: zlib-devel
 %if %{with systemd}
 BuildRequires: systemd-devel
 Requires: systemd

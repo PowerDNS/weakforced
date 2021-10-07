@@ -1,4 +1,5 @@
-webserver("0.0.0.0:8084", "super")
+addListener("0.0.0.0:8084", true, "/etc/tls/certificate.pem", "/etc/tls/private_key.pem", {minimum_protocol="TLSv1.3"})
+setWebserverPassword("aVerySecurePassword")
 setKey("Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 controlSocket("0.0.0.0:4004")
 

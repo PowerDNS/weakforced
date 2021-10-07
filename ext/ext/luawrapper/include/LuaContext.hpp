@@ -78,6 +78,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * your function to std::function (not directly std::bind or a lambda function) so the class can detect which argument types
  * it wants. These arguments may only be of basic types (int, float, etc.) or std::string.
  */
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 class LuaContext {
     struct ValueInRegistry;
     template<typename TFunctionObject, typename TFirstParamType> struct Binder;
@@ -198,7 +204,7 @@ public:
     class WrongTypeException : public std::runtime_error
     {
     public:
-        WrongTypeException(std::string luaType_, const std::type_info& destination_) :
+        WrongTypeException(const std::string& luaType_, const std::type_info& destination_) :
             std::runtime_error("Trying to cast a lua variable from \"" + luaType_ + "\" to \"" + destination_.name() + "\""),
             luaType(luaType_),
             destination(destination_)
@@ -216,6 +222,17 @@ public:
      */
     template<typename TFunctionType>
     class LuaFunctionCaller;
+
+    /**
+     * Opaque type that identifies a Lua object
+     */
+    struct LuaObject {
+        LuaObject() = default;
+        LuaObject(lua_State* state, int index=-1) {
+            this->objectInRegistry = std::make_shared<LuaContext::ValueInRegistry>(state, index);
+        }
+        std::shared_ptr<LuaContext::ValueInRegistry> objectInRegistry;
+    };
 
     /**
      * Opaque type that identifies a Lua thread
@@ -1129,7 +1146,7 @@ private:
         static_assert(std::is_class<TObject>::value || std::is_pointer<TObject>::value || std::is_union<TObject>::value , "registerFunction can only be used for a class a union or a pointer");
 
         checkTypeRegistration(mState, &typeid(TObject));
-        setTable<TRetValue(TObject&, TOtherParams...)>(mState, Registry, &typeid(TObject), 0, functionName, std::move(function));
+        setTable<TRetValue(TObject&, TOtherParams...)>(mState, Registry, &typeid(TObject), 0, functionName, function);
         
         checkTypeRegistration(mState, &typeid(TObject*));
         setTable<TRetValue(TObject*, TOtherParams...)>(mState, Registry, &typeid(TObject*), 0, functionName, [=](TObject* obj, TOtherParams... rest) { assert(obj); return function(*obj, std::forward<TOtherParams>(rest)...); });
@@ -1400,9 +1417,9 @@ private:
     }
     
     static int gettraceback(lua_State* L) {
-        lua_getglobal(L, "debug"); // stack: error, "debug"
-        lua_getfield(L, -1, "traceback"); // stack: error, "debug", debug.traceback
-        lua_remove(L, -2); // stack: error, debug.traceback
+        lua_getglobal(L, "debug"); // stack: error, debug library
+        lua_getfield(L, -1, "traceback"); // stack: error, debug library, debug.traceback function
+        lua_remove(L, -2); // stack: error, debug.traceback function
         lua_pushstring(L, ""); // stack: error, debug.traceback, ""
         lua_pushinteger(L, 2); // stack: error, debug.traceback, "", 2
         lua_call(L, 2, 1); // stack: error, traceback
@@ -1442,7 +1459,7 @@ private:
             const auto traceBack = readTopAndPop<std::string>(state, std::move(traceBackRef)); // stack top: error
             PushedObject errorCode{state, 1};
 
-            // an error occured during execution, either an error message or a std::exception_ptr was pushed on the stack
+            // an error occurred during execution, either an error message or a std::exception_ptr was pushed on the stack
             if (pcallReturnValue == LUA_ERRMEM) {
                 throw std::bad_alloc{};
 
@@ -1456,10 +1473,15 @@ private:
                     // an exception_ptr was pushed on the stack
                     // rethrowing it with an additional ExecutionErrorException
                     try {
-                        std::rethrow_exception(readTopAndPop<std::exception_ptr>(state, std::move(errorCode)));
+                        if (const auto exp = readTopAndPop<std::exception_ptr>(state, std::move(errorCode))) {
+                            std::rethrow_exception(exp);
+                        }
+                    } catch(const std::exception& e) {
+                        std::throw_with_nested(ExecutionErrorException{std::string{"Exception thrown by a callback function: "} + e.what()});
                     } catch(...) {
                         std::throw_with_nested(ExecutionErrorException{"Exception thrown by a callback function called by Lua. "+traceBack});
                     }
+                    throw ExecutionErrorException{"Unknown Lua error"};
                 }
             }
         }
@@ -1972,6 +1994,23 @@ private:
 /**************************************************/
 // specializations of the Pusher structure
 
+// opaque Lua references
+template<>
+struct LuaContext::Pusher<LuaContext::LuaObject> {
+    static const int minSize = 1;
+    static const int maxSize = 1;
+
+    static PushedObject push(lua_State* state, const LuaContext::LuaObject& value) noexcept {
+        if (value.objectInRegistry.get()) {
+            PushedObject obj = value.objectInRegistry->pop();
+            return obj;
+        } else {
+            lua_pushnil(state);
+            return PushedObject{state, 1};
+        }
+    }
+};
+
 // boolean
 template<>
 struct LuaContext::Pusher<bool> {
@@ -2112,12 +2151,12 @@ struct LuaContext::Pusher<std::map<TKey,TValue>> {
 };
 
 // unordered_maps
-template<typename TKey, typename TValue>
-struct LuaContext::Pusher<std::unordered_map<TKey,TValue>> {
+template<typename TKey, typename TValue, typename THash, typename TKeyEqual>
+struct LuaContext::Pusher<std::unordered_map<TKey,TValue,THash,TKeyEqual>> {
     static const int minSize = 1;
     static const int maxSize = 1;
 
-    static PushedObject push(lua_State* state, const std::unordered_map<TKey,TValue>& value) noexcept {
+    static PushedObject push(lua_State* state, const std::unordered_map<TKey,TValue,THash,TKeyEqual>& value) noexcept {
         static_assert(Pusher<typename std::decay<TKey>::type>::minSize == 1 && Pusher<typename std::decay<TKey>::type>::maxSize == 1, "Can't push multiple elements for a table key");
         static_assert(Pusher<typename std::decay<TValue>::type>::minSize == 1 && Pusher<typename std::decay<TValue>::type>::maxSize == 1, "Can't push multiple elements for a table value");
         
@@ -2365,9 +2404,15 @@ private:
             lua_pushstring(state, ex.luaType.c_str());
             lua_pushstring(state, " to ");
             lua_pushstring(state, ex.destination.name());
-            lua_concat(state, 4);
+            lua_concat(state, 5);
             luaError(state);
 
+        } catch (const std::exception& e) {
+          luaL_where(state, 1);
+          lua_pushstring(state, "Caught exception: ");
+          lua_pushstring(state, e.what());
+          lua_concat(state, 3);
+          luaError(state);
         } catch (...) {
             Pusher<std::exception_ptr>::push(state, std::current_exception()).release();
             luaError(state);
@@ -2533,6 +2578,18 @@ private:
 /**************************************************/
 // specializations of the Reader structures
 
+// opaque Lua references
+template<>
+struct LuaContext::Reader<LuaContext::LuaObject>
+{
+    static auto read(lua_State* state, int index)
+        -> boost::optional<LuaContext::LuaObject>
+    {
+        LuaContext::LuaObject obj(state, index);
+        return obj;
+    }
+};
+
 // reading null
 template<>
 struct LuaContext::Reader<std::nullptr_t>
@@ -2624,11 +2681,21 @@ struct LuaContext::Reader<std::string>
     static auto read(lua_State* state, int index)
         -> boost::optional<std::string>
     {
+        std::string result;
+
+        // lua_tolstring might convert the variable that would confuse lua_next, so we
+        //   make a copy of the variable.
+        lua_pushvalue(state, index);
+
         size_t len;
-        const auto val = lua_tolstring(state, index, &len);
-        if (val == 0)
-            return boost::none;
-        return std::string(val, len);
+        const auto val = lua_tolstring(state, -1, &len);
+
+        if (val != nullptr)
+          result.assign(val, len);
+
+        lua_pop(state, 1);
+
+        return val != nullptr ? boost::optional<std::string>{ std::move(result) } : boost::none;
     }
 };
 
@@ -2758,16 +2825,16 @@ struct LuaContext::Reader<std::map<TKey,TValue>>
 };
 
 // unordered_map
-template<typename TKey, typename TValue>
-struct LuaContext::Reader<std::unordered_map<TKey,TValue>>
+template<typename TKey, typename TValue, typename THash, typename TKeyEqual>
+struct LuaContext::Reader<std::unordered_map<TKey,TValue,THash,TKeyEqual>>
 {
     static auto read(lua_State* state, int index)
-        -> boost::optional<std::unordered_map<TKey,TValue>>
+        -> boost::optional<std::unordered_map<TKey,TValue,THash,TKeyEqual>>
     {
         if (!lua_istable(state, index))
             return boost::none;
 
-        std::unordered_map<TKey,TValue> result;
+        std::unordered_map<TKey,TValue,THash,TKeyEqual> result;
 
         // we traverse the table at the top of the stack
         lua_pushnil(state);     // first key
@@ -2927,5 +2994,9 @@ struct LuaContext::Reader<std::tuple<TFirst, TOthers...>,
         return std::tuple_cat(std::tuple<TFirst>(*firstVal), std::move(*othersVal));
     }
 };
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #endif

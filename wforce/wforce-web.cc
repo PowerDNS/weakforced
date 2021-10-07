@@ -28,9 +28,8 @@
 #include <chrono>
 #include <thread>
 #include <sstream>
-#include "yahttp/yahttp.hpp"
 #include "namespaces.hh"
-#include <sys/time.h>
+#include <ctime>
 #include <sys/resource.h>
 #include "base64.hh"
 #include "blackwhitelist.hh"
@@ -57,6 +56,16 @@ bool g_builtin_bl_enabled = true;
 bool g_builtin_wl_enabled = true;
 
 static time_t start = time(0);
+
+static inline void setErrorCodeAndReason(drogon::HttpStatusCode code, const std::string& reason, const drogon::HttpResponsePtr& resp)
+{
+  resp->setStatusCode(code);
+  json11::Json j = json11::Json::object {
+    { "status", "failure" },
+    { "reason", reason },
+    };
+  resp->setBody(j.dump());
+}
 
 static int uptimeOfProcess()
 {
@@ -118,9 +127,8 @@ void allowLog(int retval, const std::string& msg, const LoginTuple& lt,
 
 void addBLWLEntries(const std::vector<BlackWhiteListEntry>& blv, const char* key_name, json11::Json::array& my_entries)
 {
-  using namespace json11;
   for (auto i = blv.begin(); i != blv.end(); ++i) {
-    Json my_entry = Json::object{
+    json11::Json my_entry = json11::Json::object{
         {key_name,     (std::string) i->key},
         {"expiration", (std::string) boost::posix_time::to_simple_string(i->expiration)},
         {"reason",     (std::string) i->reason}
@@ -129,7 +137,7 @@ void addBLWLEntries(const std::vector<BlackWhiteListEntry>& blv, const char* key
   }
 }
 
-bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
+bool canonicalizeLogin(std::string& login, const drogon::HttpResponsePtr& resp)
 {
   bool retval = true;
 
@@ -138,16 +146,12 @@ bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
     login = g_luamultip->canonicalize(login);
   }
   catch (LuaContext::ExecutionErrorException& e) {
-    resp.status = 500;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
     errlog("Lua canonicalize function exception: %s", e.what());
     retval = false;
   }
   catch (...) {
-    resp.status = 500;
-    resp.body = R"({"status":"failure"})";
+    setErrorCodeAndReason(drogon::k500InternalServerError, "unknown", resp);
     retval = false;
   }
   return retval;
@@ -155,20 +159,18 @@ bool canonicalizeLogin(std::string& login, YaHTTP::Response& resp)
 
 static std::mutex dump_mutex;
 
-void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseDumpEntriesCmd(const drogon::HttpRequestPtr& req,
+                         const std::string& command,
+                         const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -185,40 +187,33 @@ void parseDumpEntriesCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
         t.detach();
       }
       else {
-        resp.status = 503;
-        std::stringstream ss;
-        ss << "{\"status\":\"failure\", \"reason\":\"A DB dump is already in progress\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k503ServiceUnavailable, "A DB dump is already in progress", resp);
       }
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
   incCommandStat("dumpEntries");
   incPrometheusCommandMetric("dumpEntries");
+
 }
 
-void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseSyncCmd(const drogon::HttpRequestPtr& req,
+                  const std::string& command,
+                  const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -245,33 +240,28 @@ void parseSyncCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std:
       t.detach();
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
   incCommandStat("syncDBs");
   incPrometheusCommandMetric("syncDBs");
 }
 
-void parseAddSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseAddSiblingCmd(const drogon::HttpRequestPtr& req,
+                        const std::string& command,
+                        const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -303,39 +293,35 @@ void parseAddSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, cons
         }
       }
       else {
-        if (!addSiblingWithKey(sibling_host, sibling_port, proto, g_replication.getSiblings(), error_msg, encryption_key)) {
+        if (!addSiblingWithKey(sibling_host, sibling_port, proto, g_replication.getSiblings(), error_msg,
+                               encryption_key)) {
           throw WforceException(error_msg);
         }
       }
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
   incCommandStat("addSibling");
   incPrometheusCommandMetric("addSibling");
 }
 
-void parseRemoveSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseRemoveSiblingCmd(const drogon::HttpRequestPtr& req,
+                           const std::string& command,
+                           const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -352,34 +338,29 @@ void parseRemoveSiblingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, c
       }
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
   incCommandStat("removeSibling");
   incPrometheusCommandMetric("removeSibling");
 }
 
-void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseSetSiblingsCmd(const drogon::HttpRequestPtr& req,
+                         const std::string& command,
+                         const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
   std::vector<std::pair<int, std::vector<std::pair<int, std::string>>>> new_siblings;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -408,7 +389,8 @@ void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
         if (proto == Sibling::Protocol::NONE) {
           throw WforceException(std::string("Invalid sibling_protocol: ") + msg["sibling_protocol"].string_value());
         }
-        new_siblings.emplace_back(std::pair<int, std::vector<std::pair<int, std::string>>>{0, {{0, createSiblingAddress(sibling_host, sibling_port, proto)}, {1, encryption_key}}});
+        new_siblings.emplace_back(std::pair<int, std::vector<std::pair<int, std::string>>>{0, {{0, createSiblingAddress(
+            sibling_host, sibling_port, proto)}, {1, encryption_key}}});
       }
       std::string error_msg;
       if (!setSiblingsWithKey(new_siblings, g_replication.getSiblings(), error_msg)) {
@@ -416,33 +398,28 @@ void parseSetSiblingsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, con
       }
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
   incCommandStat("setSiblings");
   incPrometheusCommandMetric("setSiblings");
 }
 
-void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, bool addCmd, bool blacklist)
+void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
+                             const drogon::HttpResponsePtr& resp,
+                             bool addCmd, bool blacklist)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
 
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     bool haveIP = false;
@@ -530,59 +507,62 @@ void parseAddDelBLWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp,
       }
     }
     catch (std::runtime_error& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
     }
     catch (...) {
-      resp.status = 500;
-      resp.body = R"({"status":"failure"})";
+      resp->setStatusCode(drogon::k500InternalServerError);
+      resp->setBody(R"({"status":"failure"})");
     }
   }
-  if (resp.status == 200)
-    resp.body = R"({"status":"ok"})";
+  if (resp->getStatusCode() == drogon::k200OK)
+    resp->setBody(R"({"status":"ok"})");
 }
 
-void parseAddBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseAddBLEntryCmd(const drogon::HttpRequestPtr& req,
+                        const std::string& command,
+                        const drogon::HttpResponsePtr& resp)
 {
   parseAddDelBLWLEntryCmd(req, resp, true, true);
   incCommandStat("addBLEntry");
   incPrometheusCommandMetric("addBLEntry");
 }
 
-void parseDelBLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseDelBLEntryCmd(const drogon::HttpRequestPtr& req,
+                        const std::string& command,
+                        const drogon::HttpResponsePtr& resp)
 {
   parseAddDelBLWLEntryCmd(req, resp, false, true);
   incCommandStat("delBLEntry");
   incPrometheusCommandMetric("delBLEntry");
 }
 
-void parseAddWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseAddWLEntryCmd(const drogon::HttpRequestPtr& req,
+                        const std::string& command,
+                        const drogon::HttpResponsePtr& resp)
 {
   parseAddDelBLWLEntryCmd(req, resp, true, false);
   incCommandStat("addWLEntry");
   incPrometheusCommandMetric("addWLEntry");
 }
 
-void parseDelWLEntryCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseDelWLEntryCmd(const drogon::HttpRequestPtr& req,
+                        const std::string& command,
+                        const drogon::HttpResponsePtr& resp)
 {
   parseAddDelBLWLEntryCmd(req, resp, false, false);
   incCommandStat("delWLEntry");
   incPrometheusCommandMetric("delWLEntry");
 }
 
-void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseResetCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -615,24 +595,25 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       }
 
       if (!haveLogin && !haveIP) {
-        resp.status = 415;
-        resp.body = R"({"status":"failure", "reason":"No ip or login field supplied"})";
+        setErrorCodeAndReason(drogon::k400BadRequest, "No ip or login field supplied", resp);
       }
       else {
         bool reset_ret;
         {
           reset_ret = g_luamultip->reset(en_type, en_login, en_ca);
         }
-        resp.status = 200;
-        if (reset_ret)
-          resp.body = R"({"status":"ok"})";
-        else
-          resp.body = R"({"status":"failure", "reason":"reset function returned false"})";
+        if (reset_ret) {
+          resp->setStatusCode(drogon::k200OK);
+          resp->setBody(R"({"status":"ok"})");
+        }
+        else {
+          setErrorCodeAndReason(drogon::k500InternalServerError, "reset function returned false", resp);
+        }
       }
       // generate webhook events
-      Json jobj = Json::object{{"login", en_login},
-                               {"ip",    en_ca.toString()},
-                               {"type",  "wforce_reset"}};
+      json11::Json jobj = json11::Json::object{{"login", en_login},
+                                               {"ip",    en_ca.toString()},
+                                               {"type",  "wforce_reset"}};
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
         if (auto hs = h.lock()) {
           g_webhook_runner.runHook("reset", hs, jobj);
@@ -640,32 +621,27 @@ void parseResetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       }
     }
     catch (LuaContext::ExecutionErrorException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
       errlog("Lua reset function exception: %s", e.what());
     }
     catch (...) {
-      resp.status = 500;
-      resp.body = R"({"status":"failure"})";
+      resp->setStatusCode(drogon::k500InternalServerError);
+      resp->setBody(R"({"status":"failure"})");
     }
   }
   incCommandStat("reset");
   incPrometheusCommandMetric("reset");
 }
 
-void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseReportCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     try {
@@ -679,7 +655,6 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       lt.t = getDoubleTime(); // set the time
       reportLog(lt);
       g_stats.reports++;
-      resp.status = 200;
       {
         g_luamultip->report(lt);
       }
@@ -688,53 +663,40 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       sendReportSink(lt); // XXX - this is deprecated now in favour of NamedReportSinks
       sendNamedReportSink(lt.serialize());
 
-      Json msg = lt.to_json();
-      Json::object jobj = msg.object_items();
+      json11::Json msg = lt.to_json();
+      json11::Json::object jobj = msg.object_items();
       jobj.insert(make_pair("type", "wforce_report"));
       for (const auto& h : g_webhook_db.getWebHooksForEvent("report")) {
         if (auto hs = h.lock())
           g_webhook_runner.runHook("report", hs, jobj);
       }
 
-      resp.status = 200;
-      resp.body = R"({"status":"ok"})";
+      resp->setStatusCode(drogon::k200OK);
+      resp->setBody(R"({"status":"ok"})");
     }
     catch (LuaContext::ExecutionErrorException& e) {
-      resp.status = 500;
+      resp->setStatusCode(drogon::k500InternalServerError);
       std::stringstream ss;
       try {
         std::rethrow_if_nested(e);
-        ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
         errlog("Lua function [%s] exception: %s", command, e.what());
       }
       catch (const std::exception& ne) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"status\":\"failure\", \"reason\":\"" << ne.what() << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, ne.what(), resp);
         errlog("Exception in command [%s] exception: %s", command, ne.what());
       }
       catch (const WforceException& ne) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"status\":\"failure\", \"reason\":\"" << ne.reason << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, ne.reason, resp);
         errlog("Exception in command [%s] exception: %s", command, ne.reason);
       }
     }
     catch (const std::exception& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
     }
   }
@@ -744,9 +706,9 @@ void parseReportCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
 
 #define OX_PROTECT_NOTIFY 0
 
-void genProtectHookData(const Json& lt, const std::string& msg, Json& ret_json)
+void genProtectHookData(const json11::Json& lt, const std::string& msg, json11::Json& ret_json)
 {
-  Json::object jobj;
+  json11::Json::object jobj;
 
   double dtime = lt["t"].number_value();
   unsigned int isecs = (int) dtime;
@@ -762,7 +724,7 @@ void genProtectHookData(const Json& lt, const std::string& msg, Json& ret_json)
   jobj.insert(std::make_pair("code", OX_PROTECT_NOTIFY));
   jobj.insert(std::make_pair("application", "wforce"));
 
-  ret_json = Json(std::move(jobj));
+  ret_json = json11::Json(std::move(jobj));
 }
 
 bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
@@ -783,14 +745,14 @@ bool allow_filter(std::shared_ptr<const WebHook> hook, int status)
   return retval;
 }
 
-void runAllowWebHook(const Json& request, const Json& response, int status)
+void runAllowWebHook(const json11::Json& request, const json11::Json& response, int status)
 {
-  Json jobj = Json::object{{"request",  request},
-                           {"response", response},
-                           {"type",     "wforce_allow"}};
+  json11::Json jobj = json11::Json::object{{"request",  request},
+                                           {"response", response},
+                                           {"type",     "wforce_allow"}};
   for (const auto& h : g_webhook_db.getWebHooksForEvent("allow")) {
     if (auto hs = h.lock()) {
-      Json pj;
+      json11::Json pj;
       if (hs->hasConfigKey("ox-protect")) {
         genProtectHookData(jobj["request"],
                            hs->getConfigKey("ox-protect"),
@@ -810,10 +772,11 @@ enum AllowReturnFields {
   allowRetStatus = 0, allowRetMsg = 1, allowRetLogMsg = 2, allowRetAttrs = 3
 };
 
-void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseAllowCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
   std::vector<pair<std::string, std::string>> ret_attrs;
 
@@ -821,12 +784,11 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
   incPrometheusCommandMetric("allow");
   g_stats.allows++;
 
-  msg = Json::parse(req.body, err);
+  resp->setStatusCode(drogon::k200OK);
+
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     LoginTuple lt;
@@ -838,22 +800,19 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       lt.t = getDoubleTime();
     }
     catch (const std::exception& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
       errlog("Exception in command [%s] exception: %s", command, e.what());
+      return;
     }
     catch (const WforceException& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, e.reason);
+      return;
     }
 
-    if (!canonicalizeLogin(lt.login, resp))
+    if (!canonicalizeLogin(lt.login, resp)) {
       return;
+    }
 
     // check the built-in whitelists
     bool whitelisted = false;
@@ -938,13 +897,13 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
 
     if (blacklisted || whitelisted) {
       // run webhook
-      Json::object jattrs;
+      json11::Json::object jattrs;
       for (auto& i : ret_attrs) {
-        jattrs.insert(make_pair(i.first, Json(i.second)));
+        jattrs.insert(make_pair(i.first, json11::Json(i.second)));
       }
-      msg = Json::object{{"status",  status},
-                         {"msg",     ret_msg},
-                         {"r_attrs", jattrs}};
+      msg = json11::Json::object{{"status",  status},
+                                 {"msg",     ret_msg},
+                                 {"r_attrs", jattrs}};
       runAllowWebHook(lt.to_json(), msg, status);
       if (blacklisted) {
         g_stats.denieds++;
@@ -986,85 +945,68 @@ void parseAllowCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
           incCommandStat("allow_allowed");
           incPrometheusAllowStatusMetric("allowed");
         }
-        Json::object jattrs;
+        json11::Json::object jattrs;
         for (auto& i : ret_attrs) {
-          jattrs.insert(make_pair(i.first, Json(i.second)));
+          jattrs.insert(make_pair(i.first, json11::Json(i.second)));
         }
-        msg = Json::object{{"status",  status},
-                           {"msg",     ret_msg},
-                           {"r_attrs", jattrs}};
+        msg = json11::Json::object{{"status",  status},
+                                   {"msg",     ret_msg},
+                                   {"r_attrs", jattrs}};
 
         // generate webhook events
         runAllowWebHook(lt.to_json(), msg, status);
 
-        resp.status = 200;
-        resp.body = msg.dump();
-        return;
+        resp->setStatusCode(drogon::k200OK);
+        resp->setBody(msg.dump());
       }
       catch (LuaContext::ExecutionErrorException& e) {
-        resp.status = 500;
+        resp->setStatusCode(drogon::k500InternalServerError);
         std::stringstream ss;
         try {
           std::rethrow_if_nested(e);
-          ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-          resp.body = ss.str();
+          setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
           errlog("Lua function [%s] exception: %s", command, e.what());
-          return;
         }
         catch (const std::exception& ne) {
-          resp.status = 500;
-          std::stringstream ss;
-          ss << "{\"status\":\"failure\", \"reason\":\"" << ne.what() << "\"}";
-          resp.body = ss.str();
+          setErrorCodeAndReason(drogon::k500InternalServerError, ne.what(), resp);
           errlog("Exception in command [%s] exception: %s", command, ne.what());
-          return;
         }
         catch (const WforceException& ne) {
-          resp.status = 500;
-          std::stringstream ss;
-          ss << "{\"status\":\"failure\", \"reason\":\"" << ne.reason << "\"}";
-          resp.body = ss.str();
+          setErrorCodeAndReason(drogon::k500InternalServerError, ne.reason, resp);
           errlog("Exception in command [%s] exception: %s", command, ne.reason);
-          return;
         }
       }
       catch (const std::exception& e) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"status\":\"failure\", \"reason\":\"" << e.what() << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
         errlog("Exception in command [%s] exception: %s", command, e.what());
-        return;
       }
       catch (const WforceException& e) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"status\":\"failure\", \"reason\":\"" << e.reason << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, e.reason, resp);
         errlog("Exception in command [%s] exception: %s", command, e.reason);
       }
     }
-    Json::object jattrs;
-    for (auto& i : ret_attrs) {
-      jattrs.insert(make_pair(i.first, Json(i.second)));
+    if (resp->getStatusCode() == drogon::k200OK) {
+      json11::Json::object jattrs;
+      for (auto& i : ret_attrs) {
+        jattrs.insert(make_pair(i.first, json11::Json(i.second)));
+      }
+      msg = json11::Json::object{{"status",  status},
+                                 {"msg",     ret_msg},
+                                 {"r_attrs", jattrs}};
+      resp->setBody(msg.dump());
     }
-    msg = Json::object{{"status",  status},
-                       {"msg",     ret_msg},
-                       {"r_attrs", jattrs}};
-    resp.status = 200;
-    resp.body = msg.dump();
   }
 }
 
 // XXX BEGIN Deprecated functions - will be removed in a later release
-void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseStatsCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
   struct rusage ru;
   getrusage(RUSAGE_SELF, &ru);
 
-  resp.status = 200;
-  Json my_json = Json::object{
+  json11::Json my_json = json11::Json::object{
       {"reports",      (int) g_stats.reports},
       {"allows",       (int) g_stats.allows},
       {"denieds",      (int) g_stats.denieds},
@@ -1076,17 +1018,18 @@ void parseStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std
       {"customstats",  customStatsToJson()}
   };
 
-  resp.status = 200;
-  resp.body = my_json.dump();
+  resp->setStatusCode(drogon::k200OK);
+  resp->setBody(my_json.dump());
   incCommandStat("stats");
   incPrometheusCommandMetric("stats");
 }
 // XXX END Deprecated functions - will be removed in a later release
 
-void parseGetBLWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command, bool blacklist)
+void parseGetBLWLCmd(const drogon::HttpRequestPtr& req,
+                     const std::string& command,
+                     const drogon::HttpResponsePtr& resp, bool blacklist)
 {
-  using namespace json11;
-  Json::array my_entries;
+  json11::Json::array my_entries;
   std::vector<BlackWhiteListEntry> lv;
   std::string key_name;
   std::string cmd_stat;
@@ -1116,36 +1059,38 @@ void parseGetBLWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const s
     lv = g_wl_db.getIPLoginEntries();
   addBLWLEntries(lv, "iplogin", my_entries);
 
-  Json ret_json = Json::object{
+  json11::Json ret_json = json11::Json::object{
       {key_name, my_entries}
   };
-  resp.status = 200;
-  resp.body = ret_json.dump();
+  resp->setStatusCode(drogon::k200OK);
+  resp->setBody(ret_json.dump());
   incCommandStat(cmd_stat);
   incPrometheusCommandMetric(cmd_stat);
 }
 
-void parseGetBLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseGetBLCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  parseGetBLWLCmd(req, resp, command, true);
+  parseGetBLWLCmd(req, command, resp, true);
 }
 
-void parseGetWLCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseGetWLCmd(const drogon::HttpRequestPtr& req,
+                   const std::string& command,
+                   const drogon::HttpResponsePtr& resp)
 {
-  parseGetBLWLCmd(req, resp, command, false);
+  parseGetBLWLCmd(req, command, resp, false);
 }
 
-void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
+                      const std::string& command,
+                      const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     bool haveIP = false;
@@ -1221,24 +1166,22 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
       }
     }
     catch (...) {
-      resp.status = 500;
-      resp.body = R"({"status":"failure", "reason":"Could not parse input"})";
+      setErrorCodeAndReason(drogon::k400BadRequest, "Could not parse input", resp);
       return;
     }
 
     if (!haveLogin && !haveIP) {
-      resp.status = 415;
-      resp.body = R"({"status":"failure", "reason":"No ip or login field supplied"})";
+      setErrorCodeAndReason(drogon::k400BadRequest, "No ip or login field supplied", resp);
     }
     else {
-      Json::object js_db_stats;
+      json11::Json::object js_db_stats;
       {
         std::lock_guard<std::mutex> lock(dbMap_mutx);
         for (auto i = dbMap.begin(); i != dbMap.end(); ++i) {
           std::string dbName = i->first;
           std::vector<std::pair<std::string, int>> db_fields;
           if (i->second.get_all_fields(lookup_key, db_fields)) {
-            Json::object js_db_fields;
+            json11::Json::object js_db_fields;
             for (auto j = db_fields.begin(); j != db_fields.end(); ++j) {
               js_db_fields.insert(make_pair(j->first, j->second));
             }
@@ -1246,7 +1189,7 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
           }
         }
       }
-      Json ret_json = Json::object{
+      json11::Json ret_json = json11::Json::object{
           {key_name,      key_value},
           {"whitelisted", is_whitelisted},
           {"wl_reason",   wl_reason},
@@ -1256,8 +1199,8 @@ void parseGetStatsCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const 
           {"bl_expire",   bl_expire},
           {"stats",       js_db_stats}
       };
-      resp.status = 200;
-      resp.body = ret_json.dump();
+      resp->setStatusCode(drogon::k200OK);
+      resp->setBody(ret_json.dump());
     }
   }
   incCommandStat("getDBStats");
@@ -1268,19 +1211,17 @@ enum CustomReturnFields {
   customRetStatus = 0, customRetAttrs = 1
 };
 
-void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseCustomCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
-  Json msg;
+  json11::Json msg;
   string err;
   KeyValVector ret_attrs;
 
-  msg = Json::parse(req.body, err);
+  msg = json11::Json::parse(req->bodyData(), err);
   if (msg.is_null()) {
-    resp.status = 400;
-    std::stringstream ss;
-    ss << "{\"success\":\"failure\", \"reason\":\"" << err << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k400BadRequest, err, resp);
   }
   else {
     CustomFuncArgs cfa;
@@ -1290,8 +1231,7 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       cfa.setAttrs(msg);
     }
     catch (...) {
-      resp.status = 500;
-      resp.body = R"({"success":false, "reason":"Could not parse input"})";
+      setErrorCodeAndReason(drogon::k400BadRequest, "Could not parse input", resp);
       return;
     }
 
@@ -1303,49 +1243,39 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
       }
       status = std::get<customRetStatus>(cr);
       ret_attrs = std::get<customRetAttrs>(cr);
-      Json::object jattrs;
+      json11::Json::object jattrs;
       for (auto& i : ret_attrs) {
-        jattrs.insert(make_pair(i.first, Json(i.second)));
+        jattrs.insert(make_pair(i.first, json11::Json(i.second)));
       }
-      msg = Json::object{{"success", status},
-                         {"r_attrs", jattrs}};
+      msg = json11::Json::object{{"success", status},
+                                 {"r_attrs", jattrs}};
 
       // send the custom parameters to the report sink if configured
       if (reportSink)
         sendNamedReportSink(cfa.serialize());
 
-      resp.status = 200;
-      resp.body = msg.dump();
+      resp->setStatusCode(drogon::k200OK);
+      resp->setBody(msg.dump());
     }
     catch (LuaContext::ExecutionErrorException& e) {
-      resp.status = 500;
+      resp->setStatusCode(drogon::k500InternalServerError);
       std::stringstream ss;
       try {
         std::rethrow_if_nested(e);
-        ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
         errlog("Lua custom function [%s] exception: %s", command, e.what());
       }
       catch (const std::exception& ne) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, ne.what(), resp);
         errlog("Exception in command [%s] exception: %s", command, ne.what());
       }
       catch (const WforceException& ne) {
-        resp.status = 500;
-        std::stringstream ss;
-        ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
-        resp.body = ss.str();
+        setErrorCodeAndReason(drogon::k500InternalServerError, ne.reason, resp);
         errlog("Exception in command [%s] exception: %s", command, ne.reason);
       }
     }
     catch (const std::exception& e) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
       errlog("Exception in command [%s] exception: %s", command, e.what());
     }
   }
@@ -1353,45 +1283,36 @@ void parseCustomCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const st
   incPrometheusCommandMetric(command);
 }
 
-void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseCustomGetCmd(const drogon::HttpRequestPtr& req,
+                       const std::string& command,
+                       const drogon::HttpResponsePtr& resp)
 {
-  using namespace json11;
   string err;
 
   try {
     std::string ret_msg = g_luamultip->custom_get_func(command);
-    resp.status = 200;
-    resp.body = ret_msg;
+    resp->setStatusCode(drogon::k200OK);
+    resp->setBody(ret_msg);
   }
   catch (LuaContext::ExecutionErrorException& e) {
-    resp.status = 500;
+    resp->setStatusCode(drogon::k500InternalServerError);
     std::stringstream ss;
     try {
       std::rethrow_if_nested(e);
-      ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
       errlog("Lua custom function [%s] exception: %s", command, e.what());
     }
     catch (const std::exception& ne) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"success\":false, \"reason\":\"" << ne.what() << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, ne.what(), resp);
       errlog("Exception in command [%s] exception: %s", command, ne.what());
     }
     catch (const WforceException& ne) {
-      resp.status = 500;
-      std::stringstream ss;
-      ss << "{\"success\":false, \"reason\":\"" << ne.reason << "\"}";
-      resp.body = ss.str();
+      setErrorCodeAndReason(drogon::k500InternalServerError, ne.reason, resp);
       errlog("Exception in command [%s] exception: %s", command, ne.reason);
     }
   }
   catch (const std::exception& e) {
-    resp.status = 500;
-    std::stringstream ss;
-    ss << "{\"success\":false, \"reason\":\"" << e.what() << "\"}";
-    resp.body = ss.str();
+    setErrorCodeAndReason(drogon::k500InternalServerError, e.what(), resp);
     errlog("Exception in command [%s] exception: %s", command, e.what());
   }
   incCommandStat(command + "_Get");
@@ -1400,23 +1321,27 @@ void parseCustomGetCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const
 
 std::atomic<bool> g_ping_up{false};
 
-void parsePingCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parsePingCmd(const drogon::HttpRequestPtr& req,
+                  const std::string& command,
+                  const drogon::HttpResponsePtr& resp)
 {
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
   if (g_ping_up)
-    resp.body = R"({"status":"ok"})";
+    resp->setBody(R"({"status":"ok"})");
   else
-    resp.body = R"({"status":"warmup"})";
+    resp->setBody(R"({"status":"warmup"})");
   incCommandStat("ping");
   incPrometheusCommandMetric("ping");
 }
 
-void parseSyncDoneCmd(const YaHTTP::Request& req, YaHTTP::Response& resp, const std::string& command)
+void parseSyncDoneCmd(const drogon::HttpRequestPtr& req,
+                      const std::string& command,
+                      const drogon::HttpResponsePtr& resp)
 {
-  resp.status = 200;
+  resp->setStatusCode(drogon::k200OK);
   g_ping_up = true;
 
-  resp.body = R"({"status":"ok"})";
+  resp->setBody(R"({"status":"ok"})");
   incCommandStat("syncDone");
   incPrometheusCommandMetric("syncDone");
 }

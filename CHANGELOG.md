@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+- Support HTTPS in webserver using libdrogon
+- Remove support for building debian stretch packages
+
 ## [2.4.1]
 
 ### Added

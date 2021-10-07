@@ -20,10 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "wforce-webserver.hh"
+#pragma once
 
-void setNumReportThreads(int numThreads);
-void registerWebserverCommands();
-void parseCustomCmd(const drogon::HttpRequestPtr& req,
-                    const std::string& command,
-                    const drogon::HttpResponsePtr& resp);
+#include "ext/luawrapper/include/LuaContext.hpp"
+
+void setupWforceCommonLua(bool client, bool multi_lua, LuaContext& c_lua, std::vector<std::function<void(void)>>* launchwork);

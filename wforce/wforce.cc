@@ -1037,6 +1037,12 @@ try
   // Initialise Prometheus Metrics
   initWforcePrometheusMetrics(std::make_shared<WforcePrometheus>("wforce"));
 
+  // Setup a sensible ACL, but allow it to be overridden by Lua if necessary
+  auto acl = g_webserver.getACL();
+  for(auto& addr : {"127.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "169.254.0.0/16", "192.168.0.0/16", "172.16.0.0/12", "::1/128", "fc00::/7", "fe80::/10"})
+    acl.addMask(addr);
+  g_webserver.setACL(acl);
+
   // this sets up the global lua state used for config and setup
   auto todo=setupLua(false, false, g_lua, g_allow, g_report, g_reset, g_canon, g_custom_func_map, g_custom_get_func_map, g_cmdLine.config);
 
@@ -1074,12 +1080,8 @@ try
 
   // register all the webserver commands
   registerWebserverCommands();
-  
-  auto acl = g_webserver.getACL();
-  for(auto& addr : {"127.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "169.254.0.0/16", "192.168.0.0/16", "172.16.0.0/12", "::1/128", "fc00::/7", "fe80::/10"})
-    acl.addMask(addr);
-  g_webserver.setACL(acl);
 
+  acl = g_webserver.getACL();
   vector<string> vec;
   std::string acls;
   acl.toStringVector(&vec);

@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 - Support HTTPS in webserver using libdrogon
+- Add support for configuring TLS behaviour of outbound HTTPS connections
 - Remove support for building debian stretch packages
+- Change behaviour of default ACLs such that they are overridden by setACL()
+- Build for debian bullseye
 
 ## [2.4.1]
 

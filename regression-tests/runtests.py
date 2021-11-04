@@ -4,54 +4,10 @@
 
 import os
 import requests
-import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import signal
-from OpenSSL import crypto, SSL
-
-# Based on https://stackoverflow.com/a/60804101
-def cert_gen(emailAddress="foo@foobar.com",
-             commonName="localhost",
-             countryName="US",
-             localityName="localityName",
-             stateOrProvinceName="stateOrProvinceName",
-             organizationName="organizationName",
-             organizationUnitName="organizationUnitName",
-             serialNumber=0,
-             validityStartInSeconds=0,
-             validityEndInSeconds=10 * 365 * 24 * 60 * 60,
-             KEY_FILE="private.key",
-             CERT_FILE="selfsigned.crt"):
-    # can look at generated file using openssl:
-    # openssl x509 -inform pem -in selfsigned.crt -noout -text
-    # create a key pair
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 4096)
-    # create a self-signed cert
-    cert = crypto.X509()
-    cert.get_subject().C = countryName
-    cert.get_subject().ST = stateOrProvinceName
-    cert.get_subject().L = localityName
-    cert.get_subject().O = organizationName
-    cert.get_subject().OU = organizationUnitName
-    cert.get_subject().CN = commonName
-    cert.get_subject().emailAddress = emailAddress
-    cert.set_serial_number(serialNumber)
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(validityEndInSeconds)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-    cert.sign(k, 'sha512')
-    with open(CERT_FILE, "wt") as f:
-        f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode("utf-8"))
-    with open(KEY_FILE, "wt") as f:
-        f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k).decode("utf-8"))
-
-# Generate the self-signed certificate and private key needed for wforce to serve HTTPS
-cert_gen()
 
 WEBPORT = '8084'
 APIKEY = 'super'
@@ -71,6 +27,7 @@ cmd1 = ("../wforce/wforce -D -C ./wforce1.conf -R ../wforce/regexes.yaml").split
 cmd2 = ("../wforce/wforce -D -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
 cmd4 = ("../wforce/wforce -D -C ./wforce4.conf -R ../wforce/regexes.yaml").split()
 webcmd = (".venv/bin/python ./webhook_server.py").split()
+nginx_cmd = ("nginx -c /wforce/regression-tests/nginx/nginx.conf").split()
 udpsinkcmd = (".venv/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -D -C ./trackalert.conf").split()
 report_cmd = (".venv/bin/python ../report_api/runreport.py").split()
@@ -85,6 +42,7 @@ proc2 = subprocess.Popen(cmd2, close_fds=True)
 proc4 = subprocess.Popen(cmd4, close_fds=True)
 webproc = subprocess.Popen(webcmd, close_fds=True)
 webpid = webproc.pid
+nginx_proc = subprocess.Popen(nginx_cmd, close_fds=True)
 udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
 udppid = udpproc.pid
 taproc = subprocess.Popen(ta_cmd, close_fds=True)
@@ -101,6 +59,8 @@ def sighandler(signum, frame):
     proc4.wait()
     webproc.terminate()
     webproc.wait()
+    nginx_proc.terminate()
+    nginx_proc.wait()
     udpproc.terminate()
     udpproc.wait()
     taproc.terminate()
@@ -131,6 +91,8 @@ if not available:
     proc4.wait()
     webproc.terminate()
     webproc.wait()
+    nginx_proc.terminate()
+    nginx_proc.wait()
     udpproc.terminate()
     udpproc.wait()
     taproc.terminate()
@@ -162,6 +124,8 @@ finally:
     proc4.wait()
     webproc.terminate()
     webproc.wait()
+    nginx_proc.terminate()
+    nginx_proc.wait()
     udpproc.terminate()
     udpproc.wait()
     taproc.terminate()

@@ -28,6 +28,22 @@ class TestWebHooks(ApiTestCase):
         s.close()
         logfile.close()
 
+    def test_mtls_webhook(self):
+        self.writeCmdToConsole("addWebHook(events, mtls_ck)")
+        self.reportFunc('mtls_webhook_test', '1.4.3.1', '1234', False)
+        self.allowFunc('mtls_webhook_test2', '1.4.3.2', '1234')
+        self.resetFunc('mtls_webhook_test2', '1.4.3.3');
+        self.addBLEntryLogin('mtls_webhook_test2', 10, 'This is not a reason')
+        self.addBLEntryLogin('mtls_webhook_test2', 10, 'This is not a reason')
+        self.delBLEntryLogin('mtls_webhook_test2')
+        time.sleep(4)
+        logfile = open('/var/log/nginx/access.log', 'r')
+        s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
+        search_str = s.read(s.size()).decode()
+        self.assertIn('"POST / HTTP/1.1" 200', search_str)
+        s.close()
+        logfile.close()
+
     def test_kafka_webhooks(self):
         self.writeCmdToConsole("addWebHook(events, kafka_ck)")
         self.reportFunc('kafkawebhooktest', '4.4.3.1', '1234', False)

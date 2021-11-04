@@ -11,4 +11,5 @@ pip3 install -r requirements.txt
 
 set -e
 set -x
+./create-certs.sh
 exec ./runtests.py "$@"

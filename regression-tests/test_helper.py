@@ -44,7 +44,7 @@ class ApiTestCase(unittest.TestCase):
 
         self.session = requests.Session()
         self.session.auth = ('foo', os.environ.get('APIKEY', 'super'))
-        self.session.verify = 'selfsigned.crt'
+        self.session.verify = 'certs/root.pem'
         # self.session.keep_alive = False
         #        self.session.headers = {'X-API-Key': os.environ.get('APIKEY', 'changeme-key'), 'Origin': 'http://%s:%s' % (self.server_address, self.server_port)}
 

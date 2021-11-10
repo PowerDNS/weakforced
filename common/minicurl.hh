@@ -97,6 +97,12 @@ public:
                const MiniCurlHeaders& headers);
   const std::vector<mcmPostReturn> runPost();
   void setTimeout(uint64_t timeout_secs);
+  template <class T> void setMCurlOption(int option, T optval) {
+    setCurlOption(option, optval);
+    for (auto& i : d_ccs) {
+      i.setCurlOption(option, optval);
+    }
+  }
 protected:
   void initMCurl();
   void finishPost();

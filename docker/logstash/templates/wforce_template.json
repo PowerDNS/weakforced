@@ -2,7 +2,6 @@
     "index_patterns" : ["logstash-wforce*"],
     "settings" : { "index.refresh_interval" : "5s"},
     "mappings" : {
-        "doc": {
             "dynamic_templates" :
 	    [
 	        {
@@ -39,6 +38,5 @@
 	        "tls": { "type": "boolean" },
 	        "t": { "type": "float" }
             }
-        }
     }
 }

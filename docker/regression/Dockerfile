@@ -29,6 +29,7 @@ RUN apt-get update && \
                protobuf-compiler \
                pandoc \
                wget \
+               nginx \
                docker \
                docker-compose \
                python3-pip \

@@ -1,4 +1,4 @@
-FROM docker.elastic.co/logstash/logstash:6.2.0
+FROM docker.elastic.co/logstash/logstash:7.14.2
 
 USER root
 RUN yum install -y wget
@@ -16,5 +16,3 @@ USER logstash
 RUN logstash-plugin install logstash-input-udp
 RUN logstash-plugin install logstash-output-elasticsearch
 RUN logstash-plugin install logstash-filter-geoip
-RUN logstash-plugin remove x-pack
-RUN sed -i '/xpack/d' /usr/share/logstash/config/logstash.yml

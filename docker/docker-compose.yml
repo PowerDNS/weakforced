@@ -17,7 +17,20 @@ services:
     depends_on:
       - elasticsearch
   elasticsearch:
-    build: elasticsearch
+    image: elasticsearch:7.14.1
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1000m -Xmx1000m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
     volumes:
       - esdata:/usr/share/elasticsearch/data
     ports:

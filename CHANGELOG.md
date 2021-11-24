@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [2.6.0]
 - Support HTTPS in webserver using libdrogon
 - Add support for configuring TLS behaviour of outbound HTTPS connections
 - Remove support for building debian stretch packages

@@ -106,7 +106,7 @@ def queryElastic(login_query, client_ip):
 
 def updateElastic(index, id, user_confirmation, client_ip):
     try:
-        response = elastic.update(index=index,doc_type="doc",id=id, body={ 'doc': { 'user_confirmation': user_confirmation }},refresh=True)
+        response = elastic.update(index=index,id=id, body={ 'doc': { 'user_confirmation': user_confirmation }},refresh=True)
     except elasticsearch.TransportError as err:
         app.logger.error("Elasticsearch update exception (%s) trying to update doc id=%s in index=%s remote_ip=%s", err.error, id, index, client_ip)
         return None
@@ -117,7 +117,7 @@ def updateElastic(index, id, user_confirmation, client_ip):
 
 def updateByQueryElastic(es_body, client_ip):
     try:
-        response = elastic.update_by_query(index=app.config['ELASTICSEARCH_INDEX'],doc_type="doc",conflicts="proceed", body=es_body,refresh=True)
+        response = elastic.update_by_query(index=app.config['ELASTICSEARCH_INDEX'],conflicts="proceed", body=es_body,refresh=True)
     except elasticsearch.TransportError as err:
         if type(err.info) is dict:
             app.logger.error("Elasticsearch update_by_query exception (%s) (%s): remote_ip=%s", err.error, json.dumps(err.info), client_ip)

@@ -146,6 +146,8 @@ public:
       drogon::app().disableSession();
       drogon::app().disableSigtermHandling();
       drogon::app().setLogLevel(trantor::Logger::kWarn);
+      // We will never allow uploads, but drogon wants to create a bunch of temp files in uploadPath/tmp/xx
+      drogon::app().setUploadPath("/var");
       // Set custom 404 response
       auto resp = drogon::HttpResponse::newHttpResponse();
       resp->setBody(R"({"status":"failure", "reason":"Not found"})");

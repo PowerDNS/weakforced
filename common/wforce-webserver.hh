@@ -228,6 +228,11 @@ public:
     }
   }
 
+  bool isRunning()
+  {
+    return drogon::app().isRunning();
+  }
+
 protected:
   template <typename Clock>
   void updateWTR(const std::chrono::time_point<Clock>& start_time)

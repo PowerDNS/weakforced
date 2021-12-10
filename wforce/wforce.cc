@@ -1126,6 +1126,11 @@ try
   for(auto& t : todo)
     t();
 
+  // Give time for the webserver to start
+  while (!g_webserver.isRunning()) {
+    sleep(1);
+  }
+
   // Loop through the list of configured sync hosts, check if any have been
   // up long enough and if so, kick off a DB sync operation to fill our DBs
   checkSyncHosts();

@@ -18,6 +18,11 @@ if [[ "x$TRACKALERT" == "x" ]]; then
     if [[ "$WFORCE_VERBOSE" -eq "1" ]]; then
         WFORCE_CMD="$WFORCE_CMD -v"
     fi
+    # Check if they just supplied their own wforce.conf file
+    if [[ -f /etc/wforce/wforce.conf ]]; then
+      echo "Using supplied wforce config file"
+      WFORCE_CONFIG_FILE=/etc/wforce/wforce.conf
+    fi
     if [[ "x$WFORCE_CONFIG_FILE" == "x" ]]; then
         if [[ "x$WFORCE_HTTP_PASSWORD" == "x" ]]; then
             2>&1 echo "WFORCE_HTTP_PASSWORD environment variable must be set"

@@ -20,7 +20,7 @@ if [[ "x$TRACKALERT" == "x" ]]; then
     fi
     # Check if they just supplied their own wforce.conf file
     if [[ -f /etc/wforce/wforce.conf ]]; then
-      echo "Using supplied wforce config file"
+      echo "Using supplied wforce config file /etc/wforce/wforce.conf"
       WFORCE_CONFIG_FILE=/etc/wforce/wforce.conf
     fi
     if [[ "x$WFORCE_CONFIG_FILE" == "x" ]]; then

@@ -1,4 +1,4 @@
-FROM debian:buster as wforce_build
+FROM debian:bullseye-slim as wforce_build
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -61,7 +61,7 @@ RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-do
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
-FROM debian:buster as wforce_image
+FROM debian:bullseye-slim as wforce_image
 
 WORKDIR /wforce/
 
@@ -72,18 +72,18 @@ COPY --from=wforce_build /wforce/report_api /wforce/report_api
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get -y -f install \
-               libboost-date-time1.67.0 \
-               libboost-regex1.67.0 \
-               libboost-system1.67.0 \
-               libboost-filesystem1.67.0 \
+               libboost-date-time1.74.0 \
+               libboost-regex1.74.0 \
+               libboost-system1.74.0 \
+               libboost-filesystem1.74.0 \
                libcurl4 \
                libgeoip1 \
                libgetdns10 \
                libhiredis0.14 \
                libluajit-5.1-2 \
                libmaxminddb0 \
-               libreadline7 \
-               libprotobuf17 \
+               libreadline8 \
+               libprotobuf23 \
                libssl1.1 \
                libsodium23 \
                libyaml-cpp0.6 \

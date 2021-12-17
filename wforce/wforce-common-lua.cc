@@ -28,7 +28,6 @@
 #include "webhook.hh"
 #include "wforce-webserver.hh"
 #include "wforce-common-lua.hh"
-#include "wforce-web.hh"
 #include <boost/filesystem.hpp>
 
 using std::thread;

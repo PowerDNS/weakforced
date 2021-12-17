@@ -146,6 +146,8 @@ public:
       drogon::app().disableSession();
       drogon::app().disableSigtermHandling();
       drogon::app().setLogLevel(trantor::Logger::kWarn);
+      // We will never allow uploads, but drogon wants to create a bunch of temp files in uploadPath/tmp/xx
+      drogon::app().setUploadPath("/tmp/wforce");
       // Set custom 404 response
       auto resp = drogon::HttpResponse::newHttpResponse();
       resp->setBody(R"({"status":"failure", "reason":"Not found"})");
@@ -224,6 +226,11 @@ public:
       wws->init();
       drogon::app().run();
     }
+  }
+
+  bool isRunning()
+  {
+    return drogon::app().isRunning();
   }
 
 protected:

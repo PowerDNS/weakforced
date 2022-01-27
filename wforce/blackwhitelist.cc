@@ -764,12 +764,20 @@ bool BlackWhiteListDB::loadPersistEntries()
                   }
                   freeReplyObject(get_reply);
                 }
+                else {
+                  retval = false;
+                  errlog("loadPersistEntries: Redis GET failed: %s", redis_context->errstr);
+                }
                 if (retval == false)
                   break;
               }
             }
           }
           freeReplyObject(reply);
+        }
+        else {
+          retval = false;
+          errlog("loadPersistEntries: Redis SCAN failed: %s", redis_context->errstr);
         }
         if (retval == false)
           break;

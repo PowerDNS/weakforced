@@ -16,7 +16,7 @@ jobs:
       matrix:
         os:
           - centos-7
-          - centos-8
+          - ol-8
           - amazon-2
           - debian-buster
           - debian-bullseye

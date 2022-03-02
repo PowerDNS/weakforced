@@ -700,6 +700,7 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
     c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});
+    c_lua.writeFunction("setBlacklistIPRetMsg", [](const std::string& msg) {});
     c_lua.writeFunction("setBlacklistLoginRetMsg", [](const std::string& msg) {});
     c_lua.writeFunction("setBlacklistIPLoginRetMsg", [](const std::string& msg) {});
   }

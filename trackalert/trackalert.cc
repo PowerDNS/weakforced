@@ -634,12 +634,13 @@ try
 
   // Initialise Prometheus Metrics
   initPrometheusMetrics(std::make_shared<PrometheusMetrics>("trackalert"));
-  
+
+  // now we setup the multi-lua lua states (we do this first because there are routines such as the scheduler
+  // in the global config that use the multi-lua states)
+  g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
+
   // this sets up the global lua state used for config and setup
   auto todo=setupLua(false, false, g_lua, g_report, nullptr, g_custom_func_map, g_cmdLine.config);
-
-  // now we setup the allow/report lua states
-  g_luamultip = std::make_shared<LuaMultiThread>(g_num_luastates);
   
   for (auto it = g_luamultip->begin(); it != g_luamultip->end(); ++it) {
     // first setup defaults in case the config doesn't specify anything

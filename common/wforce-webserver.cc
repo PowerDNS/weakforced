@@ -184,7 +184,11 @@ void ACLFilter::doFilter(const drogon::HttpRequestPtr& req,
     return;
   }
   else {
-    auto res = drogon::HttpResponse::newNotFoundResponse();
+    auto res = drogon::HttpResponse::newHttpResponse();
+    res->setStatusCode(drogon::k401Unauthorized);
+    std::stringstream ss;
+    ss << "{\"status\":\"failure\", \"reason\":" << "\"Source IP Address not in ACL\"" << "}";
+    res->setBody(ss.str());
     res->setCloseConnection(true);
     fcb(res);
   }

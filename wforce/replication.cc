@@ -27,16 +27,20 @@
 
 std::string ReplicationOperation::serialize() const
 {
-  std::string bytes = rep_op->serialize();
-  WforceReplicationMsg msg;
+  if (rep_op != nullptr) {
+    std::string bytes = rep_op->serialize();
+    WforceReplicationMsg msg;
 
-  msg.set_rep_type(obj_type);
-  msg.set_rep_op(bytes);
-  msg.set_forwarded(forwarded);
+    msg.set_rep_type(obj_type);
+    msg.set_rep_op(bytes);
+    msg.set_forwarded(forwarded);
 
-  std::string ret_str;
-  msg.SerializeToString(&ret_str);
-  return ret_str;
+    std::string ret_str;
+    msg.SerializeToString(&ret_str);
+    return ret_str;
+  }
+  else
+    return std::string();
 }
 
 bool ReplicationOperation::unserialize(const std::string& str)

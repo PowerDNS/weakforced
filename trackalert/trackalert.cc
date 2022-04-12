@@ -60,6 +60,7 @@ bool g_verbose=false;
 struct TrackalertStats g_stats;
 bool g_console=false;
 bool g_docker=false;
+LogLevel g_loglevel{LogLevel::Info};
 
 string g_outputBuffer;
 
@@ -531,12 +532,13 @@ try
     {"daemon", optional_argument, 0, 'd'},
     {"docker", optional_argument, 0, 'D'},
     {"facility", required_argument, 0, 'f'},
+    {"loglevel", required_argument, 0, 'l'},
     {"help", 0, 0, 'h'}, 
     {0,0,0,0} 
   };
   int longindex=0;
   for(;;) {
-    int c=getopt_long(argc, argv, ":hsdDc:e:C:R:f:v", longopts, &longindex);
+    int c=getopt_long(argc, argv, ":hsdDc:e:C:R:f:l:v", longopts, &longindex);
     if(c==-1)
       break;
     switch(c) {
@@ -589,6 +591,15 @@ try
         break;
       }
       break;
+    case 'l':
+        try {
+          g_loglevel = static_cast<LogLevel>(std::stoi(optarg));
+        }
+        catch (const std::invalid_argument &ia) {
+          cout << "Bad log level (" << optarg << ") - must be an integer" << endl;
+          exit(1);
+        }
+        break;
     case 'h':
       cout<<"Syntax: wforce [-C,--config file] [-c,--client] [-d,--daemon] [-e,--execute cmd]\n";
       cout<<"[-h,--help] [-l,--local addr]\n";
@@ -600,12 +611,14 @@ try
       cout<<"-D,--docker           Enable logging for docker\n";
       cout<<"-e,--execute cmd      Connect to wforce and execute 'cmd'\n";
       cout<<"-f,--facility name    Use log facility 'name'\n";
+      cout<<"-l,--loglevel level   Log level as an integer. 0 is Emerg, 7 is Debug. Defaults to 6 (Info).\n";
       cout<<"-h,--help             Display this helpful message\n";
       cout<<"\n";
       exit(EXIT_SUCCESS);
       break;
     case 'v':
       g_verbose=true;
+      g_loglevel=LogLevel::Debug;
       break;
     case '?':
     default:
@@ -615,6 +628,7 @@ try
   argc-=optind;
   argv+=optind;
 
+  g_webserver.setWebLogLevel(g_loglevel);
   openlog("trackalert", LOG_PID, LOG_DAEMON);
   
   g_singleThreaded = false;

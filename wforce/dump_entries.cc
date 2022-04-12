@@ -35,6 +35,7 @@
 #include "json11.hpp"
 #include "base64.hh"
 #include "sstuff.hh"
+#include "dolog.hh"
 
 using namespace std;
 using namespace json11;
@@ -54,6 +55,7 @@ void print_help()
 
 bool g_console = true;
 bool g_docker = false;
+LogLevel g_loglevel{LogLevel::Info};
 
 int main(int argc, char** argv)
 {

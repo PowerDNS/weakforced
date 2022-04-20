@@ -53,6 +53,10 @@ on "report") integrated with it using the HTTP/JSON API.
 -f,--facility *FACILITY NAME*
 :    Log using the specified facility name, e.g. local0
 
+-l,--loglevel <0-7>
+:    Logs sent to stdout will be filtered according to the specified log level,
+     matching the equivalent syslog level (0 - Emerg to 7 - Debug).
+
 -h,--help
 :    Display a helpful message and exit.
 

@@ -132,9 +132,31 @@ public:
                    const std::string& cert_file, const std::string& private_key,
                    bool enable_oldtls, std::vector<std::pair<std::string, std::string>> opts);
 
-  void setWebLogLevel(trantor::Logger::LogLevel level)
+  void setWebLogLevel(LogLevel level)
   {
-    drogon::app().setLogLevel(level);
+    switch (level) {
+      case LogLevel::Emerg:
+      case LogLevel::Alert:
+      case LogLevel::Crit:
+        d_loglevel = trantor::Logger::kFatal;
+        break;
+      case LogLevel::Err:
+        d_loglevel = trantor::Logger::kError;
+        break;
+      case LogLevel::Warning:
+        d_loglevel = trantor::Logger::kWarn;
+        break;
+      case LogLevel::Notice:
+      case LogLevel::Info:
+        d_loglevel = trantor::Logger::kInfo;
+        break;
+      case LogLevel::Debug:
+        d_loglevel = trantor::Logger::kTrace;
+        break;
+      default:
+        d_loglevel = trantor::Logger::kWarn;
+        break;
+    }
   }
 
   // Initialize the webserver
@@ -145,7 +167,7 @@ public:
     if (init.test_and_set() == false) {
       drogon::app().disableSession();
       drogon::app().disableSigtermHandling();
-      drogon::app().setLogLevel(trantor::Logger::kWarn);
+      drogon::app().setLogLevel(d_loglevel);
       // We will never allow uploads, but drogon wants to create a bunch of temp files in uploadPath/tmp/xx
       drogon::app().setUploadPath("/tmp/wforce");
       // Set custom 404 response
@@ -253,4 +275,5 @@ private:
   std::unordered_map<std::string, WforceWSFunc> d_delete_map;
   unsigned int d_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
   unsigned int d_max_conns = WFORCE_MAX_WS_CONNS;
+  trantor::Logger::LogLevel d_loglevel = trantor::Logger::kWarn;
 };

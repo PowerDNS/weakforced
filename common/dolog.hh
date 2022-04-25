@@ -74,6 +74,10 @@ extern bool g_console;
 extern bool g_verbose;
 extern bool g_docker;
 
+enum class LogLevel { Emerg=0, Alert, Crit, Err, Warning, Notice, Info, Debug};
+
+extern LogLevel g_loglevel;
+
 template<typename... Args>
 void genlog(int level, const char* s, Args... args)
 {
@@ -81,7 +85,7 @@ void genlog(int level, const char* s, Args... args)
   std::ostringstream str;
   dolog(str, s, args...);
   syslog(level, "%s", str.str().c_str());
-  if(g_console) {
+  if(g_console && level <= static_cast<int>(g_loglevel)) {
     // For docker we include a datetime string
     if (g_docker) {
       auto now = system_clock::now();

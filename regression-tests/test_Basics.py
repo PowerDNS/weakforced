@@ -16,8 +16,12 @@ class TestBasics(ApiTestCase):
         self.assertEquals(r.status_code, requests.codes.ok)
 
     def test_ping(self):
-        r = self.pingFunc()
-        j = r.json()
+        for _ in range(10):
+            r = self.pingFunc()
+            j = r.json()
+            if j['status'] == 'ok':
+                break
+            time.sleep(1)
         self.assertEquals(j['status'], 'ok')
 
     def test_getBL(self):

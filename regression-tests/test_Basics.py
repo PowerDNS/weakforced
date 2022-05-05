@@ -24,6 +24,15 @@ class TestBasics(ApiTestCase):
             time.sleep(1)
         self.assertEquals(j['status'], 'ok')
 
+    def test_ping_acl_deny(self):
+        self.writeCmdToConsole('setACL({})')
+        r = self.pingFunc()
+        self.assertEquals(r.status_code, 401)
+        j = r.json()
+        self.assertEquals(j['status'], 'failure')
+        self.assertEquals(j['reason'], 'Source IP Address not in ACL')
+        self.writeCmdToConsole('setACL({"0.0.0.0/0"})')
+
     def test_getBL(self):
         r = self.getBLFunc()
         j = r.json()

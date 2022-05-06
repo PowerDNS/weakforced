@@ -39,8 +39,7 @@ std::string ReplicationOperation::serialize() const
     msg.SerializeToString(&ret_str);
     return ret_str;
   }
-  else
-    return std::string();
+  return std::string();
 }
 
 bool ReplicationOperation::unserialize(const std::string& str)

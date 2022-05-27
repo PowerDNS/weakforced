@@ -92,17 +92,17 @@ setting. This enables custom webhooks to be generated from Lua.
 See **wforce.conf(5)** for details of the "addWebHook()" configuration
 setting. The following configuration keys can be used for all events:
 
-* url - The URL that the webhook should POST to. Supports http and
-  https, for example:
+* url - The URL that the webhook should POST to. You can add date macros into the URL that will be substituted when the hook is run. The following macros are supported: %{YYYY}, %{MM}, %{dd}. Supports http and https, for example:
 
-		config_key["url"] = "https://example.com/foo"
+        config_key["url"] = "https://example.com/foo"
+        config_key["url"] = "https://example.com/foo/logstash-%{YYYY}-${MM}-{%dd}"
 
 * secret - A string that is used to generate the Hmac digest for the
   X-Wforce-Signature header. Should be unique for each webhook, so
   that the remote web server can verify the digest as being
   authentic. For example:
 
-		config_key["secret"] = "12345"
+        config_key["secret"] = "12345"
 
 * num_conns - This configuration key is now deprecated - setting it
   will have no effect. Use "setNumWebHookConnsPerThread()"
@@ -112,7 +112,7 @@ setting. The following configuration keys can be used for all events:
   which expect Basic Authentication. The username and password are
   provided as "user:pass". For example
 
-		config_key["basic-auth"] = "wforce:super"
+        config_key["basic-auth"] = "wforce:super"
 
 * api-key - Adds an X-API-Key header to Webhooks, for servers that
   expect such a header for Authorization. For example:

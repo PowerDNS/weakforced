@@ -21,6 +21,8 @@
  */
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/gregorian/gregorian_types.hpp>
+#include <boost/format.hpp>
 #include "webhook.hh"
 #include "dolog.hh"
 #include "hmac.hh"
@@ -28,6 +30,7 @@
 #include "ext/threadname.hh"
 
 using namespace boost::posix_time;
+using namespace boost::gregorian;
 
 WebHookRunner::WebHookRunner()
 {
@@ -178,6 +181,26 @@ bool WebHookRunner::_runHooks(const std::vector<WebHookQueueItem>& events,
   return ret;
 }
 
+// This method expands all supported date macros in a url string
+std::string WebHookRunner::ExpandURL(const std::string&& url)
+{
+  std::string new_url = url; // This is equivalent to a std::move()
+  thread_local boost::format yf("%1.4d");
+  thread_local boost::format mf("%1.2d");
+  thread_local boost::format df("%1.2d");
+  date::ymd_type ymd = boost::posix_time::second_clock::universal_time().date().year_month_day();
+  boost::replace_all(new_url, "%{YYYY}", (yf % ymd.year).str());
+  boost::replace_all(new_url, "%{MM}", (mf % ymd.month.as_number()).str());
+  boost::replace_all(new_url, "%{dd}", (df % ymd.day.as_number()).str());
+  return new_url;
+}
+
+// This method (less efficiently) expands all supported date macros in a url string
+std::string WebHookRunner::ExpandURL(const std::string& url)
+{
+  return ExpandURL(std::string(url));
+}
+
 void WebHookRunner::_addHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, MiniCurlMulti& mcurl)
 {
   // construct the necessary headers
@@ -209,7 +232,7 @@ void WebHookRunner::_addHook(const std::string& event_name, std::shared_ptr<cons
   }
   
   vdebuglog("Webhook id=%d starting for event (%s) to url (%s) with delivery id (%s) and hook_data (%s)",
-          hook->getID(), event_name, hook->getConfigKey("url"), b64_hash_id, hook_data);
+          hook->getID(), event_name, ExpandURL(hook->getConfigKey("url")), b64_hash_id, hook_data);
 
-  mcurl.addPost(hook->getID(), hook->getConfigKey("url"), hook_data, mch);
+  mcurl.addPost(hook->getID(), ExpandURL(hook->getConfigKey("url")), hook_data, mch);
 }

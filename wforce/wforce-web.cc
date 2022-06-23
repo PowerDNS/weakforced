@@ -41,6 +41,7 @@
 #include "webhook.hh"
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/gregorian/gregorian.hpp"
+#include "boost/algorithm/string.hpp"
 #include "boost/regex.hpp"
 #include "wforce-prometheus.hh"
 #include "wforce-sibling.hh"
@@ -772,6 +773,33 @@ enum AllowReturnFields {
   allowRetStatus = 0, allowRetMsg = 1, allowRetLogMsg = 2, allowRetAttrs = 3
 };
 
+const std::string ipPattern = "{ip}";
+const std::string loginPattern = "{login}";
+
+std::string substituteIPLogin(const std::string msg, const ComboAddress& ca, const std::string login)
+{
+  bool replace_ip = false;
+  bool replace_login = false;
+  std::string new_msg;
+
+  if (msg.find(ipPattern) != std::string::npos)
+    replace_ip = true;
+  if (msg.find(loginPattern) != std::string::npos)
+    replace_login = true;
+
+  if (replace_ip || replace_login)
+    // The maximum length of an IPv6 address string is 39 characters
+    new_msg.reserve(msg.length()+39+login.length()); // This should prevent a realloc in the majority of cases
+
+  if (replace_ip)
+    new_msg = boost::algorithm::replace_all_copy(msg, "{ip}", ca.toString());
+  else
+    new_msg = msg;
+  if (replace_login)
+    boost::algorithm::replace_all(new_msg, "{login}", login);
+  return new_msg;
+}
+
 void parseAllowCmd(const drogon::HttpRequestPtr& req,
                    const std::string& command,
                    const drogon::HttpResponsePtr& resp)
@@ -826,7 +854,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "ip"}};
         status = 0;
         allowLog(status, std::string("whitelisted IP"), lt, log_attrs);
-        ret_msg = g_wl_db.getIPRetMsg();
+        ret_msg = substituteIPLogin(g_wl_db.getIPRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -838,7 +866,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "login"}};
         status = 0;
         allowLog(status, std::string("whitelisted Login"), lt, log_attrs);
-        ret_msg = g_wl_db.getLoginRetMsg();
+        ret_msg = substituteIPLogin(g_wl_db.getLoginRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -850,7 +878,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "iplogin"}};
         status = 0;
         allowLog(status, std::string("whitelisted IPLogin"), lt, log_attrs);
-        ret_msg = g_wl_db.getIPLoginRetMsg();
+        ret_msg = substituteIPLogin(g_wl_db.getIPLoginRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -867,7 +895,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "ip"}};
         allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
-        ret_msg = g_bl_db.getIPRetMsg();
+        ret_msg = substituteIPLogin(g_bl_db.getIPRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -878,7 +906,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "login"}};
         allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
-        ret_msg = g_bl_db.getLoginRetMsg();
+        ret_msg = substituteIPLogin(g_bl_db.getLoginRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -889,7 +917,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "iplogin"}};
         allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);
-        ret_msg = g_bl_db.getIPLoginRetMsg();
+        ret_msg = substituteIPLogin(g_bl_db.getIPLoginRetMsg(), lt.remote, lt.login);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }

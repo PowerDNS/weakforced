@@ -403,19 +403,23 @@ cannot be called inside the allow/report/reset functions:
         whitelistPersistRWTimeout(0, 50000)
 
 * setBlacklistIPRetMsg(<msg>) - Set the message to be returned to
-  clients whose IP address is blacklisted. For example:
+  clients whose IP address is blacklisted. The strings "{ip}" and
+  "{login}" will be substituted for the actual IP address and login name. 
+  For example:
 
-        setBlackistIPRetMsg("Go away your IP is blacklisted")
+        setBlackistIPRetMsg("Go away your IP {ip} is blacklisted")
 
 * setBlacklistLoginRetMsg(<msg>) - Set the message to be returned to
-  clients whose login is blacklisted. For example:
+  clients whose login is blacklisted. The strings "{ip}" and
+  "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistLoginRetMsg("Go away your login is blacklisted")
+        setBlackistLoginRetMsg("Go away your login {login} is blacklisted")
 
 * setBlacklistIPLoginRetMsg(<msg>) - Set the message to be returned to
-  clients whose IP address/login is blacklisted. For example:
+  clients whose IP address/login is blacklisted. The strings "{ip}" and
+  "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistIPLoginRetMsg("Go away your IP/Login is blacklisted")
+        setBlackistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:

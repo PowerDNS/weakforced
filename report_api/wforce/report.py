@@ -89,6 +89,8 @@ def constructQuery(j, query, addSize=True):
         max_num = j['max_num']
     if addSize:
         my_query['size'] = max_num
+    else:
+        del my_query['size']
 
     return my_query
 

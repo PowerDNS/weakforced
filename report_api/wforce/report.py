@@ -74,7 +74,7 @@ def constructMustNotSearchTerms(j):
     query.append({'term': { "user_confirmation": "forget" }})
     return query
 
-def constructQuery(j, query):
+def constructQuery(j, query, addSize=True):
     my_query = copy.deepcopy(query)
     my_query['query']['constant_score']['filter']['bool']['must'].extend(constructMustSearchTerms(j))
     my_query['query']['constant_score']['filter']['bool']['must_not'].extend(constructMustNotSearchTerms(j))
@@ -87,7 +87,8 @@ def constructQuery(j, query):
     max_num = 100
     if 'max_num' in j:
         max_num = j['max_num']
-    my_query['size'] = max_num
+    if addSize:
+        my_query['size'] = max_num
 
     return my_query
 
@@ -293,7 +294,7 @@ def forget():
     if not 'login' in request.json or not 'device' in request.json:
         return make_response(jsonify({'error_msg': 'Invalid query parameters - must supply login and device'}), 400)
 
-    my_query = constructQuery(request.json, global_query)
+    my_query = constructQuery(request.json, global_query, False)
     my_query['script'] = update_script
 
     response = updateByQueryElastic(my_query, client_ip)

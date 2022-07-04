@@ -59,11 +59,11 @@ WORKDIR /wforce/
 RUN mkdir /sdist
 
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
-RUN cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0
+RUN cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
 RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git checkout tags/v1.7.5 -b v1.7.5
 RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/

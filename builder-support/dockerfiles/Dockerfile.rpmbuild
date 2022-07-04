@@ -40,7 +40,7 @@ RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
 RUN cd jsoncpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=OFF && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+RUN cd drogon && git checkout tags/v1.7.5 -b v1.7.5
 RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
 
 ADD builder-support/specs/ /wforce/builder-support/specs/

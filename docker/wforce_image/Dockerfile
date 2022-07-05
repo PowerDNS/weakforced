@@ -39,11 +39,11 @@ RUN mkdir /wforce/install
 
 RUN git clone https://github.com/jupp0r/prometheus-cpp.git
 RUN cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
-RUN cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off && make && make install
+RUN cd prometheus-cpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.7.5 -b v1.7.5
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
+RUN cd drogon && git checkout tags/v1.7.4 -b v1.7.4
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 COPY m4/ /wforce/m4/

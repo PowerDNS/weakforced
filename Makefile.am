@@ -9,6 +9,6 @@ endif
 
 SUBDIRS=ext docs common wforce report_api $(BUILD_TRACKALERT) $(BUILD_DOCKER)
 
-LOGSTASH_DIST = elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json elk/kibana/kibana_saved_objects.json
+LOGSTASH_DIST = elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json elk/kibana/kibana_saved_objects.ndjson
 
 EXTRA_DIST= README.md LICENSE CHANGELOG.md $(LOGSTASH_DIST)

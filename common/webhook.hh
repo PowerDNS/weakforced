@@ -497,6 +497,8 @@ protected:
   void _addHook(const std::string& event_name, std::shared_ptr<const WebHook> hook, const std::string& hook_data, MiniCurlMulti& mcurl);
   bool _runHooks(const std::vector<WebHookQueueItem>& events,
                  MiniCurlMulti& mcurl);
+  std::string ExpandURL(const std::string&& url);
+  std::string ExpandURL(const std::string& url);
 private:
   std::queue<WebHookQueueItem> queue;
   std::mutex queue_mutex;

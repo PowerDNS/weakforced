@@ -95,6 +95,7 @@ RUN apt-get update && \
                python3-pip \
                python3-venv \
                python3-jinja2 \
+               net-tools \
                tini
 
 RUN groupadd -g 1000 wforce && \

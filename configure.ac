@@ -42,6 +42,17 @@ AS_IF([test "x$enable_geoip" != "xno"], [
 ])
 AC_CHECK_LIB(dl,dlopen,DLLIBS="-ldl",,)
 AC_SUBST(DLLIBS, $DLLIBS)
+# Drogon uses std::filesystem but older versions of g++ need an extra library to use it
+AC_MSG_NOTICE([Checking for stdc++fs])
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -lstdc++fs"
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([#include <filesystem>],
+    [std::filesystem::path mypath])],
+  [STDCXXFSLIBS="-lstdc++fs"] [HAVE_LIBSTDCXXFS=1],
+  [AC_MSG_NOTICE([libstdc++fs is not installed.])])
+LDFLAGS=$SAVED_LDFLAGS
+AC_SUBST(STDCXXFSLIBS, $STDCXXFSLIBS)
 PDNS_WITH_LIBSSL
 AC_ARG_ENABLE([dns],
 AS_HELP_STRING([--disable-dns], [ Disable getdns lookup feature ]))

@@ -24,7 +24,7 @@ then
     push_tag $TAG
 fi
 
-BRANCH=`git branch`
+BRANCH=`git branch --show-current`
 if [ "$BRANCH" = "master" ]
 then
     docker tag powerdns/wforce:$TAG powerdns/wforce:unstable

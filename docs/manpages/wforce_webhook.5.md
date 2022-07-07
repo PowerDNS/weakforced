@@ -2,6 +2,8 @@
 % Open-Xchange
 % 2018
 
+<!-- {% raw %} -->
+
 # NAME
 **wforce_webhook** - Documentation for wforce webhook functionality
 
@@ -95,7 +97,7 @@ setting. The following configuration keys can be used for all events:
 * url - The URL that the webhook should POST to. You can add date macros into the URL that will be substituted when the hook is run. The following macros are supported: %{YYYY}, %{MM}, %{dd}. Supports http and https, for example:
 
         config_key["url"] = "https://example.com/foo"
-        config_key["url"] = "https://example.com/foo/logstash-%{YYYY}-${MM}-{%dd}"
+        config_key["url"] = "https://example.com/foo/logstash-%{YYYY}-${MM}-%{dd}"
 
 * secret - A string that is used to generate the Hmac digest for the
   X-Wforce-Signature header. Should be unique for each webhook, so
@@ -173,3 +175,5 @@ it using the "content-type" configuration key.
 
 # SEE ALSO
 wforce(1) wforce_webhook(5) wforce_api(7)
+
+<!-- {% endraw %} -->

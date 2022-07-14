@@ -41,6 +41,8 @@ services:
       - ALL
     security_opt:
       - seccomp=unconfined
+    environment:
+      - SPAMHAUS_KEY=${SPAMHAUS_KEY}
     build:
       context: weakforced
       dockerfile: docker/regression/Dockerfile

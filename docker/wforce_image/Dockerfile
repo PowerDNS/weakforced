@@ -67,6 +67,9 @@ WORKDIR /wforce/
 
 COPY --from=wforce_build /wforce/install/ /
 
+# Remove the default wforce.conf and trackalert.conf files
+RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf
+
 COPY --from=wforce_build /wforce/report_api /wforce/report_api
 
 RUN apt-get update && \

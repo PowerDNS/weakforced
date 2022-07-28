@@ -14,9 +14,17 @@ services:
         - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     environment:
       - WFORCE_VERBOSE
-      - WFORCE_HTTP_PORT=18084
-      - WFORCE_HTTP_PASSWORD=super
+      - WFORCE_HTTP_PORT=${WFORCE_PORT}
+      - WFORCE_HTTP_PASSWORD=${WFORCE_PASSWORD}
       - WFORCE_LOGSTASH_URL
       - WFORCE_CONFIG_FILE
     ports:
-      - "18084:18084"
+      - "${WFORCE_PORT}:${WFORCE_PORT}"
+  trackalert:
+    image: powerdns/wforce:${VERSION}
+    environment:
+      - TRACKALERT=1
+      - TRACKALERT_HTTP_PORT=${TRACKALERT_PORT}
+      - TRACKALERT_HTTP_PASSWORD=${WFORCE_PASSWORD}
+    ports:
+      - "${TRACKALERT_PORT}:${TRACKALERT_PORT}"

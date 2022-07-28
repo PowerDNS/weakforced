@@ -57,7 +57,7 @@ else
             exec $TRACKALERT_CMD
         fi
     else
-        TRACKALERT_CMD="$WFORCE_CMD -C $TRACKALERT_CONFIG_FILE"
+        TRACKALERT_CMD="$TRACKALERT_CMD -C $TRACKALERT_CONFIG_FILE"
         exec $TRACKALERT_CMD
     fi
 fi

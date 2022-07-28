@@ -28,7 +28,8 @@ if [[ "x$TRACKALERT" == "x" ]]; then
             2>&1 echo "WFORCE_HTTP_PASSWORD environment variable must be set"
         else
             echo "Note you are using the default config file - to take full advantage of the capabilities of weakforced, you should specify a custom config file with the WFORCE_CONFIG_FILE environment variable or just replace /etc/wforce/wforce.conf with your own config file."
-            export WFORCE_KEY=`echo "makeKey()" | wforce | grep setKey`
+            MYKEY=`cat /proc/sys/kernel/random/uuid | sed 's/[-]//g' | head -c 32 | base64`
+            export WFORCE_KEY="setKey(\"$MYKEY\")"
             create_config.sh /etc/wforce/wforce.conf.j2 /etc/wforce/wforce.conf
             echo "Starting $WFORCE_CMD"
             exec $WFORCE_CMD
@@ -49,7 +50,8 @@ else
             2>&1 echo "TRACKALERT_HTTP_PASSWORD environment variable must be set"
         else
             echo "Note you are using the default config file - to take full advantage of the capabilities of trackalert, you should specify a custom config file with the TRACKALERT_CONFIG_FILE environment variable or just replace /etc/wforce/trackalert.conf with your own config file."
-            export TRACKALERT_KEY=`echo "makeKey()" | trackalert | grep setKey`
+            MYKEY=`cat /proc/sys/kernel/random/uuid | sed 's/[-]//g' | head -c 32 | base64`
+            export TRACKALERT_KEY="setKey(\"$MYKEY\")"
             create_config.sh /etc/wforce/trackalert.conf.j2 /etc/wforce/trackalert.conf
             echo "Starting $TRACKALERT_CMD"
             exec $TRACKALERT_CMD

@@ -1,7 +1,9 @@
 -- This configuration file is provided as an example
 -- It only scratches the surface of what weakforced policy can do
 
-webserver("0.0.0.0:{{env['WFORCE_HTTP_PORT']}}", "{{env['WFORCE_HTTP_PASSWORD']}}")
+addListener("0.0.0.0:{{env['WFORCE_HTTP_PORT']}}", false, "", "", {})
+setWebserverPassword("{{env['WFORCE_HTTP_PASSWORD']}}")
+
 {{env['WFORCE_KEY']}}
 controlSocket("0.0.0.0:4004")
 

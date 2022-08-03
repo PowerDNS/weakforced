@@ -1,4 +1,6 @@
-webserver("0.0.0.0:{{env['TRACKALERT_HTTP_PORT']}}", "{{env['TRACKALERT_HTTP_PASSWORD']}}")
+addListener("0.0.0.0:{{env['TRACKALERT_HTTP_PORT']}}", false, "", "", {})
+setWebserverPassword("{{env['TRACKALERT_HTTP_PASSWORD']}}")
+
 {{env['TRACKALERT_KEY']}}
 controlSocket("127.0.0.1:4005")
 

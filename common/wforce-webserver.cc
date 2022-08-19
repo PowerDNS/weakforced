@@ -187,7 +187,7 @@ void ACLFilter::doFilter(const drogon::HttpRequestPtr& req,
     auto res = drogon::HttpResponse::newHttpResponse();
     res->setStatusCode(drogon::k401Unauthorized);
     std::stringstream ss;
-    ss << "{\"status\":\"failure\", \"reason\":" << "\"Source IP Address not in ACL\"" << "}";
+    ss << "{\"status\":\"failure\", \"reason\":" << "\"Source IP Address not in ACL\"" << ", \"ip\":\"" << peer_addr.toIp() << "\"" << "}";
     res->setBody(ss.str());
     res->setCloseConnection(true);
     fcb(res);

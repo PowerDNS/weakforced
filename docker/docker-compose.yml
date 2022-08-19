@@ -79,7 +79,10 @@ services:
   redis:
     image: redis:latest
     ports:
-      - 6379:6379
+      - 6380:6379
+    volumes:
+      - ./redis/conf:/usr/local/etc/redis
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
 
 volumes:
   esdata:

@@ -45,6 +45,11 @@ else
         TRACKALERT_CMD="$TRACKALERT_CMD -v"
     fi
 
+    # Check if they just supplied their own trackalert.conf file
+    if [[ -f /etc/wforce/trackalert.conf ]]; then
+      echo "Using supplied trackalert config file /etc/wforce/trackalert.conf"
+      TRACKALERT_CONFIG_FILE=/etc/wforce/trackalert.conf
+    fi
     if [[ "x$TRACKALERT_CONFIG_FILE" == "x" ]]; then
         if [[ "x$TRACKALERT_HTTP_PASSWORD" == "x" ]]; then
             2>&1 echo "TRACKALERT_HTTP_PASSWORD environment variable must be set"

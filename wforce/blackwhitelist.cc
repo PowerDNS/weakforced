@@ -33,6 +33,10 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <hiredis/hiredis.h>
 #include <ostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include "iputils.hh"
 
 using namespace json11;
 
@@ -591,13 +595,42 @@ bool BlackWhiteListDB::checkSetupContext()
     struct timeval tv;
     tv.tv_sec = redis_timeout;
     tv.tv_usec = 0;
-    redis_context = redisConnectWithTimeout(redis_server.c_str(), redis_port, tv);
-    if (redis_context == NULL || redis_context->err) {
-      if (redis_context) {
-        redisFree(redis_context);
-        redis_context = NULL;
+
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+    int s;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+
+    s = getaddrinfo(redis_server.c_str(), std::to_string(redis_port).c_str(), &hints, &result);
+    if (s != 0) {
+      errlog("checkSetupContext: getaddrinfo: %s\n", gai_strerror(s));
+      if (db_type == BLWLDBType::BLACKLIST)
+        incPrometheusRedisBLConnFailed();
+      else
+        incPrometheusRedisWLConnFailed();
+      return false;
+    }
+
+    // Iterate through the returned IP addresses trying to connect to the all until we succeed
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+      std::string ip_addr = ComboAddress(rp->ai_addr, rp->ai_addrlen).toString();
+      redis_context = redisConnectWithTimeout(ip_addr.c_str(), redis_port, tv);
+      if (redis_context == NULL || redis_context->err) {
+        infolog("checkSetupContext: could not connect to redis BlackWhiteListDB on (%s:%d), will try other addresses", ip_addr, redis_port);
+        if (redis_context) {
+          redisFree(redis_context);
+          redis_context = NULL;
+        }
       }
-      errlog("checkSetupContext: could not connect to redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
+      else {
+        break;
+      }
+    }
+    freeaddrinfo(result);
+
+    if (redis_context == NULL || redis_context->err) {
+      errlog("checkSetupContext: could not connect to any addresses for redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
       if (db_type == BLWLDBType::BLACKLIST)
         incPrometheusRedisBLConnFailed();
       else
@@ -621,6 +654,34 @@ bool BlackWhiteListDB::checkSetupContext()
       }
     }
   }
+
+  // Now we have a working Redis connection, check if we need to authenticate
+  if (redis_password.length()) {
+    if (redis_username.length()) {
+      redisReply* reply = (redisReply*) redisCommand(redis_context, "AUTH %s %s", redis_username.c_str(),
+                                                     redis_password.c_str());
+      if (reply != NULL) {
+        if (reply->type == REDIS_REPLY_ERROR) {
+          errlog("checkSetupContext: Error in AUTH to persistent redis BlackWhiteListDB (username: %s): %s", redis_username, reply->str);
+          freeReplyObject(reply);
+          throw WforceException("Error: Error in AUTH to persistent redis BlackWhiteListDB");
+        }
+        freeReplyObject(reply);
+      }
+    }
+    else {
+      redisReply* reply = (redisReply*) redisCommand(redis_context, "AUTH %s", redis_password.c_str());
+      if (reply != NULL) {
+        if (reply->type == REDIS_REPLY_ERROR) {
+          errlog("checkSetupContext: Error in AUTH to persistent redis BlackWhiteListDB: %s", reply->str);
+          freeReplyObject(reply);
+          throw WforceException("Error: Error in AUTH to persistent redis BlackWhiteListDB");
+        }
+        freeReplyObject(reply);
+      }
+    }
+  }
+
   return true;
 }
 
@@ -786,7 +847,7 @@ bool BlackWhiteListDB::loadPersistEntries()
     else {
       retval = false;
       std::string myerr = "Error - could not connect to configured persistent redis DB (" + redis_server + ":" +
-                          std::to_string(redis_port);
+                          std::to_string(redis_port) + ")";
       errlog(myerr.c_str());
       throw WforceException(myerr);
     }

@@ -132,6 +132,9 @@ public:
   void setIPRetMsg(const std::string& msg) { ip_ret_msg = msg; }
   void setLoginRetMsg(const std::string& msg) { login_ret_msg = msg; }
   void setIPLoginRetMsg(const std::string& msg) { iplogin_ret_msg = msg; }
+
+  void setRedisUsername(const std::string& username) { redis_username = username; }
+  void setRedisPassword(const std::string& password) { redis_password = password; }
   
 private:
   struct TimeTag{};
@@ -161,6 +164,8 @@ private:
   bool persist_replicated=false;
   std::string redis_server;
   unsigned int redis_port;
+  std::string redis_password;
+  std::string redis_username;
   redisContext* redis_context;
   std::atomic<int> redis_timeout;
   std::atomic<int> redis_rw_timeout_secs;

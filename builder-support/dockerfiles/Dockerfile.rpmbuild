@@ -25,8 +25,8 @@ COPY --from=sdist /sdist /sdist
 RUN for file in /sdist/* ; do ln -s $file /root/rpmbuild/SOURCES/ ; done && ls /root/rpmbuild/SOURCES/
 @ENDIF
 
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.15.4/cmake-3.15.4-Linux-x86_64.sh
-RUN sh cmake-3.15.4-Linux-x86_64.sh --skip-license --prefix=/usr
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-Linux-x86_64.sh
+RUN sh cmake-3.23.2-Linux-x86_64.sh --skip-license --prefix=/usr
 RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
 RUN cd prometheus-cpp/_build && make clean && make install
@@ -40,8 +40,8 @@ RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
 RUN cd jsoncpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=OFF && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.7.1 -b v1.7.1
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
+RUN cd drogon && git checkout tags/v1.7.4 -b v1.7.4
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
 
 ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers

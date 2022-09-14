@@ -103,6 +103,15 @@ void setupCommonLua(bool client,
   else {
     c_lua.writeFunction("setMaxWebserverConns", [](int max_conns) { });
   }
+
+  if (!multi_lua) {
+    c_lua.writeFunction("setMetricsNoPassword", []() {
+      g_webserver.setMetricsNoPassword();
+    });
+  }
+  else {
+    c_lua.writeFunction("setMetricsNoPassword", []() { });
+  }
   
   c_lua.writeFunction("debugLog", [](const std::string& msg, const std::vector<pair<std::string, std::string>>& kvs) {
       if (g_verbose) {

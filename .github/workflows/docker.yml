@@ -17,11 +17,11 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get -qq -y install gcc g++ cmake libboost-all-dev libcurl4-openssl-dev libgeoip-dev libgetdns-dev libhiredis-dev libmaxminddb-dev libluajit-5.1-dev libprotobuf-dev libreadline-dev libssl-dev libsodium-dev libsystemd-dev libyaml-cpp-dev libjsoncpp-dev uuid-dev libz-dev libtool pkg-config protobuf-compiler pandoc wget autoconf automake
       - name: Download prometheus-cpp
-        run: git clone https://github.com/jupp0r/prometheus-cpp.git && cd prometheus-cpp && git checkout tags/v0.9.0 -b v0.9.0 && echo 'include(CPack)' >> CMakeLists.txt
+        run: git clone https://github.com/jupp0r/prometheus-cpp.git && cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
       - name: Build and Install prometheus-cpp
-        run: cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && sudo make install
+        run: cd prometheus-cpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && sudo make install
       - name: Download Drogon
-        run: git clone https://github.com/drogonframework/drogon.git && cd drogon && git checkout tags/v1.7.1 -b v1.7.1
+        run: git clone https://github.com/drogonframework/drogon.git && cd drogon && git checkout tags/v1.7.4 -b v1.7.4
       - name: Build and Install Drogon
         run: cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && sudo make install
       - run: sudo sysctl -w vm.max_map_count=262144

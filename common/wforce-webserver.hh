@@ -119,6 +119,11 @@ public:
     d_password = password;
   }
 
+  void setMetricsNoPassword()
+  {
+    d_metricsNoPassword = true;
+  }
+
   // Register functions to parse commands
   bool registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& func);
 
@@ -179,16 +184,30 @@ public:
       // register LoginFilter
       drogon::app().registerFilter(std::make_shared<LoginFilter>(d_password));
       // register prometheus metrics handler
-      drogon::app().registerHandler("/metrics",
-                                    [](const drogon::HttpRequestPtr& req,
-                                       std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
-                                      auto res = drogon::HttpResponse::newHttpResponse();
-                                      res->setBody(serializePrometheusMetrics());
-                                      res->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-                                      res->setStatusCode(drogon::k200OK);
-                                      callback(res);
-                                    },
-                                    {drogon::Get, "ACLFilter", "LoginFilter"});
+      if (d_metricsNoPassword) {
+        drogon::app().registerHandler("/metrics",
+                                      [](const drogon::HttpRequestPtr& req,
+                                         std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+                                        auto res = drogon::HttpResponse::newHttpResponse();
+                                        res->setBody(serializePrometheusMetrics());
+                                        res->setContentTypeCode(drogon::CT_TEXT_PLAIN);
+                                        res->setStatusCode(drogon::k200OK);
+                                        callback(res);
+                                      },
+                                      {drogon::Get, "ACLFilter"});
+      }
+      else {
+        drogon::app().registerHandler("/metrics",
+                                      [](const drogon::HttpRequestPtr& req,
+                                         std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+                                        auto res = drogon::HttpResponse::newHttpResponse();
+                                        res->setBody(serializePrometheusMetrics());
+                                        res->setContentTypeCode(drogon::CT_TEXT_PLAIN);
+                                        res->setStatusCode(drogon::k200OK);
+                                        callback(res);
+                                      },
+                                      {drogon::Get, "ACLFilter", "LoginFilter"});
+      }
       drogon::app().setThreadNum(d_num_worker_threads);
       drogon::app().setMaxConnectionNum(d_max_conns);
       // register handlers for old-style /?command=<blah> paths
@@ -276,4 +295,5 @@ private:
   unsigned int d_num_worker_threads = WFORCE_NUM_WORKER_THREADS;
   unsigned int d_max_conns = WFORCE_MAX_WS_CONNS;
   trantor::Logger::LogLevel d_loglevel = trantor::Logger::kWarn;
+  bool d_metricsNoPassword = false;
 };

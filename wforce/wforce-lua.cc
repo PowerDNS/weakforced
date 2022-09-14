@@ -682,6 +682,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {
       g_bl_db.makePersistent(ip, port);
     });
+    c_lua.writeFunction("blacklistRedisUsername", [](const std::string& username) {
+      g_bl_db.setRedisUsername(username);
+    });
+    c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {
+      g_bl_db.setRedisPassword(password);
+    });
     c_lua.writeFunction("blacklistPersistReplicated", []() { g_bl_db.persistReplicated(); });
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) { g_bl_db.setConnectTimeout(timeout_secs); });
     c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_bl_db.setRWTimeout(timeout_secs, timeout_usecs); });
@@ -697,6 +703,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
   else {
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
+    c_lua.writeFunction("blacklistRedisUsername", [](const std::string& username) {});
+    c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {});
     c_lua.writeFunction("blacklistPersistReplicated", []() {});
     c_lua.writeFunction("blacklistPersistConnectTimeout", [](int timeout_secs) {});
     c_lua.writeFunction("blacklistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});
@@ -815,6 +823,12 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {
       g_wl_db.makePersistent(ip, port);
     });
+    c_lua.writeFunction("whitelistRedisUsername", [](const std::string& username) {
+      g_wl_db.setRedisUsername(username);
+    });
+    c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {
+      g_wl_db.setRedisPassword(password);
+    });
     c_lua.writeFunction("whitelistPersistReplicated", []() { g_wl_db.persistReplicated(); });
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) { g_wl_db.setConnectTimeout(timeout_secs); });
     c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) { g_wl_db.setRWTimeout(timeout_secs, timeout_usecs); });
@@ -822,6 +836,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   }
   else {
     c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {});
+    c_lua.writeFunction("whitelistRedisUsername", [](const std::string& username) {});
+    c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {});
     c_lua.writeFunction("whitelistPersistReplicated", []() {});
     c_lua.writeFunction("whitelistPersistConnectTimeout", [](int timeout_secs) {});
     c_lua.writeFunction("whitelistPersistRWTimeout", [](int timeout_secs, int timeout_usecs) {});

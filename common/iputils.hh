@@ -279,9 +279,7 @@ union ComboAddress {
 
   unsigned int getPort() const
   {
-    if(sin4.sin_family==AF_INET)
-      return ntohs(sin4.sin_port);
-    return 0;
+    return ntohs(sin4.sin_port);
   }
 
   void truncate(unsigned int bits) noexcept;

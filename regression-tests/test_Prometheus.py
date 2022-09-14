@@ -46,12 +46,12 @@ class TestPrometheus(ApiTestCase):
         return self.parsePrometheusResponse(r.text)
     
     def checkWforceValues(self, values):
-        for key in ['wforce_worker_queue_duration_seconds_bucket{le="0.001000"}', 'wforce_worker_response_duration_seconds_bucket{le="0.001000"}', 'wforce_commands_total{cmd="ping"}', 'wforce_custom_stats_total{metric="customStat"}', 'wforce_allow_status_total{status="denied"}', 'wforce_replication_sent_total{sibling="127.0.0.1:4001",status="ok"}', 'wforce_replication_rcvd_total{sibling="127.0.0.1",status="ok"}', 'wforce_replication_tcp_connfailed_total{sibling="127.0.0.1:4001"}', 'wforce_redis_wlbl_updates_total{type="bl"}', 'wforce_redis_wlbl_connfailed_total{type="wl"}', 'wforce_bl_entries{type="iplogin"}', 'wforce_wl_entries{type="ip"}', 'wforce_web_queue_size', 'wforce_webhook_queue_size']:
+        for key in ['wforce_worker_queue_duration_seconds_bucket{le="0.001"}', 'wforce_worker_response_duration_seconds_bucket{le="0.001"}', 'wforce_commands_total{cmd="ping"}', 'wforce_custom_stats_total{metric="customStat"}', 'wforce_allow_status_total{status="denied"}', 'wforce_replication_sent_total{sibling="127.0.0.1:4001",status="ok"}', 'wforce_replication_rcvd_total{sibling="127.0.0.1",status="ok"}', 'wforce_replication_tcp_connfailed_total{sibling="127.0.0.1:4001"}', 'wforce_redis_wlbl_updates_total{type="bl"}', 'wforce_redis_wlbl_connfailed_total{type="wl"}', 'wforce_bl_entries{type="iplogin"}', 'wforce_wl_entries{type="ip"}', 'wforce_web_queue_size', 'wforce_webhook_queue_size']:
             self.assertIn(key, values)
             self.assertGreaterEqual(float(values[key]), 0)
 
     def checkTrackalertValues(self, values):
-        for key in ['trackalert_worker_queue_duration_seconds_bucket{le="0.001000"}', 'trackalert_worker_response_duration_seconds_bucket{le="0.001000"}', 'trackalert_active_http_connections', 'trackalert_commands_total{cmd="report"}']:
+        for key in ['trackalert_worker_queue_duration_seconds_bucket{le="0.001"}', 'trackalert_worker_response_duration_seconds_bucket{le="0.001"}', 'trackalert_active_http_connections', 'trackalert_commands_total{cmd="report"}']:
             self.assertIn(key, values)
             self.assertGreaterEqual(float(values[key]), 0)
             

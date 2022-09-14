@@ -234,7 +234,9 @@ void WforceReplication::receiveReplicationOperationsTCP(const ComboAddress& loca
   ComboAddress remote=local;
 
   setThreadName("wf/rcv-repl-tcp");
-  
+
+  if (local.isIpv6())
+    sock.setV6Only();
   sock.setReuseAddr();
   sock.bind(local);
   sock.listen(1024);
@@ -261,6 +263,8 @@ void WforceReplication::receiveReplicationOperationsTCP(const ComboAddress& loca
 void WforceReplication::receiveReplicationOperations(const ComboAddress& local)
 {
   Socket sock(local.sin4.sin_family, SOCK_DGRAM);
+  if (local.isIpv6())
+    sock.setV6Only();
   sock.bind(local);
   char buf[1500];
   ComboAddress remote=local;

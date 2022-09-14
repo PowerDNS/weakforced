@@ -136,6 +136,13 @@ public:
     ::setBlocking(d_socket);
   }
 
+  void setV6Only()
+  {
+    int tmp = 1;
+    if (setsockopt(d_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&tmp, static_cast<unsigned>(sizeof tmp))<0)
+      throw NetworkError(string("Setsockopt failed: ")+strerror(errno));
+  }
+
   void setReuseAddr()
   {
     int tmp = 1;

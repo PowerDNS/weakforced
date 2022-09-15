@@ -11,7 +11,7 @@ check_version()
 
 push_tag()
 {
-  $tag = $1
+  local tag=$1
   echo "Docker username is: '"$DOCKER_USERNAME"'"
   docker_login
   docker push powerdns/wforce:$tag

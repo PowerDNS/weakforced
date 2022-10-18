@@ -260,6 +260,7 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
 
         setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
 
+* setMetricsNoPassword() - Disable password protection for the /metrics endpoint.
 
 # GENERAL FUNCTIONS
 

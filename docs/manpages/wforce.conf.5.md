@@ -353,6 +353,16 @@ cannot be called inside the allow/report/reset functions:
   
         blacklistPersistReplicated()
 
+* blacklistRedisUsername(<username>) - Set the Redis username for authentication
+  to the redis DB. For example:
+
+        blacklistRedisUsername("foobar")
+
+* blacklistRedisPassword(<password>) - Set the Redis password for authentication
+  to the redis DB. For example:
+
+        blacklistRedisPassword("secret")
+
 * blacklistPersistConnectTimeout(<timeout secs>) - Set the connect
   timeout for connecting to the persistent redis DB. If the timeout is
   exceeded during connection at startup then wforce will exit,
@@ -378,6 +388,16 @@ cannot be called inside the allow/report/reset functions:
   read all the whitelist entries from the redis DB on startup. For example:
   
         whitelistPersistDB("127.0.0.1", 6379)
+
+* whitelistRedisUsername(<username>) - Set the Redis username for authentication
+  to the redis DB. For example:
+
+        whitelistRedisUsername("foobar")
+
+* whitelistRedisPassword(<password>) - Set the Redis password for authentication
+  to the redis DB. For example:
+
+        whitelistRedisPassword("secret")
 
 * whitelistPersistReplicated() - Store whitelist entries that have
   been replicated in the redis DB. By default, replicated whitelist 
@@ -557,6 +577,8 @@ cannot be called inside the allow/report/reset functions:
 * setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certifcate and key files to use for mutual TLS authentication (in PEM format).
 
         setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
+
+* setMetricsNoPassword() - Disable password protection for the /metrics endpoint.
 
 # GENERAL FUNCTIONS
 

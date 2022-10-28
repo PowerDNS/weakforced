@@ -44,7 +44,25 @@ http://www.techspot.com/news/58199-developer-reported-icloud-brute-force-passwor
 
 Installing
 ----------
+
+Docker:
+
+There is a docker image hosted on docker hub, see [https://powerdns.github.io/weakforced/](https://powerdns.github.io/weakforced/) for more details.
+
 From GitHub:
+
+The easy way:
+
+```
+$ git clone https://github.com/PowerDNS/weakforced.git
+$ cd weakforced
+$ git submodule init
+$ git submodule update
+$ builder/build.sh debian-bullseye | debian-stretch | centos-7 | ol-8 | amazon-2
+```
+This will build packages for the appropriate OS. You will need docker and docker-compose for the builder to work.
+
+The hard way:
 
 ```
 $ git clone https://github.com/PowerDNS/weakforced.git
@@ -55,27 +73,26 @@ $ make
 ```
 
 This requires recent versions of libtool, automake and autoconf to be
-installed.  Secondly, we require (versions tagged up to 1.0.0):
- * Recent g++ (5.0+)
- * Boost 1.40+
+installed.
+
+It also requires:
+ * A compiler supporting C++ 17
  * Lua 5.1+ development libraries (or LuaJIT if you configure --with-luajit)
+ * Boost 1.61+
+ * Protobuf compiler and protobuf development libraries
  * Getdns development libraries (if you want to use the DNS lookup functionality)
  * libsodium
  * python + virtualenv for regression testing
  * libgeoip-dev for GeoIP support
  * libsystemd-dev for systemd support
  * pandoc for building the manpages
-
-The most recent versions also require:
- * A compiler supporting C++ 17
- * Boost 1.61+
- * Protobuf compiler and protobuf development libraries
  * libcurl-dev (OpenSSL version)
  * libhiredis-dev
  * libssl-dev
  * libprometheus-cpp (https://github.com/jupp0r/prometheus-cpp)
  * libmaxminddb-dev
  * libyaml-cpp-dev
+ * libdrogon (https://github.com/drogonframework/drogon) - Used for the HTTP server
  * libjsoncpp-dev
  * libuuid-dev
  * libz-dev
@@ -83,8 +100,8 @@ The most recent versions also require:
  * python3 rather than python2
  * python-bottle for regression testing of webhooks
 
-To build on OS X, `brew install readline gcc` and use
-`./configure LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include CC=gcc-5 CXX=g++-5 CPP=cpp-5`
+To build on OS X, `brew install readline` and use
+`./configure PKG_CONFIG_PATH=<path to your openssl installation> LDFLAGS=-L/usr/local/opt/readline/lib CPPFLAGS=-I/usr/local/opt/readline/include`
 
 Add --with-luajit to the end of the configure line if you want to use LuaJIT.
 

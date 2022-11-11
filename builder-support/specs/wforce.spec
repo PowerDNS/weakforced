@@ -16,7 +16,6 @@
 %define __prelink_undo_cmd %{nil}
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
-
 %global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
 %global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
 
@@ -29,33 +28,36 @@ Group: System Environment/Daemons
 URL: http://www.open-xchange.com/
 Source0: %{name}-%{getenv:BUILDER_VERSION}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-BuildRequires: libtool
 BuildRequires: automake
-BuildRequires: readline-devel
-BuildRequires: gcc-c++
-BuildRequires: lua-devel
-BuildRequires: libidn-devel
-BuildRequires: GeoIP-devel
-BuildRequires: libmaxminddb-devel
-BuildRequires: boost-devel 
+BuildRequires: boost-devel
+BuildRequires: boost-filesystem
+BuildRequires: boost-regex
+BuildRequires: boost-system
 BuildRequires: bzip2
-BuildRequires: pkgconfig
-BuildRequires: getdns-devel
-BuildRequires: libsodium-devel
-BuildRequires: pandoc
-BuildRequires: protobuf-compiler
-BuildRequires: protobuf-devel
 BuildRequires: curl-devel
-BuildRequires: luajit
-BuildRequires: luajit-devel
+BuildRequires: drogon
+BuildRequires: gcc-c++
+BuildRequires: GeoIP-devel
+BuildRequires: getdns-devel
 BuildRequires: hiredis
 BuildRequires: hiredis-devel
-BuildRequires: openssl-devel
-BuildRequires: boost-regex
-BuildRequires: wget
-BuildRequires: boost-system
-BuildRequires: boost-filesystem
+BuildRequires: libidn-devel
+BuildRequires: libmaxminddb-devel
+BuildRequires: libsodium-devel
+BuildRequires: libtool
 BuildRequires: libuuid-devel
+BuildRequires: lua-devel
+BuildRequires: luajit
+BuildRequires: luajit-devel
+BuildRequires: openssl-devel
+BuildRequires: pandoc
+BuildRequires: pkgconfig
+BuildRequires: prometheus-cpp-devel
+BuildRequires: protobuf-compiler
+BuildRequires: protobuf-devel
+BuildRequires: readline-devel
+BuildRequires: wget
+BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel
 %if %{with systemd}
 BuildRequires: systemd-devel
@@ -109,6 +111,7 @@ Requires: python%{python3_pkgversion}-pip
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
 %build
+autoreconf -i
 %{?scl: %{scl} - << \EOF}
 %configure                       \
     --disable-dependency-tracking \

@@ -1,5 +1,7 @@
 # Release Notes for OX Abuse Shield 2.8.0
 
+<!-- {% raw %} -->
+
 ## New Features
 
 * Support ELK 7.x Stack
@@ -65,3 +67,5 @@ See wforce.conf manpage for more details.
 
 The blacklistPersistDB() and whitelistPersistDB() configuration commands now accept
 hostnames as well as IP addresses.
+
+<!-- {% endraw %} -->

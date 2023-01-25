@@ -45,7 +45,7 @@ trackalert_LDFLAGS = \
     $(LIBUUID_LDFLAGS)
 
 trackalert_LDADD = \
-	-lreadline -ltermcap \
+	-lreadline \
 	$(LUA_LIBS) $(EXT_LIBS) $(WFORCE_LIBS) \
 	$(libsodium_LIBS) \
 	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \

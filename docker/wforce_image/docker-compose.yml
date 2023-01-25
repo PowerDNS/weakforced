@@ -6,6 +6,10 @@ services:
     build:
       context: weakforced
       dockerfile: docker/wforce_image/Dockerfile
+      x-bake:
+        platforms:
+          - linux/amd64
+          - linux/arm64
       args:
         - build_date=${BUILD_DATE}
         - license=${LICENSE}

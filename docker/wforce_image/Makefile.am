@@ -13,7 +13,7 @@ export TRACKALERT_PORT = 18085
 
 $(WFORCE_IMAGE_COMPOSE_TARGET): $(shell find weakforced/common -type f) $(shell find weakforced/wforce -type f) $(shell find weakforced/trackalert -type f) $(shell find weakforced/ext -type f) $(shell find weakforced/report_api -type f) $(COMPOSE_SOURCE)
 	$(DCMP) down -v
-	$(DCMP) build
+	docker buildx bake -f docker-compose.yml --push
 	touch $(WFORCE_IMAGE_COMPOSE_TARGET)
 
 start:

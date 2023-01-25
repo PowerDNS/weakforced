@@ -53,7 +53,9 @@ COPY wforce/ /wforce/wforce/
 COPY common/ /wforce/common/
 COPY trackalert/ /wforce/trackalert/
 COPY report_api/ /wforce/report_api/
-COPY docker/ /wforce/docker/
+COPY docker/Makefile.am /wforce/docker/
+RUN  mkdir /wforce/docker/wforce_image
+COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
 COPY elk/ /wforce/elk/
 
 RUN autoreconf -ivf

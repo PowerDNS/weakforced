@@ -24,8 +24,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname),
                 'r', encoding='utf-8').read()
 
-
-version = os.environ.get('BUILDER_VERSION', '0.0.0')
+version = '0.0.0'
 
 if exists('version.txt'):
     version = read('version.txt').strip()

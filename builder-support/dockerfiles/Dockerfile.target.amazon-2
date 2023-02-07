@@ -5,7 +5,7 @@
 # Put only the bare minimum of common commands here, without dev tools
 FROM amazonlinux:2 as dist-base
 RUN amazon-linux-extras install epel -y
-RUN yum install -y clang clang-devel llvm llvm-devel boost-devel
+RUN yum install -y clang clang-devel llvm llvm-devel boost-devel wget tar gzip make
 
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild

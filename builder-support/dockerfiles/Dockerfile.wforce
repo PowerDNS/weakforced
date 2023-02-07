@@ -52,6 +52,9 @@ ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 ADD builder/helpers/set-configure-ac-version.sh /wforce/builder/helpers/
 
 ARG BUILDER_VERSION
+ARG BUILDER_PYTHON_SRC_VERSION
+RUN test -n "$BUILDER_PYTHON_SRC_VERSION"
+RUN echo "$BUILDER_PYTHON_SRC_VERSION" >report_api/version.txt
 RUN /wforce/builder/helpers/set-configure-ac-version.sh && \
     autoreconf -v -i -f && \
     ./configure \

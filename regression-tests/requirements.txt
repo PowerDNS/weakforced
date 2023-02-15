@@ -11,7 +11,7 @@ Jinja2==2.11.3
 MarkupSafe==1.1.1
 pytz==2017.2
 urllib3==1.26.5
-Werkzeug==0.15.5
+Werkzeug==2.2.3
 bottle==0.12.20
 prometheus_client==0.7.1
 pyOpenSSL==20.0.1

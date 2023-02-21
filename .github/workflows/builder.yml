@@ -23,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           fetch-depth: 0  # for correct version numbers
           submodules: recursive
       - run: builder/build.sh -e 1 -v  ${{ matrix.os }}

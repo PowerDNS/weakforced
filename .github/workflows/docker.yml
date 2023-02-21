@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           fetch-depth: 0
           submodules: recursive
       - name: Install dependencies

@@ -217,7 +217,7 @@ useradd -r -g %{name}-report-api -d /var/spool/%{name}-report-api -s /bin/false 
 if [ $1 -eq 1 ]; then
   TRACKALERTCONF=/etc/wforce/trackalert.conf
   echo -n "Modifying trackalert.conf to replace password and key..."
-  SETKEY=`echo "makeKey()" | wforce | grep setKey`
+  SETKEY=`echo "makeKey()" | trackalert | grep setKey`
   WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
   sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
   echo "done"

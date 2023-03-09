@@ -25,6 +25,15 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <memory>
+#include <curl/curlver.h>
+#if defined(LIBCURL_VERSION_NUM) && LIBCURL_VERSION_NUM >= 0x073200
+/* we need this so that 'CURL' is not typedef'd to void,
+   which prevents us from wrapping it in a unique_ptr.
+   Wrapping in a shared_ptr is fine because of type erasure,
+   but it is a bit wasteful. */
+#define CURL_STRICTER 1
+#endif
 #include <curl/curl.h> 
 // turns out 'CURL' is currently typedef for void which means we can't easily forward declare it
 
@@ -34,17 +43,21 @@ class MiniCurl
 {
 public:
   MiniCurl();
-  ~MiniCurl();
+  virtual ~MiniCurl();
   MiniCurl& operator=(const MiniCurl&) = delete;
   MiniCurl& operator=(const MiniCurl&&) = delete;
   void setURLData(const std::string& url, const MiniCurlHeaders& headers);
   std::string getURL(const std::string& url, const MiniCurlHeaders& headers);
   template <class T> void setCurlOption(int option, T optval) {
     if (d_curl) {
+#ifdef CURL_STRICTER
+      (void) curl_easy_setopt(d_curl.get(), static_cast<CURLoption>(option), optval);
+#else
       (void) curl_easy_setopt(d_curl, static_cast<CURLoption>(option), optval);
+#endif
     }
   }
-  void setTimeout(uint64_t timeout_secs);
+  virtual void setTimeout(uint64_t timeout_secs);
   void setPostData(const std::string& url, const std::string& post_body,
                    const MiniCurlHeaders& headers);
   std::string getPostResult() { return d_data; }
@@ -56,22 +69,29 @@ public:
 	       const MiniCurlHeaders& headers,
 	       std::string& post_res,
 	       std::string& error_msg);
-  CURL* getCurlHandle() { return d_curl; }
+  CURL* getCurlHandle();
   unsigned int getID() { return d_id; }
   std::string getErrorMsg() { return std::string(d_error_buf); }
   void setID(unsigned int id) { d_id = id; }
 protected:
+  void setCurlOpts();
   void setCurlHeaders(const MiniCurlHeaders& headers);
   void clearCurlHeaders();
   bool initCurlGlobal();
   bool is2xx(const int& code) const { return code/100 == 2; }
 private:
-  CURL *d_curl;
+#ifdef CURL_STRICTER
+  std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> d_curl{nullptr, curl_easy_cleanup};
+  std::unique_ptr<struct curl_slist, decltype(&curl_slist_free_all)> d_header_list{nullptr, curl_slist_free_all};
+#else
+  CURL *d_curl{};
+  struct curl_slist* d_header_list{};
+#endif
   static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
   static size_t read_callback(char *buffer, size_t size, size_t nitems, void *userdata);
   std::string d_data;
   std::istringstream d_post_body;
-  struct curl_slist* d_header_list = nullptr;
+
   char d_error_buf[CURL_ERROR_SIZE];
   unsigned int d_id;
 };
@@ -116,7 +136,11 @@ protected:
 private:
   std::vector<MiniCurl>::iterator d_current;
   std::vector<MiniCurl> d_ccs;
+#ifdef CURL_STRICTER
+  std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)> d_mcurl{nullptr, curl_multi_cleanup};
+#else
   CURLM* d_mcurl = nullptr;
+#endif
 };
 
 struct curlTLSOptions {

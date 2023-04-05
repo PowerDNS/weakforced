@@ -30,6 +30,14 @@
 #include "wforce_exception.hh"
 #include "dolog.hh"
 
+#ifdef CURL_STRICTER
+#define getCURLPtr(x) \
+  x.get()
+#else
+#define getCURLPtr(x) \
+  x
+#endif
+
 bool MiniCurl::initCurlGlobal()
 {
   // curl_global_init() is guaranteed to be called only once
@@ -40,11 +48,18 @@ bool MiniCurl::initCurlGlobal()
 MiniCurl::MiniCurl() : d_id(0)
 {
   bool init_cg = initCurlGlobal();
-  
+
   if (init_cg) {
+#ifdef CURL_STRICTER
+    d_curl = std::unique_ptr<CURL, decltype(&curl_easy_cleanup)>(curl_easy_init(), curl_easy_cleanup);
+#else
     d_curl = curl_easy_init();
-    if (d_curl) {
-      if (curl_easy_setopt(d_curl, CURLOPT_ERRORBUFFER, d_error_buf) != CURLE_OK)
+#endif
+    if (d_curl == nullptr) {
+      throw WforceException("Error creating a MiniCurl session");
+    }
+    else {
+      if (curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_ERRORBUFFER, d_error_buf) != CURLE_OK)
         throw WforceException("Could not setup curl error buffer");
     }
   }
@@ -54,25 +69,47 @@ MiniCurl::MiniCurl() : d_id(0)
 
 MiniCurl::~MiniCurl()
 {
+  clearCurlHeaders();
+#ifndef CURL_STRICTER
   if (d_curl)
     curl_easy_cleanup(d_curl);
+#endif
 }
 
 size_t MiniCurl::write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-  MiniCurl* us = (MiniCurl*)userdata;
-  us->d_data.append(ptr, size*nmemb);
-  return size*nmemb;
+  if (userdata != nullptr) {
+    MiniCurl* us = static_cast<MiniCurl*>(userdata);
+    us->d_data.append(ptr, size * nmemb);
+    return size * nmemb;
+  }
+  return 0;
+}
+
+void MiniCurl::setCurlOpts()
+{
+  /* only allow HTTP and HTTPS */
+#if defined(LIBCURL_VERSION_NUM) && LIBCURL_VERSION_NUM >= 0x075500 // 7.85.0
+  curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_PROTOCOLS_STR, "http,https");
+#else
+  curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+#endif
+#if defined(CURL_AT_LEAST_VERSION)
+#if CURL_AT_LEAST_VERSION(7, 49, 0)
+  curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_TCP_FASTOPEN, 1L);
+#endif
+#endif
 }
 
 void MiniCurl::setURLData(const std::string& url, const MiniCurlHeaders& headers)
 {
   if (d_curl) {
     clearCurlHeaders();
-    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPGET, 1);
-    (void) curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
-    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
-    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
+    setCurlOpts();
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_HTTPGET, 1);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_URL, url.c_str());
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_WRITEFUNCTION, write_callback);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_WRITEDATA, this);
     setCurlHeaders(headers);
     d_data.clear();
     d_error_buf[0] = '\0';
@@ -83,7 +120,7 @@ std::string MiniCurl::getURL(const std::string& url, const MiniCurlHeaders& head
 {
   if (d_curl) {
     setURLData(url, headers);
-    curl_easy_perform(d_curl);
+    curl_easy_perform(getCURLPtr(d_curl));
     std::string ret=std::move(d_data);
     d_data.clear();
 
@@ -100,10 +137,14 @@ void MiniCurl::setTimeout(uint64_t timeout_secs)
 void MiniCurl::clearCurlHeaders()
 {
   if (d_curl) {
-    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, NULL);
-    if (d_header_list != nullptr) {
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_HTTPHEADER, NULL);
+    if (d_header_list) {
+#ifdef CURL_STRICTER
+      d_header_list.reset();
+#else
       curl_slist_free_all(d_header_list);
       d_header_list = nullptr;
+#endif
     }
   }
 }
@@ -114,9 +155,17 @@ void MiniCurl::setCurlHeaders(const MiniCurlHeaders& headers)
     for (auto& header : headers) {
       std::stringstream header_ss;
       header_ss << header.first << ": " << header.second;
+#ifdef CURL_STRICTER
+      struct curl_slist * list = nullptr;
+      if (d_header_list) {
+        list = d_header_list.release();
+      }
+      d_header_list = std::unique_ptr<struct curl_slist, decltype(&curl_slist_free_all)>(curl_slist_append(list, header_ss.str().c_str()), curl_slist_free_all);
+#else
       d_header_list = curl_slist_append(d_header_list, header_ss.str().c_str());
+#endif
     }
-    (void) curl_easy_setopt(d_curl, CURLOPT_HTTPHEADER, d_header_list);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_HTTPHEADER, getCURLPtr(d_header_list));
   }
 }
 
@@ -126,6 +175,15 @@ size_t MiniCurl::read_callback(char *buffer, size_t size, size_t nitems, void *u
   ss->read(buffer, size*nitems);
   auto bytes_read = ss->gcount();
   return bytes_read;
+}
+
+CURL* MiniCurl::getCurlHandle()
+{
+#ifdef CURL_STRICTER
+  return getCURLPtr(d_curl);
+#else
+  return d_curl;
+#endif
 }
 
 // if you want Content-Type other than application/x-www-form-urlencoded you must set Content-Type
@@ -146,53 +204,53 @@ void MiniCurl::setPostData(const std::string& url,
   if (d_curl) {
     d_post_body = std::istringstream(post_body);
     clearCurlHeaders();
-
-    (void) curl_easy_setopt(d_curl, CURLOPT_URL, url.c_str());
-    (void) curl_easy_setopt(d_curl, CURLOPT_POST, 1);
-    (void) curl_easy_setopt(d_curl, CURLOPT_POSTFIELDSIZE, post_body.length());
-    (void) curl_easy_setopt(d_curl, CURLOPT_READFUNCTION, read_callback);
-    (void) curl_easy_setopt(d_curl, CURLOPT_READDATA, &d_post_body);
-    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEFUNCTION, write_callback);
-    (void) curl_easy_setopt(d_curl, CURLOPT_WRITEDATA, this);
+    setCurlOpts();
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_URL, url.c_str());
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_POST, 1);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_POSTFIELDSIZE, post_body.length());
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_READFUNCTION, read_callback);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_READDATA, &d_post_body);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_WRITEFUNCTION, write_callback);
+    (void) curl_easy_setopt(getCURLPtr(d_curl), CURLOPT_WRITEDATA, this);
     setCurlHeaders(headers);
     d_error_buf[0] = '\0';
     d_data.clear();
-  }  
+  }
 }
 
 bool MiniCurl::postURL(const std::string& url,
-		       const std::string& post_body,
-		       const MiniCurlHeaders& headers,
-		       std::string& post_res,
-		       std::string& error_msg)
+                       const std::string& post_body,
+                       const MiniCurlHeaders& headers,
+                       std::string& post_res,
+                       std::string& error_msg)
 {
   bool retval = false;
 
   if (d_curl) {
     setPostData(url, post_body, headers);
-    
-    auto ret = curl_easy_perform(d_curl);
+
+    auto ret = curl_easy_perform(getCURLPtr(d_curl));
 
     post_res = std::move(d_data);
     d_data.clear();
-    
+
     if (ret != CURLE_OK) {
       auto eb_len = strlen(d_error_buf);
       if (eb_len) {
-	error_msg = std::string(d_error_buf);
+        error_msg = std::string(d_error_buf);
       }
       else {
-	error_msg = std::string(curl_easy_strerror(ret));
+        error_msg = std::string(curl_easy_strerror(ret));
       }
     }
     else {
       long response_code;
-      curl_easy_getinfo(d_curl, CURLINFO_RESPONSE_CODE, &response_code);
+      curl_easy_getinfo(getCURLPtr(d_curl), CURLINFO_RESPONSE_CODE, &response_code);
       if (!is2xx(response_code)) {
-	error_msg = std::string("Received non-2XX response from webserver: ") + std::to_string(response_code);
+        error_msg = std::string("Received non-2XX response from webserver: ") + std::to_string(response_code);
       }
       else
-	retval = true;
+        retval = true;
     }
   }
   return retval;
@@ -202,33 +260,43 @@ bool MiniCurl::postURL(const std::string& url,
 
 MiniCurlMulti::MiniCurlMulti() : d_ccs(numMultiCurlConnections)
 {
+#ifdef CURL_STRICTER
+  d_mcurl = std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)>(curl_multi_init(), curl_multi_cleanup);
+#else
   d_mcurl = curl_multi_init();
+#endif
   initMCurl();
 }
 
 MiniCurlMulti::MiniCurlMulti(size_t num_connections) : d_ccs(num_connections)
 {
+#ifdef CURL_STRICTER
+  d_mcurl = std::unique_ptr<CURLM, decltype(&curl_multi_cleanup)>(curl_multi_init(), curl_multi_cleanup);
+#else
   d_mcurl = curl_multi_init();
+#endif
   initMCurl();
 }
 
 MiniCurlMulti::~MiniCurlMulti()
 {
+#ifndef CURL_STRICTER
   if (d_mcurl != nullptr) {
     curl_multi_cleanup(d_mcurl);
   }
+#endif
 }
 
 void MiniCurlMulti::initMCurl()
 {
 #ifdef CURLPIPE_HTTP1
-  curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING,
+  curl_multi_setopt(getCURLPtr(d_mcurl), CURLMOPT_PIPELINING,
                     CURLPIPE_HTTP1 | CURLPIPE_MULTIPLEX);
 #else
-  curl_multi_setopt(d_mcurl, CURLMOPT_PIPELINING, 1L);  
+  curl_multi_setopt(getCURLPtr(d_mcurl), CURLMOPT_PIPELINING, 1L);
 #endif
 #ifdef CURLMOPT_MAX_HOST_CONNECTIONS
-  curl_multi_setopt(d_mcurl, CURLMOPT_MAX_HOST_CONNECTIONS, d_ccs.size());
+  curl_multi_setopt(getCURLPtr(d_mcurl), CURLMOPT_MAX_HOST_CONNECTIONS, d_ccs.size());
 #endif
   d_current = d_ccs.begin();
 }
@@ -243,7 +311,7 @@ bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
       return false;
     d_current->setPostData(url, post_body, headers);
     d_current->setID(id);
-    curl_multi_add_handle(d_mcurl, d_current->getCurlHandle());
+    curl_multi_add_handle(getCURLPtr(d_mcurl), d_current->getCurlHandle());
     ++d_current;
     return true;
   }
@@ -252,6 +320,7 @@ bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
 
 void MiniCurlMulti::setTimeout(uint64_t timeout_secs)
 {
+  MiniCurl::setTimeout(timeout_secs);
   for (auto& i : d_ccs) {
     i.setCurlOption(CURLOPT_TIMEOUT, static_cast<long>(timeout_secs));
   }
@@ -266,18 +335,18 @@ const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
     do {
       CURLMcode mc;
       int numfds;
-      mc = curl_multi_perform(d_mcurl, &still_running);
+      mc = curl_multi_perform(getCURLPtr(d_mcurl), &still_running);
       if (mc == CURLM_OK) {
         auto start_time = std::chrono::steady_clock::now();
-        
-        mc = curl_multi_wait(d_mcurl, NULL, 0, 1000, &numfds);
+
+        mc = curl_multi_wait(getCURLPtr(d_mcurl), NULL, 0, 1000, &numfds);
 
         auto wait_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time);
-        
+
         if (mc == CURLM_OK) {
           struct CURLMsg *m;
           int msgq = 0;
-          while ((m = curl_multi_info_read(d_mcurl, &msgq)) != NULL) {
+          while ((m = curl_multi_info_read(getCURLPtr(d_mcurl), &msgq)) != NULL) {
             if (m->msg == CURLMSG_DONE) {
               CURL *c = m->easy_handle;
               auto minic = findMiniCurl(c);
@@ -355,7 +424,7 @@ const std::vector<mcmPostReturn> MiniCurlMulti::runPost()
 void MiniCurlMulti::finishPost()
 {
   for (auto i = d_ccs.begin(); i != d_current; ++i) {
-    curl_multi_remove_handle(d_mcurl, i->getCurlHandle());
+    curl_multi_remove_handle(getCURLPtr(d_mcurl), i->getCurlHandle());
   }
   // Reset the Easy curl handle iterator
   d_current = d_ccs.begin();

@@ -155,10 +155,7 @@ class TestTimeWindows(ApiTestCase):
         self.assertEquals(j['status'], 0)
         r.close()
 
-        for i in range(20):
-            r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", True)
-            r.json()
-        for i in range(20):
+        for i in range(50):
             r = self.reportFunc('expirebaddie%s' % i, "127.0.0.1", "1234", True)
             r.json()
 

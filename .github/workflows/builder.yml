@@ -17,6 +17,7 @@ jobs:
         os:
           - centos-7
           - ol-8
+          - rocky-9
           - amazon-2
           - debian-buster
           - debian-bullseye

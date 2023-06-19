@@ -7,7 +7,6 @@ RUN apt-get update && \
                automake \
                libboost-all-dev \
                libcurl4-openssl-dev \
-               libgeoip-dev \
                libgetdns-dev \
                libhiredis-dev \
                libmaxminddb-dev \

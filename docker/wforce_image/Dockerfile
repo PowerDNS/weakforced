@@ -7,7 +7,6 @@ RUN apt-get update && \
                automake \
                libboost-all-dev \
                libcurl4-openssl-dev \
-               libgeoip-dev \
                libgetdns-dev \
                libhiredis-dev \
                libmaxminddb-dev \
@@ -82,7 +81,6 @@ RUN apt-get update && \
                libboost-system1.74.0 \
                libboost-filesystem1.74.0 \
                libcurl4 \
-               libgeoip1 \
                libgetdns10 \
                libhiredis0.14 \
                libluajit-5.1-2 \

@@ -35,7 +35,6 @@ BuildRequires: readline-devel
 BuildRequires: gcc-c++
 BuildRequires: lua-devel
 BuildRequires: libidn-devel
-BuildRequires: GeoIP-devel
 BuildRequires: boost-devel
 BuildRequires: bzip2
 BuildRequires: pkgconfig

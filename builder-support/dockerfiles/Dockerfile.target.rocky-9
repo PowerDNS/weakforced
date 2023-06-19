@@ -1,0 +1,16 @@
+# First do the source builds
+@INCLUDE Dockerfile.target.sdist
+
+# This defines the distribution base layer
+# Put only the bare minimum of common commands here, without dev tools
+FROM rockylinux:9 as dist-base
+
+RUN touch /var/lib/rpm/* && dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf install -y 'dnf-command(config-manager)' yum && dnf config-manager --set-enabled devel && \
+    dnf install -y curl procps-ng --allowerasing # This is to ensure we don't have curlminimal and we do have pkill
+
+RUN dnf -y install dnf-plugins-core clang
+
+# Do the actual rpm build
+@INCLUDE Dockerfile.rpmbuild
+

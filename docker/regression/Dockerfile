@@ -10,7 +10,6 @@ RUN apt-get update && \
                build-essential \
                libboost-all-dev \
                libcurl4-openssl-dev \
-               libgeoip-dev \
                libgetdns-dev \
                libhiredis-dev \
                libmaxminddb-dev \

@@ -62,12 +62,12 @@ bool WforceReplication::decryptMsg(const char* buf, size_t len, std::string& msg
 {
   SodiumNonce nonce;
 
-  if (len < static_cast<size_t>(crypto_secretbox_NONCEBYTES)) {
+  if (len < static_cast<size_t>(sizeof(nonce.value))) {
     errlog("Could not decrypt replication operation: not enough bytes (%d) to hold nonce", len);
     return false;
   }
-  memcpy((char*)&nonce, buf, crypto_secretbox_NONCEBYTES);
-  string packet(buf + crypto_secretbox_NONCEBYTES, buf+len);
+  memcpy((char*)&nonce, buf, sizeof(nonce.value));
+  string packet(buf + sizeof(nonce.value), buf+len);
   try {
     msg=sodDecryptSym(packet, d_key, nonce);
   }

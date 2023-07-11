@@ -24,7 +24,7 @@ AM_LDFLAGS = \
 noinst_LTLIBRARIES=libweakforce.la
 libweakforce_la_LIBADD=$(EXT_LIBS) $(JSON11_LIBS) $(BOOST_FILESYSTEM_LIBS) $(BOOST_SYSTEM_LIBS) \
                         $(GEOIP_LIBS) $(MMDB_LIBS) $(LIBPROMETHEUS_LIBS) $(LIBDROGON_LIBS) \
-                        $(LIBJSONCPP_LIBS) $(LIBZ_LIBS) $(LIBCURL) $(LIBSSL_LIBS)
+                        $(LIBJSONCPP_LIBS) $(LIBZ_LIBS) $(LIBCURL) $(LIBSSL_LIBS) $(LIBCRYPTO_LIBS)
 libweakforce_la_SOURCES= \
 	base64.hh \
 	dns_lookup.cc dns_lookup.hh \

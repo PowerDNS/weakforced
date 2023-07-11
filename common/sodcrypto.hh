@@ -28,15 +28,44 @@
 #include <arpa/inet.h>
 
 #ifndef HAVE_LIBSODIUM
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/crypto.h>
+
+#define CHACHA20_POLY1305_IV_SIZE 12
+#define CHACHA20_POLY1305_KEY_SIZE 32
+
 struct SodiumNonce
 {
-  void init(){};
-  void merge(const SodiumNonce& lower, const SodiumNonce& higher){};
-  void increment(){};
-  std::string toString() { return string(""); }
-  unsigned char value[1];
+  void init()
+  {
+    if (!RAND_priv_bytes(value, sizeof value)) {
+      throw std::runtime_error("Could not initialize random number generator for cryptographic functions - this is not recoverable");
+    }
+  }
+
+  void merge(const SodiumNonce& lower, const SodiumNonce& higher)
+  {
+    static const size_t halfSize = (sizeof value) / 2;
+    memcpy(value, lower.value, halfSize);
+    memcpy(value + halfSize, higher.value + halfSize, halfSize);
+  }
+
+  void increment()
+  {
+    uint32_t* p = (uint32_t*)value;
+    uint32_t count=htonl(*p);
+    ++count;
+    *p=ntohl(count);
+  }
+
+  string toString() const
+  {
+    return string((const char*)value, sizeof value);
+  }
+
+  unsigned char value[CHACHA20_POLY1305_IV_SIZE];
 };
-#define crypto_secretbox_NONCEBYTES 0
 #else
 #include <sodium.h>
 

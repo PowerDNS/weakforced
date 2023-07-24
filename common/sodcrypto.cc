@@ -84,7 +84,7 @@ std::string sodEncryptSym(const std::string& msg, const std::string& key, Sodium
   int len;
   int ciphertext_len;
   // Each thread gets its own cipher context
-  thread_local EVP_CIPHER_CTX *ctx = nullptr;
+  thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
 
   if (key.length() != 32) {
     ostringstream err;
@@ -92,29 +92,29 @@ std::string sodEncryptSym(const std::string& msg, const std::string& key, Sodium
     throw std::runtime_error(err.str().c_str());
   }
 
-  if (ctx == nullptr) {
-    if (!(ctx = EVP_CIPHER_CTX_new()))
+  if (ctx.get() == nullptr) {
+    if (!(ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free)))
       throw std::runtime_error("sodEncryptSym: EVP_CIPHER_CTX_new() could not initialize cipher context");
 
     /* Initialise the encryption operation. */
-    if (1 != EVP_EncryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
+    if (1 != EVP_EncryptInit_ex(ctx.get(), EVP_chacha20_poly1305(), NULL, NULL, NULL))
       throw std::runtime_error("sodEncryptSym: EVP_EncryptInit_ex() could not initialize encryption operation");
   }
 
-  if (1 != EVP_EncryptInit_ex(ctx, NULL, NULL, (unsigned char*) key.c_str(), nonce.value))
+  if (1 != EVP_EncryptInit_ex(ctx.get(), NULL, NULL, (unsigned char*) key.c_str(), nonce.value))
     throw std::runtime_error("sodEncryptSym: EVP_EncryptInit_ex() could not initialize encryption key and IV");
 
   if (1 !=
-      EVP_EncryptUpdate(ctx, ciphertext + POLY1305_BLOCK_SIZE, &len, (unsigned char*) msg.c_str(), msg.length()))
+      EVP_EncryptUpdate(ctx.get(), ciphertext + POLY1305_BLOCK_SIZE, &len, (unsigned char*) msg.c_str(), msg.length()))
     throw std::runtime_error("sodEncryptSym: EVP_EncryptUpdate() could not encrypt message");
   ciphertext_len = len;
 
-  if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + len + POLY1305_BLOCK_SIZE, &len))
+  if (1 != EVP_EncryptFinal_ex(ctx.get(), ciphertext + len + POLY1305_BLOCK_SIZE, &len))
     throw std::runtime_error("sodEncryptSym: EVP_EncryptFinal_ex() could finalize message encryption");;
   ciphertext_len += len;
 
   /* Get the tag */
-  if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, POLY1305_BLOCK_SIZE, ciphertext))
+  if (1 != EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_GET_TAG, POLY1305_BLOCK_SIZE, ciphertext))
     throw std::runtime_error("sodEncryptSym: EVP_CIPHER_CTX_ctrl() could not get tag");
 
   nonce.increment();
@@ -126,7 +126,7 @@ std::string sodDecryptSym(const std::string& msg, const std::string& key, Sodium
   int len;
   int plaintext_len;
   // Each thread gets its own cipher context
-  thread_local EVP_CIPHER_CTX *ctx = nullptr;
+  thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
 
   if (key.length() != 32) {
     ostringstream err;
@@ -139,27 +139,27 @@ std::string sodDecryptSym(const std::string& msg, const std::string& key, Sodium
     string tag = msg.substr(0, POLY1305_BLOCK_SIZE);
     char plaintext[msg.length() - POLY1305_BLOCK_SIZE];
 
-    if (ctx == nullptr) {
-      if (!(ctx = EVP_CIPHER_CTX_new()))
+    if (ctx.get() == nullptr) {
+      if (!(ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free)))
         throw std::runtime_error("sodDecryptSym: EVP_CIPHER_CTX_new() could not initialize cipher context");
 
-      if (1 != EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, NULL, NULL))
+      if (1 != EVP_DecryptInit_ex(ctx.get(), EVP_chacha20_poly1305(), NULL, NULL, NULL))
         throw std::runtime_error("sodDecryptSym: EVP_DecryptInit_ex() could not initialize decryption operation");
     }
 
-    if (1 != EVP_DecryptInit_ex(ctx, NULL, NULL, (unsigned char*) key.c_str(), nonce.value))
+    if (1 != EVP_DecryptInit_ex(ctx.get(), NULL, NULL, (unsigned char*) key.c_str(), nonce.value))
       throw std::runtime_error("sodDecryptSym: EVP_DecryptInit_ex() could not initialize decryption key and IV");
 
-    if (!EVP_DecryptUpdate(ctx, (unsigned char*) plaintext, &len,
+    if (!EVP_DecryptUpdate(ctx.get(), (unsigned char*) plaintext, &len,
                            (unsigned char*) (msg.c_str() + POLY1305_BLOCK_SIZE), msg.length() - POLY1305_BLOCK_SIZE))
       throw std::runtime_error("sodDecryptSym: EVP_DecryptUpdate() could not decrypt message");
     plaintext_len = len;
 
     /* Set expected tag value. Works in OpenSSL 1.0.1d and later */
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, POLY1305_BLOCK_SIZE, (void*) tag.c_str()))
+    if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_AEAD_SET_TAG, POLY1305_BLOCK_SIZE, (void*) tag.c_str()))
       throw std::runtime_error("sodDecryptSym: EVP_CIPHER_CTX_ctrl() AEAD tag could not be validated");
 
-    if (!EVP_DecryptFinal_ex(ctx, (unsigned char*) (plaintext + len), &len))
+    if (!EVP_DecryptFinal_ex(ctx.get(), (unsigned char*) (plaintext + len), &len))
       throw std::runtime_error("sodDecryptSym: EVP_DecryptFinal_ex() failed - plaintext cannot be trusted");
 
     nonce.increment();

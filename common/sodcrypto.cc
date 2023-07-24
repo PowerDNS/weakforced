@@ -70,7 +70,7 @@ std::string sodDecryptSym(const std::string& msg, const std::string& key, Sodium
 string newKey()
 {
   unsigned char key[CHACHA20_POLY1305_KEY_SIZE];
-  if (!RAND_priv_bytes(key, sizeof key)) {
+  if (RAND_priv_bytes(key, sizeof key) != 1) {
     throw std::runtime_error(
         "Could not initialize random number generator for cryptographic functions - this is not recoverable");
   }

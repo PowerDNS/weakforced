@@ -39,7 +39,7 @@ struct SodiumNonce
 {
   void init()
   {
-    if (!RAND_priv_bytes(value, sizeof value)) {
+    if (RAND_priv_bytes(value, sizeof value) != 1) {
       throw std::runtime_error("Could not initialize random number generator for cryptographic functions - this is not recoverable");
     }
   }

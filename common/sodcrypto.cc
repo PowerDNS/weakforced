@@ -86,7 +86,7 @@ std::string sodEncryptSym(const std::string& msg, const std::string& key, Sodium
   // Each thread gets its own cipher context
   thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
 
-  if (key.length() != 32) {
+  if (key.length() != CHACHA20_POLY1305_KEY_SIZE) {
     ostringstream err;
     err << "sodEncryptSym: key length is not 32 bytes (actual length=" << key.length() << ")";
     throw std::runtime_error(err.str().c_str());
@@ -128,7 +128,7 @@ std::string sodDecryptSym(const std::string& msg, const std::string& key, Sodium
   // Each thread gets its own cipher context
   thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
 
-  if (key.length() != 32) {
+  if (key.length() != CHACHA20_POLY1305_KEY_SIZE) {
     ostringstream err;
     err << "sodDecryptSym: key length is not 32 bytes (actual length=" << key.length() << ")";
     throw std::runtime_error(err.str().c_str());

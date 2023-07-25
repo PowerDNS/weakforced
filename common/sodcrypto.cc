@@ -84,7 +84,7 @@ std::string sodEncryptSym(const std::string& msg, const std::string& key, Sodium
   int len;
   int ciphertext_len;
   // Each thread gets its own cipher context
-  thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
+  static thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);
 
   if (key.length() != CHACHA20_POLY1305_KEY_SIZE) {
     ostringstream err;
@@ -126,7 +126,7 @@ std::string sodDecryptSym(const std::string& msg, const std::string& key, Sodium
   int len;
   int plaintext_len;
   // Each thread gets its own cipher context
-  thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);;
+  static thread_local auto ctx = std::unique_ptr<EVP_CIPHER_CTX, decltype(&EVP_CIPHER_CTX_free)>(nullptr, EVP_CIPHER_CTX_free);
 
   if (key.length() != CHACHA20_POLY1305_KEY_SIZE) {
     ostringstream err;

@@ -2,20 +2,22 @@
 
 set -e
 
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
 then
     export MYCC=clang
     export MYCXX=clang++
+    export SODIUM=
 else
     export MYCC=$1
     export MYCXX=$2
+    export SODIUM=$3
 fi
 
 echo "CC=$MYCC"
 echo "CXX=$MYCXX"
 
 autoreconf -v -i -f
-./configure --enable-trackalert --enable-systemd --disable-docker --enable-unit-tests --enable-asan --enable-ubsan --disable-silent-rules CC=$MYCC CXX=$MYCXX
+./configure --enable-trackalert --enable-systemd --disable-docker --enable-unit-tests --enable-asan --enable-ubsan $SODIUM --disable-silent-rules CC=$MYCC CXX=$MYCXX
 make clean
 make
 make check || (cat common/test-suite.log && false)

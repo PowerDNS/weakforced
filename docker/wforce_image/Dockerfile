@@ -14,7 +14,6 @@ RUN apt-get update && \
                libluajit2-5.1-dev \
                libprotobuf-dev \
                libssl-dev \
-               libsodium-dev \
                libsystemd-dev \
                libyaml-cpp-dev \
                libjsoncpp-dev \
@@ -52,7 +51,7 @@ COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
 COPY elk/ /wforce/elk/
 
 RUN autoreconf -ivf
-RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-docker --with-luajit --sysconfdir=/etc/wforce CC=clang CXX=clang++
+RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-sodium --disable-docker --with-luajit --sysconfdir=/etc/wforce CC=clang CXX=clang++
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
@@ -81,7 +80,6 @@ RUN apt-get update && \
                libprotobuf32 \
                libprometheus-cpp-core1.0 \
                libssl3 \
-               libsodium23 \
                libyaml-cpp0.7 \
                libjsoncpp-dev \
                libz-dev \

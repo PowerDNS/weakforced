@@ -28,8 +28,6 @@ RUN apt-get update && \
                wget \
                docker \
                docker-compose \
-               python3-pip \
-               python3-venv \
                net-tools \
                clang \
                cmake

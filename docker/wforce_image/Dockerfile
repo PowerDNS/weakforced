@@ -85,7 +85,7 @@ RUN apt-get update && \
                libreadline8 \
                libprotobuf32 \
                libssl3 \
-               libsodium \
+               libsodium23 \
                libyaml-cpp0.7 \
                libjsoncpp-dev \
                libz-dev \

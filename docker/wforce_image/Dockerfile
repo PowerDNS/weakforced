@@ -11,7 +11,7 @@ RUN apt-get update && \
                libhiredis-dev \
                libmaxminddb-dev \
                liblua5.1-0-dev \
-               libluajit-5.1-dev \
+               libluajit2-5.1-dev \
                libprotobuf-dev \
                libssl-dev \
                libsodium-dev \
@@ -80,13 +80,13 @@ RUN apt-get update && \
                libcurl4 \
                libgetdns10 \
                libhiredis0.14 \
-               libluajit-5.1-2 \
+               libluajit2-5.1-2 \
                libmaxminddb0 \
                libreadline8 \
-               libprotobuf23 \
-               libssl1.1 \
-               libsodium23 \
-               libyaml-cpp0.6 \
+               libprotobuf32 \
+               libssl3 \
+               libsodium \
+               libyaml-cpp0.7 \
                libjsoncpp-dev \
                libz-dev \
                uuid-dev \

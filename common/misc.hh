@@ -390,8 +390,8 @@ private:
     #endif
 };
 
-
-struct CIStringCompare: public std::binary_function<string, string, bool>  
+// FIXME400 this should probably go?
+struct CIStringCompare
 {
   bool operator()(const string& a, const string& b) const
   {
@@ -401,28 +401,32 @@ struct CIStringCompare: public std::binary_function<string, string, bool>
 
 struct CIStringComparePOSIX
 {
-   bool operator() (const std::string& lhs, const std::string& rhs)
-   {
-      std::string::const_iterator a,b;
-      const std::locale &loc = std::locale("POSIX");
-      a=lhs.begin();b=rhs.begin();
-      while(a!=lhs.end()) {
-          if (b==rhs.end() || std::tolower(*b,loc)<std::tolower(*a,loc)) return false;
-          else if (std::tolower(*a,loc)<std::tolower(*b,loc)) return true;
-          ++a;++b;
+  bool operator() (const std::string& lhs, const std::string& rhs) const
+  {
+    const std::locale &loc = std::locale("POSIX");
+    auto lhsIter = lhs.begin();
+    auto rhsIter = rhs.begin();
+    while (lhsIter != lhs.end()) {
+      if (rhsIter == rhs.end() || std::tolower(*rhsIter,loc) < std::tolower(*lhsIter,loc)) {
+        return false;
       }
-      return (b!=rhs.end());
-   }
+      if (std::tolower(*lhsIter,loc) < std::tolower(*rhsIter,loc)) {
+        return true;
+      }
+      ++lhsIter;++rhsIter;
+    }
+    return rhsIter != rhs.end();
+  }
 };
 
-struct CIStringPairCompare: public std::binary_function<pair<string, uint16_t>, pair<string,uint16_t>, bool>  
+struct CIStringPairCompare
 {
   bool operator()(const pair<string, uint16_t>& a, const pair<string, uint16_t>& b) const
   {
     if(pdns_ilexicographical_compare(a.first, b.first))
-	return true;
+      return true;
     if(pdns_ilexicographical_compare(b.first, a.first))
-	return false;
+      return false;
     return a.second < b.second;
   }
 };

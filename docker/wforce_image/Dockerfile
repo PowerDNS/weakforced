@@ -19,6 +19,7 @@ RUN apt-get update && \
                libyaml-cpp-dev \
                libjsoncpp-dev \
                libz-dev \
+               prometheus-cpp-dev \
                uuid-dev \
                libtool \
                pkg-config \
@@ -35,10 +36,6 @@ RUN apt-get update && \
 
 WORKDIR /wforce/
 RUN mkdir /wforce/install
-
-RUN git clone https://github.com/jupp0r/prometheus-cpp.git
-RUN cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
-RUN cd prometheus-cpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/v1.7.4 -b v1.7.4
@@ -84,6 +81,7 @@ RUN apt-get update && \
                libmaxminddb0 \
                libreadline8 \
                libprotobuf32 \
+               libprometheus-cpp-core1.0 \
                libssl3 \
                libsodium23 \
                libyaml-cpp0.7 \

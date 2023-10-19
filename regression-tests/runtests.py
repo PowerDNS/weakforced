@@ -103,7 +103,10 @@ test_env.update({'WEBPORT': WEBPORT, 'APIKEY': APIKEY, 'WEBPID': str(webpid)})
 
 try:
     print("")
-    p = subprocess.check_call(["pytest", "--junitxml", "pytest.xml"], env=test_env)
+    if len(sys.argv) > 1:
+        p = subprocess.check_call(["pytest", "--junitxml", sys.argv[1]], env=test_env)
+    else:
+        p = subprocess.check_call(["pytest", "--junitxml", "pytest.xml"], env=test_env)
 except subprocess.CalledProcessError as ex:
     rc = ex.returncode
 finally:

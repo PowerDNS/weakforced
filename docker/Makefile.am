@@ -32,10 +32,10 @@ clean_docker:
 clean: clean_docker
 
 regression-gcc: build_image start
-	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh gcc g++ --enable-sodium
+	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh gcc g++ --enable-sodium /var/tmp/testlog/gcctest.xml
 
 regression-clang: build_image start
-	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh clang clang++ --disable-sodium
+	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh clang clang++ --disable-sodium /var/tmp/testlog/clangtest.xml
 
 regression-none:
 	echo "Regression tests skipped due to compiler 'none'"

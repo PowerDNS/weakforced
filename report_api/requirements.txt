@@ -8,7 +8,7 @@ itsdangerous==0.24
 Jinja2==2.11.3
 MarkupSafe==1.1.0
 pytz==2017.2
-urllib3==1.26.5
+urllib3==1.26.18
 Werkzeug==0.15.5
 requests==2.25.1
 gunicorn==19.9.0

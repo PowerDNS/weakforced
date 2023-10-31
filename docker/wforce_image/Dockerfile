@@ -71,8 +71,6 @@ COPY --from=wforce_build /wforce/install/ /
 # Remove the default wforce.conf and trackalert.conf files
 RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf
 
-COPY --from=wforce_build /wforce/report_api /wforce/report_api
-
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get -y -f install \
@@ -114,14 +112,6 @@ COPY docker/wforce_image/trackalert.conf.j2 /etc/wforce
 RUN chmod 0775 /usr/bin/docker-entrypoint.sh
 RUN chmod 0775 /usr/bin/create_config.sh
 
-ARG VENV_DIR=/usr/share/wforce-report-api
-RUN python3 -m venv --symlinks $VENV_DIR
-RUN cd report_api && $VENV_DIR/bin/python $VENV_DIR/bin/pip install .
-RUN mkdir /etc/wforce-report-api
-RUN cp report_api/helpers/wforce-report-api-webserver /usr/bin/wforce-report-api-webserver && chmod 755 /usr/bin/wforce-report-api-webserver 
-RUN cp report_api/instance/report.cfg /etc/wforce-report-api/wforce-report-api-instance.conf && chmod 644 /etc//wforce-report-api/wforce-report-api-instance.conf
-RUN cp report_api/helpers/wforce-report-api-docker.conf /etc/wforce-report-api/wforce-report-api-web.conf && chmod 755 /etc/wforce-report-api/wforce-report-api-web.conf
-RUN export python3_version=$(python3 -V | awk '{print $2}' | awk 'BEGIN{FS="."};{print $1"."$2}') && sed -i -e s:\<python_version\>:$python3_version: /etc/wforce-report-api/wforce-report-api-web.conf
 RUN rm -rf /wforce/*
 
 ARG build_date

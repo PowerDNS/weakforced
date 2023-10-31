@@ -73,7 +73,6 @@ COPY regression-tests/ /wforce/regression-tests/
 COPY wforce/ /wforce/wforce/
 COPY common/ /wforce/common/
 COPY trackalert/ /wforce/trackalert/
-COPY report_api/ /wforce/report_api/
 COPY docker/ /wforce/docker/
 COPY elk/ /wforce/elk/
 

@@ -2,7 +2,3 @@ usr/bin/wforce
 usr/lib/systemd/system/wforce.service
 etc/wforce/regexes.yaml
 etc/wforce/wforce.conf
-report_api/wforce usr/share/wforce/report_api
-report_api/instance usr/share/wforce/report_api
-report_api/run.sh usr/share/wforce/report_api
-report_api/runreport.py usr/share/wforce/report_api

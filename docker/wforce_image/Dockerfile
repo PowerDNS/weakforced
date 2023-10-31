@@ -51,7 +51,6 @@ COPY docs/ /wforce/docs/
 COPY wforce/ /wforce/wforce/
 COPY common/ /wforce/common/
 COPY trackalert/ /wforce/trackalert/
-COPY report_api/ /wforce/report_api/
 COPY docker/Makefile.am /wforce/docker/
 RUN  mkdir /wforce/docker/wforce_image
 COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
@@ -93,8 +92,6 @@ RUN apt-get update && \
                uuid-dev \
                gnupg \
                python3 \
-               python3-pip \
-               python3-venv \
                python3-jinja2 \
                net-tools \
                tini

@@ -857,12 +857,12 @@ unsigned int pdns_stou(const std::string& str, size_t * idx, int base)
 std::string getDirectoryPath(const std::string& filename)
 {
   boost::filesystem::path my_path(filename);
-  boost::filesystem::path branch_path = my_path.branch_path();
+  boost::filesystem::path branch_path = my_path.parent_path();
   return branch_path.empty() ? "." : branch_path.string();
 }
 
 std::string getFileFromPath(const std::string& filename)
 {
   boost::filesystem::path my_path(filename);
-  return my_path.leaf().string();
+  return my_path.filename().string();
 }

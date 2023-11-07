@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim as wforce_build
+FROM debian:bookworm-slim as wforce_build
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -11,14 +11,14 @@ RUN apt-get update && \
                libhiredis-dev \
                libmaxminddb-dev \
                liblua5.1-0-dev \
-               libluajit-5.1-dev \
+               libluajit2-5.1-dev \
                libprotobuf-dev \
                libssl-dev \
-               libsodium-dev \
                libsystemd-dev \
                libyaml-cpp-dev \
                libjsoncpp-dev \
                libz-dev \
+               prometheus-cpp-dev \
                uuid-dev \
                libtool \
                pkg-config \
@@ -27,18 +27,12 @@ RUN apt-get update && \
                wget \
                docker \
                docker-compose \
-               python3-pip \
-               python3-venv \
                net-tools \
                clang \
                cmake
 
 WORKDIR /wforce/
 RUN mkdir /wforce/install
-
-RUN git clone https://github.com/jupp0r/prometheus-cpp.git
-RUN cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
-RUN cd prometheus-cpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off && make && make install
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/v1.7.4 -b v1.7.4
@@ -57,11 +51,11 @@ COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
 COPY elk/ /wforce/elk/
 
 RUN autoreconf -ivf
-RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-docker --with-luajit --sysconfdir=/etc/wforce CC=clang CXX=clang++
+RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-sodium --disable-docker --with-luajit --sysconfdir=/etc/wforce CC=clang CXX=clang++
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
-FROM debian:bullseye-slim as wforce_image
+FROM debian:bookworm-slim as wforce_image
 
 WORKDIR /wforce/
 
@@ -80,13 +74,13 @@ RUN apt-get update && \
                libcurl4 \
                libgetdns10 \
                libhiredis0.14 \
-               libluajit-5.1-2 \
+               libluajit2-5.1-2 \
                libmaxminddb0 \
                libreadline8 \
-               libprotobuf23 \
-               libssl1.1 \
-               libsodium23 \
-               libyaml-cpp0.6 \
+               libprotobuf32 \
+               libprometheus-cpp-core1.0 \
+               libssl3 \
+               libyaml-cpp0.7 \
                libjsoncpp-dev \
                libz-dev \
                uuid-dev \

@@ -1,4 +1,4 @@
-FROM ubuntu:focal as wforce_regression
+FROM ubuntu:jammy as wforce_regression
 
 ENV DEBIAN_FRONTEND noninteractive
 

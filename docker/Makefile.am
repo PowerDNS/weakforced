@@ -5,7 +5,7 @@ REGRESSION_SERVICE = regression
 
 SUBDIRS= wforce_image
 
-$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f)  $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find regression -type f)  $(shell find logstash -type f) 
+$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f) $(shell find ../report_api -type f)  $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find regression -type f) $(shell find logstash -type f) 
 	$(DCMP) down -v
 	$(DCMP) build
 	touch $(COMPOSE_TARGET)
@@ -32,10 +32,10 @@ clean_docker:
 clean: clean_docker
 
 regression-gcc: build_image start
-	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh gcc g++ --enable-sodium
+	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh gcc g++ --enable-sodium /var/tmp/testlog/gcctest.xml
 
 regression-clang: build_image start
-	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh clang clang++ --disable-sodium
+	$(DCMP) exec -T $(REGRESSION_SERVICE) docker/regression/regression.sh clang clang++ --disable-sodium /var/tmp/testlog/clangtest.xml
 
 regression-none:
 	echo "Regression tests skipped due to compiler 'none'"

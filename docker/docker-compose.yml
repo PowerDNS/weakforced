@@ -50,6 +50,7 @@ services:
         - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     volumes:
       - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+      - ./tmp:/var/tmp/testlog
     links:
       - elasticsearch
       - logstash

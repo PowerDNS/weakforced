@@ -30,7 +30,6 @@ webcmd = (".venv/bin/python ./webhook_server.py").split()
 nginx_cmd = ("nginx -c /wforce/regression-tests/nginx/nginx.conf").split()
 udpsinkcmd = (".venv/bin/python ./udp_sink.py").split()
 ta_cmd = ("../trackalert/trackalert -D -C ./trackalert.conf").split()
-report_cmd = (".venv/bin/python ../report_api/runreport.py").split()
 
 # Now run wforce and the tests.
 print("Launching wforce (1 and 2 and 4)...")
@@ -47,8 +46,6 @@ udpproc = subprocess.Popen(udpsinkcmd, close_fds=True)
 udppid = udpproc.pid
 taproc = subprocess.Popen(ta_cmd, close_fds=True)
 tapid = taproc.pid
-reportproc = subprocess.Popen(report_cmd, close_fds=True)
-reportpid = reportproc.pid
 
 def sighandler(signum, frame):
     proc1.terminate()
@@ -65,8 +62,6 @@ def sighandler(signum, frame):
     udpproc.wait()
     taproc.terminate()
     taproc.wait()
-    reportproc.terminate()
-    reportproc.wait()
     subprocess.call(["/bin/stty", "sane"])
 
 signal.signal(signal.SIGINT, sighandler)
@@ -130,8 +125,6 @@ finally:
     udpproc.wait()
     taproc.terminate()
     taproc.wait()
-    reportproc.terminate()
-    reportproc.wait()
 
 subprocess.call(["/bin/stty", "sane"])
     

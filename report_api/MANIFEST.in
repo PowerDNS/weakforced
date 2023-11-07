@@ -1,5 +1,0 @@
-include requirements.txt
-include version.txt
-recursive-include helpers *
-recursive-include instance *
-recursive-include nginx *

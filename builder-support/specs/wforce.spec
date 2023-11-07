@@ -94,15 +94,6 @@ Summary: Longterm abuse data reporting and alerter
  stored in an external DB such as elasticsearch, and to send alerts on
  potential login abuse.
 
-%package report-api
-Summary: Enable access to the report information stored in Elasticsearch.
-Requires: python%{python3_pkgversion}-setuptools
-Requires: python%{python3_pkgversion}-devel
-Requires: python%{python3_pkgversion}-pip
-
-%description report-api
- The Report API is provided to enable access to the report information stored in Elasticsearch.
- It provides REST API endpoints to retrieve data about logins and devices, as well as endpoints to "forget" devices and logins.
 %prep
 %setup -n %{name}-%{getenv:BUILDER_VERSION}
 
@@ -127,39 +118,6 @@ mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}
 mv elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/kibana/kibana_saved_objects.ndjson %{buildroot}/%{_docdir}/%{name}-%{version}/
-
-%{venv_cmd} %{venv_dir}
-%{venv_pip} -U pip setuptools
-pushd report_api
-%{venv_pip} .
-popd
-
-# RECORD files are used by wheels for checksum. They contain path names which
-# match the buildroot and must be removed or the package will fail to build.
-find %{buildroot} -name "RECORD" -exec rm -rf {} \;
-find %{venv_dir} -type f -iname '*.pyc' -delete
-find %{venv_dir} -type d -iname '__pycache__' -delete
-
-# Change the virtualenv path to the target installation directory.
-%{venv_pip} -U venvctrl
-%{venv_bin}/venvctrl-relocate --source=%{venv_dir} --destination=%{venv_install_dir}
-%{venv_python} %{venv_bin}/pip3 uninstall --yes venvctrl
-
-#remove unfixable files and pycache
-%{__rm} -f %{venv_dir}/bin/activate.*
-
-# Strip native modules as they contain buildroot paths in their debug information
-find %{venv_dir}/lib -type f -name "*.so" | xargs -r strip
-
-# Remove the venvdir from all file contents
-find %{venv_dir} -type f -exec sed -e 's!%{venv_dir}!%{venv_install_dir}!g' -i {} +
-
-# install some files for the report-api
-%{__install} -D -m 755 report_api/helpers/wforce-report-api-webserver %{buildroot}/%{_bindir}/wforce-report-api-webserver
-%{__install} -D -m 644 report_api/helpers/wforce-report-api.conf %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
-%{__install} -D -m 644 report_api/instance/report.cfg %{buildroot}/%{_sysconfdir}/%{name}-report-api/%{name}-report-api-instance.conf
-%{__install} -D -m 644 report_api/helpers/wforce-report-api.service %{buildroot}/%{_unitdir}/wforce-report-api.service
-sed -i -e s:\<python_version\>:%{python3_version}: %{buildroot}/%{_sysconfdir}/%{name}-report-api/wforce-report-api-web.conf
 
 %clean
 rm -rf %{buildroot}
@@ -190,26 +148,6 @@ if [ "$1" = "2" ] || [ "$1" = "1" ]; then
   /sbin/service %{name} stop >/dev/null 2>&1 || :
 %endif
 fi
-
-%pre report-api
-getent group %{name}-report-api >/dev/null || groupadd -r %{name}-report-api
-getent passwd %{name}-report-api >/dev/null || \
-useradd -r -g %{name}-report-api -d /var/spool/%{name}-report-api -s /bin/false -c "wforce-report-api" %{name}-report-api
-
-%post report-api
-%if %{with systemd}
-%systemd_post %{name}-report-api
-%endif
-
-%preun report-api
-%if %{with systemd}
-%systemd_preun %{name}-report-api
-%endif
-
-%postun report-api
-%if %{with systemd}
-%systemd_postun_with_restart %{name}-report-api
-%endif
 
 %post trackalert
 # Post-Install
@@ -353,10 +291,3 @@ fi
 %license LICENSE
 %{_unitdir}/trackalert.service
 %{_sysconfdir}/%{name}/trackalert.conf
-
-%files report-api
-%{venv_install_dir}
-%attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/%{name}-report-api/*.conf
-%{_bindir}/%{name}-report-api-webserver
-%{_unitdir}/%{name}-report-api.service
-%{_mandir}/man5/%{name}-report-api.5.gz

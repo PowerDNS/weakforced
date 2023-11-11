@@ -1,1 +1,1 @@
-@INCLUDE Dockerfile.target.rocky-9
+@INCLUDE Dockerfile.target.ol-9

@@ -6,7 +6,7 @@
 FROM oraclelinux:9 as dist-base
 
 RUN touch /var/lib/rpm/* && dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
-    dnf install -y 'dnf-command(config-manager)' yum && dnf config-manager --set-enabled devel && \
+    dnf install -y 'dnf-command(config-manager)' yum && dnf config-manager --set-enabled ol9_codeready_builder && \
     dnf install -y curl procps-ng --allowerasing # This is to ensure we don't have curlminimal and we do have pkill
 
 RUN dnf -y install dnf-plugins-core clang

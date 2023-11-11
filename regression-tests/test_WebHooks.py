@@ -24,7 +24,7 @@ class TestWebHooks(ApiTestCase):
         for event in [ 'report', 'allow', 'reset', 'addbl', 'delbl', 'expirebl' ]:
             regex = r"digest_match=True, event=" + re.escape(event)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()
 
@@ -58,7 +58,7 @@ class TestWebHooks(ApiTestCase):
         self.writeCmdToConsole("addCustomWebHook(\"customwebhook\", ck)")
         r = self.customFunc("custom1")
         j = r.json()
-        self.assertEquals(j['r_attrs']['login'], 'custom1')
+        self.assertEqual(j['r_attrs']['login'], 'custom1')
         time.sleep(5)
         logfile = open('/tmp/webhook-server.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
@@ -66,7 +66,7 @@ class TestWebHooks(ApiTestCase):
         for event in [ 'customwebhook' ]:
             regex = r"digest_match=True, event=" + re.escape(event)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()
 
@@ -81,6 +81,6 @@ class TestWebHooks(ApiTestCase):
         for event in [ 'namedreportsink', 'customargs' ]:
             regex = r"\"login\": \"" + re.escape(event)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()

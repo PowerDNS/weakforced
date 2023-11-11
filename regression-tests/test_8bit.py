@@ -21,4 +21,4 @@ class TestEightBit(ApiTestCase):
         print(json.dumps(j))
         count = int(j["r_attrs"]["count"])
 
-        self.assertEquals(count, 2)
+        self.assertEqual(count, 2)

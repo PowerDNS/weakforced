@@ -560,4 +560,4 @@ class ApiTestCase(unittest.TestCase):
         except:
             print(result.content)
             raise
-        self.assertEquals(result.headers['Content-Type'], 'application/json')
+        self.assertEqual(result.headers['Content-Type'], 'application/json')

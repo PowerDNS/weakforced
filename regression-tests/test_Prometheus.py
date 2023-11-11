@@ -34,14 +34,14 @@ class TestPrometheus(ApiTestCase):
     def getWforcePrometheusValues(self):
         r = self.getWforceMetrics()
         self.assertTrue(r)
-        self.assertEquals(r.status_code, 200)
+        self.assertEqual(r.status_code, 200)
 
         return self.parsePrometheusResponse(r.text)
 
     def getTrackalertPrometheusValues(self):
         r = self.getTrackalertMetrics()
         self.assertTrue(r)
-        self.assertEquals(r.status_code, 200)
+        self.assertEqual(r.status_code, 200)
 
         return self.parsePrometheusResponse(r.text)
     

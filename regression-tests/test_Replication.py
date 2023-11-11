@@ -12,7 +12,7 @@ class TestTimeWindowsReplication(ApiTestCase):
     def test_invalidPasswords(self):
         r = self.allowFunc('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(22):
@@ -22,26 +22,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('ivbaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         
     def test_FailedLogins(self):
         r = self.allowFunc('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(32):
@@ -51,26 +51,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('flbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_diffIPs(self):
         r = self.allowFunc('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(12):
@@ -80,26 +80,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('ipbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_subTest(self):
         r = self.allowFunc('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(42):
@@ -108,26 +108,26 @@ class TestTimeWindowsReplication(ApiTestCase):
 
         r = self.allowFuncReplica('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('subbaddiereplication', '228.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         
         # Wait for the time windows to clear and then check again
         time.sleep(15)
         r = self.allowFuncReplica('subbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('subbaddiereplication', '227.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_Prefixv4(self):
         r = self.allowFunc('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(50):
@@ -137,26 +137,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('ipv4baddiereplication', '114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_PrefixMappedv4(self):
         r = self.allowFunc('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(50):
@@ -166,26 +166,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('mappedipv4baddiereplication', '::ffff:114.31.193.200', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_Prefixv6(self):
         r = self.allowFunc('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(50):
@@ -195,26 +195,26 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         # Wait for the time windows to clear and then check again
         time.sleep(16)
         r = self.allowFuncReplica('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('ipv6baddiereplication', '2001:c78::1000', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         
     def test_expiry(self):
         r = self.allowFunc('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(20):
@@ -226,26 +226,26 @@ class TestTimeWindowsReplication(ApiTestCase):
 
         r = self.allowFuncReplica('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         
         # Wait for the expiry thread to delete everything bigger than size (10) and then check again
         time.sleep(30)
         r = self.allowFuncReplica('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('expirebaddiereplication', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
     def test_Reset(self):
         r = self.allowFunc('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(32):
@@ -255,57 +255,57 @@ class TestTimeWindowsReplication(ApiTestCase):
         time.sleep(1)
         r = self.allowFuncReplica('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
 
         r = self.allowFuncReplica2('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         
         r = self.resetFunc('resetbaddiereplication', '128.0.0.1')
         j = r.json()
-        self.assertEquals(j['status'], "ok")
+        self.assertEqual(j['status'], "ok")
 
         time.sleep(1)
         r = self.allowFuncReplica('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
 
         r = self.allowFuncReplica2('resetbaddiereplication', '128.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         
     def test_resetField(self):
         r = self.resetLogins("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '0')
+        self.assertEqual(j['r_attrs']['countLogins'], '0')
 
         r = self.incLogins("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '1')
+        self.assertEqual(j['r_attrs']['countLogins'], '1')
 
         time.sleep(1)
         
         r = self.countLoginsReplica("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '1')
+        self.assertEqual(j['r_attrs']['countLogins'], '1')
 
         r = self.countLoginsReplica2("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '1')
+        self.assertEqual(j['r_attrs']['countLogins'], '1')
         
         r = self.resetLogins("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '0')
+        self.assertEqual(j['r_attrs']['countLogins'], '0')
 
         time.sleep(1)
 
         r = self.countLoginsReplica("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '0')
+        self.assertEqual(j['r_attrs']['countLogins'], '0')
 
         r = self.countLoginsReplica2("resetFieldTest")
         j = r.json()
-        self.assertEquals(j['r_attrs']['countLogins'], '0')
+        self.assertEqual(j['r_attrs']['countLogins'], '0')
 
     def test_BlackWhitelist(self):
         self.addBLEntryIP('12.12.12.12', 60, "replication bl test")

@@ -11,156 +11,156 @@ class TestWhitelist(ApiTestCase):
     def test_NetmaskWhitelist(self):
         r = self.allowFunc('goodie', '193.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.addBLEntryNetmask("193.168.0.0/16", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addBLEntryNetmask("2002:503:ba3e::/64", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addWLEntryNetmask("193.168.0.0/16", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addWLEntryNetmask("2002:503:ba3e::/64", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
         
         r = self.allowFunc('goodie', '193.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         time.sleep(11);
 
         r = self.allowFunc('goodie', '193.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
         
         r = self.allowFunc('goodie', '2002:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()        
     
     def test_IPWhitelist(self):
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.addBLEntryIP("192.168.72.14", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addBLEntryIP("2001:503:ba3e::2:30", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
         
         r = self.addWLEntryIP("192.168.72.14", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addWLEntryIP("2001:503:ba3e::2:30", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         time.sleep(11);
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
         
         r = self.allowFunc('goodie', '2001:503:ba3e::2:30', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
     
     def test_LoginWhitelist(self):
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.addBLEntryLogin("goodie", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addWLEntryLogin("goodie", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
         
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         time.sleep(11);
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
     def test_IPLoginBlacklist(self):
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.addBLEntryIPLogin("192.168.72.14", "goodie", 10, "test blacklist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.addWLEntryIPLogin("192.168.72.14", "goodie", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         r = self.allowFunc('goodie', '192.168.72.15', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         time.sleep(11);
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
     def test_PersistWhitelist(self):
@@ -170,7 +170,7 @@ class TestWhitelist(ApiTestCase):
         
         r = self.addWLEntryIPPersist("99.99.99.99", 10, "test whitelist")
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
         
         print("Killing process")
         proc3.terminate()

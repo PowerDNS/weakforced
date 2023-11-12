@@ -11,13 +11,13 @@ class TestTrackalert(ApiTestCase):
 
     def test_auth_stats(self):
         r = self.session.get(self.ta_url("/?command=stats"))
-        self.assertEquals(r.status_code, requests.codes.ok)
+        self.assertEqual(r.status_code, requests.codes.ok)
     
     def test_wforceToTrackalert(self):
         self.writeCmdToConsole("addWebHook(ta_events, tack)")
         r = self.reportFunc('wforce2trackalert', '1.4.3.2', '1234', False); 
         j = r.json()
-        self.assertEquals(j['status'], 'ok')
+        self.assertEqual(j['status'], 'ok')
         time.sleep(5)
         logfile = open('/tmp/trackalert.log', 'r')
         s = mmap.mmap(logfile.fileno(), 0, access=mmap.ACCESS_READ)
@@ -25,7 +25,7 @@ class TestTrackalert(ApiTestCase):
         for mystring in [ 'login=wforce2trackalert', 'remote=1.4.3.2' ]:
             regex = re.escape(mystring)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()
 
@@ -41,7 +41,7 @@ class TestTrackalert(ApiTestCase):
         for mystring in [ 'login=tareportuser', 'remote=127.0.0.1' ]:
             regex = re.escape(mystring)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()
 
@@ -53,11 +53,11 @@ class TestTrackalert(ApiTestCase):
         for mystring in [ 'background1', 'background2' ]:
             regex = re.escape(mystring)
             result = re.search(regex, search_str);
-            self.assertNotEquals(result, None)
+            self.assertNotEqual(result, None)
         s.close()
         logfile.close()
 
     def test_trackalertCustomFunc(self):
         r = self.trackalertCustomFunc("custom1")
         j = r.json()
-        self.assertEquals(j['r_attrs']['login'], 'custom1')
+        self.assertEqual(j['r_attrs']['login'], 'custom1')

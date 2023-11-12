@@ -9,7 +9,7 @@ class TestBlock(ApiTestCase):
     def test_block(self):
         r = self.allowFunc("baddie", "127.0.0.1", "1234")
         j = r.json()
-        self.assertEquals(j['status'], 0)
+        self.assertEqual(j['status'], 0)
         r.close()
 
         for i in range(100):
@@ -18,6 +18,6 @@ class TestBlock(ApiTestCase):
 
         r = self.allowFunc('baddie', '127.0.0.1', "1234")
         j = r.json()
-        self.assertEquals(j['status'], -1)
+        self.assertEqual(j['status'], -1)
         r.close()
         

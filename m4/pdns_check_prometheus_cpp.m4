@@ -50,10 +50,10 @@ AC_DEFUN([PDNS_CHECK_LIBPROMETHEUS], [
             # then use that information and don't search promdirs
             AC_CHECK_TOOL([PKG_CONFIG], [pkg-config])
             if test x"$PKG_CONFIG" != x""; then
-                LIBPROMETHEUS_LDFLAGS=`$PKG_CONFIG libprometheus-cpp-core --libs-only-L 2>/dev/null`
+                LIBPROMETHEUS_LDFLAGS=`$PKG_CONFIG prometheus-cpp-core --libs-only-L 2>/dev/null`
                 if test $? = 0; then
-                    LIBPROMETHEUS_LIBS=`$PKG_CONFIG libprometheus-cpp-core --libs-only-l 2>/dev/null`
-                    LIBPROMETHEUS_INCLUDES=`$PKG_CONFIG libprometheus-cpp-core --cflags-only-I 2>/dev/null`
+                    LIBPROMETHEUS_LIBS=`$PKG_CONFIG prometheus-cpp-core --libs-only-l 2>/dev/null`
+                    LIBPROMETHEUS_INCLUDES=`$PKG_CONFIG prometheus-cpp-core --cflags-only-I 2>/dev/null`
                     found=true
                 fi
             fi

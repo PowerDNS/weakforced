@@ -104,7 +104,7 @@ namespace ctpl {
                 delete _f;  // empty the queue
         }
 
-        // pops a functional wraper to the original function
+        // pops a functional wrapper to the original function
         std::function<void(int)> pop() {
             std::function<void(int id)> * _f = nullptr;
             this->q.pop(_f);

@@ -25,7 +25,7 @@
 #include <string>
 #include <iostream>
 
-// Example IMAP Client ID string (Apple Mail on MacOS):
+// Example IMAP Client ID string (Apple Mail on macOS):
 // "name" "Mac OS X Mail" "version" "10.0 (3226)" "os" "Mac OS X" "os-version" "10.12 (16A323)" "vendor" "Apple Inc."
 //
 // This class maps IMAP Client ID fields as follows:

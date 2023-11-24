@@ -1066,7 +1066,7 @@ a Netmask. For example:
 
 		if (lt.device_attrs["os.family"] == "Mac OS X")
 		then
-		    -- do something special for MacOS
+		    -- do something special for macOS
 		end
 
 * LoginTuple.protocol - A string representing the protocol that was

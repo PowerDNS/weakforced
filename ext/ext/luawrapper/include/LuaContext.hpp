@@ -217,7 +217,7 @@ public:
 
     /**
      * Function object that can call a function stored by Lua
-     * This type is copiable and movable, but not constructible. It can only be created through readVariable.
+     * This type is copyable and movable, but not constructible. It can only be created through readVariable.
      * @tparam TFunctionType    Function type (eg. "int (int, bool)")
      */
     template<typename TFunctionType>

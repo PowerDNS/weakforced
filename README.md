@@ -504,10 +504,10 @@ To view sibling stats:
 
 ```lua
 > siblings()
-Address                             Sucesses  Failures     Note
-192.168.1.79:4001                   18        7
-192.168.1.30:4001                   25        0
-192.168.1.54:4001                   0         0            Self
+Address                             Send Successes  Send Failures  Rcv Successes   Rcv Failures     Note
+192.168.1.79:4001                   18              7              0               0
+192.168.1.30:4001                   25              0              0               0
+192.168.1.54:4001                   0               0              0               0                Self
 ```
 
 With this setup, several wforces are all kept in sync, and can be load

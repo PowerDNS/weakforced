@@ -98,7 +98,7 @@ started with the -c option.
   sinks. For example: 
 
 		> showNamedReportSinks()
-		Name            Address                             Sucesses  Failures
+		Name            Address                             Successes Failures
 		trackalert      192.168.1.79:4501                   18        0
 		trackalert      192.168.1.30:4501                   19        0
 		elasticsearch   10.22.2.15:4501                     18        0
@@ -108,7 +108,7 @@ started with the -c option.
   information about configured report sinks. For example:
 
 		> showReportSinks()
-		Address                             Sucesses  Failures
+		Address                             Successes Failures
 		192.168.1.79:4501                   18        7
 		192.168.1.30:4501                   25        0
 

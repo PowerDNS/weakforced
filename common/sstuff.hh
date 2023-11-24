@@ -188,7 +188,7 @@ public:
       throw NetworkError(strerror(errno));
   }
 
-  //! Connecto the socket to a specific endpoint with a configurable timeout in milliseconds
+  //! Connect to the socket to a specific endpoint with a configurable timeout in milliseconds
   void connectWithTimeout(const ComboAddress &ep, int timeout)
   {
     long arg;

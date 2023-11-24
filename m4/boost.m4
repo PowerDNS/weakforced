@@ -496,7 +496,7 @@ dnl generated only once above (before we start the for loops).
       if test x"$Boost_lib" = xyes; then
         # Check or used cached result of whether or not using -R or
         # -rpath makes sense.  Some implementations of ld, such as for
-        # Mac OSX, require -rpath but -R is the flag known to work on
+        # Mac OS X, require -rpath but -R is the flag known to work on
         # other systems.  https://github.com/tsuna/boost.m4/issues/19
         AC_CACHE_VAL([boost_cv_rpath_link_ldflag],
           [case $boost_ldpath in

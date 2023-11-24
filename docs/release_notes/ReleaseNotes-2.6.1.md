@@ -5,7 +5,7 @@
 * Fix issue where wforce was complaining about not being able to create tmp file on startup
 * Fix timing issue whereby the webserver was not started before syncDB leading to syncDone failures
 * Use debian bullseye-slim in wforce docker image to save over 100MB in image size
-* Fix issue in wforce docker image where the default config file was overriden with a volume mount but not used
+* Fix issue in wforce docker image where the default config file was overridden with a volume mount but not used
 
 ## Fix Wforce complaint about not being able to create temporary files on startup
 
@@ -21,7 +21,7 @@ and complete, before the webserver had finished initializing. This would cause t
 the other wforce instance to fail. This fix forces wforce to wait until the webserver is ready before
 starting the syncDB checks.
 
-## Fix issue in wforce docker image where the default config file was overriden by a volume mount by not used
+## Fix issue in wforce docker image where the default config file was overridden by a volume mount by not used
 
 The wforce docker image documentation states that a volume mount can be used to specify a custom config file
 in /etc/wforce/wforce.conf, however this was not actually the case. The file was only used if the environment

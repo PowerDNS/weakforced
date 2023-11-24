@@ -48,7 +48,7 @@ attempts to provide a simple framework to fulfil them:
 
  * The ability to create Lua policy that responds to individual login
    reports and takes appropriate action. It is suggested that policies
-   query a long-term DB such as elaticsearch for previously
+   query a long-term DB such as elasticsearch for previously
    stored reports, and then alert based on comparing the long-term
    data with the current login information. Currently no default
    policy is provided to support that behaviour.

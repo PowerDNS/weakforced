@@ -64,7 +64,7 @@ a Netmask. For example:
 		blacklistIP(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
 
 There is also a new "netmask" parameter to the HTTP REST API
-addBLentry and delBLEntry commands. The netmask parameter is mutually
+addBLEntry and delBLEntry commands. The netmask parameter is mutually
 exclusive with the existing ip parameter. For example:
 
 	curl -H "Content-Type: application/json" -X POST --data '{

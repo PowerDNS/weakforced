@@ -428,7 +428,7 @@ dnl until we succeed to link conftest.o in an executable.  The problem is
 dnl that the various TRY_LINK / COMPILE_IFELSE macros of Autoconf always
 dnl remove all the temporary files including conftest.o.  So the trick here
 dnl is to temporarily change the value of ac_objext so that conftest.o is
-dnl preserved accross tests.  This is obviously fragile and I will burn in
+dnl preserved across tests.  This is obviously fragile and I will burn in
 dnl hell for not respecting Autoconf's documented interfaces, but in the
 dnl mean time, it optimizes the macro by a factor of 5 to 30.
 dnl Another small optimization: the first argument of AC_COMPILE_IFELSE left

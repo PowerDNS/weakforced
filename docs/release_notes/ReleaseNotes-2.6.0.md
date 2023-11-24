@@ -32,7 +32,7 @@ For more details, see the man page for wforce.conf.
 
 Various options for the configuration of outbound HTTPS connections are now supported, specifically:
 
-* Mutual TLS Authentication - `setCurlClientCertAndKey()` is used to specify the location of a client certifcate 
+* Mutual TLS Authentication - `setCurlClientCertAndKey()` is used to specify the location of a client certificate 
   and key for mTLS.
 * Using a different CA for checking server certificates - `setCurlCABundleFile()` is used to specify the location
   of a file containing certs to use for this purposes.

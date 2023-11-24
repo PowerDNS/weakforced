@@ -256,7 +256,7 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
 
         setCurlCABundleFile("/etc/ca/local_cas.pem")
 
-* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certifcate and key files to use for mutual TLS authentication (in PEM format).
+* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certificate and key files to use for mutual TLS authentication (in PEM format).
 
         setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
 

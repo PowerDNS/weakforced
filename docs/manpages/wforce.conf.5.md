@@ -831,7 +831,7 @@ a Netmask. For example:
   
 		statsdb:twResetField(lt.login, "countLogins")
 
-* StringStatsDB:twSetExpireSleep(\<miliseconds\>) - Set the sleep
+* StringStatsDB:twSetExpireSleep(\<milliseconds\>) - Set the sleep
   interval between checks to expire/expunge entries. Defaults to
   250ms. For example:
 

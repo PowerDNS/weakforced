@@ -115,7 +115,7 @@ the insanely great Lua scripting language.
 Note that although there is
 a single Lua configuration file, the canonicalize, reset, report and allow functions run in
 different lua states from the rest of the configuration. This mostly
-"just works", but may lead to unexpectd behaviour such as running Lua
+"just works", but may lead to unexpected behaviour such as running Lua
 commands at the server Lua prompt, and getting multiple answers
 (because Lua commands are passed to all Lua states).
 

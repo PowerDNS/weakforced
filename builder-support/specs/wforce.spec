@@ -20,7 +20,7 @@
 %global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
 %global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
 
-Summary: Weakforce daemon for detecting brute force attacts
+Summary: Weakforce daemon for detecting brute force attacks
 Name: wforce
 Version: %{getenv:BUILDER_RPM_VERSION}
 Release: %{getenv:BUILDER_RPM_RELEASE}%{?dist}

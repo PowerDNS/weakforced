@@ -363,7 +363,7 @@ bool removeSibling(const std::string& address,
   });
 
   // We don't remove any existing prometheus metrics for this sibling, otherwise we might cut off metrics before they are scraped
-  // This means that of sibling membership is highly dynamic, the mwtrics for siblings will "grow"; this is considered to be acceptable.
+  // This means that of sibling membership is highly dynamic, the metrics for siblings will "grow"; this is considered to be acceptable.
 
   return retval;
 }

@@ -140,7 +140,7 @@ cannot be called inside the allow/report/reset functions:
   the named list to which all received reports should be forwarded
   over UDP. Reports will be sent to the configured report sinks for a
   given name in a round-robin fashion if more than one is
-  specified. Eeports are sent separately to each named report sink. If
+  specified. Reports are sent separately to each named report sink. If
   port is not specified it defaults to 4501. Replaces the deprecated
   "addReportSink()". For example:
   

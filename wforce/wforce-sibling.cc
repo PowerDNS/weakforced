@@ -219,7 +219,7 @@ void Sibling::queueMsg(const std::string& msg)
   queue_cv.notify_one();
 }
 
-// Utility functions for managings siblings
+// Utility functions for managing siblings
 
 // siblingHostToAddress takes string representing either a hostname or an IP address
 // and returns a string representing the IP address.

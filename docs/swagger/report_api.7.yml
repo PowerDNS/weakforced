@@ -32,7 +32,7 @@ paths:
             $ref: "#/definitions/QueryParams"
       responses:
         "200":
-          description: "logins reponse"
+          description: "logins response"
           schema:
             $ref: "#/definitions/LoginsResponse"
         default:

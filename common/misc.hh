@@ -145,9 +145,6 @@ string itoa(int i);
 string uitoa(unsigned int i);
 string bitFlip(const string &str);
 
-void dropPrivs(int uid, int gid);
-int makeGidNumeric(const string &group);
-int makeUidNumeric(const string &user);
 void cleanSlashes(string &str);
 
 /** The DTime class can be used for timing statistics with microsecond resolution. 

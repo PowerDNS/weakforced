@@ -207,7 +207,7 @@ the function "twResetField()" can be used to achieve this, e.g.:
 Configurable accuracy for HLL and CountMin types
 -----------
 
-The HLL and CountMin types of StatsDB entries are probablistic data
+The HLL and CountMin types of StatsDB entries are probabilistic data
 structures, which trade accuracy for memory usage. Previously the
 accuracy (and thus memory usage) was hardcoded, however now their
 accuracy can be tuned. Increasing accuracy however means a

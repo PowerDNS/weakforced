@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2014 by Vitaliy Vitsentiy
  *
- *  Github: https://github.com/vit-vit/ctpl
+ *  GitHub: https://github.com/vit-vit/ctpl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.

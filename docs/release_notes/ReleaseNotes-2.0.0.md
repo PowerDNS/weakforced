@@ -45,7 +45,7 @@ fields:
 * expiration - A string showing the date/time when the blacklist will
 expire
 * reason - A string stating why the blacklist was created
-* key - What was blacllisted, i.e. either ip, login or iplogin
+* key - What was blacklisted, i.e. either ip, login or iplogin
 * blacklisted - This will be set to 1
 
 The getDBStats command will return additional information about

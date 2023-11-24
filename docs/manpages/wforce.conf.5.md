@@ -427,19 +427,19 @@ cannot be called inside the allow/report/reset functions:
   "{login}" will be substituted for the actual IP address and login name. 
   For example:
 
-        setBlackistIPRetMsg("Go away your IP {ip} is blacklisted")
+        setBlacklistIPRetMsg("Go away your IP {ip} is blacklisted")
 
 * setBlacklistLoginRetMsg(<msg>) - Set the message to be returned to
   clients whose login is blacklisted. The strings "{ip}" and
   "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistLoginRetMsg("Go away your login {login} is blacklisted")
+        setBlacklistLoginRetMsg("Go away your login {login} is blacklisted")
 
 * setBlacklistIPLoginRetMsg(<msg>) - Set the message to be returned to
   clients whose IP address/login is blacklisted. The strings "{ip}" and
   "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
+        setBlacklistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
@@ -872,17 +872,17 @@ a Netmask. For example:
 * getBlacklistIPRetMsg() - Get the message to be returned to
   clients whose IP address is blacklisted. For example:
 
-        local retmsg = getBlackistIPRetMsg()
+        local retmsg = getBlacklistIPRetMsg()
 
 * getBlacklistLoginRetMsg() - Get the message to be returned to
   clients whose login is blacklisted. For example:
 
-        local retmsg = getBlackistLoginRetMsg()
+        local retmsg = getBlacklistLoginRetMsg()
 
 * getBlacklistIPLoginRetMsg() - Get the message to be returned to
   clients whose IP address/login is blacklisted. For example:
 
-        local retmsg = getBlackistIPLoginRetMsg()
+        local retmsg = getBlacklistIPLoginRetMsg()
 
 * blacklistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified netmask for expiry seconds, with the specified reason. Netmask

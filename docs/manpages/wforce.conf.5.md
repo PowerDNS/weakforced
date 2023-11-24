@@ -287,7 +287,7 @@ cannot be called inside the allow/report/reset functions:
   a lower number giving more accuracy at the expense of memory. The
   default is 0.05. The value of gamma is between 0 and 1, with a
   higher number giving higher accuracy. The default for gamma
-  is 0.2. If you require more acuracy, consider changing these values
+  is 0.2. If you require more accuracy, consider changing these values
   slightly, but check your memory usage carefully.
 
 * newStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,

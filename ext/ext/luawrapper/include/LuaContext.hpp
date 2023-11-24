@@ -1078,7 +1078,7 @@ private:
 
     // simple function that reads the "nb" first top elements of the stack, pops them, and returns the value
     // warning: first parameter is the number of parameters, not the parameter index
-    // if read generates an exception, stack is poped anyway
+    // if read generates an exception, stack is popped anyway
     template<typename TReturnType>
     static auto readTopAndPop(lua_State* state, PushedObject object)
         -> TReturnType

@@ -268,7 +268,7 @@ std::string createSiblingAddress(const std::string& host, int port, Sibling::Pro
 // parseSiblingString takes a string (as constructed by parseSiblingAddress() for example) representing
 // a sibling IP address, port and protocol, and sets the ComboAddress and SiblingProtocol parameters
 // based on the values in the string
-// The ComboAddress contructor will throw a WforceException if the resulting ComboAddress is not valid
+// The ComboAddress constructor will throw a WforceException if the resulting ComboAddress is not valid
 // If an invalid protocol is supplied, then UDP will be assumed
 void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Protocol& proto)
 {

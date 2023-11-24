@@ -534,7 +534,7 @@ The Lua object is retrieved with the following call:
 local mygeodb = getGeoIP2DB("Name")
 ```
 
-You can then lookup infomation using the following calls:
+You can then lookup information using the following calls:
 
 * lookupCountry() - Returns the 2 letter country code associated with
   the IP address

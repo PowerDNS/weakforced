@@ -682,7 +682,7 @@ a Netmask. For example:
 		my_nm = newNetmask("8.0.0.0/8")
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
-  efficiently match IPs/subnets agagainst a range. For example:
+  efficiently match IPs/subnets against a range. For example:
 
 		mynm = newNetmaskGroup()
 

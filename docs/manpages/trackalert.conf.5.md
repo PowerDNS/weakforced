@@ -333,7 +333,7 @@ configuration or within the allow/report/reset functions:
 		mystr = my_ca:tostring()
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
-  efficiently match IPs/subnets agagainst a range. For example:
+  efficiently match IPs/subnets against a range. For example:
 
 		mynm = newNetmaskGroup()
 

@@ -16,7 +16,7 @@
 
 The `webserver()` configuration command is now deprecated, and is replaced with `addListener()`,
 which enables both TLS and non-TLS listeners to be created, as well as enabling multiple listeners
-to be created oncurrently. The new command `setWebserverPassword()` is used to set the password
+to be created concurrently. The new command `setWebserverPassword()` is used to set the password
 for the REST API (previously this was set as part of the `webserver()` command).
 
 An example listener without TLS:

@@ -125,7 +125,7 @@ Support for Parsing device_id
 The device_id parameter to the allow and report commands existed
 in 1.2.x, however it was not parsed by wforce. Now the parameter is
 parsed if the protocol parameter is one of "http", "imap" or
-"mobileapi". Note that if the protocol parameter is non-existent or
+"mobileapi". Note that if the protocol parameter is nonexistent or
 does not match the above list, then device_id will not be parsed. The
 device_id is parsed into key value pairs of the "device_attrs" object,
 as follows: 

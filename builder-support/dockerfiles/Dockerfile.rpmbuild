@@ -39,8 +39,20 @@ RUN git clone https://github.com/open-source-parsers/jsoncpp
 RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
 RUN cd jsoncpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=OFF && make && make install
 
+@IF [ "$BUILDER_RHEL_FLAVOUR" = "amazon" ]
+ARG DROGON_VERSION=v1.7.4
+@ENDIF
+@IF [ "$BUILDER_RHEL_FLAVOUR" != "amazon" ]
+@IF [ "$BUILDER_RHEL_VERSION" = "7" ]
+ARG DROGON_VERSION=v1.7.4
+@ENDIF
+@IF [ "$BUILDER_RHEL_VERSION" != "7" ]
+ARG DROGON_VERSION=v1.9.1
+@ENDIF
+@ENDIF
+
 RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.7.4 -b v1.7.4
+RUN cd drogon && git checkout tags/"$DROGON_VERSION" -b "$DROGON_VERSION"
 RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
 
 RUN wget https://github.com/maxmind/libmaxminddb/releases/download/1.7.1/libmaxminddb-1.7.1.tar.gz && tar xvf libmaxminddb-1.7.1.tar.gz

@@ -1,3 +1,5 @@
+@EXEC export BUILDER_RHEL_VERSION=8
+@EXEC export BUILDER_RHEL_FLAVOUR=oracle
 # First do the source builds
 @INCLUDE Dockerfile.target.sdist
 

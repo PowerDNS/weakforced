@@ -23,7 +23,7 @@ jobs:
       - name: Build and Install prometheus-cpp
         run: cd prometheus-cpp && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && sudo make install
       - name: Download Drogon
-        run: git clone https://github.com/drogonframework/drogon.git && cd drogon && git checkout tags/v1.7.4 -b v1.7.4
+        run: git clone https://github.com/drogonframework/drogon.git && cd drogon && git checkout tags/v1.9.1 -b v1.9.1
       - name: Build and Install Drogon
         run: cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && sudo make install
       - run: sudo sysctl -w vm.max_map_count=262144

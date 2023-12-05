@@ -3,6 +3,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [2.10.0]
+
+### Added
+- Add Enterprise Linux 9 Build Target
+- Option to use OpenSSL instead of Libsodium for encryption
+
+### Removed
+- Remove Legacy GeoIP from Packages and Dockerfiles/Images
+- Remove the report_api from weakforced entirely
+
+### Changed
+- Move to pytest instead of nose for regression tests
+
+## [2.8.0]
+
+### Added 
+- Support ELK 7.x Stack 
+- Support Date Expansion in WebHook URLs
+- Enable IP and Login substitution in blocklist return messages
+- Add config option to disable password for /metrics endpoint
+- Support redis usernames and passwords for redis authentication
+- Support hostnames for redis configuration in addition to IP addresses
+
+## Changed
+
+- Fix an issue where IPv6 ComboAddress returned zero port number (which caused v6 HTTP listen addresses to not work)
+- Set V6ONLY socket option to stop v6 sockets from managing v4 addresses for replication
+- Return the IP address of the client in JSON of ACL denied response
+
 ## [2.6.1]
 - Fix issue where wforce was complaining about not being able to create tmp file on startup
 - Fix timing issue whereby the webserver was not started before syncDB leading to syncDone failures

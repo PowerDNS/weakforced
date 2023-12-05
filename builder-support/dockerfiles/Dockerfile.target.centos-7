@@ -1,3 +1,5 @@
+@EXEC export BUILDER_RHEL_VERSION=7
+@EXEC export BUILDER_RHEL_FLAVOUR=centos
 # First do the source builds
 @INCLUDE Dockerfile.target.sdist
 

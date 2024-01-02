@@ -98,7 +98,7 @@ started with the -c option.
   sinks. For example: 
 
 		> showNamedReportSinks()
-		Name            Address                             Sucesses  Failures
+		Name            Address                             Successes Failures
 		trackalert      192.168.1.79:4501                   18        0
 		trackalert      192.168.1.30:4501                   19        0
 		elasticsearch   10.22.2.15:4501                     18        0
@@ -108,7 +108,7 @@ started with the -c option.
   information about configured report sinks. For example:
 
 		> showReportSinks()
-		Address                             Sucesses  Failures
+		Address                             Successes Failures
 		192.168.1.79:4501                   18        7
 		192.168.1.30:4501                   25        0
 
@@ -227,7 +227,7 @@ initialized. For example:
 # BUGS
 The replication function of clustering means that as more servers are added to a 
 cluster, incremental performance gains may be less each time, eventually
-possibly leading to peformance degradation. This is because each
+possibly leading to performance degradation. This is because each
 server keeps a full copy of the stats DBs and the blacklists, and
 changes to those are replicated to all siblings. This can be mitigated by
 partitioning siblings into smaller clusters that do not share

@@ -428,7 +428,7 @@ dnl until we succeed to link conftest.o in an executable.  The problem is
 dnl that the various TRY_LINK / COMPILE_IFELSE macros of Autoconf always
 dnl remove all the temporary files including conftest.o.  So the trick here
 dnl is to temporarily change the value of ac_objext so that conftest.o is
-dnl preserved accross tests.  This is obviously fragile and I will burn in
+dnl preserved across tests.  This is obviously fragile and I will burn in
 dnl hell for not respecting Autoconf's documented interfaces, but in the
 dnl mean time, it optimizes the macro by a factor of 5 to 30.
 dnl Another small optimization: the first argument of AC_COMPILE_IFELSE left
@@ -496,7 +496,7 @@ dnl generated only once above (before we start the for loops).
       if test x"$Boost_lib" = xyes; then
         # Check or used cached result of whether or not using -R or
         # -rpath makes sense.  Some implementations of ld, such as for
-        # Mac OSX, require -rpath but -R is the flag known to work on
+        # Mac OS X, require -rpath but -R is the flag known to work on
         # other systems.  https://github.com/tsuna/boost.m4/issues/19
         AC_CACHE_VAL([boost_cv_rpath_link_ldflag],
           [case $boost_ldpath in

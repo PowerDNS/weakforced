@@ -45,7 +45,7 @@ fields:
 * expiration - A string showing the date/time when the blacklist will
 expire
 * reason - A string stating why the blacklist was created
-* key - What was blacllisted, i.e. either ip, login or iplogin
+* key - What was blacklisted, i.e. either ip, login or iplogin
 * blacklisted - This will be set to 1
 
 The getDBStats command will return additional information about
@@ -207,7 +207,7 @@ the function "twResetField()" can be used to achieve this, e.g.:
 Configurable accuracy for HLL and CountMin types
 -----------
 
-The HLL and CountMin types of StatsDB entries are probablistic data
+The HLL and CountMin types of StatsDB entries are probabilistic data
 structures, which trade accuracy for memory usage. Previously the
 accuracy (and thus memory usage) was hardcoded, however now their
 accuracy can be tuned. Increasing accuracy however means a

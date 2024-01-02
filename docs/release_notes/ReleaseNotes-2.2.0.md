@@ -208,7 +208,7 @@ Built-In Blacklist return messages are configurable
 The following new functions enable the return messages for built-in blacklists to be configured:
 * setBlacklistIPRetMsg
 * setBlacklistLoginRetMsg
-* setBlackistIPLoginRetMsg
+* setBlacklistIPLoginRetMsg
 
 See the wforce.conf man page for more details.
 

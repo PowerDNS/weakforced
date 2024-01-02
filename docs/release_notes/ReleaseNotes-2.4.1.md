@@ -43,5 +43,5 @@ is strongly recommended when specifying per-sibling encryption keys.
 # Optional Per-Sibling Encryption Keys
 
 All the methods of managing siblings (Lua or REST API) enable per-sibling encryption keys to be set.
-Encryption keys are are 32-byte strings that are Base-64 encoded before passing to the sibling
+Encryption keys are 32-byte strings that are Base-64 encoded before passing to the sibling
 management functions or REST API.

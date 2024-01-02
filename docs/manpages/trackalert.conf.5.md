@@ -256,7 +256,7 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
 
         setCurlCABundleFile("/etc/ca/local_cas.pem")
 
-* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certifcate and key files to use for mutual TLS authentication (in PEM format).
+* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certificate and key files to use for mutual TLS authentication (in PEM format).
 
         setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
 
@@ -333,7 +333,7 @@ configuration or within the allow/report/reset functions:
 		mystr = my_ca:tostring()
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
-  efficiently match IPs/subnets agagainst a range. For example:
+  efficiently match IPs/subnets against a range. For example:
 
 		mynm = newNetmaskGroup()
 
@@ -449,7 +449,7 @@ configuration or within the allow/report/reset functions:
 
 		if (lt.device_attrs["os.family"] == "Mac OS X")
 		then
-		    -- do something special for MacOS
+		    -- do something special for macOS
 		end
 
 * LoginTuple.protocol - A string representing the protocol that was

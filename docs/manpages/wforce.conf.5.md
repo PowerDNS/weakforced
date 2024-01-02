@@ -140,7 +140,7 @@ cannot be called inside the allow/report/reset functions:
   the named list to which all received reports should be forwarded
   over UDP. Reports will be sent to the configured report sinks for a
   given name in a round-robin fashion if more than one is
-  specified. Eeports are sent separately to each named report sink. If
+  specified. Reports are sent separately to each named report sink. If
   port is not specified it defaults to 4501. Replaces the deprecated
   "addReportSink()". For example:
   
@@ -287,7 +287,7 @@ cannot be called inside the allow/report/reset functions:
   a lower number giving more accuracy at the expense of memory. The
   default is 0.05. The value of gamma is between 0 and 1, with a
   higher number giving higher accuracy. The default for gamma
-  is 0.2. If you require more acuracy, consider changing these values
+  is 0.2. If you require more accuracy, consider changing these values
   slightly, but check your memory usage carefully.
 
 * newStringStatsDB(\<stats db name\>, \<window size\>, \<num windows\>,
@@ -427,19 +427,19 @@ cannot be called inside the allow/report/reset functions:
   "{login}" will be substituted for the actual IP address and login name. 
   For example:
 
-        setBlackistIPRetMsg("Go away your IP {ip} is blacklisted")
+        setBlacklistIPRetMsg("Go away your IP {ip} is blacklisted")
 
 * setBlacklistLoginRetMsg(<msg>) - Set the message to be returned to
   clients whose login is blacklisted. The strings "{ip}" and
   "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistLoginRetMsg("Go away your login {login} is blacklisted")
+        setBlacklistLoginRetMsg("Go away your login {login} is blacklisted")
 
 * setBlacklistIPLoginRetMsg(<msg>) - Set the message to be returned to
   clients whose IP address/login is blacklisted. The strings "{ip}" and
   "{login}" will be substituted for the actual IP address and login name. For example:
 
-        setBlackistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
+        setBlacklistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
@@ -574,7 +574,7 @@ cannot be called inside the allow/report/reset functions:
 
         setCurlCABundleFile("/etc/ca/local_cas.pem")
 
-* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certifcate and key files to use for mutual TLS authentication (in PEM format).
+* setCurlClientCertAndKey(\<Path to Cert File\>, \<Path to Key File\>) - Gives the location of the certificate and key files to use for mutual TLS authentication (in PEM format).
 
         setCurlClientCertAndKey("/etc/certs/clientcert.pem", "/etc/certs/clientkey.pem")
 
@@ -682,7 +682,7 @@ a Netmask. For example:
 		my_nm = newNetmask("8.0.0.0/8")
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
-  efficiently match IPs/subnets agagainst a range. For example:
+  efficiently match IPs/subnets against a range. For example:
 
 		mynm = newNetmaskGroup()
 
@@ -831,7 +831,7 @@ a Netmask. For example:
   
 		statsdb:twResetField(lt.login, "countLogins")
 
-* StringStatsDB:twSetExpireSleep(\<miliseconds\>) - Set the sleep
+* StringStatsDB:twSetExpireSleep(\<milliseconds\>) - Set the sleep
   interval between checks to expire/expunge entries. Defaults to
   250ms. For example:
 
@@ -872,17 +872,17 @@ a Netmask. For example:
 * getBlacklistIPRetMsg() - Get the message to be returned to
   clients whose IP address is blacklisted. For example:
 
-        local retmsg = getBlackistIPRetMsg()
+        local retmsg = getBlacklistIPRetMsg()
 
 * getBlacklistLoginRetMsg() - Get the message to be returned to
   clients whose login is blacklisted. For example:
 
-        local retmsg = getBlackistLoginRetMsg()
+        local retmsg = getBlacklistLoginRetMsg()
 
 * getBlacklistIPLoginRetMsg() - Get the message to be returned to
   clients whose IP address/login is blacklisted. For example:
 
-        local retmsg = getBlackistIPLoginRetMsg()
+        local retmsg = getBlacklistIPLoginRetMsg()
 
 * blacklistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Blacklist the
   specified netmask for expiry seconds, with the specified reason. Netmask
@@ -1066,7 +1066,7 @@ a Netmask. For example:
 
 		if (lt.device_attrs["os.family"] == "Mac OS X")
 		then
-		    -- do something special for MacOS
+		    -- do something special for macOS
 		end
 
 * LoginTuple.protocol - A string representing the protocol that was

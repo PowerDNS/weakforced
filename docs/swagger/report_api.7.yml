@@ -32,7 +32,7 @@ paths:
             $ref: "#/definitions/QueryParams"
       responses:
         "200":
-          description: "logins reponse"
+          description: "logins response"
           schema:
             $ref: "#/definitions/LoginsResponse"
         default:
@@ -178,7 +178,7 @@ definitions:
         description: "The name of the region associated with the IP address"
         type: string
       location:
-        description: "The longitude and latitude of the IP addresss [long, lat]"
+        description: "The longitude and latitude of the IP address [long, lat]"
         type: string
       login_datetime:
         description: "The date, time and timezone of the login in ISO-8601 format"

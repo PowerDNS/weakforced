@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fix issue where wforce was complaining about not being able to create tmp file on startup
 - Fix timing issue whereby the webserver was not started before syncDB leading to syncDone failures
 - Use debian bullseye-slim in wforce docker image
-- Fix issue in wforce docker image where the default config file was overriden with a volume mount but not used
+- Fix issue in wforce docker image where the default config file was overridden with a volume mount but not used
 
 ## [2.6.0]
 - Support HTTPS in webserver using libdrogon

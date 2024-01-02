@@ -68,7 +68,7 @@ RUN yum install -y /usr/bin/python3
 RUN builder/helpers/build-specs.sh builder-support/specs/wforce.spec
 @ENDIF
 
-# mv accross layers with overlay2 is buggy in some kernel versions (results in empty dirs)
+# mv across layers with overlay2 is buggy in some kernel versions (results in empty dirs)
 # See: https://github.com/moby/moby/issues/33733
 #RUN mv /root/rpmbuild/RPMS/* /dist/
 RUN cp -R /root/rpmbuild/RPMS/* /dist/

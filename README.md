@@ -115,7 +115,7 @@ the insanely great Lua scripting language.
 Note that although there is
 a single Lua configuration file, the canonicalize, reset, report and allow functions run in
 different lua states from the rest of the configuration. This mostly
-"just works", but may lead to unexpectd behaviour such as running Lua
+"just works", but may lead to unexpected behaviour such as running Lua
 commands at the server Lua prompt, and getting multiple answers
 (because Lua commands are passed to all Lua states).
 
@@ -504,10 +504,10 @@ To view sibling stats:
 
 ```lua
 > siblings()
-Address                             Sucesses  Failures     Note
-192.168.1.79:4001                   18        7
-192.168.1.30:4001                   25        0
-192.168.1.54:4001                   0         0            Self
+Address                             Send Successes  Send Failures  Rcv Successes   Rcv Failures     Note
+192.168.1.79:4001                   18              7              0               0
+192.168.1.30:4001                   25              0              0               0
+192.168.1.54:4001                   0               0              0               0                Self
 ```
 
 With this setup, several wforces are all kept in sync, and can be load
@@ -534,7 +534,7 @@ The Lua object is retrieved with the following call:
 local mygeodb = getGeoIP2DB("Name")
 ```
 
-You can then lookup infomation using the following calls:
+You can then lookup information using the following calls:
 
 * lookupCountry() - Returns the 2 letter country code associated with
   the IP address

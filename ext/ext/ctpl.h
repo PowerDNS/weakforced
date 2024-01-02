@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2014 by Vitaliy Vitsentiy
  *
- *  Github: https://github.com/vit-vit/ctpl
+ *  GitHub: https://github.com/vit-vit/ctpl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ namespace ctpl {
                 delete _f;  // empty the queue
         }
 
-        // pops a functional wraper to the original function
+        // pops a functional wrapper to the original function
         std::function<void(int)> pop() {
             std::function<void(int id)> * _f = nullptr;
             this->q.pop(_f);
@@ -118,7 +118,7 @@ namespace ctpl {
 
 
         // wait for all computing threads to finish and stop all threads
-        // may be called asyncronously to not pause the calling thread while waiting
+        // may be called asynchronously to not pause the calling thread while waiting
         // if isWait == true, all the functions in the queue are run, otherwise the queue is cleared without running the functions
         void stop(bool isWait = false) {
             if (!isWait) {
@@ -168,7 +168,7 @@ namespace ctpl {
         }
 
         // run the user's function that excepts argument int - id of the running thread. returned value is templatized
-        // operator returns std::future, where the user can get the result and rethrow the catched exceptins
+        // operator returns std::future, where the user can get the result and rethrow the caught exceptions
         template<typename F>
         auto push(F && f) ->std::future<decltype(f(0))> {
             auto pck = std::make_shared<std::packaged_task<decltype(f(0))(int)>>(std::forward<F>(f));

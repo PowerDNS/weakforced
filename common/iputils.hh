@@ -735,7 +735,7 @@ public:
 
   void cleanup_tree(TreeNode* node)
   {
-    // only cleaup this node if it has no children and node4 and node6 are both empty
+    // only cleanup this node if it has no children and node4 and node6 are both empty
     if (!(node->left || node->right || node->node6 || node->node4)) {
       // get parent node ptr
       TreeNode* parent = node->parent;
@@ -841,7 +841,7 @@ private:
   bool d_cleanup_tree; //<! Whether or not to cleanup the tree on erase
 };
 
-/** This class represents a group of supplemental Netmask classes. An IP address matchs
+/** This class represents a group of supplemental Netmask classes. An IP address matches
     if it is matched by zero or more of the Netmask classes within.
 */
 class NetmaskGroup

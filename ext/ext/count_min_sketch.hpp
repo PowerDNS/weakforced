@@ -1,7 +1,7 @@
 /** 
     Author: Daniel Alabi
     http://alabidan.me
-    Github: alabid/countminsketch
+    GitHub: alabid/countminsketch
     Count-Min Sketch Implementation based on paper by
     Muthukrishnan and Cormode, 2004
 **/

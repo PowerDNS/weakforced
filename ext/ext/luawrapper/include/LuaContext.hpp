@@ -217,7 +217,7 @@ public:
 
     /**
      * Function object that can call a function stored by Lua
-     * This type is copiable and movable, but not constructible. It can only be created through readVariable.
+     * This type is copyable and movable, but not constructible. It can only be created through readVariable.
      * @tparam TFunctionType    Function type (eg. "int (int, bool)")
      */
     template<typename TFunctionType>
@@ -1078,7 +1078,7 @@ private:
 
     // simple function that reads the "nb" first top elements of the stack, pops them, and returns the value
     // warning: first parameter is the number of parameters, not the parameter index
-    // if read generates an exception, stack is poped anyway
+    // if read generates an exception, stack is popped anyway
     template<typename TReturnType>
     static auto readTopAndPop(lua_State* state, PushedObject object)
         -> TReturnType

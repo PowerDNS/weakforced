@@ -16,7 +16,7 @@
 
 The `webserver()` configuration command is now deprecated, and is replaced with `addListener()`,
 which enables both TLS and non-TLS listeners to be created, as well as enabling multiple listeners
-to be created oncurrently. The new command `setWebserverPassword()` is used to set the password
+to be created concurrently. The new command `setWebserverPassword()` is used to set the password
 for the REST API (previously this was set as part of the `webserver()` command).
 
 An example listener without TLS:
@@ -32,7 +32,7 @@ For more details, see the man page for wforce.conf.
 
 Various options for the configuration of outbound HTTPS connections are now supported, specifically:
 
-* Mutual TLS Authentication - `setCurlClientCertAndKey()` is used to specify the location of a client certifcate 
+* Mutual TLS Authentication - `setCurlClientCertAndKey()` is used to specify the location of a client certificate 
   and key for mTLS.
 * Using a different CA for checking server certificates - `setCurlCABundleFile()` is used to specify the location
   of a file containing certs to use for this purposes.

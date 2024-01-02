@@ -35,8 +35,8 @@ See the wforce_webhook man page for more details.
 ## Enable IP and Login Substitution in blocklist return messages
 
 For example:
-setBlackistIPRetMsg("Go away your IP {ip} is blacklisted")
-setBlackistLoginRetMsg("Go away your login {login} is blacklisted")
+setBlacklistIPRetMsg("Go away your IP {ip} is blacklisted")
+setBlacklistLoginRetMsg("Go away your login {login} is blacklisted")
 
 See the wforce.conf man page for more details.
 

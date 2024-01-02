@@ -5,7 +5,7 @@ DIRTY=""
 git status | grep -q clean || DIRTY='.dirty'
 
 # Special environment variable to signal that we are building a release, as this
-# has consequenses for the version number.
+# has consequences for the version number.
 if [ "${IS_RELEASE}" = "YES" ]; then
   TAG="$(git describe --tags --exact-match 2> /dev/null)"
   if [ -n "${TAG}" ]; then

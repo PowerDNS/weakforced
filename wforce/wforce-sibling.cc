@@ -219,7 +219,7 @@ void Sibling::queueMsg(const std::string& msg)
   queue_cv.notify_one();
 }
 
-// Utility functions for managings siblings
+// Utility functions for managing siblings
 
 // siblingHostToAddress takes string representing either a hostname or an IP address
 // and returns a string representing the IP address.
@@ -268,7 +268,7 @@ std::string createSiblingAddress(const std::string& host, int port, Sibling::Pro
 // parseSiblingString takes a string (as constructed by parseSiblingAddress() for example) representing
 // a sibling IP address, port and protocol, and sets the ComboAddress and SiblingProtocol parameters
 // based on the values in the string
-// The ComboAddress contructor will throw a WforceException if the resulting ComboAddress is not valid
+// The ComboAddress constructor will throw a WforceException if the resulting ComboAddress is not valid
 // If an invalid protocol is supplied, then UDP will be assumed
 void parseSiblingString(const std::string& str, ComboAddress& ca, Sibling::Protocol& proto)
 {
@@ -363,7 +363,7 @@ bool removeSibling(const std::string& address,
   });
 
   // We don't remove any existing prometheus metrics for this sibling, otherwise we might cut off metrics before they are scraped
-  // This means that of sibling membership is highly dynamic, the mwtrics for siblings will "grow"; this is considered to be acceptable.
+  // This means that of sibling membership is highly dynamic, the metrics for siblings will "grow"; this is considered to be acceptable.
 
   return retval;
 }

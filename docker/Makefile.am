@@ -5,7 +5,7 @@ REGRESSION_SERVICE = regression
 
 SUBDIRS= wforce_image
 
-$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f) $(shell find ../report_api -type f)  $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find regression -type f) $(shell find logstash -type f) 
+$(COMPOSE_TARGET): $(COMPOSE_SOURCE) $(shell find ../common -type f) $(shell find ../wforce -type f)  $(shell find ../trackalert -type f) $(shell find ../ext -type f) $(shell find ../regression-tests -type f) $(shell find regression -type f) $(shell find logstash -type f)
 	$(DCMP) down -v
 	$(DCMP) build
 	touch $(COMPOSE_TARGET)

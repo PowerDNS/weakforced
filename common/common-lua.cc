@@ -474,5 +474,15 @@ void setupCommonLua(bool client,
   c_lua.registerFunction("lookupUIntValue", &WFGeoIP2DB::lookupUIntValue);
   c_lua.registerFunction("lookupBoolValue", &WFGeoIP2DB::lookupBoolValue);
   c_lua.registerFunction("lookupDoubleValue", &WFGeoIP2DB::lookupDoubleValue);
+
+  c_lua.registerMember("city", &WFGeoIPRecord::city);
+  c_lua.registerMember("country_code", &WFGeoIPRecord::country_code);
+  c_lua.registerMember("country_name", &WFGeoIPRecord::country_name);
+  c_lua.registerMember("region", &WFGeoIPRecord::region);
+  c_lua.registerMember("continent_code", &WFGeoIPRecord::continent_code);
+  c_lua.registerMember("postal_code", &WFGeoIPRecord::postal_code);
+  c_lua.registerMember("latitude", &WFGeoIPRecord::latitude);
+  c_lua.registerMember("longitude", &WFGeoIPRecord::longitude);
+
 #endif // HAVE_MMDB
 }

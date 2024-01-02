@@ -13,7 +13,7 @@ million users, if not more. The limiting factor is number of logins
 per second at peak.
 
 Wforce is a project by Dovecot, PowerDNS and Open-Xchange. For historical
-reasons, it lives in the PowerDNS github tree. If you have any questions, email
+reasons, it lives in the PowerDNS github organization. If you have any questions, email
 neil.cook@open-xchange.com.
 
 For detailed technical documentation, please go to [https://powerdns.github.io/weakforced/](https://powerdns.github.io/weakforced/).

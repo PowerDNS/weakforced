@@ -45,7 +45,7 @@ public:
   
   std::string lookupCountry(const ComboAddress& address);
   std::string lookupISP(const ComboAddress& address);
-  WFGeoIPRecord lookupCity(const ComboAddress& address);
+  std::unique_ptr<WFGeoIPRecord> lookupCity(const ComboAddress& address);
   std::string lookupStringValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
   uint64_t lookupUIntValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);
   bool lookupBoolValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs);

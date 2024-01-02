@@ -76,40 +76,40 @@ std::string WFGeoIP2DB::lookupISP(const ComboAddress& address)
   return std::string(data.utf8_string, data.data_size);
 }
 
-WFGeoIPRecord WFGeoIP2DB::lookupCity(const ComboAddress& address)
+std::unique_ptr<WFGeoIPRecord> WFGeoIP2DB::lookupCity(const ComboAddress& address)
 {
-  WFGeoIPRecord ret_wfgir = {};
+  auto ret_wfgir = std::make_unique<WFGeoIPRecord>();
   MMDB_entry_data_s data;
   MMDB_lookup_result_s res;
   
   if (mmdbLookup(address.toString(), res)) {
     if ((MMDB_get_value(&res.entry, &data, "country", "iso_code", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.country_code = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->country_code = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "country", "names", "en", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.country_name = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->country_name = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "subdivisions", "0", "iso_code", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.region = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->region = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "cities", "0", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.city = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->city = std::string(data.utf8_string, data.data_size);
     else if ((MMDB_get_value(&res.entry, &data, "city", "names", "en", NULL)
               == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.city = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->city = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "continent", "code", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.continent_code = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->continent_code = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "postal", "code", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.postal_code = std::string(data.utf8_string, data.data_size);
+      ret_wfgir->postal_code = std::string(data.utf8_string, data.data_size);
     if ((MMDB_get_value(&res.entry, &data, "location", "latitude", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.latitude = data.double_value;
+      ret_wfgir->latitude = data.double_value;
     if ((MMDB_get_value(&res.entry, &data, "location", "longitude", NULL)
          == MMDB_SUCCESS) && (data.has_data))
-      ret_wfgir.longitude = data.double_value;    
+      ret_wfgir->longitude = data.double_value;
   }
   return ret_wfgir;
 }

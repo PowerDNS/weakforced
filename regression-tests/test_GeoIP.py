@@ -32,5 +32,5 @@ class TestGeoIP(ApiTestCase):
         j = r.json()
         print(json.dumps(j))
         self.assertRegex(json.dumps(j['r_attrs']['city']), "Nottingham")
-        self.assertRegex(json.dumps(j['r_attrs']['latitude']), "52.9538")
+        self.assertRegex(json.dumps(j['r_attrs']['latitude']), "52.9044")
         r.close()

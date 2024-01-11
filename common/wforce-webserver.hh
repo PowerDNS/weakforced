@@ -34,7 +34,6 @@
 #include "iputils.hh"
 #include "sstuff.hh"
 #include "sholder.hh"
-#include "ext/ctpl.h"
 #include "drogon/drogon.h"
 #include "prometheus.hh"
 #include "perf-stats.hh"

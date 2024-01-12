@@ -3,7 +3,7 @@ name: Publish Test Results
 
 on:
   workflow_run:
-    workflows: ["Run regression tests"]
+    workflows: ["Call reusable regression workflow"]
     types:
       - completed
 permissions: {}

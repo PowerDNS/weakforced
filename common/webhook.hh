@@ -23,8 +23,8 @@
 #pragma once
 #include <mutex>
 #include <curl/curl.h>
+#include <condition_variable>
 #include "json11.hpp"
-#include "ext/ctpl.h"
 #include "dolog.hh"
 #include "minicurl.hh"
 #include "prometheus.hh"

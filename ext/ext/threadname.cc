@@ -1,10 +1,11 @@
 /*
- * This file is part of PowerDNS or dnsdist.
+ * This file is part of PowerDNS or weakforced.
  * Copyright -- PowerDNS.COM B.V. and its contributors
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * In addition, for the avoidance of any doubt, permission is granted to
  * link this program with OpenSSL and to (re)distribute the binaries

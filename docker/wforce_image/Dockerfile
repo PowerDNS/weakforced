@@ -120,8 +120,7 @@ ENV TRACKALERT_HTTP_PORT=8085
 ENV TRACKALERT_HTTP_PASSWORD=
 ENV TRACKALERT_CONFIG_FILE=
 
-LABEL org.label-schema.build-date="${build_date}" \
-  org.label-schema.license="${license}" \
+LABEL   org.label-schema.license="${license}" \
   org.label-schema.name="Weakforced" \
   org.label-schema.schema-version="1.0" \
   org.label-schema.url="https://powerdns.github.io/weakforced" \
@@ -130,7 +129,6 @@ LABEL org.label-schema.build-date="${build_date}" \
   org.label-schema.vcs-url="https://github.com/PowerDNS/weakforced" \
   org.label-schema.vendor="PowerDNS" \
   org.label-schema.version="${version}" \
-  org.opencontainers.image.created="${build_date}" \
   org.opencontainers.image.documentation="https://powerdns.github.io/weakforced" \
   org.opencontainers.image.licenses="${license}" \
   org.opencontainers.image.revision="${git_revision}" \

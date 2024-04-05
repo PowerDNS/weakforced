@@ -33,7 +33,7 @@ jobs:
         env:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      - run: cd docker/wforce_image && TAG=`git describe --tags` docker buildx build -f Dockerfile.minimal weakforced -t powerdns/wforce-minimal:$TAG --load
+      - run: cd docker/wforce_image && docker buildx build -f Dockerfile.minimal weakforced -t powerdns/wforce-minimal:`git describe --tags` --load
       - run: cd docker && bash docker_push.sh "powerdns/wforce-minimal"
         env:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

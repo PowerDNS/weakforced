@@ -14,7 +14,7 @@ push_tag()
   local tag=$1
   echo "Docker username is: '"$DOCKER_USERNAME"'"
   docker_login
-  docker push powerdns/wforce:$tag
+  docker push $IMAGE:$tag
 }
 
 TAG=`git describe --tags`
@@ -24,10 +24,12 @@ then
     push_tag $TAG
 fi
 
+IMAGE=$1
+
 BRANCH=`git branch --show-current`
 if [ "$BRANCH" = "master" ]
 then
-    docker tag powerdns/wforce:$TAG powerdns/wforce:unstable
+    docker tag $IMAGE:$TAG $IMAGE:unstable
     push_tag unstable
 fi
 

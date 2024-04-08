@@ -7,7 +7,6 @@ services:
       context: weakforced
       dockerfile: docker/wforce_image/Dockerfile
       args:
-        - build_date=${BUILD_DATE}
         - license=${LICENSE}
         - git_revision=${GIT_REVISION}
         - version=${VERSION}

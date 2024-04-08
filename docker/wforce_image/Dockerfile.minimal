@@ -1,0 +1,124 @@
+FROM alpine:3.19 as wforce_build
+
+RUN apk update && \
+    apk add \
+               autoconf \
+               automake \
+               boost-dev \
+               curl-dev \
+               openssl-dev \
+               hiredis-dev \
+               readline-dev \
+               libmaxminddb-dev \
+               luajit-dev \
+               protobuf-dev \
+               yaml-cpp-dev \
+               jsoncpp-dev \
+               zlib-dev \
+               libtool \
+               pkgconf \
+               protobuf \
+               wget \
+               util-linux-dev \
+               make \
+               cmake \
+               git \
+               binutils \
+               g++
+
+WORKDIR /wforce/
+RUN mkdir /wforce/install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_BROTLI=OFF -DBUILD_C-ARES=OFF -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
+
+RUN git clone https://github.com/jupp0r/prometheus-cpp.git
+RUN cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
+RUN cd prometheus-cpp && \
+    mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=off -DENABLE_PULL=off \
+    -DENABLE_PUSH=off -DENABLE_COMPRESSION=off -DENABLE_TESTING=off \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make && make install
+
+RUN wget https://getdnsapi.net/dist/getdns-1.7.3.tar.gz && tar -xvf getdns-1.7.3.tar.gz
+RUN cd getdns-1.7.3 && cmake . -DCMAKE_BUILD_TYPE=Release -DENABLE_SHARED=off -DENABLE_STUB_ONLY=on -DBUILD_GETDNS_QUERY=off -DBUILD_GETDNS_SERVER_MON=off -DBUILD_TESTING:BOOL=OFF -DUSE_LIBIDN2=off && make install
+
+ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
+COPY m4/ /wforce/m4/
+COPY ext/ /wforce/ext/
+COPY docs/ /wforce/docs/
+COPY wforce/ /wforce/wforce/
+COPY common/ /wforce/common/
+COPY trackalert/ /wforce/trackalert/
+COPY docker/Makefile.am /wforce/docker/
+RUN  mkdir /wforce/docker/wforce_image
+COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
+COPY elk/ /wforce/elk/
+
+RUN autoreconf -ivf
+RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-sodium --disable-docker --with-luajit --sysconfdir=/etc/wforce
+RUN make clean
+RUN make install DESTDIR=/wforce/install
+RUN strip /wforce/install/usr/bin/wforce /wforce/install/usr/bin/trackalert
+# Remove the default wforce.conf and trackalert.conf files
+RUN rm /wforce/install/etc/wforce/wforce.conf /wforce/install/etc/wforce/trackalert.conf
+
+FROM alpine:3.19 as wforce_image
+
+WORKDIR /wforce/
+
+COPY --from=wforce_build /wforce/install/ /
+
+RUN apk update && \
+    apk add \
+               boost-filesystem \
+               curl \
+               openssl \
+               hiredis \
+               readline \
+               libmaxminddb \
+               luajit \
+               libprotobuf \
+               yaml-cpp \
+               jsoncpp \
+               zlib \
+               protobuf \
+               abseil-cpp \
+               abseil-cpp-flags-marshalling \
+               util-linux \
+               tini
+
+RUN addgroup --gid 1000 wforce && \
+    adduser -u 1000 -S -G wforce wforce && \
+    chmod -R 0775 /etc/wforce && \
+    chgrp -R 1000 /etc/wforce
+
+ARG license
+ARG git_revision
+ARG version
+
+LABEL   org.label-schema.license="${license}" \
+  org.label-schema.name="Weakforced" \
+  org.label-schema.schema-version="1.0" \
+  org.label-schema.url="https://powerdns.github.io/weakforced" \
+  org.label-schema.usage="https://powerdns.github.io/weakforced" \
+  org.label-schema.vcs-ref="${git_revision}" \
+  org.label-schema.vcs-url="https://github.com/PowerDNS/weakforced" \
+  org.label-schema.vendor="PowerDNS" \
+  org.label-schema.version="${version}" \
+  org.opencontainers.image.documentation="https://powerdns.github.io/weakforced" \
+  org.opencontainers.image.licenses="${license}" \
+  org.opencontainers.image.revision="${git_revision}" \
+  org.opencontainers.image.source="https://github.com/PowerDNS/weakforced" \
+  org.opencontainers.image.title="Weakforced" \
+  org.opencontainers.image.url="https://powerdns.github.io/weakforced" \
+  org.opencontainers.image.vendor="PowerDNS" \
+  org.opencontainers.image.version="${version}"
+
+USER wforce:wforce
+
+EXPOSE 8084
+
+ENTRYPOINT ["tini", "--"]
+
+CMD ["/usr/bin/wforce", "-D"]

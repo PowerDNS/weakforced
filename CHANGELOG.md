@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [2.10.2]
+
+### Changed
+- Fixed LuaState selection algorithm to use a free pool, which should lead to faster/more 
+  consistent selection of lua states by threads.
+
+### Added
+- CI now builds an additional image 'powerdns/wforce-minimal' using alpine for more secure and much smaller image
+
 ## [2.10.1]
 
 ### Changed

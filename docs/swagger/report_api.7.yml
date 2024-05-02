@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  version: "2.10.1"
+  version: "2.10.2"
   title: "OX Abuse Shield Report API"
   description: "An API to retrieve and modify report information"
   contact:

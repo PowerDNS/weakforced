@@ -13,8 +13,7 @@ jobs:
       # Github.refname is wrong for pull requests - have to use head ref for them
       MYREF: ${{ github.event.pull_request && github.head_ref || github.ref_name }}
       PLATFORMS: linux/arm64,linux/amd64
-      DOCKERFILE: Dockerfile.minimal
-      BUILD_CONTEXT: docker/wforce_image
+      DOCKERFILE: docker/wforce_image/Dockerfile.minimal
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       IMAGE_NAME: wforce-minimal
     steps:
@@ -46,7 +45,7 @@ jobs:
         if: ${{ steps.release_check.outputs.release == 'YES' }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.BUILD_CONTEXT }}
+          context: .
           file: ${{ env.DOCKERFILE }}
           platforms: ${{ env.PLATFORMS }}
           push: true
@@ -58,7 +57,7 @@ jobs:
         if: ${{ env.BRANCH_NAME == 'master' }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.BUILD_CONTEXT }}
+          context: .
           file: ${{ env.DOCKERFILE }}
           platforms: ${{ env.PLATFORMS }}
           push: true

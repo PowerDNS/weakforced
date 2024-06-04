@@ -44,8 +44,6 @@ BuildRequires: pandoc
 BuildRequires: protobuf-compiler
 BuildRequires: protobuf-devel
 BuildRequires: curl-devel
-BuildRequires: luajit
-BuildRequires: luajit-devel
 BuildRequires: hiredis
 BuildRequires: hiredis-devel
 BuildRequires: openssl-devel
@@ -55,6 +53,8 @@ BuildRequires: boost-system
 BuildRequires: boost-filesystem
 BuildRequires: libuuid-devel
 BuildRequires: zlib-devel
+BuildRequires: pkgconfig(luajit)
+Requires: wforce-lua-dist
 %if %{with systemd}
 BuildRequires: systemd-devel
 Requires: systemd

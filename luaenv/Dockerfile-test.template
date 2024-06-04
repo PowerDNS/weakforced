@@ -1,0 +1,55 @@
+#
+# Dockerfile to test this env under Linux in different distros
+#
+# Run from repo root with:
+#
+#   docker build -f luaenv/Dockerfile-test .
+#
+# Add --target to specify a specific distribution target to test.
+#
+
+FROM ubuntu:20.04 AS test-ubuntu-20.04
+ENV DEBIAN_FRONTEND noninteractive
+ENV LC_ALL C.UTF-8
+ARG APT_URL=
+ENV APT_URL ${APT_URL:-http://archive.ubuntu.com/ubuntu/}
+RUN sed -i "s%http://archive.ubuntu.com/ubuntu/%${APT_URL}%" /etc/apt/sources.list
+RUN ulimit -n 2000 && apt-get update && apt-get -y upgrade && apt-get -y clean
+RUN ulimit -n 2000 && apt-get -y install gcc g++ build-essential curl autoconf automake unzip git && apt-get -y clean
+
+@INCLUDE luaenv/Dockerfile-test.include
+
+###########################################################################
+
+@EXEC COMMON_EL_DEPS="epel-release autoconf bzip2 bzip2-devel findutils gcc-c++ glibc-devel gmp-devel libffi-devel libuuid-devel net-tools openssl-devel pkgconfig readline-devel tar xz-devel unzip git make /usr/bin/curl"
+
+FROM rockylinux:9 AS test-rocky-9
+ENV LC_ALL C.UTF-8
+@EVAL RUN ulimit -n 2000 && yum install -y $COMMON_EL_DEPS
+
+@INCLUDE luaenv/Dockerfile-test.include
+
+###########################################################################
+
+FROM oraclelinux:8 AS test-oraclelinux-8
+ENV LC_ALL C.UTF-8
+@EVAL RUN ulimit -n 2000 && yum install -y $COMMON_EL_DEPS
+
+@INCLUDE luaenv/Dockerfile-test.include
+
+###########################################################################
+
+FROM centos:7 AS test-centos-7
+ENV LC_ALL C.UTF-8
+@EVAL RUN ulimit -n 2000 && yum install -y $COMMON_EL_DEPS
+
+@INCLUDE luaenv/Dockerfile-test.include
+
+###########################################################################
+
+FROM scratch AS all
+
+# We just need to reference the other stages to make sure they are all built,
+# so we generate lines like "COPY --from=test-ubuntu-20.04 /etc/hosts /tmp"
+@EXEC grep '^FROM.*AS test-' luaenv/Dockerfile-test.template | sed -E 's|^FROM.*AS (test-.*)|COPY --from=\1 /etc/hosts /tmp|'
+

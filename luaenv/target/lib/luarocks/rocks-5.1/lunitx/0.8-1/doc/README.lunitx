@@ -1,0 +1,56 @@
+
+Notes on the extensions to lunit found at <http://github.com/dcurrie/lunit>
+
+Starting with Sam's fork, described below, I added support for Lua 5.2.
+
+Since Lua 5.2 has no module function, I added a lunit.module that serves the 
+same purpose. For examples of its use, see up.lua, down.lua, and lunit-tests.lua
+
+The update has been tested with Lua 5.1.4, Lua 5.2-beta, and LuaJIT 2.0.0-beta8
+
+-- -- -- -- -- -- -- -- -- -- -- 
+
+Notes on the extensions to lunit found at <http://github.com/sam-github/lunit>.
+
+I fixed the -t switch for selecting only a single test, it didn't seem to be
+completely implemented, and annoyingly forced you to match the entire test
+function name.
+
+Vanilla lunit doesn't actually need the lunit wrapper script, you can write tests like
+
+    -- mytest.lua
+    require"lunit"
+    module("mytest", lunit.testcase, package.seeall)
+    function test_xxx()
+    end
+    function test_yyy()
+    end
+
+    lunit.main(arg)
+
+and run them like
+
+    lua mytest.lua -t xxx
+
+
+It's unfortunate this isn't documented, it led at one person to clone it, with
+slightly different function names, and minus some useful features that lunit
+got right (multiple testcases, distinguishing between errors like syntax, and
+test assertions) <http://lua-users.org/lists/lua-l/2008-11/msg00423.html>.
+
+The files both.lua, up.lua, and down.lua show how, without using the lunit
+script wrapper, you can write tests that are runnable as a single file:
+
+    lua up.lua
+
+as well as by collecting them all into a single test suite
+
+    lua both.lua
+
+or just listing them all
+
+    lua up.lua down.lua
+
+
+YMMV, hope you like it.
+

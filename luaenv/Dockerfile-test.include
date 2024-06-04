@@ -1,0 +1,9 @@
+# Generic include that adds the necessary context and runs tests
+
+@INCLUDE luaenv/Dockerfile.paths-include
+
+WORKDIR /wforce/luaenv
+RUN ./clean.sh
+RUN ./build.sh
+RUN bash -c 'source ./bin/activate.sh && ./bin/luajit test.lua'
+

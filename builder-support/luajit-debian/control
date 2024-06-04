@@ -1,0 +1,12 @@
+Source: wforce-lua-dist
+Maintainer: Neil Cook <neil.cook@open-xchange.com>
+Section: libs
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: libldap2-dev
+
+Package: wforce-lua-dist
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: PowerDNS Weakforced LuaJIT distribution

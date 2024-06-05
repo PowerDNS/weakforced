@@ -16,6 +16,7 @@ jobs:
       DOCKERFILE: docker/wforce_image/Dockerfile.minimal
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       IMAGE_NAME: wforce-minimal
+      DOCKER_ORGANIZATION_NAME: ${{ secrets.DOCKER_ORGANIZATION_NAME }}
     steps:
       - uses: actions/checkout@v4
         with:

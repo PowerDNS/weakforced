@@ -31,6 +31,7 @@ jobs:
         with:
           platforms: ${{ env.PLATFORMS }}
       - name: Login to Docker
+        if: github.event_name != 'pull_request' && github.event_name != 'push'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}

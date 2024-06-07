@@ -1,3 +1,0 @@
-#!/bin/sh
-
-LUAROCKS_SYSCONFDIR='/Users/ncook/GitProjects/weakforced/luaenv/target/etc/luarocks' exec '/Users/ncook/GitProjects/weakforced/luaenv/target/bin/luajit' -e 'package.path="/Users/ncook/GitProjects/weakforced/luaenv/target/share/lua/5.1/?.lua;/Users/ncook/GitProjects/weakforced/luaenv/target/share/lua/5.1/?/init.lua;"..package.path;package.cpath="/Users/ncook/GitProjects/weakforced/luaenv/target/lib/lua/5.1/?.so;"..package.cpath;local k,l,_=pcall(require,"luarocks.loader") _=k and l.add_context("lua-cjson","2.1.0.10-1")' '/Users/ncook/GitProjects/weakforced/luaenv/target/lib/luarocks/rocks-5.1/lua-cjson/2.1.0.10-1/bin/json2lua' "$@"

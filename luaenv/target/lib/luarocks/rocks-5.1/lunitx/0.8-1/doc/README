@@ -1,7 +1,0 @@
-This is lunitx Version 0.8.1, an extended version of Lunit
-for Lua 5.2, 5.3, and 5.4.
-
-Lunit is a unit testing framework for lua.
-
-To learn more about lunit take a look in ANNOUNCE
-and look in DOCUMENTATION and check lunitx/ example files

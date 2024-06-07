@@ -32,7 +32,7 @@ FROM package-builder-fat-base as luaenv-builder
 # These are needed for the luaenv build
 @INCLUDE ../../luaenv/Dockerfile.paths-include
 # Build Lua dist in docker, and later only package it in an RPM spec
-# This is easier to debug that build failures in an RPM build and gets cached in a layer
+# This is easier to debug than build failures in an RPM build and gets cached in a layer
 RUN cd /weakforced/luaenv && ./build.sh -p /usr/share/wforce-lua-dist
 @ENDIF
 

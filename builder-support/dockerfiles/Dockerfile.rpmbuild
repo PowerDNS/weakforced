@@ -124,3 +124,5 @@ RUN builder/helpers/build-specs.sh builder-support/specs/wforce.spec
 # See: https://github.com/moby/moby/issues/33733
 #RUN mv /root/rpmbuild/RPMS/* /dist/
 RUN cp -R /root/rpmbuild/RPMS/* /dist/
+
+

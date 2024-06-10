@@ -19,10 +19,10 @@ jobs:
           - ol-8
           - el-9
           - amazon-2
-          - debian-buster
           - debian-bullseye
+          - debian-bookworm
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # for correct version numbers
           submodules: recursive

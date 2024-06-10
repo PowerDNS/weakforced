@@ -1,4 +1,4 @@
-FROM dist-base as package-builder
+FROM dist-base as package-builder-base
 RUN yum install -y rpm-build rpmdevtools python3-rpm-macros wget \
     /usr/bin/python3 /usr/bin/pip3 && \
     yum groupinstall -y "Development Tools"
@@ -13,31 +13,51 @@ ARG CXX=clang++
 RUN mkdir /dist /wforce
 WORKDIR /wforce
 
-# Used for -p option to only build specific spec files
-ARG BUILDER_PACKAGE_MATCH
+##############################################################################
+# Reusable base with extra packages
 
-ARG BUILDER_VERSION
-ARG BUILDER_RELEASE
-ARG BUILDER_EPOCH
+FROM package-builder-base as package-builder-fat-base
+
+# Some extra dependencies we install early for better docker caching
+RUN ulimit -n 2000 && \
+    yum install -y autoconf bzip2 bzip2-devel findutils \
+	libuuid-devel net-tools openssl-devel pkgconfig readline-devel tar xz-devel openldap-devel
+
+##############################################################################
+# Separate build stage for luaenv to speedup builds and improve caching
+
+FROM package-builder-fat-base as luaenv-builder
+
+@IF [ ! -z "$M_all$M_lua" ]
+# These are needed for the luaenv build
+@INCLUDE ../../luaenv/Dockerfile.paths-include
+# Build Lua dist in docker, and later only package it in an RPM spec
+# This is easier to debug than build failures in an RPM build and gets cached in a layer
+RUN cd /weakforced/luaenv && ./build.sh -p /usr/share/wforce-lua-dist
+@ENDIF
+
+##############################################################################
+# Separate build stage for wforce static libs to speedup builds and caching
+
+FROM package-builder-fat-base as wforce-static-libs-builder
 
 @IF [ ! -z "$M_all$M_wforce" ]
 COPY --from=sdist /sdist /sdist
-RUN for file in /sdist/* ; do ln -s $file /root/rpmbuild/SOURCES/ ; done && ls /root/rpmbuild/SOURCES/
-@ENDIF
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-Linux-x86_64.sh
 RUN sh cmake-3.23.2-Linux-x86_64.sh --skip-license --prefix=/usr
+
 RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
 RUN cd prometheus-cpp/_build && make clean && make install
 
 RUN wget https://github.com/jbeder/yaml-cpp/archive/0.8.0.tar.gz
 RUN tar xvf 0.8.0.tar.gz
-RUN cd yaml-cpp* && mkdir build && cd build && cmake .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
+RUN cd yaml-cpp* && mkdir build && cd build && cmake --install-prefix=/usr/local .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
 
 RUN git clone https://github.com/open-source-parsers/jsoncpp
 RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
-RUN cd jsoncpp && mkdir _build && cd _build && cmake .. -DBUILD_SHARED_LIBS=OFF && make && make install
+RUN cd jsoncpp && mkdir _build && cd _build && cmake --install-prefix=/usr/local .. -DBUILD_SHARED_LIBS=OFF && make && make install
 
 @IF [ "$BUILDER_RHEL_FLAVOUR" = "amazon" ]
 ARG DROGON_VERSION=v1.7.4
@@ -55,13 +75,45 @@ ARG DROGON_VERSION=v1.9.1
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/"$DROGON_VERSION" -b "$DROGON_VERSION"
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake --install-prefix=/usr/local .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
 
 RUN wget https://github.com/maxmind/libmaxminddb/releases/download/1.7.1/libmaxminddb-1.7.1.tar.gz && tar xvf libmaxminddb-1.7.1.tar.gz
-RUN cd libmaxminddb-1.7.1 && ./configure --enable-shared=no && make && make install
+RUN cd libmaxminddb-1.7.1 && ./configure --prefix=/usr/local --enable-shared=no && make && make install
+@ENDIF
+
+##############################################################################
+# Our package-builder target image
+
+FROM package-builder-fat-base as package-builder
 
 ADD builder-support/specs/ /wforce/builder-support/specs/
 ADD builder/helpers /wforce/builder/helpers
+
+# Used for -p option to only build specific spec files
+ARG BUILDER_PACKAGE_MATCH
+
+ARG BUILDER_VERSION
+ARG BUILDER_RELEASE
+ARG BUILDER_EPOCH
+
+@IF [ ! -z "$M_all$M_wforce" ]
+COPY --from=sdist /sdist /sdist
+RUN for file in /sdist/* ; do ln -s $file /root/rpmbuild/SOURCES/ ; done && ls /root/rpmbuild/SOURCES/
+COPY --from=wforce-static-libs-builder /usr/local /usr/local
+@ENDIF
+
+#
+# Lua dist and modules
+#
+@IF [ ! -z "$M_all$M_lua" ]
+# This is packaged and removed in the lua-dist RPM
+COPY --from=luaenv-builder /usr/share/wforce-lua-dist /usr/share/wforce-lua-dist
+# Build and install Lua dist package
+# QA_RPATHS for: ERROR 0001: file '/usr/share/wforce-lua-dist/lib/lua/5.1/system/core.so' contains a standard rpath '/usr/lib64' in [/usr/lib64]
+RUN ulimit -n 2000 && QA_RPATHS=1 builder/helpers/build-specs.sh builder-support/specs/wforce-lua-dist.spec
+RUN ulimit -n 2000 && yum localinstall -y /root/rpmbuild/RPMS/*/wforce-lua-dist*.rpm
+@ENDIF
+
 
 @IF [ ! -z "$M_all$M_wforce" ]
 RUN yum install -y /usr/bin/python3
@@ -72,3 +124,5 @@ RUN builder/helpers/build-specs.sh builder-support/specs/wforce.spec
 # See: https://github.com/moby/moby/issues/33733
 #RUN mv /root/rpmbuild/RPMS/* /dist/
 RUN cp -R /root/rpmbuild/RPMS/* /dist/
+
+

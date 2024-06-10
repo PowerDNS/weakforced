@@ -1,8 +1,8 @@
-FROM dist-base as package-builder
+FROM dist-base as package-builder-base
 ARG APT_URL
 RUN apt-get -y install devscripts dpkg-dev build-essential wget curl \
                        python3 python3-pip python3-setuptools \
-                       libjsoncpp-dev uuid-dev libz-dev libssl-dev
+                       libjsoncpp-dev uuid-dev libz-dev libssl-dev libldap2-dev
 
 RUN mkdir -p /dist /wforce
 ADD builder/helpers/ /wforce/builder/helpers/
@@ -10,9 +10,44 @@ ADD builder/helpers/ /wforce/builder/helpers/
 # Used for -p option to only build specific spec files
 ARG BUILDER_PACKAGE_MATCH
 
-@IF [ ! -z "$M_all$M_wforce" ]
 # Build weakforce
 WORKDIR /wforce
+
+##############################################################################
+# Separate build stage for luaenv to speedup builds and improve caching
+
+FROM package-builder-base as luaenv-builder
+
+@IF [ ! -z "$M_all$M_lua" ]
+# These are needed for the luaenv build
+@INCLUDE ../../luaenv/Dockerfile.paths-include
+# Build Lua dist in docker, and later only package it in an RPM spec
+# This is easier to debug than build failures in a deb build and gets cached in a layer
+RUN cd /weakforced/luaenv && ./build.sh -p /usr/share/wforce-lua-dist
+@ENDIF
+
+##############################################################################
+# Separate build stage for wforce static libs to speedup builds and improve caching
+
+FROM package-builder-base as wforce-static-libs-builder
+
+COPY --from=sdist /sdist/ /sdist/
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-Linux-x86_64.sh
+RUN sh cmake-3.23.2-Linux-x86_64.sh --skip-license --prefix=/usr
+
+RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
+RUN mv prometheus-cpp*Source prometheus-cpp
+RUN cd prometheus-cpp/_build && make install
+
+RUN git clone https://github.com/drogonframework/drogon.git
+RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake --install-prefix=/usr/local .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
+
+##############################################################################
+# Our package-builder target image
+
+FROM package-builder-base as package-builder
 
 ARG BUILDER_VERSION
 ARG BUILDER_RELEASE
@@ -20,20 +55,25 @@ ARG BUILDER_EPOCH
 
 COPY --from=sdist /sdist/ /sdist/
 
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-Linux-x86_64.sh
-RUN sh cmake-3.23.2-Linux-x86_64.sh --skip-license --prefix=/usr
-RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
-RUN mv prometheus-cpp*Source prometheus-cpp
-RUN cd prometheus-cpp/_build && make install
+#
+# Lua dist and modules
+#
+@IF [ ! -z "$M_all$M_lua" ]
+RUN mkdir -p luajit-${BUILDER_VERSION}/usr/share/wforce-lua-dist/debian/tmp
+COPY --from=luaenv-builder /usr/share/wforce-lua-dist wforce-lua-dist-${BUILDER_VERSION}/wforce-lua-dist
+# Build and install Lua dist package
+COPY builder-support/luajit-debian wforce-lua-dist-${BUILDER_VERSION}/debian
+# QA_RPATHS for: ERROR 0001: file '/usr/share/wforce-lua-dist/lib/lua/5.1/system/core.so' contains a standard rpath '/usr/lib64' in [/usr/lib64]
+RUN ulimit -n 2000 && QA_RPATHS=1 builder/helpers/build-debs.sh wforce-lua-dist-${BUILDER_VERSION}
+RUN ulimit -n 2000 && apt install -y ./wforce-lua-dist*.deb
+@ENDIF
 
-RUN git clone https://github.com/drogonframework/drogon.git
-RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_ORM=OFF -DCMAKE_BUILD_TYPE=Release && make && make install
+@IF [ ! -z "$M_all$M_wforce" ]
+COPY --from=wforce-static-libs-builder /usr/local /usr/local
 
 RUN tar xvf /sdist/wforce-${BUILDER_VERSION}.tar.bz2
 COPY builder-support/debian wforce-${BUILDER_VERSION}/debian
 RUN builder/helpers/build-debs.sh wforce-$BUILDER_VERSION
-
 @ENDIF
 
 RUN mv wforce-${BUILDER_VERSION}/wforce*.deb /dist

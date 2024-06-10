@@ -1,0 +1,3 @@
+usr/share/wforce-lua-dist/bin/luajit /usr/bin/wforce-luajit
+usr/share/wforce-lua-dist/lib/libluajit-5.1.so usr/share/wforce-lua-dist/lib/exported/libluajit-5.1.so
+usr/share/wforce-lua-dist/lib/libluajit-5.1.so.2 usr/share/wforce-lua-dist/lib/exported/libluajit-5.1.so.2

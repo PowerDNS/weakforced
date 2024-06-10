@@ -17,3 +17,6 @@ RUN dnf -y install dnf-plugins-core clang
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild
 
+# Do a test install and verify
+# Can be skipped with skiptests=1 in the environment
+@EXEC [ "$skiptests" = "" ] && include Dockerfile.rpmtest

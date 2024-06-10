@@ -1,0 +1,3 @@
+wforce-lua-dist usr/share
+wforce-lua-dist.conf etc/ld.so.conf.d
+wforce-lua-dist/lib/pkgconfig/luajit.pc /usr/lib/pkgconfig

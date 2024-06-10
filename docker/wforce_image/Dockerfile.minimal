@@ -1,4 +1,26 @@
-FROM alpine:3.19 as wforce_build
+FROM alpine:3.20 as lua_build
+
+RUN apk update && \
+    apk add \
+        luajit-dev \
+        luarocks5.1 \
+        gcc \
+        musl-dev \
+        openssl-dev \
+        hiredis-dev \
+        openldap-dev
+
+RUN luarocks-5.1 config variables.LUA_INCDIR /usr/include/luajit-2.1
+
+RUN luarocks-5.1 install elasticsearch-lua && \
+    luarocks-5.1 install lua-cjson && \
+    luarocks-5.1 install lualdap && \
+    luarocks-5.1 install luasocket && \
+    luarocks-5.1 install luasec && \
+    luarocks-5.1 install lua-resty-template && \
+    luarocks-5.1 install redis-lua
+
+FROM alpine:3.20 as wforce_build
 
 RUN apk update && \
     apk add \
@@ -63,17 +85,20 @@ RUN strip /wforce/install/usr/bin/wforce /wforce/install/usr/bin/trackalert
 # Remove the default wforce.conf and trackalert.conf files
 RUN rm /wforce/install/etc/wforce/wforce.conf /wforce/install/etc/wforce/trackalert.conf
 
-FROM alpine:3.19 as wforce_image
+FROM alpine:3.20 as wforce_image
 
 WORKDIR /wforce/
 
 COPY --from=wforce_build /wforce/install/ /
+COPY --from=lua_build /usr/local/share/lua /usr/local/share/lua
+COPY --from=lua_build /usr/local/lib/lua /usr/local/lib/lua
 
 RUN apk update && \
     apk add \
                boost-filesystem \
                curl \
                openssl \
+               libldap \
                hiredis \
                readline \
                libmaxminddb \

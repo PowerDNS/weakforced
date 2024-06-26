@@ -15,7 +15,7 @@ jobs:
       DOCKERFILE: docker/wforce_image/Dockerfile.minimal
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       IMAGE_NAME: wforce-minimal
-      DOCKER_ORGANIZATION_NAME: ${{ secrets.DOCKER_ORGANIZATION_NAME }}
+      DOCKER_ORGANIZATION_NAME: ${{ secrets.DOCKERHUB_ORGANIZATION_NAME }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,8 +39,8 @@ jobs:
         if: steps.release_check.outputs.release == 'YES' || env.BRANCH_NAME == 'master'
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push to docker hub for releases with tag
         id: release_build
         if: ${{ steps.release_check.outputs.release == 'YES' }}

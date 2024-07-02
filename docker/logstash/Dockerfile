@@ -1,7 +1,7 @@
-FROM docker.elastic.co/logstash/logstash:7.14.2
+FROM docker.elastic.co/logstash/logstash:8.14.1
 
 USER root
-RUN yum install -y wget
+RUN apt update && apt install -y wget
 RUN mkdir -p /usr/share/logstash/geoip
 RUN chown -R logstash:logstash /usr/share/logstash/geoip
 ARG MAXMIND_LICENSE_KEY

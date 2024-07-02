@@ -15,8 +15,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - centos-7
-          - ol-8
+          - el-7
+          - el-8
           - el-9
           - amazon-2
           - debian-bullseye

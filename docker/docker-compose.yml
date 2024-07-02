@@ -17,7 +17,7 @@ services:
     depends_on:
       - elasticsearch
   elasticsearch:
-    image: elasticsearch:7.14.1
+    image: elasticsearch:8.14.1
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node

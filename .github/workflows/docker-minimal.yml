@@ -49,6 +49,10 @@ jobs:
           context: .
           file: ${{ env.DOCKERFILE }}
           platforms: ${{ env.PLATFORMS }}
+          build-args: |
+            license=GPLv3
+            git_revision=${{ env.MYREF }}
+            version=${{ env.MYREF }}
           push: true
           sbom: true
           tags: |

@@ -1,6 +1,5 @@
 version: '2'
 services:
-  # This is the optimized image that will go onto Docker Hub
   wforce_image:
     image: powerdns/wforce:${VERSION}
     build:
@@ -19,6 +18,15 @@ services:
       - WFORCE_CONFIG_FILE
     ports:
       - "${WFORCE_PORT}:${WFORCE_PORT}"
+  wforce_minimal:
+    image: powerdns/wforce-minimal:${VERSION}
+    build:
+      context: weakforced
+      dockerfile: docker/wforce_image/Dockerfile.minimal
+      args:
+        - license=${LICENSE}
+        - git_revision=${GIT_REVISION}
+        - version=${VERSION}
   trackalert:
     image: powerdns/wforce:${VERSION}
     environment:

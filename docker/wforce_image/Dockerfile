@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim as wforce_build
+FROM debian:bookworm-slim AS wforce_build
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -55,7 +55,7 @@ RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-so
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
-FROM debian:bookworm-slim as wforce_image
+FROM debian:bookworm-slim AS wforce_image
 
 WORKDIR /wforce/
 

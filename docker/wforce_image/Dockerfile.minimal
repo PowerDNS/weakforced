@@ -1,4 +1,4 @@
-FROM alpine:3.20 as lua_build
+FROM alpine:3.20 AS lua_build
 
 RUN apk update && \
     apk add \
@@ -20,7 +20,7 @@ RUN luarocks-5.1 install elasticsearch-lua && \
     luarocks-5.1 install lua-resty-template && \
     luarocks-5.1 install redis-lua
 
-FROM alpine:3.20 as wforce_build
+FROM alpine:3.20 AS wforce_build
 
 RUN apk update && \
     apk add \
@@ -85,7 +85,7 @@ RUN strip /wforce/install/usr/bin/wforce /wforce/install/usr/bin/trackalert
 # Remove the default wforce.conf and trackalert.conf files
 RUN rm /wforce/install/etc/wforce/wforce.conf /wforce/install/etc/wforce/trackalert.conf
 
-FROM alpine:3.20 as wforce_image
+FROM alpine:3.20 AS wforce_image
 
 WORKDIR /wforce/
 

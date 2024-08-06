@@ -197,9 +197,9 @@ AC_ARG_ENABLE([docker],
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-docker]) ;;
 esac],[docker=false])
 AM_CONDITIONAL([WITH_DOCKER], [test x$docker = xtrue])
-AC_CHECK_PROG(DOCKER, docker-compose, docker-compose)
+AC_CHECK_PROG(DOCKER, docker, docker)
 AS_IF([test x$docker = xtrue -a "x$DOCKER" = "x"], [
-    AC_MSG_ERROR([docker-compose not found, and is required])
+    AC_MSG_ERROR([docker not found, and is required])
 ])
 AC_ARG_ENABLE([trackalert],
 [  --enable-trackalert         Build trackalert],

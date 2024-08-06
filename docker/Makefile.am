@@ -1,4 +1,4 @@
-DCMP = docker-compose
+DCMP = docker compose
 COMPOSE_SOURCE = docker-compose.yml logstash/Dockerfile logstash/config/logstash.conf logstash/templates/wforce_template.json regression/Dockerfile wforce_image/Dockerfile wforce_image/docker-entrypoint.sh wforce_image/wforce.conf.j2 wforce_image/create_config.sh
 COMPOSE_TARGET = .docker
 REGRESSION_SERVICE = regression
@@ -27,7 +27,7 @@ clean_elastic: stop
 	rm $(COMPOSE_TARGET)
 
 clean_docker:
-	docker-compose down -v
+	$(DCMP) down -v
 
 clean: clean_docker
 

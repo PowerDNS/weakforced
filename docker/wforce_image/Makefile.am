@@ -1,4 +1,4 @@
-DCMP = docker-compose
+DCMP = docker compose
 WFORCE_IMAGE_COMPOSE_TARGET = .wforce_image_docker
 WFORCE_IMAGE_SERVICE = wforce_image
 WFORCE_MINIMAL_IMAGE_SERVICE = wforce_minimal
@@ -27,7 +27,7 @@ kill:
 	$(DCMP) kill
 
 clean_docker:
-	docker-compose down -v
+	$(DCMP) down -v
 
 clean: clean_docker
 

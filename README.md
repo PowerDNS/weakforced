@@ -62,7 +62,7 @@ $ builder/build.sh debian-bullseye | debian-bookworm | el-7 | el-8  | el-9 | ama
 ```
 This will build packages (`wforce`,`wforce-trackalert` and `wforce-debuginfo`) for the appropriate OS. You will need docker for the builder to work.
 
-Note that since the latest release (2.11), the built packages include an openresty luajit fork (`wforce-lua-dist`); this is because that fork
+Note that since the 2.12 release, the built packages include an openresty luajit fork (`wforce-lua-dist`); this is because that fork
 fixes issues in the main luajit library that wforce runs into under conditions of high load. The `wforce-lua-dist` package
 also contains some lua modules that have proved useful to wforce deployments over the years as well as luarocks to install
 new modules.

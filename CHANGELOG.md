@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [2.11.0]
+## [2.12.0]
 
 ## Added
 - Now builds a separate luajit package, based on the openresty luajit fork. This is to address some issues found with stock luajit. The package also includes some lua modules that wforce typically makes use of.

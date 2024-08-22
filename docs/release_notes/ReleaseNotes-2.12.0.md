@@ -1,4 +1,4 @@
-# Release Notes for OX Abuse Shield 2.11.0
+# Release Notes for OX Abuse Shield 2.12.0
 
 <!-- {% raw %} -->
 

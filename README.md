@@ -58,9 +58,14 @@ $ git clone https://github.com/PowerDNS/weakforced.git
 $ cd weakforced
 $ git submodule init
 $ git submodule update
-$ builder/build.sh debian-bullseye | debian-stretch | centos-7 | ol-8 | amazon-2
+$ builder/build.sh debian-bullseye | debian-bookworm | el-7 | el-8  | el-9 | amazon-2
 ```
-This will build packages for the appropriate OS. You will need docker and docker-compose for the builder to work.
+This will build packages (`wforce`,`wforce-trackalert` and `wforce-debuginfo`) for the appropriate OS. You will need docker for the builder to work.
+
+Note that since the 2.12 release, the built packages include an openresty luajit fork (`wforce-lua-dist`); this is because that fork
+fixes issues in the main luajit library that wforce runs into under conditions of high load. The `wforce-lua-dist` package
+also contains some lua modules that have proved useful to wforce deployments over the years as well as luarocks to install
+new modules.
 
 The hard way:
 

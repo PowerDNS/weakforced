@@ -16,11 +16,13 @@ case "$1" in
       adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "wforce" wforce
       echo "done"
     fi
-    echo -n "Modifying trackalert.conf to replace password and key..."
-    SETKEY=`echo "makeKey()" | trackalert | grep setKey`
-    WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
-    sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
-    echo "done"
+    if [ -z "$2" ]; then
+        echo -n "Modifying trackalert.conf to replace password and key..."
+        SETKEY=`echo "makeKey()" | trackalert | grep setKey`
+        WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
+        sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
+        echo "done"
+    fi
   ;;
 
   *)

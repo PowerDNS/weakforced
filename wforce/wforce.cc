@@ -177,8 +177,11 @@ try
     uint16_t len{0};
     if(!getMsgLen(fd, &len))
       break;
-    char msg[len];
-    readn2(fd, msg, len);
+    std::vector<char> msgv;
+
+    string msg;
+    msg.resize(len);
+    readn2(fd, msg.data(), len);
     
     string line(msg, len);
     try {
@@ -299,9 +302,9 @@ void doClient(ComboAddress server, const std::string& command)
     writen2(fd, msg);
     uint16_t len{0};
     getMsgLen(fd, &len);
-    char resp[len];
-    readn2(fd, resp, len);
-    msg.assign(resp, len);
+    msg.clear();
+    msg.resize(len);
+    readn2(fd, msg.data(), len);
     msg=sodDecryptSym(msg, key, readingNonce);
     cout<<msg<<endl;
     close(fd);
@@ -341,9 +344,9 @@ void doClient(ComboAddress server, const std::string& command)
     writen2(fd, msg);
     uint16_t len{0};
     getMsgLen(fd, &len);
-    char resp[len];
-    readn2(fd, resp, len);
-    msg.assign(resp, len);
+    msg.clear();
+    msg.resize(len);
+    readn2(fd, msg.data(), len);
     msg=sodDecryptSym(msg, key, readingNonce);
     cout<<msg<<endl;
   }

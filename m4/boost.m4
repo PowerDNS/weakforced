@@ -22,7 +22,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 m4_define([_BOOST_SERIAL], [m4_translit([
-# serial 34
+# serial 38
 ], [#
 ], [])])
 
@@ -428,7 +428,7 @@ dnl until we succeed to link conftest.o in an executable.  The problem is
 dnl that the various TRY_LINK / COMPILE_IFELSE macros of Autoconf always
 dnl remove all the temporary files including conftest.o.  So the trick here
 dnl is to temporarily change the value of ac_objext so that conftest.o is
-dnl preserved across tests.  This is obviously fragile and I will burn in
+dnl preserved accross tests.  This is obviously fragile and I will burn in
 dnl hell for not respecting Autoconf's documented interfaces, but in the
 dnl mean time, it optimizes the macro by a factor of 5 to 30.
 dnl Another small optimization: the first argument of AC_COMPILE_IFELSE left
@@ -496,7 +496,7 @@ dnl generated only once above (before we start the for loops).
       if test x"$Boost_lib" = xyes; then
         # Check or used cached result of whether or not using -R or
         # -rpath makes sense.  Some implementations of ld, such as for
-        # Mac OS X, require -rpath but -R is the flag known to work on
+        # Mac OSX, require -rpath but -R is the flag known to work on
         # other systems.  https://github.com/tsuna/boost.m4/issues/19
         AC_CACHE_VAL([boost_cv_rpath_link_ldflag],
           [case $boost_ldpath in
@@ -1615,7 +1615,14 @@ if test x$boost_cv_inc_path != xno; then
   # I'm not sure about my test for `il' (be careful: Intel's ICC pre-defines
   # the same defines as GCC's).
   for i in \
+    "defined __clang__ && __clang_major__ == 18 && __clang_minor__ == 1 @ clang181" \
+    "defined __clang__ && __clang_major__ == 17 && __clang_minor__ == 0 @ clang170" \
+    "defined __clang__ && __clang_major__ == 16 && __clang_minor__ == 0 @ clang160" \
+    "defined __clang__ && __clang_major__ == 15 && __clang_minor__ == 0 @ clang150" \
+    "defined __clang__ && __clang_major__ == 14 && __clang_minor__ == 0 @ clang140" \
+    "defined __clang__ && __clang_major__ == 13 && __clang_minor__ == 0 @ clang130" \
     "defined __clang__ && __clang_major__ == 12 && __clang_minor__ == 0 @ clang120" \
+    "defined __clang__ && __clang_major__ == 11 && __clang_minor__ == 1 @ clang111" \
     "defined __clang__ && __clang_major__ == 11 && __clang_minor__ == 0 @ clang110" \
     "defined __clang__ && __clang_major__ == 10 && __clang_minor__ == 0 @ clang100" \
     "defined __clang__ && __clang_major__ == 9 && __clang_minor__ == 0 @ clang90" \
@@ -1627,10 +1634,38 @@ if test x$boost_cv_inc_path != xno; then
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 9 @ clang39" \
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 8 @ clang38" \
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 7 @ clang37" \
+    _BOOST_mingw_test(13, 2) \
+    _BOOST_gcc_test(13, 2) \
+    _BOOST_mingw_test(13, 1) \
+    _BOOST_gcc_test(13, 1) \
+    _BOOST_mingw_test(12, 3) \
+    _BOOST_gcc_test(12, 3) \
+    _BOOST_mingw_test(12, 2) \
+    _BOOST_gcc_test(12, 2) \
+    _BOOST_mingw_test(12, 1) \
+    _BOOST_gcc_test(12, 1) \
+    _BOOST_mingw_test(11, 4) \
+    _BOOST_gcc_test(11, 4) \
+    _BOOST_mingw_test(11, 3) \
+    _BOOST_gcc_test(11, 3) \
+    _BOOST_mingw_test(11, 2) \
+    _BOOST_gcc_test(11, 2) \
+    _BOOST_mingw_test(11, 1) \
+    _BOOST_gcc_test(11, 1) \
+    _BOOST_mingw_test(10, 5) \
+    _BOOST_gcc_test(10, 5) \
+    _BOOST_mingw_test(10, 4) \
+    _BOOST_gcc_test(10, 4) \
+    _BOOST_mingw_test(10, 3) \
+    _BOOST_gcc_test(10, 3) \
     _BOOST_mingw_test(10, 2) \
     _BOOST_gcc_test(10, 2) \
     _BOOST_mingw_test(10, 1) \
     _BOOST_gcc_test(10, 1) \
+    _BOOST_mingw_test(9, 5) \
+    _BOOST_gcc_test(9, 5) \
+    _BOOST_mingw_test(9, 4) \
+    _BOOST_gcc_test(9, 4) \
     _BOOST_mingw_test(9, 3) \
     _BOOST_gcc_test(9, 3) \
     _BOOST_mingw_test(9, 2) \
@@ -1639,6 +1674,8 @@ if test x$boost_cv_inc_path != xno; then
     _BOOST_gcc_test(9, 1) \
     _BOOST_mingw_test(9, 0) \
     _BOOST_gcc_test(9, 0) \
+    _BOOST_mingw_test(8, 5) \
+    _BOOST_gcc_test(8, 5) \
     _BOOST_mingw_test(8, 4) \
     _BOOST_gcc_test(8, 4) \
     _BOOST_mingw_test(8, 3) \

@@ -160,9 +160,9 @@ try
     char msg[len];
     readn2(fd, msg, len);
     
-    string line(msg, len);
+    string line;
     try {
-      line = sodDecryptSym(line, g_key, readingNonce);
+      line = sodDecryptSym(msg, g_key, readingNonce);
     }
     catch (std::runtime_error& e) {
       errlog("Could not decrypt client command: %s", e.what());

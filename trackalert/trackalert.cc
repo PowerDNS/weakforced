@@ -157,8 +157,9 @@ try
     uint16_t len;
     if(!getMsgLen(fd, &len))
       break;
-    char msg[len];
-    readn2(fd, msg, len);
+    string msg;
+    msg.resize(len);
+    readn2(fd, msg.data(), len);
     
     string line;
     try {
@@ -277,9 +278,9 @@ void doClient(ComboAddress server, const std::string& command)
     writen2(fd, msg);
     uint16_t len;
     getMsgLen(fd, &len);
-    char resp[len];
-    readn2(fd, resp, len);
-    msg.assign(resp, len);
+    msg.clear();
+    msg.resize(len);
+    readn2(fd, msg.data(), len);
     msg=sodDecryptSym(msg, g_key, readingNonce);
     cout<<msg<<endl;
     close(fd);
@@ -319,10 +320,10 @@ void doClient(ComboAddress server, const std::string& command)
     writen2(fd, msg);
     uint16_t len;
     getMsgLen(fd, &len);
-    char resp[len];
-    readn2(fd, resp, len);
-    msg.assign(resp, len);
-    msg=sodDecryptSym(msg, g_key, readingNonce);
+    string resp;
+    resp.resize(len);
+    readn2(fd, resp.data(), len);
+    msg=sodDecryptSym(resp, g_key, readingNonce);
     cout<<msg<<endl;
   }
 }

@@ -100,7 +100,8 @@ endif
 testrunner_SOURCES = \
 	testrunner.cc \
 	test-minicurl.cc \
-	test-serialize.cc
+	test-serialize.cc \
+	test-crypto.cc
 
 EXTRA_testrunner_DEPENDENCIES = \
 	$(EXT_LIBS) libweakforce.la

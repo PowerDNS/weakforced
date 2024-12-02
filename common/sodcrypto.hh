@@ -59,9 +59,9 @@ struct SodiumNonce
     *p=ntohl(count);
   }
 
-  string toString() const
+  std::string toString() const
   {
-    return string((const char*)value, sizeof value);
+    return std::string((const char*)value, sizeof value);
   }
 
   unsigned char value[CHACHA20_POLY1305_IV_SIZE];
@@ -91,15 +91,15 @@ struct SodiumNonce
     *p=ntohl(count);
   }
 
-  string toString() const
+  std::string toString() const
   {
-    return string((const char*)value, crypto_secretbox_NONCEBYTES);
+    return std::string((const char*)value, crypto_secretbox_NONCEBYTES);
   }
 
   unsigned char value[crypto_secretbox_NONCEBYTES];
 };
 #endif
-std::string newKeypair();
+std::string newKeyStr();
 std::string sodEncryptSym(const std::string& msg, const std::string& key, SodiumNonce&);
 std::string sodDecryptSym(const std::string& msg, const std::string& key, SodiumNonce&);
 std::string newKey();

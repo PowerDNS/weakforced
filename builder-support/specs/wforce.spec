@@ -91,6 +91,7 @@ Summary: Longterm abuse data reporting and alerter
 %build
 %{?scl: %{scl} - << \EOF}
 %configure                       \
+    CXXFLAGS="%{optflags} -Wno-enum-constexpr-conversion" \
     --disable-dependency-tracking \
     --docdir=%{_docdir}/%{name}-%{getenv:BUILDER_VERSION} \
     --disable-static --with-luajit --sysconfdir=/etc/%{name} \

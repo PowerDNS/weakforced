@@ -64,6 +64,8 @@ bool ReplicationOperation::unserialize(const std::string& str)
     }
     else
       retval = false;
+  } else {
+    errlog("ReplicationOperation:unserialize error - cannot parse received replication msg");
   }
   forwarded = msg.forwarded();
   return retval;

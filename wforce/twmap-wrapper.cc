@@ -29,7 +29,9 @@ TWStringStatsDBWrapper::TWStringStatsDBWrapper(const std::string& name, int w_si
 {
   sdbvp = std::make_shared<std::vector<std::shared_ptr<TWStatsDB<std::string>>>>();
   for (int i=0; i<num_shards; ++i) {
-    sdbvp->push_back(std::make_shared<TWStatsDB<std::string>>(name, w_size, n_windows));
+    auto s = std::make_shared<TWStatsDB<std::string>>(name, w_size, n_windows);
+    s->set_map_size_soft(ctwstats_map_size_soft/n_shards);
+    sdbvp->push_back(s);
   }
   replicated = std::make_shared<bool>(false);
 }

@@ -82,7 +82,7 @@ void LoginTuple::from_json(const json11::Json& msg, const std::shared_ptr<UserAg
   protocol=msg["protocol"].string_value();
   tls=msg["tls"].bool_value();
   policy_reject=msg["policy_reject"].bool_value();
-  fail_type=msg["fail_type"].string_value()
+  fail_type=msg["fail_type"].string_value();
   session_id=msg["session_id"].string_value();
 }
 

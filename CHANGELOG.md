@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [2.12.1]
+
+## Added
+- Set default map size for sharded Stats DBs based on the number of shards
+- Change debian postinst scripts to modify 'setKey' and 'webpwd' parameter only if no weakforce is already installed
+- Add tests for crypto code
+
 ## [2.12.0]
 
 ## Added

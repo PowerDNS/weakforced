@@ -1,4 +1,4 @@
-AC_INIT([wforce], [2.12.0])
+AC_INIT([wforce], [2.12.1])
 AM_INIT_AUTOMAKE([foreign dist-bzip2 parallel-tests 1.11 subdir-objects tar-ustar])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])

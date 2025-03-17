@@ -17,6 +17,7 @@ push_tag()
   docker push $IMAGE:$tag
 }
 
+IMAGE=$1
 TAG=`git describe --tags`
 check_version
 if [ $? = "0" ]
@@ -24,7 +25,6 @@ then
     push_tag $TAG
 fi
 
-IMAGE=$1
 
 BRANCH=`git branch --show-current`
 if [ "$BRANCH" = "master" ]

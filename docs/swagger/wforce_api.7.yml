@@ -7,7 +7,7 @@ info:
     name: "Open-Xchange"
   license:
     name: "GPL3"
-    url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
+    url: https://github.com/PowerDNS/weakforced/blob/master/LICENSE
 host: "doesnotexist.open-xchange.com"
 basePath: "/"
 schemes:
@@ -555,6 +555,7 @@ definitions:
       remote: 192.168.1.2
       pwhash: cc04
       success: true
+      fail_type: credentials
     properties:
       login:
         type: string
@@ -566,6 +567,15 @@ definitions:
         type: boolean
       policy_reject:
         type: boolean
+      fail_type:
+        type: string
+        enum:
+          - internal
+          - credentials
+          - account
+          - expired
+          - disabled
+          - policy
       protocol:
         type: string
         enum:

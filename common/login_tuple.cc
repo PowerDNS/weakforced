@@ -53,6 +53,7 @@ json11::Json LoginTuple::to_json() const
     {"tls", tls},
     {"attrs", jattrs},
     {"policy_reject", policy_reject},
+    {"fail_type", fail_type},
     {"session_id", session_id},
   };
 }
@@ -81,6 +82,7 @@ void LoginTuple::from_json(const json11::Json& msg, const std::shared_ptr<UserAg
   protocol=msg["protocol"].string_value();
   tls=msg["tls"].bool_value();
   policy_reject=msg["policy_reject"].bool_value();
+  fail_type=msg["fail_type"].string_value();
   session_id=msg["session_id"].string_value();
 }
 
@@ -157,18 +159,18 @@ void LoginTuple::setLtAttrs(const json11::Json& msg)
   json11::Json jattrs = msg["attrs"];
   if (jattrs.is_object()) {
     auto attrs_obj = jattrs.object_items();
-    for (auto it=attrs_obj.begin(); it!=attrs_obj.end(); ++it) {
+    for (auto it = attrs_obj.begin(); it != attrs_obj.end(); ++it) {
       string attr_name = it->first;
       if (it->second.is_string()) {
-	attrs.insert(std::make_pair(attr_name, it->second.string_value()));
+        attrs.insert(std::make_pair(attr_name, it->second.string_value()));
       }
       else if (it->second.is_array()) {
-	auto av_list = it->second.array_items();
-	std::vector<std::string> myvec;
-	for (auto avit=av_list.begin(); avit!=av_list.end(); ++avit) {
-	  myvec.push_back(avit->string_value());
-	}
-	attrs_mv.insert(std::make_pair(attr_name, myvec));
+        auto av_list = it->second.array_items();
+        std::vector <std::string> myvec;
+        for (auto avit = av_list.begin(); avit != av_list.end(); ++avit) {
+          myvec.push_back(avit->string_value());
+        }
+        attrs_mv.insert(std::make_pair(attr_name, myvec));
       }
     }
   }

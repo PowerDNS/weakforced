@@ -15,7 +15,6 @@ jobs:
     strategy:
       matrix:
         os:
-          - el-7
           - el-8
           - el-9
           - amazon-2

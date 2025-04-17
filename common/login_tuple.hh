@@ -40,6 +40,9 @@ struct LoginTuple
   std::map<std::string, std::string> attrs; // additional attributes
   std::map<std::string, std::vector<std::string>> attrs_mv; // additional multi-valued attributes
   bool policy_reject=false;
+  // Replaces policy_reject with more info on how the auth failed
+  // Possible values: internal, credentials, account, expired, disabled, policy (equivalent to policy_reject=true)
+  string fail_type;
   std::string session_id;
   json11::Json to_json() const;
   std::string serialize() const;

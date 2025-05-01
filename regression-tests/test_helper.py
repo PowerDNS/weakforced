@@ -143,6 +143,8 @@ class ApiTestCase(unittest.TestCase):
         payload['attrs'] = attrs
         payload['device_id'] = device_id
         payload['protocol'] = protocol
+        if not success:
+            payload['fail_type'] = "credentials"
         if not replica:
             return self.session.post(
                 self.url("/?command=report"),

@@ -185,6 +185,7 @@ void setupCommonLua(bool client,
   c_lua.registerMember("device_id", &LoginTuple::device_id);
   c_lua.registerMember("device_attrs", &LoginTuple::device_attrs);
   c_lua.registerMember("session_id", &LoginTuple::session_id);
+  c_lua.registerMember("fail_type", &LoginTuple::fail_type);
 
   c_lua.registerFunction<string(ComboAddress::*)()>("tostring", [](const ComboAddress& ca) { return ca.toString(); });
 

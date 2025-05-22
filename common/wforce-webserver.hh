@@ -125,6 +125,7 @@ public:
 
   // Register functions to parse commands
   bool registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& func);
+  bool registerFuncNoAuth(const std::string& command, HTTPVerb verb, const WforceWSFunc& func);
 
   void addSimpleListener(const std::string& ip, unsigned int port)
   {
@@ -207,6 +208,18 @@ public:
                                       },
                                       {drogon::Get, "ACLFilter", "LoginFilter"});
       }
+      addCommandStat("livez");
+      addPrometheusCommandMetric("livez");
+      drogon::app().registerHandler("/command/livez",
+                              [](const drogon::HttpRequestPtr& req,
+                                 std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+                                auto res = drogon::HttpResponse::newHttpResponse();
+                                res->setStatusCode(drogon::k200OK);
+                                incCommandStat("livez");
+                                incPrometheusCommandMetric("livez");
+                                callback(res);
+                              },
+                              {drogon::Get, "ACLFilter"});
       drogon::app().setThreadNum(d_num_worker_threads);
       drogon::app().setMaxConnectionNum(d_max_conns);
       // register handlers for old-style /?command=<blah> paths
@@ -283,6 +296,7 @@ protected:
     addWTRStat(i_millis.count());
     observePrometheusWRD(std::chrono::duration<float>(run_time).count());
   }
+  bool registerFuncInternal(const std::string& command, HTTPVerb verb, const WforceWSFunc& func, bool auth_required);
 
 private:
   GlobalStateHolder<NetmaskGroup> d_ACL;

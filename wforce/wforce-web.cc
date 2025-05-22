@@ -1362,6 +1362,18 @@ void parsePingCmd(const drogon::HttpRequestPtr& req,
   incPrometheusCommandMetric("ping");
 }
 
+void parseReadyzCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
+{
+  if (g_ping_up)
+    resp->setStatusCode(drogon::k200OK);
+  else
+    resp->setStatusCode(drogon::k503ServiceUnavailable);
+  incCommandStat("readyz");
+  incPrometheusCommandMetric("readyz");
+}
+
 void parseSyncDoneCmd(const drogon::HttpRequestPtr& req,
                       const std::string& command,
                       const drogon::HttpResponsePtr& resp)
@@ -1440,4 +1452,7 @@ void registerWebserverCommands()
   addCommandStat("setSiblings");
   addPrometheusCommandMetric("setSiblings");
   g_webserver.registerFunc("setSiblings", HTTPVerb::POST, WforceWSFunc(parseSetSiblingsCmd));
+  addCommandStat("readyz");
+  addPrometheusCommandMetric("readyz");
+  g_webserver.registerFuncNoAuth("readyz", HTTPVerb::GET, WforceWSFunc(parseReadyzCmd));
 }

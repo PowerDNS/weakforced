@@ -29,6 +29,8 @@
 #include "drogon/drogon.h"
 #include <ctime>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++11-extensions"
 using std::thread;
 
 void WforceWebserver::setNumWorkerThreads(unsigned int num_workers)
@@ -62,6 +64,16 @@ size_t WforceWebserver::getNumConns()
 }
 
 bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& wsf)
+{
+  return registerFuncInternal(command, verb, wsf, true);
+}
+
+bool WforceWebserver::registerFuncNoAuth(const std::string& command, HTTPVerb verb, const WforceWSFunc& wsf)
+{
+  return registerFuncInternal(command, verb, wsf, false);
+}
+
+bool WforceWebserver::registerFuncInternal(const std::string& command, HTTPVerb verb, const WforceWSFunc& wsf, bool auth_required)
 {
   bool retval = true;
   drogon::HttpMethod method = drogon::Get;
@@ -107,6 +119,10 @@ bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, co
       retval = false;
       break;
   }
+
+  vector<drogon::internal::HttpConstraint> constraints_auth = { method, "ACLFilter", "LoginFilter"};
+  vector<drogon::internal::HttpConstraint> constraints_noauth = { method, "ACLFilter"};
+
   if (retval) {
     std::string command_str = "/command/" + command;
     drogon::app().registerHandlerViaRegex(command_str,
@@ -120,7 +136,7 @@ bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, co
                                             callback(resp);
                                             updateWTR(start_time);
                                           },
-                                          {method, "ACLFilter", "LoginFilter"});
+                                          auth_required ? constraints_auth : constraints_noauth );
   }
   return retval;
 }
@@ -193,3 +209,4 @@ void ACLFilter::doFilter(const drogon::HttpRequestPtr& req,
     fcb(res);
   }
 }
+#pragma clang diagnostic pop

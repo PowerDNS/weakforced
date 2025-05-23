@@ -1,206 +1,284 @@
-swagger: "2.0"
+openapi: 3.0.1
+
 info:
-  version: "2.12.1"
-  title: "OX Abuse Shield (Trackalert)"
-  description: "An API to the trackalert daemon to prevent brute-force and abuse of mail systems"
+  title: OX Abuse Shield (Trackalert)
+  description: An API to the trackalert daemon to prevent brute-force and abuse of
+    mail systems
   contact:
-    name: "Open-Xchange"
+    name: Open-Xchange
   license:
-    name: "GPL3"
+    name: GPL3
     url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
-host: "doesnotexist.open-xchange.com"
-basePath: "/"
-schemes:
-  - "http"
-  - "https"
-consumes:
-  - "application/json"
-produces:
-  - "application/json"
+  version: 2.12.1
+
+servers:
+  - url: http://doesnotexist.open-xchange.com/
+  - url: https://doesnotexist.open-xchange.com/
+
 paths:
-  /?command=report:
+  /command/report:
     post:
-      description: "Creates a new report about a login (successful or unsuccessful)"
-      operationId: "report"
-      produces:
-        - "application/json"
-      parameters:
-        - name: "LoginTupleReport"
-          in: body
-          description: "Login Tuple for report command"
-          required: true
-          schema:
-            $ref: "#/definitions/LoginTupleReport"
+      description: Creates a new report about a login (successful or unsuccessful)
+      operationId: report
+      requestBody:
+        description: Login Tuple for report command
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginTupleReport'
+        required: true
       responses:
         "200":
-          description: "report response"
-          schema:
-            type: object
-            required:
-              - status
-            properties:
-              status:
-                type: string
-            example:
-              status: ok
+          description: report response
+          content:
+            application/json:
+              schema:
+                required:
+                  - status
+                type: object
+                properties:
+                  status:
+                    type: string
+                example:
+                  status: ok
         default:
           description: unexpected error
-          schema:
-            $ref: "#/definitions/Error"
-  /?command=stats:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-codegen-request-body-name: LoginTupleReport
+  /command/stats:
     get:
-      description: "Get server stats"
-      operationId: "stats"
-      produces:
-        - "application/json"
+      description: Get server stats
+      operationId: stats
       responses:
         "200":
-          description: "stats response"
-          schema:
-            $ref: "#/definitions/statsResponse"
+          description: stats response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/statsResponse'
         default:
           description: unexpected error
-          schema:
-            $ref: "#/definitions/Error"
-definitions:
-  LoginTupleReport:
-    required:
-      - login
-      - remote
-      - pwhash
-      - success
-    example:
-      login: joe.bloggs
-      remote: 192.168.1.2
-      pwhash: cc04
-      success: true
-      fail_type: credentials
-    properties:
-      login:
-        type: string
-      remote:
-        type: string
-      pwhash:
-        type: string
-      success:
-        type: boolean
-      policy_reject:
-        type: boolean
-      fail_type:
-        type: string
-        enum:
-          - internal
-          - credentials
-          - account
-          - expired
-          - disabled
-          - policy
-      protocol:
-        type: string
-        enum:
-          - http
-          - imap
-          - pop3
-          - smtp
-          - mobileapi
-      tls:
-        type: boolean
-      device_id:
-        type: string
-      device_attrs:
-        $ref: "#/definitions/LTAttrs"
-      attrs:
-        $ref: "#/definitions/LTAttrs" 
-  LTAttrs:
-    type: object
-    properties:
-      attr_name_single_value:
-        type: string
-      attr_name multi_value:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /metrics:
+    get:
+      description: Retrieve prometheus metrics
+      operationId: metrics
+      responses:
+        "200":
+          description: Prometheus metrics in the format described at https://prometheus.io/docs/instrumenting/exposition_formats/
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          description: unexpected error
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /readyz:
+    get:
+      security: [] # No auth needed
+      description: Determine if wforce is ready to accept queries
+      operationId: readyz
+      responses:
+        "200":
+          description: wforce is ready to accept queries
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /livez:
+    get:
+      security: [] # No auth needed
+      description: Determine if wforce is up
+      operationId: livez
+      responses:
+        "200":
+          description: wforce is up
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    LoginTupleReport:
+      required:
+        - login
+        - pwhash
+        - remote
+        - success
+      type: object
+      properties:
+        login:
+          type: string
+        remote:
+          type: string
+        pwhash:
+          type: string
+        success:
+          type: boolean
+        policy_reject:
+          type: boolean
+        fail_type:
+          type: string
+          enum:
+            - internal
+            - credentials
+            - account
+            - expired
+            - disabled
+            - policy
+        protocol:
+          type: string
+          enum:
+            - http
+            - imap
+            - pop3
+            - smtp
+            - mobileapi
+        tls:
+          type: boolean
+        device_id:
+          type: string
+        device_attrs:
+          $ref: '#/components/schemas/LTAttrs'
+        attrs:
+          $ref: '#/components/schemas/LTAttrs'
+      example:
+        login: joe.bloggs
+        remote: 192.168.1.2
+        pwhash: cc04
+        success: true
+        fail_type: credentials
+    LTAttrs:
+      type: object
+      properties:
+        attr_name_single_value:
+          type: string
+        attr_name multi_value:
           type: array
           items:
             type: string
-    example:
-      attr1: value1
-      attr2: value2
-      attr3: [ value3, value4 ]
-  Error:
-    required:
-      - status
-      - reason
-    properties:
-      status:
-        type: string
-      reason:
-        type: string
-    example:
-      status: failure
-      reason: Unauthorized
-  statsResponse:
-    type: object
-    properties:
-      reports:
-        type: integer
-      sys-msec:
-        type: integer
-      user-msec:
-        type: integer
-      perfstats:
-        type: object
-        description: Latency buckets for worker thread wait (WTW) and run (WTR)
-        properties:
-          WTW_0_1:
-            type: integer
-          WTW_1_10:
-            type: integer
-          WTW_10_100:
-            type: integer
-          WTW_100_1000:
-            type: integer
-          WTW_Slow:
-            type: integer
-          WTR_0_1:
-            type: integer
-          WTR_1_10:
-            type: integer
-          WTR_10_100:
-            type: integer
-          WTR_100_1000:
-            type: integer
-          WTR_Slow:
-            type: integer
-      commandstats:
-        type: object
-        description: Count of REST API commands run in last 5 minutes
-        properties:
-          addBLEntry:
-            type: integer
-          delBLEntry:
-            type: integer
-          getBL:
-            type: integer
-          getDBStats:
-            type: integer
-          stats:
-            type: integer
-          allow:
-            type: integer
-          report:
-            type: integer
-          reset:
-            type: integer
-          ping:
-            type: integer
-      customstats:
-        type: object
-        description: Count of custom statistics in last 5 minutes
-        properties:
-          custom_stat:
-            type: integer
-    example:
-      reports: 28291
-      sys-msec: 97211221
-      user-msec: 292910108
-      perfstats: {"WTR_0_1": 0, "WTR_100_1000": 0, "WTR_10_100": 0, "WTR_1_10": 0, "WTR_Slow": 0, "WTW_0_1": 1, "WTW_100_1000": 0, "WTW_10_100": 0, "WTW_1_10": 0, "WTW_Slow": 0}
-      commandstats: {"addBLEntry": 0, "allow": 0, "delBLEntry": 0, "getBL": 0, "getDBStats": 0, "ping": 0, "report": 0, "reset": 0, "stats": 0}
-      customstats: {"custom1": 0, "custom2": 0}
+      example:
+        attr1: value1
+        attr2: value2
+        attr3:
+          - value3
+          - value4
+    Error:
+      required:
+        - reason
+        - status
+      type: object
+      properties:
+        status:
+          type: string
+        reason:
+          type: string
+      example:
+        status: failure
+        reason: Unauthorized
+    statsResponse:
+      type: object
+      properties:
+        reports:
+          type: integer
+        sys-msec:
+          type: integer
+        user-msec:
+          type: integer
+        perfstats:
+          type: object
+          properties:
+            WTW_0_1:
+              type: integer
+            WTW_1_10:
+              type: integer
+            WTW_10_100:
+              type: integer
+            WTW_100_1000:
+              type: integer
+            WTW_Slow:
+              type: integer
+            WTR_0_1:
+              type: integer
+            WTR_1_10:
+              type: integer
+            WTR_10_100:
+              type: integer
+            WTR_100_1000:
+              type: integer
+            WTR_Slow:
+              type: integer
+          description: Latency buckets for worker thread wait (WTW) and run (WTR)
+        commandstats:
+          type: object
+          properties:
+            addBLEntry:
+              type: integer
+            delBLEntry:
+              type: integer
+            getBL:
+              type: integer
+            getDBStats:
+              type: integer
+            stats:
+              type: integer
+            allow:
+              type: integer
+            report:
+              type: integer
+            reset:
+              type: integer
+            ping:
+              type: integer
+          description: Count of REST API commands run in last 5 minutes
+        customstats:
+          type: object
+          properties:
+            custom_stat:
+              type: integer
+          description: Count of custom statistics in last 5 minutes
+      example:
+        reports: 28291
+        sys-msec: 97211221
+        user-msec: 292910108
+        perfstats:
+          WTR_0_1: 0
+          WTR_100_1000: 0
+          WTR_10_100: 0
+          WTR_1_10: 0
+          WTR_Slow: 0
+          WTW_0_1: 1
+          WTW_100_1000: 0
+          WTW_10_100: 0
+          WTW_1_10: 0
+          WTW_Slow: 0
+        commandstats:
+          addBLEntry: 0
+          allow: 0
+          delBLEntry: 0
+          getBL: 0
+          getDBStats: 0
+          ping: 0
+          report: 0
+          reset: 0
+          stats: 0
+        customstats:
+          custom1: 0
+          custom2: 0
+
+security:
+  - BasicAuth: []

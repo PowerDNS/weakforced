@@ -222,6 +222,15 @@ void parseCustomCmd(const drogon::HttpRequestPtr& req,
   incPrometheusCommandMetric(command);
 }
 
+void parseReadyzCmd(const drogon::HttpRequestPtr& req,
+                    const std::string& command,
+                    const drogon::HttpResponsePtr& resp)
+{
+  resp->setStatusCode(drogon::k200OK);
+  incCommandStat("readyz");
+  incPrometheusCommandMetric("readyz");
+}
+
 void registerWebserverCommands()
 {
   addCommandStat("report");
@@ -230,4 +239,7 @@ void registerWebserverCommands()
   addCommandStat("stats");
   addPrometheusCommandMetric("stats");
   g_webserver.registerFunc("stats", HTTPVerb::GET, WforceWSFunc(parseStatsCmd));
+  addCommandStat("readyz");
+  addPrometheusCommandMetric("readyz");
+  g_webserver.registerFuncNoAuth("readyz", HTTPVerb::GET, WforceWSFunc(parseReadyzCmd));
 }

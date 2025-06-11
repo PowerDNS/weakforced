@@ -126,7 +126,7 @@ popd
 
 SECTION "Install luarocks package manager"
 
-luarocks_version="3.9.2"
+luarocks_version="3.12.0"
 luarocks_tarfile="luarocks-${luarocks_version}.tar.gz"
 luarocks_tardir="luarocks-${luarocks_version}"
 luarocks_url="https://luarocks.org/releases/${luarocks_tarfile}"

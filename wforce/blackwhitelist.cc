@@ -43,9 +43,9 @@ using namespace json11;
 BlackWhiteListDB g_bl_db(BLWLDBType::BLACKLIST);
 BlackWhiteListDB g_wl_db(BLWLDBType::WHITELIST);
 
-std::string BlackWhiteListDB::ipLoginStr(const ComboAddress& ca, const std::string& login) const
+std::string BlackWhiteListDB::ipStringStr(const ComboAddress& ca, const std::string& str) const
 {
-  return ca.toString() + ":" + login;
+  return ca.toString() + ":" + str;
 }
 
 void BlackWhiteListDB::addEntry(const Netmask& nm, time_t seconds, const std::string& reason)
@@ -73,9 +73,23 @@ void BlackWhiteListDB::addEntry(const std::string& login, time_t seconds, const 
 void
 BlackWhiteListDB::addEntry(const ComboAddress& ca, const std::string& login, time_t seconds, const std::string& reason)
 {
-  std::string key = ipLoginStr(ca, login);
+  std::string key = ipStringStr(ca, login);
   addEntryInternal(key, seconds, IP_LOGIN_BLWL, reason, true);
   addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
+}
+
+void BlackWhiteListDB::addJA3Entry(const std::string& ja3, time_t seconds, const std::string& reason)
+{
+  addEntryInternal(ja3, seconds, JA3_BLWL, reason, true);
+  addEntryLog(JA3_BLWL, ja3, seconds, reason);
+}
+
+void
+BlackWhiteListDB::addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, time_t seconds, const std::string& reason)
+{
+  std::string key = ipStringStr(ca, ja3);
+  addEntryInternal(key, seconds, IP_JA3_BLWL, reason, true);
+  addEntryLog(IP_JA3_BLWL, key, seconds, reason);
 }
 
 void BlackWhiteListDB::addEntryInternal(const std::string& key, time_t seconds, BLWLType blwl_type,
@@ -83,71 +97,46 @@ void BlackWhiteListDB::addEntryInternal(const std::string& key, time_t seconds, 
 {
   WriteLock wl(&rwlock);
 
+  auto add = [&key, replicate, &reason, seconds, blwl_type, this] {
+    addEntryLog(blwl_type, key, seconds, reason);
+    if (persist && ((replicate == true) || ((replicate == false) && persist_replicated)))
+      addPersistEntry(key, seconds, blwl_type, reason);
+    if (replicate == true) {
+      if (db_type == BLWLDBType::BLACKLIST) {
+        std::shared_ptr<BLReplicationOperation> bl_rop;
+        bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, blwl_type, key, seconds, reason);
+        ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
+        replicateOperation(rep_op);
+      }
+      else {
+        std::shared_ptr<WLReplicationOperation> wl_rop;
+        wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLAdd, blwl_type, key, seconds, reason);
+        ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
+        replicateOperation(rep_op);
+      }
+    }
+  };
   switch (blwl_type) {
     case IP_BLWL:
       _addEntry(key, seconds, ip_list, reason);
       iplist_netmask.addMask(key);
-      addEntryLog(IP_BLWL, key, seconds, reason);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated)))
-        addPersistEntry(key, seconds, IP_BLWL, reason);
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_BLWL, key, seconds, reason);
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_BLWL, key, seconds, reason);
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      add();
       break;
     case LOGIN_BLWL:
       _addEntry(key, seconds, login_list, reason);
-      addEntryLog(LOGIN_BLWL, key, seconds, reason);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated)))
-        addPersistEntry(key, seconds, LOGIN_BLWL, reason);
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, LOGIN_BLWL, key, seconds,
-                                                            reason);
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLAdd, LOGIN_BLWL, key, seconds,
-                                                            reason);
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      add();
       break;
     case IP_LOGIN_BLWL:
       _addEntry(key, seconds, ip_login_list, reason);
-      addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated)))
-        addPersistEntry(key, seconds, IP_LOGIN_BLWL, reason);
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_LOGIN_BLWL, key, seconds,
-                                                            reason);
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLAdd, IP_LOGIN_BLWL, key, seconds,
-                                                            reason);
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      add();
+      break;
+    case JA3_BLWL:
+      _addEntry(key, seconds, ja3_list, reason);
+      add();
+      break;
+    case IP_JA3_BLWL:
+      _addEntry(key, seconds, ip_ja3_list, reason);
+      add();
       break;
     default:
       break;
@@ -204,7 +193,17 @@ bool BlackWhiteListDB::checkEntry(const std::string& login) const
 
 bool BlackWhiteListDB::checkEntry(const ComboAddress& ca, const std::string& login) const
 {
-  return _checkEntry(ipLoginStr(ca, login), ip_login_list);
+  return _checkEntry(ipStringStr(ca, login), ip_login_list);
+}
+
+bool BlackWhiteListDB::checkJA3Entry(const std::string& ja3) const
+{
+  return _checkEntry(ja3, ja3_list);
+}
+
+bool BlackWhiteListDB::checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3) const
+{
+  return _checkEntry(ipStringStr(ca, ja3), ip_ja3_list);
 }
 
 bool BlackWhiteListDB::_checkEntry(const std::string& key, const blackwhitelist_t& blackwhitelist) const
@@ -236,7 +235,17 @@ bool BlackWhiteListDB::getEntry(const std::string& login, BlackWhiteListEntry& r
 
 bool BlackWhiteListDB::getEntry(const ComboAddress& ca, const std::string& login, BlackWhiteListEntry& ret) const
 {
-  return _getEntry(ipLoginStr(ca, login), ip_login_list, ret);
+  return _getEntry(ipStringStr(ca, login), ip_login_list, ret);
+}
+
+bool BlackWhiteListDB::getJA3Entry(const std::string& ja3, BlackWhiteListEntry& ret) const
+{
+  return _getEntry(ja3, ja3_list, ret);
+}
+
+bool BlackWhiteListDB::getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, BlackWhiteListEntry& ret) const
+{
+  return _getEntry(ipStringStr(ca, ja3), ip_ja3_list, ret);
 }
 
 bool BlackWhiteListDB::_getEntry(const std::string& key, const blackwhitelist_t& blackwhitelist,
@@ -275,79 +284,69 @@ void BlackWhiteListDB::deleteEntry(const std::string& login)
 
 void BlackWhiteListDB::deleteEntry(const ComboAddress& ca, const std::string& login)
 {
-  std::string key = ipLoginStr(ca, login);
+  std::string key = ipStringStr(ca, login);
 
   deleteEntryInternal(key, IP_LOGIN_BLWL, true);
+}
+
+void BlackWhiteListDB::deleteJA3Entry(const std::string& ja3)
+{
+  deleteEntryInternal(ja3, JA3_BLWL, true);
+}
+
+void BlackWhiteListDB::deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3)
+{
+  std::string key = ipStringStr(ca, ja3);
+
+  deleteEntryInternal(key, IP_JA3_BLWL, true);
 }
 
 void BlackWhiteListDB::deleteEntryInternal(const std::string& key, BLWLType blwl_type, bool replicate)
 {
   WriteLock wl(&rwlock);
 
+  auto del = [this, &key, blwl_type, replicate] {
+    deleteEntryLog(blwl_type, key);
+    if (persist && ((replicate == true) || ((replicate == false) && persist_replicated))) {
+      deletePersistEntry(key, blwl_type, ip_list);
+    }
+    if (replicate == true) {
+      if (db_type == BLWLDBType::BLACKLIST) {
+        std::shared_ptr<BLReplicationOperation> bl_rop;
+        bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, blwl_type, key, 0, "");
+        ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
+        replicateOperation(rep_op);
+      }
+      else {
+        std::shared_ptr<WLReplicationOperation> wl_rop;
+        wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLDelete, blwl_type, key, 0, "");
+        ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
+        replicateOperation(rep_op);
+      }
+    }
+  };
+
   switch (blwl_type) {
     case IP_BLWL:
-      deleteEntryLog(IP_BLWL, key);
       _deleteEntry(key, ip_list);
       iplist_netmask.deleteMask(key);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated))) {
-        deletePersistEntry(key, blwl_type, ip_list);
-      }
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_BLWL, key, 0, "");
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_BLWL, key, 0, "");
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      del();
       break;
     case LOGIN_BLWL:
-      deleteEntryLog(LOGIN_BLWL, key);
       _deleteEntry(key, login_list);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated))) {
-        deletePersistEntry(key, blwl_type, login_list);
-      }
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, LOGIN_BLWL, key, 0, "");
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLDelete, LOGIN_BLWL, key, 0, "");
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      del();
       break;
     case IP_LOGIN_BLWL:
-      deleteEntryLog(IP_LOGIN_BLWL, key);
       _deleteEntry(key, ip_login_list);
-      if (persist && ((replicate == true) || ((replicate == false) && persist_replicated))) {
-        deletePersistEntry(key, blwl_type, ip_login_list);
-      }
-      if (replicate == true) {
-        if (db_type == BLWLDBType::BLACKLIST) {
-          std::shared_ptr<BLReplicationOperation> bl_rop;
-          bl_rop = std::make_shared<BLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_LOGIN_BLWL, key, 0, "");
-          ReplicationOperation rep_op(bl_rop, WforceReplicationMsg_RepType_BlacklistType);
-          replicateOperation(rep_op);
-        }
-        else {
-          std::shared_ptr<WLReplicationOperation> wl_rop;
-          wl_rop = std::make_shared<WLReplicationOperation>(BLOperation_BLOpType_BLDelete, IP_LOGIN_BLWL, key, 0, "");
-          ReplicationOperation rep_op(wl_rop, WforceReplicationMsg_RepType_WhitelistType);
-          replicateOperation(rep_op);
-        }
-      }
+      del();
+      break;
+    case JA3_BLWL:
+      _deleteEntry(key, ja3_list);
+      del();
+      break;
+    case IP_JA3_BLWL:
+      _deleteEntry(key, ip_ja3_list);
+      del();
       break;
     default:
       break;
@@ -372,7 +371,6 @@ void BlackWhiteListDB::deleteEntryInternal(const std::string& key, BLWLType blwl
         g_webhook_runner.runHook(event_name, hs, jobj);
     }
   }
-
 }
 
 bool BlackWhiteListDB::_deleteEntry(const std::string& key, blackwhitelist_t& blackwhitelist)
@@ -401,7 +399,17 @@ time_t BlackWhiteListDB::getExpiration(const std::string& login) const
 
 time_t BlackWhiteListDB::getExpiration(const ComboAddress& ca, const std::string& login) const
 {
-  return _getExpiration(ipLoginStr(ca, login), ip_login_list);
+  return _getExpiration(ipStringStr(ca, login), ip_login_list);
+}
+
+time_t BlackWhiteListDB::getJA3Expiration(const std::string& ja3) const
+{
+  return _getExpiration(ja3, ja3_list);
+}
+
+time_t BlackWhiteListDB::getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3) const
+{
+  return _getExpiration(ipStringStr(ca, ja3), ip_ja3_list);
 }
 
 // to_time_t is missing in some versions of boost
@@ -437,26 +445,32 @@ void BlackWhiteListDB::purgeEntries()
 {
   while (true) {
     sleep(1);
-    _purgeEntries(IP_BLWL, ip_list, IP_BLWL);
-    _purgeEntries(LOGIN_BLWL, login_list, LOGIN_BLWL);
-    _purgeEntries(IP_LOGIN_BLWL, ip_login_list, IP_LOGIN_BLWL);
+    _purgeEntries(ip_list, IP_BLWL);
+    _purgeEntries(login_list, LOGIN_BLWL);
+    _purgeEntries(ip_login_list, IP_LOGIN_BLWL);
+    _purgeEntries(ja3_list, JA3_BLWL);
+    _purgeEntries(ip_ja3_list, IP_JA3_BLWL);
     {
       ReadLock rl(&rwlock);
       if (db_type == BLWLDBType::BLACKLIST) {
         setPrometheusBLIPEntries(ip_list.size());
         setPrometheusBLLoginEntries(login_list.size());
         setPrometheusBLIPLoginEntries(ip_login_list.size());
+        setPrometheusBLJA3Entries(ja3_list.size());
+        setPrometheusBLIPJA3Entries(ip_ja3_list.size());
       }
       else {
         setPrometheusWLIPEntries(ip_list.size());
         setPrometheusWLLoginEntries(login_list.size());
         setPrometheusWLIPLoginEntries(ip_login_list.size());
+        setPrometheusWLJA3Entries(ja3_list.size());
+        setPrometheusWLIPJA3Entries(ip_ja3_list.size());
       }
     }
   }
 }
 
-void BlackWhiteListDB::_purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitelist, BLWLType blwl_type)
+void BlackWhiteListDB::_purgeEntries(blackwhitelist_t& blackwhitelist, BLWLType blwl_type)
 {
   WriteLock wl(&rwlock);
   boost::system_time now = boost::get_system_time();
@@ -482,7 +496,7 @@ void BlackWhiteListDB::_purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitel
         if (auto hs = h.lock())
           g_webhook_runner.runHook(event_name, hs, jobj);
       }
-      expireEntryLog(blt, tit->key);
+      expireEntryLog(blwl_type, tit->key);
       if (blwl_type == IP_BLWL)
         iplist_netmask.deleteMask(tit->key);
       tit = timeindex.erase(tit);
@@ -492,37 +506,40 @@ void BlackWhiteListDB::_purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitel
   }
 }
 
-std::vector<BlackWhiteListEntry> BlackWhiteListDB::getIPEntries() const
+std::vector<BlackWhiteListEntry> BlackWhiteListDB::getEntries(const blackwhitelist_t& list) const
 {
   ReadLock rl(&rwlock);
   std::vector<BlackWhiteListEntry> ret;
 
-  auto& seqindex = ip_list.get<SeqTag>();
+  auto& seqindex = list.get<SeqTag>();
   for (const auto& a: seqindex)
     ret.push_back(a);
   return ret;
+}
+
+std::vector<BlackWhiteListEntry> BlackWhiteListDB::getIPEntries() const
+{
+  return getEntries(ip_list);
 }
 
 std::vector<BlackWhiteListEntry> BlackWhiteListDB::getLoginEntries() const
 {
-  ReadLock rl(&rwlock);
-  std::vector<BlackWhiteListEntry> ret;
-
-  auto& seqindex = login_list.get<SeqTag>();
-  for (const auto& a: seqindex)
-    ret.push_back(a);
-  return ret;
+  return getEntries(login_list);
 }
 
 std::vector<BlackWhiteListEntry> BlackWhiteListDB::getIPLoginEntries() const
 {
-  ReadLock rl(&rwlock);
-  std::vector<BlackWhiteListEntry> ret;
+  return getEntries(ip_login_list);
+}
 
-  auto& seqindex = ip_login_list.get<SeqTag>();
-  for (const auto& a: seqindex)
-    ret.push_back(a);
-  return ret;
+std::vector<BlackWhiteListEntry> BlackWhiteListDB::getJA3Entries() const
+{
+  return getEntries(ja3_list);
+}
+
+std::vector<BlackWhiteListEntry> BlackWhiteListDB::getIPJA3Entries() const
+{
+  return getEntries(ip_ja3_list);
 }
 
 void
@@ -530,7 +547,7 @@ BlackWhiteListDB::addEntryLog(BLWLType blt, const std::string& key, time_t secon
 {
   std::ostringstream os;
   std::string blwl_name = list_names[blt];
-  std::string key_name = string(key_names[blt]);
+  std::string key_name = BLWLTypeToName(blt);
   std::string event_name;
 
   if (db_type == BLWLDBType::BLACKLIST)
@@ -547,7 +564,7 @@ void BlackWhiteListDB::deleteEntryLog(BLWLType blt, const std::string& key) cons
 {
   std::ostringstream os;
   std::string blwl_name = list_names[blt];
-  std::string key_name = string(key_names[blt]);
+  std::string key_name = BLWLTypeToName(blt);
   std::string event_name;
 
   if (db_type == BLWLDBType::BLACKLIST)
@@ -563,7 +580,7 @@ void BlackWhiteListDB::expireEntryLog(BLWLType blt, const std::string& key) cons
 {
   std::ostringstream os;
   std::string blwl_name = list_names[blt];
-  std::string key_name = string(key_names[blt]);
+  std::string key_name = BLWLTypeToName(blt);
   std::string event_name;
 
   if (db_type == BLWLDBType::BLACKLIST)
@@ -699,7 +716,7 @@ BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, BLWLTy
   if (checkSetupContext()) {
     std::stringstream redis_key_s;
     std::stringstream redis_value_s;
-    std::string blwl_key = string(key_names[blwl_type]);
+    std::string blwl_key = BLWLTypeToName(blwl_type);
     time_t expiration_time = time(NULL) + seconds;
 
     redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
@@ -728,7 +745,7 @@ bool BlackWhiteListDB::deletePersistEntry(const std::string& key, BLWLType blwl_
   if (checkSetupContext()) {
     BlackWhiteListEntry ble;
     std::stringstream redis_key_s;
-    std::string blwl_key = string(key_names[blwl_type]);
+    std::string blwl_key = BLWLTypeToName(blwl_type);
 
     redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
     redisReply* reply = (redisReply*) redisCommand(redis_context, "DEL %s", redis_key_s.str().c_str());
@@ -859,17 +876,19 @@ bool BlackWhiteListDB::loadPersistEntries()
 
 BLWLType BlackWhiteListDB::BLWLNameToType(const std::string& blwl_name) const
 {
-  for (unsigned int i = 0; key_names[i] != NULL; i++) {
-    if (blwl_name.compare(key_names[i]) == 0)
+  int i=0;
+  for (auto &key_name : key_names) {
+    if (blwl_name.compare(key_name) == 0)
       return (BLWLType) i;
+    i++;
   }
   return NONE_BLWL;
 }
 
 std::string BlackWhiteListDB::BLWLTypeToName(BLWLType blwl_type) const
 {
-  if (blwl_type < list_names.size())
-    return list_names[blwl_type];
+  if (blwl_type < key_names.size())
+    return key_names[blwl_type];
   else
     return std::string();
 }

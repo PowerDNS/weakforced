@@ -67,6 +67,8 @@ public:
       bl_entries_ip = &(bl_entries_family.Add({{"type", "ip"}}));
       bl_entries_login = &(bl_entries_family.Add({{"type", "login"}}));
       bl_entries_iplogin = &(bl_entries_family.Add({{"type", "iplogin"}}));
+      bl_entries_ja3 = &(bl_entries_family.Add({{"type", "ja3"}}));
+      bl_entries_ipja3 = &(bl_entries_family.Add({{"type", "ipja3"}}));
       auto& wl_entries_family = BuildGauge()
         .Name(d_prefix+"_wl_entries")
         .Help("How many entries are in the whitelist?")
@@ -74,6 +76,8 @@ public:
       wl_entries_ip = &(wl_entries_family.Add({{"type", "ip"}}));
       wl_entries_login = &(wl_entries_family.Add({{"type", "login"}}));
       wl_entries_iplogin = &(wl_entries_family.Add({{"type", "iplogin"}}));
+      wl_entries_ja3 = &(wl_entries_family.Add({{"type", "ja3"}}));
+      wl_entries_ipja3 = &(wl_entries_family.Add({{"type", "ipja3"}}));
       auto& repl_recv_queue_family = BuildGauge()
         .Name(d_prefix+"_repl_recv_queue_size")
         .Help("How full is the replication recv worker thread queue?")
@@ -106,6 +110,10 @@ public:
   void setWLLoginEntries(int);
   void setBLIPLoginEntries(int);
   void setWLIPLoginEntries(int);
+  void setBLJA3Entries(int);
+  void setWLJA3Entries(int);
+  void setBLIPJA3Entries(int);
+  void setWLIPJA3Entries(int);
 
   void setReplRecvQueueSize(int value)
   {
@@ -147,9 +155,13 @@ private:
   Gauge* bl_entries_ip;
   Gauge* bl_entries_login;
   Gauge* bl_entries_iplogin;
+  Gauge* bl_entries_ja3;
+  Gauge* bl_entries_ipja3;
   Gauge* wl_entries_ip;
   Gauge* wl_entries_login;
   Gauge* wl_entries_iplogin;
+  Gauge* wl_entries_ja3;
+  Gauge* wl_entries_ipja3;
   Gauge* repl_recv_queue_size;
   std::function<int()> repl_queue_func;
 };
@@ -175,6 +187,10 @@ void setPrometheusBLLoginEntries(int);
 void setPrometheusWLLoginEntries(int);
 void setPrometheusBLIPLoginEntries(int);
 void setPrometheusWLIPLoginEntries(int);
+void setPrometheusBLIPJA3Entries(int);
+void setPrometheusWLIPJA3Entries(int);
+void setPrometheusBLJA3Entries(int);
+void setPrometheusWLJA3Entries(int);
 
 void setPrometheusReplRecvQueueSize(int value);
 void setPrometheusReplRecvQueueRetrieveFunc(std::function<int()> func);

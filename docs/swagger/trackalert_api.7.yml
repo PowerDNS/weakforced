@@ -85,11 +85,11 @@ paths:
   /readyz:
     get:
       security: [] # No auth needed
-      description: Determine if wforce is ready to accept queries
+      description: Determine if trackalert is ready to accept queries
       operationId: readyz
       responses:
         "200":
-          description: wforce is ready to accept queries
+          description: trackalert is ready to accept queries
         default:
           description: unexpected error
           content:
@@ -99,11 +99,11 @@ paths:
   /livez:
     get:
       security: [] # No auth needed
-      description: Determine if wforce is up
+      description: Determine if trackalert is up
       operationId: livez
       responses:
         "200":
-          description: wforce is up
+          description: trackalert is up
         default:
           description: unexpected error
           content:

@@ -123,8 +123,8 @@ paths:
       x-codegen-request-body-name: Reset
   /command/delBLEntry:
     post:
-      description: Delete a blacklist entry for an IP and/or login. Note that netmask
-        and ip parameters are mutually exclusive.
+      description: Delete a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
+        and other parameters are mutually exclusive.
       operationId: delBLEntry
       requestBody:
         description: Provide IP and/or login
@@ -156,11 +156,11 @@ paths:
       x-codegen-request-body-name: delBLEntry
   /command/addBLEntry:
     post:
-      description: Add a blacklist entry for an IP and/or login. Note that netmask
-        and ip parameters are mutually exclusive.
+      description: Add a blacklist entry for an IP and/or login and/or JA3 hash. Note that netmask
+        and other parameters are mutually exclusive.
       operationId: addBLEntry
       requestBody:
-        description: Provide IP and/or login
+        description: Provide IP and/or login and/or JA3 hash
         content:
           application/json:
             schema:
@@ -189,11 +189,11 @@ paths:
       x-codegen-request-body-name: addBLEntry
   /command/delWLEntry:
     post:
-      description: Delete a whitelist entry for an IP and/or login. Note that netmask
-        and ip parameters are mutually exclusive.
+      description: Delete a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
+        and other parameters are mutually exclusive.
       operationId: delWLEntry
       requestBody:
-        description: Provide IP and/or login
+        description: Provide IP and/or login and/or JA3 hash
         content:
           application/json:
             schema:
@@ -222,11 +222,11 @@ paths:
       x-codegen-request-body-name: delWLEntry
   /command/addWLEntry:
     post:
-      description: Add a whitelist entry for an IP and/or login. Note that netmask
-        and ip parameters are mutually exclusive.
+      description: Add a whitelist entry for an IP and/or login and/or JA3 hash. Note that netmask
+        and other parameters are mutually exclusive.
       operationId: addWLEntry
       requestBody:
-        description: Provide IP and/or login
+        description: Provide IP and/or login and/or JA3 hash
         content:
           application/json:
             schema:
@@ -320,7 +320,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /command/getBL:
     get:
-      description: Get the list of all blacklisted IPs and/or Logins
+      description: Get the list of all blacklisted IPs and/or Logins and/or JA3 hashes
       operationId: getBL
       responses:
         "200":
@@ -337,7 +337,7 @@ paths:
                 $ref: '#/components/schemas/Error'
   /command/getWL:
     get:
-      description: Get the list of all whitelisted IPs and/or Logins
+      description: Get the list of all whitelisted IPs and/or Logins and/or JA3 hashes
       operationId: getWL
       responses:
         "200":
@@ -745,6 +745,8 @@ components:
           type: string
         login:
           type: string
+        ja3:
+          type: string
       example:
         ip: 127.0.0.1
     DelBLWLEntryParams:
@@ -755,6 +757,8 @@ components:
         netmask:
           type: string
         login:
+          type: string
+        ja3:
           type: string
       example:
         ip: 127.0.0.1
@@ -767,6 +771,8 @@ components:
         netmask:
           type: string
         login:
+          type: string
+        ja3:
           type: string
         expire_secs:
           type: integer
@@ -818,6 +824,10 @@ components:
         login:
           $ref: '#/components/schemas/BLWLEntry'
         iplogin:
+          $ref: '#/components/schemas/BLWLEntry'
+        ja3:
+          $ref: '#/components/schemas/BLWLEntry'
+        ipja3:
           $ref: '#/components/schemas/BLWLEntry'
     BLWLEntry:
       type: array

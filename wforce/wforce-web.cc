@@ -914,9 +914,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
       ja3 = lt.attrs.at(g_ja3_attrname);
     }
     catch (const std::out_of_range& oor) {
-      setErrorCodeAndReason(drogon::k500InternalServerError, oor.what(), resp);
-      errlog("ja3 not found in attrs using name: %s", g_ja3_attrname, oor.what());
-      return;
+      vdebuglog("ja3 not found in attrs using name: %s", g_ja3_attrname, oor.what());
     }
 
     // check the built-in whitelists
@@ -947,7 +945,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
-      else if (g_wl_db.getJA3Entry(ja3, wle)) {
+      else if (!ja3.empty() && g_wl_db.getJA3Entry(ja3, wle)) {
         std::vector<pair<std::string, std::string>> log_attrs =
             {{"expiration",  boost::posix_time::to_simple_string(wle.expiration)},
              {"reason",      wle.reason},
@@ -971,7 +969,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
-      else if (g_wl_db.getIPJA3Entry(lt.remote, ja3, wle)) {
+      else if (!ja3.empty() && g_wl_db.getIPJA3Entry(lt.remote, ja3, wle)) {
         std::vector<pair<std::string, std::string>> log_attrs =
             {{"expiration",  boost::posix_time::to_simple_string(wle.expiration)},
              {"reason",      wle.reason},
@@ -1010,7 +1008,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
-      else if (g_bl_db.getJA3Entry(ja3, ble)) {
+      else if (!ja3.empty() && g_bl_db.getJA3Entry(ja3, ble)) {
         std::vector<pair<std::string, std::string>> log_attrs =
             {{"expiration",  boost::posix_time::to_simple_string(ble.expiration)},
              {"reason",      ble.reason},
@@ -1032,7 +1030,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
-      else if (g_bl_db.getIPJA3Entry(lt.remote, ja3, ble)) {
+      else if (!ja3.empty() && g_bl_db.getIPJA3Entry(lt.remote, ja3, ble)) {
         std::vector<pair<std::string, std::string>> log_attrs =
             {{"expiration",  boost::posix_time::to_simple_string(ble.expiration)},
              {"reason",      ble.reason},

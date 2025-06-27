@@ -37,7 +37,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], -1)
         r.close()
 
-        time.sleep(11);
+        time.sleep(11)
 
         r = self.allowFunc('goodie', '193.168.72.14', "1234")
         j = r.json()
@@ -78,7 +78,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], -1)
         r.close()
 
-        time.sleep(11);
+        time.sleep(11)
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
@@ -105,7 +105,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], -1)
         r.close()
 
-        time.sleep(11);
+        time.sleep(11)
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
@@ -137,7 +137,7 @@ class TestBlacklist(ApiTestCase):
         self.assertEqual(j['status'], 0)
         r.close()
 
-        time.sleep(11);
+        time.sleep(11)
 
         r = self.allowFunc('goodie', '192.168.72.14', "1234")
         j = r.json()
@@ -168,3 +168,80 @@ class TestBlacklist(ApiTestCase):
 
         proc3.terminate()
         proc3.wait()
+
+    def test_JA3Blacklist(self):
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.addBLEntryJA3("03456", 10, "test ja3 blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        time.sleep(11)
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+    def test_JA3BlacklistReset(self):
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"034567"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.addBLEntryJA3("034567", 3600, "test ja3 blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"034567"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        time.sleep(11)
+
+        r= self.resetJA3Func("034567", None)
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.49.14', "1234", {"ja3":"034567"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+    def test_IPJA3Blacklist(self):
+        r = self.allowFuncAttrs('ja3goodie', '192.168.41.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.addBLEntryIPJA3("192.168.41.14", "03456", 10, "test ipja3 blacklist")
+        j = r.json()
+        self.assertEqual(j['status'], 'ok')
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.41.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], -1)
+        r.close()
+
+        r = self.allowFuncAttrs('ja3goody', '192.168.41.15', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.41.14', "1234", {"ja3":"111111"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()
+
+        time.sleep(11)
+
+        r = self.allowFuncAttrs('ja3goodie', '192.168.41.14', "1234", {"ja3":"03456"})
+        j = r.json()
+        self.assertEqual(j['status'], 0)
+        r.close()

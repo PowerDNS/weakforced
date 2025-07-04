@@ -58,6 +58,11 @@ bool g_builtin_wl_enabled = true;
 
 static time_t start = time(0);
 
+static inline std::string getIPJA3(const std::string& ip, const std::string& ja3)
+{
+  return ip+"::"+ja3;
+}
+
 static inline void setErrorCodeAndReason(drogon::HttpStatusCode code, const std::string& reason, const drogon::HttpResponsePtr& resp)
 {
   resp->setStatusCode(code);
@@ -1298,7 +1303,7 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
       }
       else if (haveJA3 && haveIP) {
         key_name = "ip_ja3";
-        key_value = en_ca.toString() + ":" + en_ja3;
+        key_value = getIPJA3(en_ca.toString(), en_ja3);
         lookup_key = key_value;
         if (g_bl_db.getIPJA3Entry(en_ca, en_ja3, bwle)) {
           is_blacklisted = true;

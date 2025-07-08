@@ -40,7 +40,7 @@ BuildRequires: bzip2
 BuildRequires: pkgconfig
 BuildRequires: getdns-devel
 BuildRequires: libsodium-devel
-BuildRequires: pandoc
+BuildRequires: asciidoctor
 BuildRequires: protobuf-compiler
 BuildRequires: protobuf-devel
 BuildRequires: curl-devel

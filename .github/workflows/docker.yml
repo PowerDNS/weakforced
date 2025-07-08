@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
           submodules: recursive
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get -qq -y install gcc g++ cmake libboost-all-dev libcurl4-openssl-dev libgetdns-dev libhiredis-dev libmaxminddb-dev libluajit-5.1-dev libprotobuf-dev libreadline-dev libssl-dev libsodium-dev libsystemd-dev libyaml-cpp-dev libjsoncpp-dev uuid-dev libz-dev libtool pkg-config protobuf-compiler pandoc wget autoconf automake
+        run: sudo apt-get update && sudo apt-get -qq -y install asciidoctor gcc g++ cmake libboost-all-dev libcurl4-openssl-dev libgetdns-dev libhiredis-dev libmaxminddb-dev libluajit-5.1-dev libprotobuf-dev libreadline-dev libssl-dev libsodium-dev libsystemd-dev libyaml-cpp-dev libjsoncpp-dev uuid-dev libz-dev libtool pkg-config protobuf-compiler wget autoconf automake
       - name: Download prometheus-cpp
         run: git clone https://github.com/jupp0r/prometheus-cpp.git && cd prometheus-cpp && git checkout tags/v1.0.1 -b v1.0.1
       - name: Build and Install prometheus-cpp

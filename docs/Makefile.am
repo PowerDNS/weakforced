@@ -7,7 +7,7 @@ MANPAGES_TARGET = wforce.1 wforce.conf.5 wforce_webhook.5 wf_dump_entries.1 $(TR
 APIDOC = wforce_api.7 $(TRACKALERT_APIDOC)
 SWAG2MD_PROG = swag2md.pl
 
-EXTRA_DIST = manpages swagger $(SWAG2MD_PROG)
+EXTRA_DIST = manpages swagger
 
 .PHONY: all-manpages
 

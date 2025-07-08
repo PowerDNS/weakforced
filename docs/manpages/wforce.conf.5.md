@@ -1,13 +1,13 @@
-% WFORCE.CONF(5)
-% Open-Xchange
-% 2018
+= WFORCE.CONF(5)
+:doctype: manpage
+:manmanual: wforce.conf
 
-<!-- {% raw %} -->
+// <!-- {% raw %} -->
 
-# NAME
-**wforce.conf** - configuration file for wforce daemon
+## NAME
+wforce.conf - configuration file for wforce daemon
 
-# DESCRIPTION
+## DESCRIPTION
 This file is read by **wforce** and is a Lua script containing Lua
 commands to implement (a) configuration of the wforce daemon and (b)
 functions that control the operation of the wforce daemon in response
@@ -17,7 +17,7 @@ An alternative version of this file can be specified with
 
     wforce -C private_wforce.conf ...
 
-# CONFIGURATION-ONLY FUNCTIONS
+## CONFIGURATION-ONLY FUNCTIONS
 
 The following functions are for configuration of wforce only, and
 cannot be called inside the allow/report/reset functions:
@@ -580,7 +580,7 @@ cannot be called inside the allow/report/reset functions:
 
 * setMetricsNoPassword() - Disable password protection for the /metrics endpoint.
 
-# GENERAL FUNCTIONS
+## GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 
 configuration or within the allow/report/reset functions:
@@ -1137,10 +1137,10 @@ a Netmask. For example:
 
         incCustomStat("custom_stat1")
 
-# FILES
+## FILES
 */etc/wforce/wforce.conf*
 
-# SEE ALSO
+## SEE ALSO
 wforce(1) wforce_webhook(5)
 
-<!-- {% endraw %} -->
+// <!-- {% endraw %} -->

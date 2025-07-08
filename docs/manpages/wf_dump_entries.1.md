@@ -1,15 +1,15 @@
-% WF_DUMP_ENTRIES(1)
-% Open-Xchange
-% 2020
+= WF_DUMP_ENTRIES(1)
+Open-Xchange 2020
+doctype: manpage
 
-# NAME
-**wf_dump_entries** - Tool to dump the entries from the wforce stats
+## NAME
+wf_dump_entries - Tool to dump the entries from the wforce stats
 DBs to stdout or a file
 
-# SYNOPSIS
+## SYNOPSIS
 wf_dump_entries [-u,--uri wforce uri] [-l,--local-addr address] [-p,--local-port port] [-w,--wforce-pwd password] [-f,--filename file] [-h,--help] 
 
-# DESCRIPTION
+## DESCRIPTION
 **wf_dump_entries** connects to the specified wforce server, and asks
 it to send a dump of all the stats DBs to itself over TCP/IP. It then
 sends the results to stdout or a file. 
@@ -18,11 +18,11 @@ sends the results to stdout or a file.
 and invoking the 'dumpEntries' command. Then it acts as a server,
 receiving the dumped entries, and printing them to stdout or to a file.
 
-# SCOPE
+## SCOPE
 **wf_dump_entries** requires a running wforce daemon to connect
 to.
 
-# OPTIONS
+## OPTIONS
 -u *URI*
 :    Provides the URI of the wforce daemon, ideally without a path or
      query. For example: http://127.0.0.1:8084/. The query
@@ -47,6 +47,6 @@ to.
 -h,--help
 :    Display a helpful message and exit.
 
-# SEE ALSO
+## SEE ALSO
 wforce(1)
 

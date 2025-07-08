@@ -1,11 +1,11 @@
-% TRACKALERT.CONF(5)
-% Open-Xchange
-% 2018
+= TRACKALERT.CONF(5)
+Open-Xchange 2018
+doctype: manpage
 
-# NAME
-**trackalert.conf** - configuration file for trackalert daemon
+## NAME
+trackalert.conf - configuration file for trackalert daemon
 
-# DESCRIPTION
+## DESCRIPTION
 This file is read by **trackalert** and is a Lua script containing Lua
 commands to implement (a) configuration of the trackalert daemon and
 (b) functions that control the operation of the trackalert daemon in
@@ -15,7 +15,7 @@ An alternative version of this file can be specified with
 
     trackalert -C private_trackalert.conf ...
 
-# CONFIGURATION-ONLY FUNCTIONS
+## CONFIGURATION-ONLY FUNCTIONS
 
 The following functions are for configuration of trackalert only, and
 cannot be called inside the report or background functions:
@@ -262,7 +262,7 @@ e.g. GeoIPCityv6.dat -> GeoLiteCityv6.dat. For example:
 
 * setMetricsNoPassword() - Disable password protection for the /metrics endpoint.
 
-# GENERAL FUNCTIONS
+## GENERAL FUNCTIONS
 
 The following functions are available anywhere; either as part of the 
 configuration or within the allow/report/reset functions:
@@ -516,8 +516,8 @@ configuration or within the allow/report/reset functions:
 
         incCustomStat("custom_stat1")
 
-# FILES
+## FILES
 */etc/wforce/trackalert.conf*
 
-# SEE ALSO
+## SEE ALSO
 trackalert(1)

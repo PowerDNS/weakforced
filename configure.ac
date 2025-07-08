@@ -147,8 +147,11 @@ AS_IF([test "x$LUAPC" = "x" -a "x$LUAJITPC" = "x"], [
   AC_MSG_ERROR([Neither Lua nor LuaJIT found, Lua support is required])
 ])
 PDNS_CHECK_LUA_HPP
-# Need pandoc to build documentation
-PDNS_CHECK_PANDOC
+# Need asciidoctor to build documentation
+AC_CHECK_PROG(HAVE_ASCIIDOCTOR, asciidoctor, asciidoctor)
+AS_IF([test "x$HAVE_ASCIIDOCTOR" = "x"], [
+  AC_MSG_ERROR([asciidoctor not found, needed to generate manpages and is required])
+])
 
 # We need prometheus-cpp
 PDNS_CHECK_LIBPROMETHEUS([], [
@@ -180,8 +183,6 @@ AM_CONDITIONAL([HAVE_PROTOBUF], [ test x = x ])
 AM_CONDITIONAL([HAVE_PROTOC], [ test x = x ])
 AM_CONDITIONAL([LUA], [ test x = x ])
 AM_CONDITIONAL([HAVE_LUA_HPP], [ test x = x ])
-AM_CONDITIONAL([HAVE_PANDOC], [ test x = x ])
-AM_CONDITIONAL([HAVE_MANPAGES], [ test x = x ])
 AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
 AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])
 AM_CONDITIONAL([BACKEND_UNIT_TESTS], [ test x = x ])

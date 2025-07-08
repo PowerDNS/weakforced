@@ -1,15 +1,15 @@
-% TRACKALERT(1)
-% Open-Xchange
-% 2018
+= TRACKALERT(1)
+Open-Xchange 2018
+doctype: manpage
 
-# NAME
-**trackalert** - daemon to track and alert on long-term abuse trends
+## NAME
+trackalert - daemon to track and alert on long-term abuse trends
 for logins
 
-# SYNOPSIS
+## SYNOPSIS
 trackalert [*OPTION*]... 
 
-# DESCRIPTION
+## DESCRIPTION
 **trackalert** implements a simple HTTP server that accepts JSON
 formatted commands that report successful/unsuccessful logins.
 
@@ -22,12 +22,12 @@ to a trackalert server and provides the same interactive commands.
 a simple example. In fact, all configuration is done using the Lua
 language, as trackalert.conf is simply a Lua script.
 
-# SCOPE
+## SCOPE
 **trackalert** depends on a system to feed it login reports, which
 will typically be wforce (configured with a webhook that triggers only
 on "report") integrated with it using the HTTP/JSON API.
 
-# OPTIONS
+## OPTIONS
 -c 
 :    Act as a client, connecting to a trackalert instance at the IP/Port 
      specified in the 'controlSocket' function in trackalert.conf. A
@@ -61,7 +61,7 @@ on "report") integrated with it using the HTTP/JSON API.
 :    Display a helpful message and exit.
 
 
-# CONSOLE COMMANDS
+## CONSOLE COMMANDS
 
 The following commands can be run from the console when *trackalert* is
 started with the -c option.
@@ -159,6 +159,6 @@ initialized. For example:
 		trackalert 1.2.0
 
 
-# SEE ALSO
+## SEE ALSO
 trackalert.conf(5) trackalert_api(7)
 

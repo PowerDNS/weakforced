@@ -206,15 +206,22 @@ class ApiTestCase(unittest.TestCase):
             headers={'Content-Type': 'application/json'})
 
     def resetFunc(self, login, ip):
-        return self.resetFuncInternal(login, ip, False)
+        return self.resetFuncInternal(login, ip, None, False)
+
+    def resetJA3Func(self, ja3, ip):
+        return self.resetFuncInternal(None, ip, ja3,False)
 
     def resetFuncReplica(self, login, ip):
-        return self.resetFuncInternal(login, ip, True)
+        return self.resetFuncInternal(login, ip, None,True)
 
-    def resetFuncInternal(self, login, ip, replica):
+    def resetFuncInternal(self, login, ip, ja3, replica):
         payload = dict()
-        payload['login'] = login
-        payload['ip'] = ip
+        if login is not None and login != "":
+            payload['login'] = login
+        if ja3 is not None and ja3 != "":
+            payload['ja3'] = ja3
+        if ip is not None and ip != "":
+            payload['ip'] = ip
         if not replica:
             return self.session.post(
                 self.url("/?command=reset"),
@@ -348,6 +355,17 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryIPJA3(self, ip, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addBLEntryIP(self, ip, expire_secs, reason):
         payload = dict()
         payload['ip'] = ip
@@ -388,6 +406,16 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def addBLEntryJA3(self, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def delBLEntryIPLogin(self, ip, login):
         payload = dict()
         payload['login'] = login
@@ -413,9 +441,28 @@ class ApiTestCase(unittest.TestCase):
             data=json.dumps(payload),
             headers={'Content-Type': 'application/json'})
 
+    def delBLEntryJA3(self, ja3):
+        payload = dict()
+        payload['ja3'] = ja3
+        return self.session.post(
+            self.url("/?command=delBLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
     def addWLEntryIPLogin(self, ip, login, expire_secs, reason):
         payload = dict()
         payload['login'] = login
+        payload['ip'] = ip
+        payload['expire_secs'] = expire_secs
+        payload['reason'] = reason
+        return self.session.post(
+            self.url("/?command=addWLEntry"),
+            data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'})
+
+    def addWLEntryIPJA3(self, ip, ja3, expire_secs, reason):
+        payload = dict()
+        payload['ja3'] = ja3
         payload['ip'] = ip
         payload['expire_secs'] = expire_secs
         payload['reason'] = reason

@@ -196,6 +196,18 @@ void WforcePrometheus::setBLIPLoginEntries(int num_entries)
     bl_entries_iplogin->Set(num_entries);
 }
 
+void WforcePrometheus::setBLJA3Entries(int num_entries)
+{
+  if (bl_entries_ja3 != nullptr)
+    bl_entries_ja3->Set(num_entries);
+}
+
+void WforcePrometheus::setBLIPJA3Entries(int num_entries)
+{
+  if (bl_entries_ipja3 != nullptr)
+    bl_entries_ipja3->Set(num_entries);
+}
+
 void WforcePrometheus::setWLIPEntries(int num_entries)
 {
   if (wl_entries_ip != nullptr)
@@ -212,6 +224,18 @@ void WforcePrometheus::setWLIPLoginEntries(int num_entries)
 {
   if (wl_entries_iplogin != nullptr)
     wl_entries_iplogin->Set(num_entries);
+}
+
+void WforcePrometheus::setWLJA3Entries(int num_entries)
+{
+  if (wl_entries_ja3 != nullptr)
+    wl_entries_ja3->Set(num_entries);
+}
+
+void WforcePrometheus::setWLIPJA3Entries(int num_entries)
+{
+  if (wl_entries_ipja3 != nullptr)
+    wl_entries_ipja3->Set(num_entries);
 }
 
 void addPrometheusAllowStatusMetric(const std::string& name)
@@ -337,6 +361,34 @@ void setPrometheusWLIPLoginEntries(int num_entries)
 {
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->setWLIPLoginEntries(num_entries);
+  }
+}
+
+void setPrometheusBLJA3Entries(int num_entries)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->setBLJA3Entries(num_entries);
+  }
+}
+
+void setPrometheusWLJA3Entries(int num_entries)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->setWLJA3Entries(num_entries);
+  }
+}
+
+void setPrometheusBLIPJA3Entries(int num_entries)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->setBLIPJA3Entries(num_entries);
+  }
+}
+
+void setPrometheusWLIPJA3Entries(int num_entries)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->setWLIPJA3Entries(num_entries);
   }
 }
 

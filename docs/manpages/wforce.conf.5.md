@@ -126,6 +126,10 @@ cannot be called inside the allow/report/reset functions:
 
         setMaxSiblingQueueSize(10000)
 
+* setJA3AttrName(\<attribute name\>) - Sets the attribute name that will be used
+  for determining the JA3 hash. It defaults to `ja3`. Note that a (single-valued) attribute with
+  this name must be present in the LoginTuple `attrs` object.
+
 * setNamedReportSinks(\<name\>, \<list of IP[:port]\>) - Set a named list
   of report sinks to which all received reports should be forwarded
   over UDP. Reports will be sent to the configured report sinks for a
@@ -440,6 +444,18 @@ cannot be called inside the allow/report/reset functions:
   "{login}" will be substituted for the actual IP address and login name. For example:
 
         setBlacklistIPLoginRetMsg("Go away your IP {ip}/Login {login} is blacklisted")
+
+* setBlacklistJA3RetMsg(<msg>) - Set the message to be returned to
+  clients whose JA3 hash is blacklisted. The string "{ja3}" will be substituted for the 
+  actual JA3 hash. For example:
+
+        setBlacklistJA3RetMsg("Go away your client {ja3} is blacklisted")
+
+* setBlacklistIPJA3RetMsg(<msg>) - Set the message to be returned to
+  clients whose IP address/JA3 hash is blacklisted. The strings "{ip}" and
+  "{ja3}" will be substituted for the actual IP address and JA3 hash. For example:
+
+        setBlacklistIPLoginRetMsg("Go away your IP {ip}/Client {ja3} is blacklisted")
 
 * setAllow(\<allow func\>) - Tell wforce to use the specified Lua
   function for handling all "allow" commands. For example:
@@ -910,6 +926,20 @@ a Netmask. For example:
   
 		blacklistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
 
+* blacklistJA3(\<ja3\>, \<expiry\> \<reason string\>) - Blacklist the
+  specified JA3 hash for expiry seconds, with the specified
+  reason. For example:
+
+  	blacklistJA3(lt.attrs.ja3, 300, "Potentially compromised account")
+
+* blacklistIPJA3(\<ip\>, \<ja3\>, \<expiry\>, \<reason string\>) -
+  Blacklist the specified IP-JA3 tuple for expiry seconds, with the
+  specified reason. Only when that IP and JA3 hash are received in the
+  same login tuple will the request be blacklisted. IP address must be
+  a ComboAddress. For example:
+
+  	blacklistIPLogin(lt.remote, lt.attrs.ja3, 300, "Account and IP are suspicious")
+
 * unblacklistNetmask(\<Netmask\>) Remove the blacklist for the
   specified netmask. Netmask address must be a Netmask object,
   e.g. created with newNetmask(). For example:
@@ -931,6 +961,16 @@ a Netmask. For example:
   
 		unblacklistIPLogin(lt.remote, lt.login)
 
+* unblacklistJA3(\<ja3\>) - Remove the blacklist for the specified
+  JA3 hash. For example:
+
+  	unblacklistJA3(lt.attrs.ja3)
+
+* unblacklistIPJA3(\<ip\>, \<ja3\>) - Remove the blacklist for the specified
+  IP-JA3 tuple. IP address must be a ComboAddress. For example:
+
+  	unblacklistIPJA3(lt.remote, lt.attrs.ja3)
+
 * checkBlacklistIP(\<ip\>) - Check if an IP is blacklisted. Return
   true if the IP is blacklisted. IP must be a ComboAddress. For example:
 
@@ -947,23 +987,59 @@ a Netmask. For example:
 
         checkBlacklistIPLogin(lt.remote, lt.login)
 
+* checkBlacklistJA3(\<ja3\>) - Check if a JA3 hash is
+  blacklisted. Return true if the JA3 hash is blacklisted. For example:
+
+        checkBlacklistJA3("6734f37431670b3ab4292b8f60f29984")
+
+* checkBlacklistIPJA3(\<ip\>, \<ja3\>) - Check if a IP/JA3 hash is
+  blacklisted. Return true if the ip/JA3 tuple is blacklisted. For
+  example:
+
+        checkBlacklistIPJA3(lt.remote, ja3_attr)
+
+* getIPBlacklist() - Gets the current IP blacklist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ip`. For example, the following is an example table returned:
+
+        { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ip="1.2.3.4"} }
+
+* getLoginBlacklist() - Gets the current login blacklist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `login`. For example, the following is an example table returned:
+
+        { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", login="admin")
+
+* getJA3Blacklist() - Gets the current JA3 blacklist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ja3`. For example, the following is an example table returned:
+
+        { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ja3="8d172671cc8e3c9808e277df5fbf69ba")
+
+* getIPLoginBlacklist() - Gets the current IP/Login blacklist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ip_login`. For example, the following is an example table returned:
+
+        { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ip_login="1.2.3.4:admin"} }
+
+* getIPJA3Blacklist() - Gets the current IP/Login blacklist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ip_ja3`. For example, the following is an example table returned:
+
+        { { reason="blacklisted", expiration="2025-Jun-20 15:09:34", ip_ja3="1.2.3.4:8d172671cc8e3c9808e277df5fbf69ba"} }
+
 * whitelistNetmask(\<Netmask\>, \<expiry\>, \<reason string\>) - Whitelist the
   specified netmask for expiry seconds, with the specified reason. Netmask
   address must be a Netmask object, e.g. created with newNetmask(). For example:
   
-		whitelistNetmask(newNetmask("12.32.0.0/16"), 300, "Attempted password brute forcing")
+		whitelistNetmask(newNetmask("12.32.0.0/16"), 300, "Known good network")
 
 * whitelistIP(\<ip\>, \<expiry\>, \<reason string\>) - Whitelist the
   specified IP for expiry seconds, with the specified reason. IP
   address must be a ComboAddress. For example:
   
-		whitelistIP(lt.remote, 300, "Attempted password brute forcing")
+		whitelistIP(lt.remote, 300, "Known good IP")
 
 * whitelistLogin(\<login\>, \<expiry\> \<reason string\>) - Whitelist the
   specified login for expiry seconds, with the specified
   reason. For example: 
   
-		whitelistLogin(lt.login, 300, "Potentially compromised account")
+		whitelistLogin(lt.login, 300, "Known good login")
 
 * whitelistIPLogin(\<ip\>, \<login\>, \<expiry\>, \<reason string\>) -
   Whitelist the specified IP-Login tuple for expiry seconds, with the
@@ -971,7 +1047,21 @@ a Netmask. For example:
   same login tuple will the request be whitelisted. IP address must be
   a ComboAddress. For example:
   
-		whitelistIPLogin(lt.remote, lt.login, 300, "Account and IP are suspicious")
+		whitelistIPLogin(lt.remote, lt.login, 300, "Known good IP and login")
+
+* whitelistJA3(\<ja3\>, \<expiry\> \<reason string\>) - Whitelist the
+  specified JA3 hash for expiry seconds, with the specified
+  reason. For example:
+
+  	whitelistJA3(lt.attrs.ja3, 300, "Whitelisted client")
+
+* whitelistIPJA3(\<ip\>, \<ja3\>, \<expiry\>, \<reason string\>) -
+  Whitelist the specified IP-JA3 tuple for expiry seconds, with the
+  specified reason. Only when that IP and JA3 hash are received in the
+  same login tuple will the request be whitelisted. IP address must be
+  a ComboAddress. For example:
+
+  	whitelistIPLogin(lt.remote, lt.attrs.ja3, 300, "JA3 and IP are well-known")
 
 * unwhitelistNetmask(\<Netmask\>) Remove the whitelist for the
   specified netmask. Netmask address must be a Netmask object,
@@ -994,6 +1084,16 @@ a Netmask. For example:
   
 		unwhitelistIPLogin(lt.remote, lt.login)
 
+* unwhitelistJA3(\<ja3\>) - Remove the whitelist for the specified
+  JA3 hash. For example:
+
+  	unwhitelistJA3(lt.attrs.ja3)
+
+* unwhitelistIPJA3(\<ip\>, \<ja3\>) - Remove the whitelist for the specified
+  IP-JA3 tuple. IP address must be a ComboAddress. For example:
+
+  	unwhitelistIPLogin(lt.remote, lt.attrs.ja3)
+
 * checkWhitelistIP(\<ip\>) - Check if an IP is whitelisted. Return
   true if the IP is whitelisted. IP must be a ComboAddress. For example:
 
@@ -1009,6 +1109,42 @@ a Netmask. For example:
   example:
 
         checkWhitelistIPLogin(lt.remote, lt.login)
+
+* checkWhitelistJA3(\<ja3\>) - Check if a JA3 hash is
+  whitelisted. Return true if the JA3 is whitelisted. For example:
+
+        checkWhitelistJA3(lt.attrs.ja3)
+
+* checkWhitelistIPJA3(\<ip\>, \<ja3\>) - Check if a IP/JA3 hash is
+  whitelisted. Return true if the ip/ja3 tuple is whitelisted. For
+  example:
+
+        checkWhitelistIPJA3(lt.remote, lt.attrs.ja3)
+
+* getIPWhitelist() - Gets the current IP whitelist as an array. Each item in the array is a table containing 
+  three keys: `expiration`, `reason` and `ip`. For example, the following is an example table returned:
+
+        { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ip="1.2.3.4"} }
+
+* getLoginWhitelist() - Gets the current login whitelist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `login`. For example, the following is an example table returned:
+
+        { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", login="admin")
+
+* getJA3Whitelist() - Gets the current JA3 whitelist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ja3`. For example, the following is an example table returned:
+
+        { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ja3="8d172671cc8e3c9808e277df5fbf69ba")
+
+* getIPLoginWhitelist() - Gets the current IP/Login whitelist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ip_login`. For example, the following is an example table returned:
+
+        { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ip_login="1.2.3.4:admin"} }
+
+* getIPJA3Whitelist() - Gets the current IP/Login whitelist as an array. Each item in the array is a table containing
+  three keys: `expiration`, `reason` and `ip_ja3`. For example, the following is an example table returned:
+
+        { { reason="whitelisted", expiration="2025-Jun-20 15:09:34", ip_ja3="1.2.3.4:8d172671cc8e3c9808e277df5fbf69ba"} }
 
 * LoginTuple - The only parameter to both the allow and report
   functions is a LoginTuple table. This table contains the following
@@ -1031,9 +1167,9 @@ a Netmask. For example:
   example:
 
 		 for k, v in pairs(lt.attrs) do
-			 if (k == "xxx")
+			 if (k == "ja3")
 			 then
-				 -- do something
+				 -- do something with the JA3 hash
 			 end
 		 end
   		

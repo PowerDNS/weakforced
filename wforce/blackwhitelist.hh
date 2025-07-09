@@ -54,7 +54,7 @@ struct BlackWhiteListEntry {
 
 using namespace boost::multi_index;
 
-enum BLWLType { IP_BLWL=0, LOGIN_BLWL=1, IP_LOGIN_BLWL=2, NONE_BLWL=999 };
+enum BLWLType { IP_BLWL=0, LOGIN_BLWL=1, IP_LOGIN_BLWL=2, JA3_BLWL=3, IP_JA3_BLWL=4, NONE_BLWL=999 };
 enum class BLWLDBType { BLACKLIST=0, WHITELIST=1 };
 
 class BlackWhiteListDB {
@@ -62,18 +62,22 @@ public:
   BlackWhiteListDB(BLWLDBType type) {
     db_type = type;
     if (type == BLWLDBType::BLACKLIST) {
-      list_names = { "ip_bl", "login_bl", "ip_login_bl" };
+      list_names = { "ip_bl", "login_bl", "ip_login_bl", "ja3_bl", "ip_ja3_bl" };
       redis_prefix = "wfbl";
       ip_ret_msg = "Temporarily blacklisted IP Address - try again later";
       login_ret_msg = "Temporarily blacklisted Login Name - try again later";
       iplogin_ret_msg = "Temporarily blacklisted IP/Login Tuple - try again later";
+      ja3_ret_msg = "Temporarily blacklisted JA3 Hash - try again later";
+      ipja3_ret_msg = "Temporarily blacklisted IP/JA3 Hash Tuple - try again later";
     }
     else {
-      list_names = { "ip_wl", "login_wl", "ip_login_wl" };
+      list_names = { "ip_wl", "login_wl", "ip_login_wl", "ja3_wl", "ip_ja3_wl" };
       redis_prefix = "wfwl";
       ip_ret_msg = "Whitelisted IP Address";
       login_ret_msg = "Whitelisted Login Name";
       iplogin_ret_msg = "Whitelisted IP/Login Tuple";
+      ja3_ret_msg = "Whitelisted JA3 Hash";
+      ipja3_ret_msg = "Whitelisted IP/JA3 Hash";
     }
     redis_context = NULL;
     redis_port = 6379;
@@ -86,23 +90,33 @@ public:
   void addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason);
   void addEntry(const std::string& login, time_t seconds, const std::string& reason);
   void addEntry(const ComboAddress& ca, const std::string& login, time_t seconds, const std::string& reason);
+  void addJA3Entry(const std::string& ja3, time_t seconds, const std::string& reason);
+  void addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, time_t seconds, const std::string& reason);
 
   bool checkEntry(const ComboAddress& ca) const;
   bool checkEntry(const std::string& login) const;
   bool checkEntry(const ComboAddress& ca, const std::string& login) const;
+  bool checkJA3Entry(const std::string& ja3) const;
+  bool checkIPJA3Entry(const ComboAddress& ca, const std::string& ja3) const;
 
   bool getEntry(const ComboAddress& ca, BlackWhiteListEntry& ret) const;
   bool getEntry(const std::string& login, BlackWhiteListEntry& ret) const;
   bool getEntry(const ComboAddress& ca, const std::string& login, BlackWhiteListEntry& ret) const;
+  bool getJA3Entry(const std::string& ja3, BlackWhiteListEntry& ret) const;
+  bool getIPJA3Entry(const ComboAddress& ca, const std::string& ja3, BlackWhiteListEntry& ret) const;
 
   void deleteEntry(const Netmask& nm);
   void deleteEntry(const ComboAddress& ca);
   void deleteEntry(const std::string& login);
   void deleteEntry(const ComboAddress& ca, const std::string& login);
+  void deleteJA3Entry(const std::string& ja3);
+  void deleteIPJA3Entry(const ComboAddress& ca, const std::string& ja3);
 
   time_t getExpiration(const ComboAddress& ca) const;
   time_t getExpiration(const std::string& login) const;
   time_t getExpiration(const ComboAddress& ca, const std::string& login) const;
+  time_t getJA3Expiration(const std::string& ja3) const;
+  time_t getIPJA3Expiration(const ComboAddress& ca, const std::string& ja3) const;
 
   void addEntryInternal(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason, bool replicate);
   void deleteEntryInternal(const std::string& key, BLWLType bl_type, bool replicate);
@@ -122,6 +136,8 @@ public:
   std::vector<BlackWhiteListEntry> getIPEntries() const;
   std::vector<BlackWhiteListEntry> getLoginEntries() const;
   std::vector<BlackWhiteListEntry> getIPLoginEntries() const;
+  std::vector<BlackWhiteListEntry> getJA3Entries() const;
+  std::vector<BlackWhiteListEntry> getIPJA3Entries() const;
 
   void setConnectTimeout(int timeout);
   void setRWTimeout(int timeout_secs, int timeout_usecs);
@@ -129,13 +145,17 @@ public:
   const std::string& getIPRetMsg() const { return ip_ret_msg;}
   const std::string& getLoginRetMsg() const { return login_ret_msg; }
   const std::string& getIPLoginRetMsg() const { return iplogin_ret_msg; }
+  const std::string& getJA3RetMsg() const { return ja3_ret_msg; }
+  const std::string& getIPJA3RetMsg() const { return ipja3_ret_msg; }
   void setIPRetMsg(const std::string& msg) { ip_ret_msg = msg; }
   void setLoginRetMsg(const std::string& msg) { login_ret_msg = msg; }
   void setIPLoginRetMsg(const std::string& msg) { iplogin_ret_msg = msg; }
+  void setJA3RetMsg(const std::string& msg) { ja3_ret_msg = msg; }
+  void setIPJA3RetMsg(const std::string& msg) { ipja3_ret_msg = msg; }
 
   void setRedisUsername(const std::string& username) { redis_username = username; }
   void setRedisPassword(const std::string& password) { redis_password = password; }
-  
+
 private:
   struct TimeTag{};
   struct KeyTag{};
@@ -153,12 +173,14 @@ private:
     >
     > blackwhitelist_t;
 
-  std::vector<std::string> list_names = { "ip_blwl", "login_blwl", "ip_login_blwl" };
-  const char* key_names[4] = { "ip", "login", "ip_login", NULL };
+  std::vector<std::string> list_names = { "ip_blwl", "login_blwl", "ip_login_blwl", "ja3_blwl", "ip_ja3_blwl" };
+  std::vector<std::string> key_names = { "ip", "login", "ip_login", "ja3", "ip_ja3"};
   NetmaskGroup iplist_netmask;
   blackwhitelist_t ip_list;
   blackwhitelist_t login_list;
   blackwhitelist_t ip_login_list;
+  blackwhitelist_t ja3_list;
+  blackwhitelist_t ip_ja3_list;
   mutable pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
   bool persist=false;
   bool persist_replicated=false;
@@ -175,17 +197,20 @@ private:
   std::string ip_ret_msg;
   std::string login_ret_msg;
   std::string iplogin_ret_msg;
-  
+  std::string ipja3_ret_msg;
+  std::string ja3_ret_msg;
+
+  std::vector<BlackWhiteListEntry> getEntries(const blackwhitelist_t& list) const;
   void _addEntry(const std::string& key, time_t seconds, blackwhitelist_t& blackwhitelist, const std::string& reason);
   bool _checkEntry(const std::string& key, const blackwhitelist_t& blackwhitelist) const;
   bool _getEntry(const std::string& key, const blackwhitelist_t& blackwhitelist, BlackWhiteListEntry& ret_ble) const;
   bool _deleteEntry(const std::string& key, blackwhitelist_t& blackwhitelist);
   time_t _getExpiration(const std::string& key, const blackwhitelist_t& blackwhitelist) const; // returns number of seconds until expiration
-  void _purgeEntries(BLWLType blt, blackwhitelist_t& blackwhitelist, BLWLType bl_type);
+  void _purgeEntries(blackwhitelist_t& blackwhitelist, BLWLType bl_type);
   void addEntryLog(BLWLType blt, const std::string& key, time_t seconds, const std::string& reason) const;
   void deleteEntryLog(BLWLType blt, const std::string& key) const;
   void expireEntryLog(BLWLType blt, const std::string& key) const;
-  std::string ipLoginStr(const ComboAddress& ca, const std::string& login) const;
+  std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   bool checkSetupContext();
   bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);
   bool deletePersistEntry(const std::string& key, BLWLType bl_type, blackwhitelist_t& blackwhitelist);

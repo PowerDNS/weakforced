@@ -58,6 +58,11 @@ bool g_builtin_wl_enabled = true;
 
 static time_t start = time(0);
 
+static inline std::string getIPJA3(const std::string& ip, const std::string& ja3)
+{
+  return ip+"::"+ja3;
+}
+
 static inline void setErrorCodeAndReason(drogon::HttpStatusCode code, const std::string& reason, const drogon::HttpResponsePtr& resp)
 {
   resp->setStatusCode(code);
@@ -425,9 +430,11 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
   else {
     bool haveIP = false;
     bool haveLogin = false;
+    bool haveJA3 = false;
     bool haveNetmask = false;
     unsigned int bl_seconds = 0;
     std::string bl_reason;
+    std::string en_ja3;
     std::string en_login;
     ComboAddress en_ca;
     Netmask en_nm;
@@ -450,6 +457,13 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
           return;
         haveLogin = true;
       }
+      if (!msg["ja3"].is_null()) {
+        en_ja3 = msg["ja3"].string_value();
+        haveJA3 = true;
+      }
+      if (!haveJA3 && !haveLogin && !haveIP && !haveNetmask) {
+        throw std::runtime_error("Must provide at least one of login, ip, netmask or ja3");
+      }
       if (addCmd) {
         if (!msg["expire_secs"].is_null()) {
           bl_seconds = msg["expire_secs"].int_value();
@@ -463,6 +477,9 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
         else {
           throw std::runtime_error("Missing mandatory reason field");
         }
+      }
+      if (haveLogin && haveJA3) {
+        throw std::runtime_error("login and ja3 are mutually exclusive parameters");
       }
       if (haveLogin && haveIP) {
         if (addCmd) {
@@ -478,6 +495,20 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
             g_wl_db.deleteEntry(en_ca, en_login);
         }
       }
+      else if (haveJA3 && haveIP) {
+        if (addCmd) {
+          if (blacklist)
+            g_bl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
+          else
+            g_wl_db.addIPJA3Entry(en_ca, en_ja3, bl_seconds, bl_reason);
+        }
+        else {
+          if (blacklist)
+            g_bl_db.deleteIPJA3Entry(en_ca, en_ja3);
+          else
+            g_wl_db.deleteIPJA3Entry(en_ca, en_ja3);
+        }
+      }
       else if (haveLogin) {
         if (addCmd) {
           if (blacklist)
@@ -490,6 +521,20 @@ void parseAddDelBLWLEntryCmd(const drogon::HttpRequestPtr& req,
             g_bl_db.deleteEntry(en_login);
           else
             g_wl_db.deleteEntry(en_login);
+        }
+      }
+      else if (haveJA3) {
+        if (addCmd) {
+          if (blacklist)
+            g_bl_db.addJA3Entry(en_ja3, bl_seconds, bl_reason);
+          else
+            g_wl_db.addJA3Entry(en_ja3, bl_seconds, bl_reason);
+        }
+        else {
+          if (blacklist)
+            g_bl_db.deleteJA3Entry(en_ja3);
+          else
+            g_wl_db.deleteJA3Entry(en_ja3);
         }
       }
       else if (haveIP || haveNetmask) {
@@ -569,7 +614,8 @@ void parseResetCmd(const drogon::HttpRequestPtr& req,
     try {
       bool haveIP = false;
       bool haveLogin = false;
-      std::string en_type, en_login;
+      bool haveJA3 = false;
+      std::string en_type, en_login, en_ja3;
       ComboAddress en_ca;
       if (!msg["ip"].is_null()) {
         en_ca = ComboAddress(msg["ip"].string_value());
@@ -582,26 +628,42 @@ void parseResetCmd(const drogon::HttpRequestPtr& req,
           return;
         haveLogin = true;
       }
+      if (!msg["ja3"].is_null()) {
+        en_ja3 = msg["ja3"].string_value();
+        haveJA3 = true;
+      }
+      if (haveLogin && haveJA3) {
+        throw std::runtime_error("login and ja3 are mutually exclusive parameters");
+      }
       if (haveLogin && haveIP) {
         en_type = "ip:login";
         g_bl_db.deleteEntry(en_ca, en_login);
       }
+      else if (haveJA3 && haveIP) {
+        en_type = "ip:ja3";
+        g_bl_db.deleteIPJA3Entry(en_ca, en_ja3);
+      }
       else if (haveLogin) {
         en_type = "login";
         g_bl_db.deleteEntry(en_login);
+      }
+      else if (haveJA3) {
+        en_type = "ja3";
+        g_bl_db.deleteJA3Entry(en_ja3);
       }
       else if (haveIP) {
         en_type = "ip";
         g_bl_db.deleteEntry(en_ca);
       }
 
-      if (!haveLogin && !haveIP) {
-        setErrorCodeAndReason(drogon::k400BadRequest, "No ip or login field supplied", resp);
+      if (!haveLogin && !haveIP && !haveJA3) {
+        setErrorCodeAndReason(drogon::k400BadRequest, "No ip, login or ja3 field supplied", resp);
       }
       else {
         bool reset_ret;
         {
-          reset_ret = g_luamultip->reset(en_type, en_login, en_ca);
+          std::string login_or_ja3 = haveLogin ? en_login : en_ja3;
+          reset_ret = g_luamultip->reset(en_type, login_or_ja3, en_ca);
         }
         if (reset_ret) {
           resp->setStatusCode(drogon::k200OK);
@@ -614,6 +676,7 @@ void parseResetCmd(const drogon::HttpRequestPtr& req,
       // generate webhook events
       json11::Json jobj = json11::Json::object{{"login", en_login},
                                                {"ip",    en_ca.toString()},
+                                               {"ja3",   en_ja3},
                                                {"type",  "wforce_reset"}};
       for (const auto& h : g_webhook_db.getWebHooksForEvent("reset")) {
         if (auto hs = h.lock()) {
@@ -775,28 +838,37 @@ enum AllowReturnFields {
 
 const std::string ipPattern = "{ip}";
 const std::string loginPattern = "{login}";
+const std::string ja3Pattern = "{ja3}";
 
-std::string substituteIPLogin(const std::string msg, const ComboAddress& ca, const std::string login)
+std::string substituteStrings(const std::string msg,
+                              const ComboAddress& ca,
+                              const std::string login,
+                              const std::string ja3)
 {
   bool replace_ip = false;
   bool replace_login = false;
+  bool replace_ja3 = false;
   std::string new_msg;
 
   if (msg.find(ipPattern) != std::string::npos)
     replace_ip = true;
   if (msg.find(loginPattern) != std::string::npos)
     replace_login = true;
+  if (msg.find(ja3Pattern) != std::string::npos)
+    replace_ja3 = true;
 
-  if (replace_ip || replace_login)
+  if (replace_ip || replace_login || replace_ja3)
     // The maximum length of an IPv6 address string is 39 characters
-    new_msg.reserve(msg.length()+39+login.length()); // This should prevent a realloc in the majority of cases
+    new_msg.reserve(msg.length()+39+login.length()+ja3.length()); // This should prevent a realloc in the majority of cases
 
   if (replace_ip)
-    new_msg = boost::algorithm::replace_all_copy(msg, "{ip}", ca.toString());
+    new_msg = boost::algorithm::replace_all_copy(msg, ipPattern, ca.toString());
   else
     new_msg = msg;
   if (replace_login)
-    boost::algorithm::replace_all(new_msg, "{login}", login);
+    boost::algorithm::replace_all(new_msg, loginPattern, login);
+  if (replace_ja3)
+    boost::algorithm::replace_all(new_msg, ja3Pattern, ja3);
   return new_msg;
 }
 
@@ -842,6 +914,14 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
       return;
     }
 
+    string ja3;
+    try {
+      ja3 = lt.attrs.at(g_ja3_attrname);
+    }
+    catch (const std::out_of_range& oor) {
+      vdebuglog("ja3 not found in attrs using name: %s", g_ja3_attrname, oor.what());
+    }
+
     // check the built-in whitelists
     bool whitelisted = false;
     BlackWhiteListEntry wle;
@@ -854,7 +934,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "ip"}};
         status = 0;
         allowLog(status, std::string("whitelisted IP"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_wl_db.getIPRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_wl_db.getIPRetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -866,7 +946,19 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "login"}};
         status = 0;
         allowLog(status, std::string("whitelisted Login"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_wl_db.getLoginRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_wl_db.getLoginRetMsg(), lt.remote, lt.login, ja3);
+        ret_attrs = std::move(log_attrs);
+        whitelisted = true;
+      }
+      else if (!ja3.empty() && g_wl_db.getJA3Entry(ja3, wle)) {
+        std::vector<pair<std::string, std::string>> log_attrs =
+            {{"expiration",  boost::posix_time::to_simple_string(wle.expiration)},
+             {"reason",      wle.reason},
+             {"whitelisted", "1"},
+             {"key",         "ja3"}};
+        status = 0;
+        allowLog(status, std::string("whitelisted JA3"), lt, log_attrs);
+        ret_msg = substituteStrings(g_wl_db.getJA3RetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
@@ -878,12 +970,23 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"key",         "iplogin"}};
         status = 0;
         allowLog(status, std::string("whitelisted IPLogin"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_wl_db.getIPLoginRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_wl_db.getIPLoginRetMsg(), lt.remote, lt.login, ja3);
+        ret_attrs = std::move(log_attrs);
+        whitelisted = true;
+      }
+      else if (!ja3.empty() && g_wl_db.getIPJA3Entry(lt.remote, ja3, wle)) {
+        std::vector<pair<std::string, std::string>> log_attrs =
+            {{"expiration",  boost::posix_time::to_simple_string(wle.expiration)},
+             {"reason",      wle.reason},
+             {"whitelisted", "1"},
+             {"key",         "ipja3"}};
+        status = 0;
+        allowLog(status, std::string("whitelisted IPJA3"), lt, log_attrs);
+        ret_msg = substituteStrings(g_wl_db.getIPJA3RetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         whitelisted = true;
       }
     }
-
     // next check the built-in blacklists
     bool blacklisted = false;
     BlackWhiteListEntry ble;
@@ -895,7 +998,7 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "ip"}};
         allowLog(status, std::string("blacklisted IP"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_bl_db.getIPRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_bl_db.getIPRetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -906,7 +1009,18 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "login"}};
         allowLog(status, std::string("blacklisted Login"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_bl_db.getLoginRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_bl_db.getLoginRetMsg(), lt.remote, lt.login, ja3);
+        ret_attrs = std::move(log_attrs);
+        blacklisted = true;
+      }
+      else if (!ja3.empty() && g_bl_db.getJA3Entry(ja3, ble)) {
+        std::vector<pair<std::string, std::string>> log_attrs =
+            {{"expiration",  boost::posix_time::to_simple_string(ble.expiration)},
+             {"reason",      ble.reason},
+             {"blacklisted", "1"},
+             {"key",         "ja3"}};
+        allowLog(status, std::string("blacklisted JA3"), lt, log_attrs);
+        ret_msg = substituteStrings(g_bl_db.getJA3RetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -917,7 +1031,18 @@ void parseAllowCmd(const drogon::HttpRequestPtr& req,
              {"blacklisted", "1"},
              {"key",         "iplogin"}};
         allowLog(status, std::string("blacklisted IPLogin"), lt, log_attrs);
-        ret_msg = substituteIPLogin(g_bl_db.getIPLoginRetMsg(), lt.remote, lt.login);
+        ret_msg = substituteStrings(g_bl_db.getIPLoginRetMsg(), lt.remote, lt.login, ja3);
+        ret_attrs = std::move(log_attrs);
+        blacklisted = true;
+      }
+      else if (!ja3.empty() && g_bl_db.getIPJA3Entry(lt.remote, ja3, ble)) {
+        std::vector<pair<std::string, std::string>> log_attrs =
+            {{"expiration",  boost::posix_time::to_simple_string(ble.expiration)},
+             {"reason",      ble.reason},
+             {"blacklisted", "1"},
+             {"key",         "ipja3"}};
+        allowLog(status, std::string("blacklisted IPJA3"), lt, log_attrs);
+        ret_msg = substituteStrings(g_bl_db.getIPJA3RetMsg(), lt.remote, lt.login, ja3);
         ret_attrs = std::move(log_attrs);
         blacklisted = true;
       }
@@ -1071,21 +1196,24 @@ void parseGetBLWLCmd(const drogon::HttpRequestPtr& req,
     cmd_stat = "getWL";
   }
 
-  if (blacklist)
-    lv = g_bl_db.getIPEntries();
-  else
-    lv = g_wl_db.getIPEntries();
+  BlackWhiteListDB* blwl;
+  if (blacklist) {
+    blwl = &g_bl_db;
+  }
+  else {
+    blwl = &g_wl_db;
+  }
+
+  lv = blwl->getIPEntries();
   addBLWLEntries(lv, "ip", my_entries);
-  if (blacklist)
-    lv = g_bl_db.getLoginEntries();
-  else
-    lv = g_wl_db.getLoginEntries();
+  lv = blwl->getLoginEntries();
   addBLWLEntries(lv, "login", my_entries);
-  if (blacklist)
-    lv = g_bl_db.getIPLoginEntries();
-  else
-    lv = g_wl_db.getIPLoginEntries();
+  lv = blwl->getIPLoginEntries();
   addBLWLEntries(lv, "iplogin", my_entries);
+  lv = blwl->getJA3Entries();
+  addBLWLEntries(lv, "ja3", my_entries);
+  lv = blwl->getIPJA3Entries();
+  addBLWLEntries(lv, "ipja3", my_entries);
 
   json11::Json ret_json = json11::Json::object{
       {key_name, my_entries}
@@ -1123,7 +1251,8 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
   else {
     bool haveIP = false;
     bool haveLogin = false;
-    std::string en_type, en_login;
+    bool haveJA3 = false;
+    std::string en_type, en_login, en_ja3;
     std::string key_name, key_value;
     TWKeyType lookup_key;
     bool is_blacklisted = false;
@@ -1147,6 +1276,16 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
           return;
         haveLogin = true;
       }
+      if (!msg["ja3"].is_null()) {
+        en_ja3 = msg["ja3"].string_value();
+        haveJA3 = true;
+      }
+
+      if (haveLogin && haveJA3) {
+        setErrorCodeAndReason(drogon::k400BadRequest, "ja3 and login fields are mutually exclusive", resp);
+        return;
+      }
+
       if (haveLogin && haveIP) {
         key_name = "ip_login";
         key_value = en_ca.toString() + ":" + en_login;
@@ -1162,6 +1301,21 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
           wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
         }
       }
+      else if (haveJA3 && haveIP) {
+        key_name = "ip_ja3";
+        key_value = getIPJA3(en_ca.toString(), en_ja3);
+        lookup_key = key_value;
+        if (g_bl_db.getIPJA3Entry(en_ca, en_ja3, bwle)) {
+          is_blacklisted = true;
+          bl_reason = bwle.reason;
+          bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+        if (g_wl_db.getIPJA3Entry(en_ca, en_ja3, bwle)) {
+          is_whitelisted = true;
+          wl_reason = bwle.reason;
+          wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+      }
       else if (haveLogin) {
         key_name = "login";
         key_value = en_login;
@@ -1172,6 +1326,21 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
           bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
         }
         if (g_wl_db.getEntry(en_login, bwle)) {
+          is_whitelisted = true;
+          wl_reason = bwle.reason;
+          wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+      }
+      else if (haveJA3) {
+        key_name = "ja3";
+        key_value = en_ja3;
+        lookup_key = key_value;
+        if (g_bl_db.getJA3Entry(en_ja3, bwle)) {
+          is_blacklisted = true;
+          bl_reason = bwle.reason;
+          bl_expire = boost::posix_time::to_simple_string(bwle.expiration);
+        }
+        if (g_wl_db.getJA3Entry(en_ja3, bwle)) {
           is_whitelisted = true;
           wl_reason = bwle.reason;
           wl_expire = boost::posix_time::to_simple_string(bwle.expiration);
@@ -1198,8 +1367,8 @@ void parseGetStatsCmd(const drogon::HttpRequestPtr& req,
       return;
     }
 
-    if (!haveLogin && !haveIP) {
-      setErrorCodeAndReason(drogon::k400BadRequest, "No ip or login field supplied", resp);
+    if (!haveLogin && !haveIP && !haveJA3) {
+      setErrorCodeAndReason(drogon::k400BadRequest, "No ja3, ip or login field supplied", resp);
     }
     else {
       json11::Json::object js_db_stats;

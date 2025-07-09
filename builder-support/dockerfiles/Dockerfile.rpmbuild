@@ -5,6 +5,7 @@ RUN yum install -y rpm-build rpmdevtools python3-rpm-macros wget \
 RUN yum install -y openssl-devel libuuid-devel zlib-devel
 RUN rpmdev-setuptree
 
+
 SHELL ["bash", "--login", "-c"]
 
 ARG CC=clang
@@ -21,7 +22,7 @@ FROM package-builder-base as package-builder-fat-base
 # Some extra dependencies we install early for better docker caching
 RUN ulimit -n 2000 && \
     yum install -y autoconf bzip2 bzip2-devel findutils \
-	libuuid-devel net-tools openssl-devel pkgconfig readline-devel tar xz-devel openldap-devel
+	libuuid-devel net-tools openssl-devel pkgconfig readline-devel tar xz-devel openldap-devel cmake
 
 ##############################################################################
 # Separate build stage for luaenv to speedup builds and improve caching
@@ -44,8 +45,7 @@ FROM package-builder-fat-base as wforce-static-libs-builder
 @IF [ ! -z "$M_all$M_wforce" ]
 COPY --from=sdist /sdist /sdist
 
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2-Linux-x86_64.sh
-RUN sh cmake-3.23.2-Linux-x86_64.sh --skip-license --prefix=/usr
+ARG DROGON_VERSION=v1.9.1
 
 RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
@@ -58,20 +58,6 @@ RUN cd yaml-cpp* && mkdir build && cd build && cmake --install-prefix=/usr/local
 RUN git clone https://github.com/open-source-parsers/jsoncpp
 RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
 RUN cd jsoncpp && mkdir _build && cd _build && cmake --install-prefix=/usr/local .. -DBUILD_SHARED_LIBS=OFF && make && make install
-
-@IF [ "$BUILDER_RHEL_FLAVOUR" = "amazon" ]
-ARG DROGON_VERSION=v1.7.4
-@ENDIF
-@IF [ "$BUILDER_RHEL_FLAVOUR" != "amazon" ]
-@IF [ "$BUILDER_RHEL_VERSION" = "7" ]
-ARG DROGON_VERSION=v1.7.4
-@ENDIF
-@ENDIF
-@IF [ "$BUILDER_RHEL_FLAVOUR" != "amazon" ]
-@IF [ "$BUILDER_RHEL_VERSION" != "7" ]
-ARG DROGON_VERSION=v1.9.1
-@ENDIF
-@ENDIF
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/"$DROGON_VERSION" -b "$DROGON_VERSION"
@@ -112,6 +98,7 @@ COPY --from=luaenv-builder /usr/share/wforce-lua-dist /usr/share/wforce-lua-dist
 # QA_RPATHS for: ERROR 0001: file '/usr/share/wforce-lua-dist/lib/lua/5.1/system/core.so' contains a standard rpath '/usr/lib64' in [/usr/lib64]
 RUN ulimit -n 2000 && QA_RPATHS=1 builder/helpers/build-specs.sh builder-support/specs/wforce-lua-dist.spec
 RUN ulimit -n 2000 && yum localinstall -y /root/rpmbuild/RPMS/*/wforce-lua-dist*.rpm
+RUN pkg-config --cflags --libs luajit
 @ENDIF
 
 

@@ -26,7 +26,7 @@ RUN apt-get update && \
                uuid-dev \
                pkg-config \
                protobuf-compiler \
-               pandoc \
+               asciidoctor \
                wget \
                nginx \
                docker \

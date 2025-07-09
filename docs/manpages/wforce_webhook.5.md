@@ -1,20 +1,20 @@
-% WFORCE_WEBHOOK(5)
-% Open-Xchange
-% 2018
+= WFORCE_WEBHOOK(5)
+Open-Xchange 2018
+:doctype: manpage
 
-<!-- {% raw %} -->
+// <!-- {% raw %} -->
 
-# NAME
-**wforce_webhook** - Documentation for wforce webhook functionality
+## NAME
+wforce_webhook - Documentation for wforce webhook functionality
 
-# DESCRIPTION
+## DESCRIPTION
 The **wforce** daemon supports generating webhooks which run for
 specific events. The list of supported events, example payload for
 those events, and the supported configuration keys for those events
 are documented here. A summary of the custom HTTP(S) POST headers is
 also included.
 
-# WEBHOOK EVENTS
+## WEBHOOK EVENTS
 
 See **wforce.conf(5)** for details of the "addWebHook()" configuration
 setting. The following events are available for generating webhooks:
@@ -84,12 +84,12 @@ setting. The following events are available for generating webhooks:
 
 		{"key": "webhooktest@foobar.com", "wl_type": "login_wl"}
 
-# CUSTOM WEBHOOKS
+## CUSTOM WEBHOOKS
 
 See **wforce.conf(5)** for details of the "addCustomWebHook()" configuration
 setting. This enables custom webhooks to be generated from Lua. 
 
-# WEBHOOK CONFIGURATION KEYS
+## WEBHOOK CONFIGURATION KEYS
 
 See **wforce.conf(5)** for details of the "addWebHook()" configuration
 setting. The following configuration keys can be used for all events:
@@ -149,7 +149,7 @@ The following configuration keys are custom to specific events:
 
 		config_key["content-type"] = "text/plain"
 
-# WEBHOOK CUSTOM HTTP HEADERS
+## WEBHOOK CUSTOM HTTP HEADERS
 
 The following custom headers will be added to the POST request for
 each event:
@@ -164,16 +164,16 @@ each event:
 
 * X-Wforce-Delivery - A unique ID for this webhook.
 
-# WEBHOOK HTTP Content-Type HEADER
+## WEBHOOK HTTP Content-Type HEADER
 
 The HTTP Content-Type header defaults to application/json, and cannot
 be changed for normal webhooks. Custom webhooks however can change
 it using the "content-type" configuration key.
 
-# FILES
+## FILES
 */etc/wforce.conf*
 
-# SEE ALSO
+## SEE ALSO
 wforce(1) wforce_webhook(5) wforce_api(7)
 
-<!-- {% endraw %} -->
+// <!-- {% endraw %} -->

@@ -24,6 +24,7 @@ FROM alpine:3.20 AS wforce_build
 
 RUN apk update && \
     apk add \
+               asciidoctor \
                autoconf \
                automake \
                boost-dev \

@@ -1,14 +1,16 @@
-% WFORCE(1)
-% Open-Xchange
-% 2018
+= WFORCE(1)
+Open-Xchange 2018
+:doctype: manpage
+:manmanual: WFORCE
+:manmanual: WFORCE
 
-# NAME
-**wforce** - daemon to detect brute-force login attempts and enforce other policies for logins
+## NAME
+wforce - daemon to detect brute-force login attempts and enforce other policies for logins
 
-# SYNOPSIS
+## SYNOPSIS
 wforce [*OPTION*]... 
 
-# DESCRIPTION
+## DESCRIPTION
 **wforce** implements a simple HTTP server that accepts JSON formatted commands 
 that report successful/unsuccessful logins and query whether a login should be 
 allowed to proceed. 
@@ -23,7 +25,7 @@ and wforce.conf.example for a more sophisticated example. In fact all
 configuration is done using the Lua language, as wforce.conf is simply a
 Lua script.
 
-# SCOPE
+## SCOPE
 **wforce** depends on the systems performing login authentication to integrate
 with it using the HTTP/JSON API. Example clients of the API include Dovecot
 and OX AppSuite.
@@ -35,7 +37,7 @@ will be replicated to all configured siblings. Replication uses the
 UDP protocol, so if siblings are not on a local subnet, you should
 ensure that any firewalls forward UDP on the configured ports.
 
-# OPTIONS
+## OPTIONS
 -c 
 :    Act as a client, connecting to a wforce instance at the IP/Port 
      specified in the 'controlSocket' function in wforce.conf. A
@@ -68,7 +70,7 @@ ensure that any firewalls forward UDP on the configured ports.
 :    Display a helpful message and exit.
 
 
-# CONSOLE COMMANDS
+## CONSOLE COMMANDS
 
 The following commands can be run from the console when *wforce* is
 started with the -c option.
@@ -224,15 +226,15 @@ initialized. For example:
 		wforce 1.2.0
 
 
-# BUGS
+## BUGS
 The replication function of clustering means that as more servers are added to a 
 cluster, incremental performance gains may be less each time, eventually
 possibly leading to performance degradation. This is because each
 server keeps a full copy of the stats DBs and the blacklists, and
 changes to those are replicated to all siblings. This can be mitigated by
 partitioning siblings into smaller clusters that do not share
-information, at the expense of missing potential abuse activity. 
+information, at the expense of missing potential abuse activity.
 
-# SEE ALSO
+## SEE ALSO
 wforce.conf(5) wforce_webhook(5) wforce_api(7)
 

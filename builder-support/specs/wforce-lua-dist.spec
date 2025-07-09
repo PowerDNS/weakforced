@@ -6,7 +6,6 @@ Release:        %{getenv:BUILDER_RPM_RELEASE}%{dist}
 Summary:        PowerDNS Filtering Platform LuaJIT distribution
 License:        mixed
 URL:            https://www.powerdns.com/
-BuildArch:      x86_64
 Provides:       luajit = 2.1.0-0.16beta3.openresty.%{getenv:BUILDER_RPM_RELEASE}%{dist}
 BuildRequires:  openldap-devel
 
@@ -59,10 +58,13 @@ echo "%{luadist_root}/lib/exported" > %{buildroot}/etc/ld.so.conf.d/wforce-lua-d
 # So that pkg-config finds us
 %{__install} -m 755 -d %{buildroot}/usr/lib/pkgconfig/
 ln -sf %{luadist_root}/lib/pkgconfig/luajit.pc %{buildroot}/usr/lib/pkgconfig/luajit.pc
+%{__install} -m 755 -d %{buildroot}/usr/share/pkgconfig/
+ln -sf %{luadist_root}/lib/pkgconfig/luajit.pc %{buildroot}/usr/share/pkgconfig/luajit.pc
 
 %files
 /usr/bin/wforce-luajit
 /etc/ld.so.conf.d/wforce-lua-dist.conf
 /usr/lib/pkgconfig/luajit.pc
+/usr/share/pkgconfig/luajit.pc
 %{luadist_root}
 

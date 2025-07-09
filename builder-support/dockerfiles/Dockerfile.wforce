@@ -23,7 +23,7 @@ RUN apt-get update && \
                libtool \
                pkg-config \
                protobuf-compiler \
-               pandoc \
+               asciidoctor \
                wget \
                cmake \
                git \

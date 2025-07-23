@@ -32,7 +32,7 @@ jobs:
       - name: Check for release tag
         id: release_check
         run: |
-          if [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
             echo "release=YES" >> $GITHUB_OUTPUT
           fi
       - name: Set short git commit SHA

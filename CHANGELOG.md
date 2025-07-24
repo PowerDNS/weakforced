@@ -3,19 +3,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- Support new `fail_type` parameter for determining why a login failed
+- New livez and readyz endpoints (unauthenticated) for k8s environments
+- Support JA3 allow/block lists in API/Lua
+- Allow ja3 to be passed to the reset API command
+- Add support for building amazon-2023 packages
+- Use asciidoctor to build documentation not pandoc
+
+### Removed
+- Removed support for Enterprise Linux 7 and Amazon 2
+
 ## [2.12.1]
 
-## Added
+### Added
 - Set default map size for sharded Stats DBs based on the number of shards
 - Change debian postinst scripts to modify 'setKey' and 'webpwd' parameter only if no weakforce is already installed
 - Add tests for crypto code
 
 ## [2.12.0]
 
-## Added
+### Added
 - Now builds a separate luajit package, based on the openresty luajit fork. This is to address some issues found with stock luajit. The package also includes some lua modules that wforce typically makes use of.
 
-## Changed
+### Changed
 - Build the wforce-minimal image for both arm64 and amd64, and add provenance.
 - Fix centos-7/el-7 builds to still work after centos-7 went EOL
 - Add support for debian-bookworm, remove support for debian-buster

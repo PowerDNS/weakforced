@@ -6,7 +6,7 @@ docker_login()
 # Only push tagged releases matching the versioning scheme
 check_version()
 {
-    echo $TAG | egrep "^v[0-9]+\.[0-9]+\.[0-9]+$"
+    echo $TAG | egrep "^v[0-9]+\.[0-9]+\.[0-9]+"
 }
 
 push_tag()

@@ -9,7 +9,7 @@ then
   SED_ARG='-E'
 fi
 
-for i in wforce_api.7.yml trackalert_api.7.yml report_api.7.yml
+for i in wforce_api.7.yml trackalert_api.7.yml
 do
     sed $SED_ARG "s/version:(.*)/version: \"$VERSION\"/" $i >$i.tmp
     if [ $? != 0 ]

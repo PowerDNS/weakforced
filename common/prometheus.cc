@@ -116,7 +116,7 @@ void PrometheusMetrics::incWebhookMetric(unsigned int id, bool success, bool cus
   }
 }
 
-void setPrometheusActiveConns(int value)
+void setPrometheusActiveConns(size_t value)
 {
   if (prom_metrics)
     prom_metrics->setActiveConns(value);

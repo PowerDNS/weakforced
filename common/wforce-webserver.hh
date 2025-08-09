@@ -110,7 +110,9 @@ public:
 
   NetmaskGroup getACL();
 
-  size_t getNumConns();
+  size_t getNumConns() {
+    return static_cast<size_t>(drogon::app().getConnectionCount());
+  }
 
   // set the basic-auth password
   void setBasicAuthPassword(const std::string& password)
@@ -269,6 +271,13 @@ public:
                                     },
                                     {drogon::Delete, "ACLFilter", "LoginFilter"});
     }
+    std::thread connCountThread([this] {
+      for (;;) {
+        sleep(1);
+        setPrometheusActiveConns(getNumConns());
+      }
+    });
+    connCountThread.detach();
   }
 
   static void start(WforceWebserver* wws)

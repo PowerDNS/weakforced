@@ -49,7 +49,7 @@ services:
       args:
         - MAXMIND_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
     ports:
-      - "8084:8084"
+      - "18084:8084"
     volumes:
       - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
       - ./tmp:/var/tmp/testlog

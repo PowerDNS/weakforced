@@ -9,6 +9,8 @@
 * Allow ja3 to be passed to the reset API command
 * Add support for building amazon-2023 packages
 * Use asciidoctor to build documentation not pandoc
+* Add a sample grafana dashboard for monitoring wforce
+* Implemented the (existing but previously always 0) `wforce_active_http_connections` metric for counting active HTTP connections
 
 ## Removed
 * Removed support for Enterprise Linux 7 and Amazon 2

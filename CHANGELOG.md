@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [3.0.0]
 
 ### Added
 - Support new `fail_type` parameter for determining why a login failed
@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Allow ja3 to be passed to the reset API command
 - Add support for building amazon-2023 packages
 - Use asciidoctor to build documentation not pandoc
+- Add a sample grafana dashboard for monitoring wforce
+- Implemented the (existing but previously always 0) `wforce_active_http_connections` metric for counting active HTTP connections
 
 ### Removed
 - Removed support for Enterprise Linux 7 and Amazon 2

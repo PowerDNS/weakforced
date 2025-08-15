@@ -110,6 +110,7 @@ mv %{buildroot}/etc/%{name}/%{name}.conf.example %{buildroot}/%{_docdir}/%{name}
 mv elk/logstash/config/logstash.conf %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/logstash/templates/wforce_template.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 mv elk/kibana/kibana_saved_objects.ndjson %{buildroot}/%{_docdir}/%{name}-%{version}/
+mv grafana/grafana_dashboard.json %{buildroot}/%{_docdir}/%{name}-%{version}/
 
 %clean
 rm -rf %{buildroot}

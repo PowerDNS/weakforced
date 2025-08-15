@@ -10,5 +10,6 @@ endif
 SUBDIRS=ext docs common wforce $(BUILD_TRACKALERT) $(BUILD_DOCKER)
 
 LOGSTASH_DIST = elk/logstash/config/logstash.conf elk/logstash/templates/wforce_template.json elk/kibana/kibana_saved_objects.ndjson
+GRAFANA_DIST = grafana/grafana_dashboard.json
 
-EXTRA_DIST= README.md LICENSE CHANGELOG.md $(LOGSTASH_DIST)
+EXTRA_DIST= README.md LICENSE CHANGELOG.md $(LOGSTASH_DIST) $(GRAFANA_DIST)

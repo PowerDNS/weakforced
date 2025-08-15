@@ -49,6 +49,7 @@ COPY docker/Makefile.am /wforce/docker/
 RUN  mkdir /wforce/docker/wforce_image
 COPY docker/wforce_image/Makefile.am /wforce/docker/wforce_image
 COPY elk/ /wforce/elk/
+COPY grafana/ /wforce/grafana/
 
 RUN autoreconf -ivf
 RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-sodium --disable-docker --with-luajit --sysconfdir=/etc/wforce CC=clang CXX=clang++

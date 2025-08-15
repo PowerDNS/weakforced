@@ -37,6 +37,7 @@
 #include "drogon/drogon.h"
 #include "prometheus.hh"
 #include "perf-stats.hh"
+#include "ext/threadname.hh"
 
 using WforceWSFuncPtr = void (*)(const drogon::HttpRequestPtr& req,
                                  const std::string& command,
@@ -272,6 +273,7 @@ public:
                                     {drogon::Delete, "ACLFilter", "LoginFilter"});
     }
     std::thread connCountThread([this] {
+      setThreadName("wf/conn-count");
       for (;;) {
         sleep(1);
         setPrometheusActiveConns(getNumConns());

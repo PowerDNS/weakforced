@@ -1,6 +1,7 @@
 .deps
 .dirstamp
 .history
+.idea
 
 /.tags*
 /aclocal.m4

@@ -110,7 +110,7 @@ public:
     worker_response_duration->Observe(duration);
   }
   
-  void setActiveConns(int value)
+  void setActiveConns(size_t value)
   {
     active_connections->Set(value);
   }
@@ -164,7 +164,7 @@ protected:
 
 void initPrometheusMetrics(std::shared_ptr<PrometheusMetrics> pmp);
 
-void setPrometheusActiveConns(int value);
+void setPrometheusActiveConns(size_t value);
 
 void addPrometheusCommandMetric(const std::string& name);
 void incPrometheusCommandMetric(const std::string& name);

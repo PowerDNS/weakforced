@@ -46,7 +46,7 @@ RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
 RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
-@EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert docker elk)
+@EXEC sdist_dirs=(m4 ext docs regression-tests wforce common trackalert docker elk grafana)
 @EXEC for d in ${sdist_dirs[@]} ; do echo "COPY $d/ /wforce/$d/" ; done
 ADD builder/helpers/set-configure-ac-version.sh /wforce/builder/helpers/
 

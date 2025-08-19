@@ -74,6 +74,7 @@ COPY common/ /wforce/common/
 COPY trackalert/ /wforce/trackalert/
 COPY docker/ /wforce/docker/
 COPY elk/ /wforce/elk/
+COPY grafana/ /wforce/grafana/
 
 RUN rm -rf regression-tests/.venv  
 

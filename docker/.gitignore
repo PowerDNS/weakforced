@@ -1,2 +1,4 @@
 # Ignore .docker file
 /.docker
+/redis
+/tmp

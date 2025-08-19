@@ -37,6 +37,7 @@
 #include "drogon/drogon.h"
 #include "prometheus.hh"
 #include "perf-stats.hh"
+#include "ext/threadname.hh"
 
 using WforceWSFuncPtr = void (*)(const drogon::HttpRequestPtr& req,
                                  const std::string& command,
@@ -110,7 +111,9 @@ public:
 
   NetmaskGroup getACL();
 
-  size_t getNumConns();
+  size_t getNumConns() {
+    return static_cast<size_t>(drogon::app().getConnectionCount());
+  }
 
   // set the basic-auth password
   void setBasicAuthPassword(const std::string& password)
@@ -269,6 +272,14 @@ public:
                                     },
                                     {drogon::Delete, "ACLFilter", "LoginFilter"});
     }
+    std::thread connCountThread([this] {
+      setThreadName("wf/conn-count");
+      for (;;) {
+        sleep(1);
+        setPrometheusActiveConns(getNumConns());
+      }
+    });
+    connCountThread.detach();
   }
 
   static void start(WforceWebserver* wws)

@@ -58,11 +58,6 @@ NetmaskGroup WforceWebserver::getACL()
   return d_ACL.getCopy();
 }
 
-size_t WforceWebserver::getNumConns()
-{
-  return 0; // XXX - investigate if this can be retrieved from drogon
-}
-
 bool WforceWebserver::registerFunc(const std::string& command, HTTPVerb verb, const WforceWSFunc& wsf)
 {
   return registerFuncInternal(command, verb, wsf, true);

@@ -113,6 +113,7 @@ RUN apk update && \
                abseil-cpp \
                abseil-cpp-flags-marshalling \
                util-linux \
+               tzdata \
                tini
 
 RUN addgroup --gid 1000 wforce && \

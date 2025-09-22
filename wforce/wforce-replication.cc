@@ -32,6 +32,7 @@
 #include "json11.hpp"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <stdint.h>
 #include "sodcrypto.hh"
 #include "perf-stats.hh"
 #include "lock.hh"

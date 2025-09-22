@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <regex.h>
 #include <limits.h>
+#include <stdint.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>

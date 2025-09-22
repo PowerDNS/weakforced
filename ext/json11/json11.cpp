@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <limits>
 #include <string>
+#include <stdint.h>
 
 namespace json11 {
 

@@ -26,6 +26,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <stdint.h>
 #include <curl/curlver.h>
 #if defined(LIBCURL_VERSION_NUM) && LIBCURL_VERSION_NUM >= 0x073200
 /* we need this so that 'CURL' is not typedef'd to void,

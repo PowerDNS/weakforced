@@ -24,6 +24,7 @@
 #include <string>
 #include <mutex>
 #include <vector>
+#include <stdint.h>
 #include "lock.hh"
 #include "iputils.hh"
 #include "wforce-geoip.hh"

@@ -132,6 +132,7 @@ Sibling::Sibling(const ComboAddress& ca,
       }
     });
   }
+  d_name = rem.toStringWithPort();
 }
 
 Sibling::~Sibling()
@@ -208,8 +209,9 @@ void Sibling::queueMsg(const std::string& msg)
 {
   {
     std::lock_guard<std::mutex> lock(queue_mutx);
-    if (queue.size() >= max_queue_size) {
-      errlog("Sibling::queueMsg: max sibling send queue size (%d) reached - dropping replication msg", max_queue_size);
+    auto queue_size = queue.size();
+    if (queue_size >= max_queue_size) {
+      incPrometheusReplicationSendQueueErr(d_name);
       return;
     }
     else {
@@ -447,10 +449,16 @@ bool addSibling(std::shared_ptr<Sibling> sibling, GlobalStateHolder<vector<share
     output_buffer += errstr;
     return false;
   }
+
+  auto get_queue_size_func = std::function<int()>([sibling]() -> int
+  {
+    return sibling->queue.size();
+  });
+
   // This is for sending when we know the port
-  addPrometheusReplicationSibling(sibling->rem.toStringWithPort());
+  addPrometheusReplicationSibling(sibling->rem.toStringWithPort(), get_queue_size_func);
   // This is for receiving when the port may be ephemeral
-  addPrometheusReplicationSibling(sibling->rem.toString());
+  addPrometheusReplicationSibling(sibling->rem.toString(), get_queue_size_func);
   siblings.modify([sibling](vector<shared_ptr<Sibling>>& v) {
     v.push_back(sibling);
   });
@@ -554,14 +562,20 @@ bool setSiblingsWithKey(const std::vector<std::pair<int, std::vector<std::pair<i
       continue;
 
     // This is for sending when we know the port
-    addPrometheusReplicationSibling(ca.toStringWithPort());
+    addPrometheusReplicationSibling(ca.toStringWithPort(), nullptr);
     // This is for receiving when the port may be ephemeral
-    addPrometheusReplicationSibling(ca.toString());
+    addPrometheusReplicationSibling(ca.toString(), nullptr);
     // Create the sibling after the Prometheus metrics so connfail stats get updated
     auto sibling = std::make_shared<Sibling>(ca, proto, raw_key, sibling_connect_timeout,
                                               sibling_queue_size, send_sdb, send_wlbl);
     sibling->checkIgnoreSelf(g_sibling_listen_addr);
     v.push_back(sibling);
+    auto get_queue_size_func = std::function<int()>([sibling]() -> int
+    {
+      return static_cast<int>(sibling->queue.size());
+    });
+    setPrometheusReplSendQueueRetrieveFunc(ca.toStringWithPort(), get_queue_size_func);
+    setPrometheusReplSendQueueRetrieveFunc(ca.toString(), get_queue_size_func);
   }
   siblings.setState(v);
   return true;

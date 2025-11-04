@@ -27,3 +27,7 @@ jobs:
           fetch-depth: 0  # for correct version numbers
           submodules: recursive
       - run: builder/build.sh -e 1 -v  ${{ matrix.os }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.os }}
+          path: builder/tmp/latest/${{ matrix.os }}/dist/*

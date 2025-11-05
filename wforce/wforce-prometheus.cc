@@ -45,7 +45,7 @@ void WforcePrometheus::incAllowStatusMetric(const std::string& name)
   }
 }
 
-void WforcePrometheus::addReplicationSibling(const std::string& name)
+void WforcePrometheus::addReplicationSibling(const std::string& name, const std::function<int()>& func)
 {
   std::lock_guard<std::mutex> lock(repl_mutx);
   Counter* c = &(repl_sent_family->Add({{"sibling", name},
@@ -54,14 +54,27 @@ void WforcePrometheus::addReplicationSibling(const std::string& name)
   c = &(repl_sent_family->Add({{"sibling", name},
                                {"status",  "error"}}));
   repl_sent_err_metrics.insert(std::make_pair(name, c));
+  c = &(repl_send_queue_err_family->Add({{"sibling", name}}));
+  repl_send_queue_err_metrics.insert(std::make_pair(name, c));
   c = &(repl_rcvd_family->Add({{"sibling", name},
                                {"status",  "ok"}}));
   repl_rcvd_ok_metrics.insert(std::make_pair(name, c));
   c = &(repl_rcvd_family->Add({{"sibling", name},
                                {"status",  "error"}}));
   repl_rcvd_err_metrics.insert(std::make_pair(name, c));
+  c = &(repl_rcvd_queue_err_family->Add({{"sibling", name}}));
+  repl_rcvd_err_metrics.insert(std::make_pair(name, c));
   c = &(repl_connfail_family->Add({{"sibling", name}}));
   repl_connfail_metrics.insert(std::make_pair(name, c));
+  Gauge* g = &(repl_send_queue_size_family->Add({{"sibling", name}}));
+  repl_send_queue_size_metrics.insert(std::make_pair(name, g));
+  // Add the function which returns the sibling queue size
+  if (func != nullptr) {
+    repl_send_queue_func_map.insert_or_assign(name, func);
+  }
+  else {
+    repl_send_queue_func_map.insert_or_assign(name, []() { return 0; });
+  }
 }
 
 void WforcePrometheus::removeReplicationSiblingNoLock(const std::string& name)
@@ -76,6 +89,11 @@ void WforcePrometheus::removeReplicationSiblingNoLock(const std::string& name)
     repl_sent_family->Remove(c->second);
     repl_sent_err_metrics.erase(name);
   }
+  c = repl_send_queue_err_metrics.find(name);
+  if (c != repl_send_queue_err_metrics.end()) {
+    repl_send_queue_err_family->Remove(c->second);
+    repl_send_queue_err_metrics.erase(name);
+  }
   c = repl_rcvd_ok_metrics.find(name);
   if (c != repl_rcvd_ok_metrics.end()) {
     repl_rcvd_family->Remove(c->second);
@@ -86,10 +104,24 @@ void WforcePrometheus::removeReplicationSiblingNoLock(const std::string& name)
     repl_rcvd_family->Remove(c->second);
     repl_rcvd_err_metrics.erase(name);
   }
+  c = repl_rcvd_queue_err_metrics.find(name);
+  if (c != repl_rcvd_queue_err_metrics.end()) {
+    repl_rcvd_queue_err_family->Remove(c->second);
+    repl_rcvd_queue_err_metrics.erase(name);
+  }
   c = repl_connfail_metrics.find(name);
   if (c != repl_connfail_metrics.end()) {
     repl_connfail_family->Remove(c->second);
     repl_connfail_metrics.erase(name);
+  }
+  auto g = repl_send_queue_size_metrics.find(name);
+  if (g != repl_send_queue_size_metrics.end()) {
+    repl_send_queue_size_family->Remove(g->second);
+    repl_send_queue_size_metrics.erase(name);
+  }
+  // Remove the function which returns the sibling queue size
+  if (auto i = repl_send_queue_func_map.find(name); i != repl_send_queue_func_map.end()) {
+    repl_send_queue_func_map.erase(i);
   }
 }
 
@@ -128,6 +160,15 @@ void WforcePrometheus::incReplicationSent(const std::string& name, bool success)
   }
 }
 
+void WforcePrometheus::incReplicationSendQueueErr(const std::string& name)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  auto i = repl_send_queue_err_metrics.find(name);
+  if (i != repl_send_queue_err_metrics.end()) {
+    i->second->Increment();
+  }
+}
+
 void WforcePrometheus::incReplicationRcvd(const std::string& name, bool success)
 {
   std::lock_guard<std::mutex> lock(repl_mutx);
@@ -145,12 +186,45 @@ void WforcePrometheus::incReplicationRcvd(const std::string& name, bool success)
   }
 }
 
+void WforcePrometheus::incReplicationRcvdQueueErr(const std::string& name)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  auto i = repl_rcvd_queue_err_metrics.find(name);
+  if (i != repl_rcvd_queue_err_metrics.end())
+  {
+    i->second->Increment();
+  }
+}
+
 void WforcePrometheus::incReplicationConnFail(const std::string& name)
 {
   std::lock_guard<std::mutex> lock(repl_mutx);
   auto i = repl_connfail_metrics.find(name);
   if (i != repl_connfail_metrics.end()) {
     i->second->Increment();
+  }
+}
+
+void WforcePrometheus::setReplicationSendQueueSize(const std::string& name, int size)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  auto i = repl_send_queue_size_metrics.find(name);
+  if (i != repl_send_queue_size_metrics.end()) {
+    i->second->Set(size);
+  }
+}
+
+void WforcePrometheus::setReplicationSendQueueRetrieveFunc(const std::string& name, const std::function<int()>& func)
+{
+  std::lock_guard<std::mutex> lock(repl_mutx);
+  auto i = repl_send_queue_func_map.find(name);
+  if (i != repl_send_queue_func_map.end()) {
+    if (func != nullptr) {
+      i->second = func;
+    }
+    else {
+      i->second = []() { return 0; };
+    }
   }
 }
 
@@ -228,10 +302,10 @@ void incPrometheusAllowStatusMetric(const std::string& name)
   }
 }
 
-void addPrometheusReplicationSibling(const std::string& name)
+void addPrometheusReplicationSibling(const std::string& name, const std::function<int()>& func)
 {
   if (wforce_prom_metrics != nullptr) {
-    wforce_prom_metrics->addReplicationSibling(name);
+    wforce_prom_metrics->addReplicationSibling(name, func);
   }
 }
 
@@ -256,10 +330,24 @@ void incPrometheusReplicationSent(const std::string& name, bool success)
   }
 }
 
+void incPrometheusReplicationSendQueueErr(const std::string& name)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->incReplicationSendQueueErr(name);
+  }
+}
+
 void incPrometheusReplicationRcvd(const std::string& name, bool success)
 {
   if (wforce_prom_metrics != nullptr) {
     wforce_prom_metrics->incReplicationRcvd(name, success);
+  }
+}
+
+void incPrometheusReplicationRcvdQueueErr(const std::string& name)
+{
+  if (wforce_prom_metrics != nullptr) {
+    wforce_prom_metrics->incReplicationRcvdQueueErr(name);
   }
 }
 
@@ -351,5 +439,20 @@ void setPrometheusReplRecvQueueRetrieveFunc(std::function<int()> func)
 {
   if (wforce_prom_metrics) {
     wforce_prom_metrics->setReplRecvQueueRetrieveFunc(func);
+  }
+}
+
+void setPrometheusReplSendQueueSize(const std::string& name, int value)
+{
+  if (wforce_prom_metrics) {
+    wforce_prom_metrics->setReplicationSendQueueSize(name, value);
+  }
+}
+
+void setPrometheusReplSendQueueRetrieveFunc(const std::string& name, const std::function<int()>& func)
+{
+  if (wforce_prom_metrics)
+  {
+    wforce_prom_metrics->setReplicationSendQueueRetrieveFunc(name, func);
   }
 }

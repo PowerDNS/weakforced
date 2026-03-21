@@ -1334,9 +1334,17 @@ BOOST_DEFUN([String_Algo],
 # documentation of BOOST_FIND_LIB above.  This library was introduced in Boost
 # 1.35.0.
 BOOST_DEFUN([System],
-[BOOST_FIND_LIB([system], [$1],
-                [boost/system/error_code.hpp],
-                [boost::system::error_code e; e.clear();], [], [], [$2])
+[# Since Boost 1.69, Boost.System is header-only and does not require linking
+if test $boost_major_version -ge 169; then
+  BOOST_FIND_HEADER([boost/system/error_code.hpp])
+  AC_SUBST([BOOST_SYSTEM_LIBS], [])
+  AC_SUBST([BOOST_SYSTEM_LDFLAGS], [])
+  AC_DEFINE([HAVE_BOOST_SYSTEM], [1], [Defined if the Boost system library is available])
+else
+  BOOST_FIND_LIB([system], [$1],
+                  [boost/system/error_code.hpp],
+                  [boost::system::error_code e; e.clear();], [], [], [$2])
+fi
 ])# BOOST_SYSTEM
 
 

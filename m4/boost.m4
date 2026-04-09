@@ -22,7 +22,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 m4_define([_BOOST_SERIAL], [m4_translit([
-# serial 38
+# serial 39
 ], [#
 ], [])])
 
@@ -226,7 +226,7 @@ AC_LANG_POP([C++])dnl
   AC_CACHE_CHECK([for Boost's header version],
     [boost_cv_lib_version],
     [m4_pattern_allow([^BOOST_LIB_VERSION$])dnl
-     _BOOST_SED_CPP([[/^boost-lib-version = /{s///;s/[\" ]//g;p;q;}]],
+     _BOOST_SED_CPP([[/^.*boost-lib-version = /{s///;s/[\" ]//g;p;q;}]],
                     [#include <boost/version.hpp>
 boost-lib-version = BOOST_LIB_VERSION],
     [boost_cv_lib_version=`cat conftest.i`])])
@@ -1332,11 +1332,16 @@ BOOST_DEFUN([String_Algo],
 # --------------------------------
 # Look for Boost.System.  For the documentation of PREFERRED-RT-OPT, see the
 # documentation of BOOST_FIND_LIB above.  This library was introduced in Boost
-# 1.35.0.
+# 1.35.0 and is header only since 1.70.
 BOOST_DEFUN([System],
-[BOOST_FIND_LIB([system], [$1],
+[
+if test $boost_major_version -ge 170; then
+  BOOST_FIND_HEADER([boost/system/error_code.hpp])
+else
+  BOOST_FIND_LIB([system], [$1],
                 [boost/system/error_code.hpp],
                 [boost::system::error_code e; e.clear();], [], [], [$2])
+fi
 ])# BOOST_SYSTEM
 
 
@@ -1615,10 +1620,6 @@ if test x$boost_cv_inc_path != xno; then
   # I'm not sure about my test for `il' (be careful: Intel's ICC pre-defines
   # the same defines as GCC's).
   for i in \
-    "defined __clang__ && __clang_major__ == 18 && __clang_minor__ == 1 @ clang181" \
-    "defined __clang__ && __clang_major__ == 17 && __clang_minor__ == 0 @ clang170" \
-    "defined __clang__ && __clang_major__ == 16 && __clang_minor__ == 0 @ clang160" \
-    "defined __clang__ && __clang_major__ == 15 && __clang_minor__ == 0 @ clang150" \
     "defined __clang__ && __clang_major__ == 14 && __clang_minor__ == 0 @ clang140" \
     "defined __clang__ && __clang_major__ == 13 && __clang_minor__ == 0 @ clang130" \
     "defined __clang__ && __clang_major__ == 12 && __clang_minor__ == 0 @ clang120" \
@@ -1634,38 +1635,16 @@ if test x$boost_cv_inc_path != xno; then
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 9 @ clang39" \
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 8 @ clang38" \
     "defined __clang__ && __clang_major__ == 3 && __clang_minor__ == 7 @ clang37" \
-    _BOOST_mingw_test(13, 2) \
-    _BOOST_gcc_test(13, 2) \
-    _BOOST_mingw_test(13, 1) \
-    _BOOST_gcc_test(13, 1) \
-    _BOOST_mingw_test(12, 3) \
-    _BOOST_gcc_test(12, 3) \
-    _BOOST_mingw_test(12, 2) \
-    _BOOST_gcc_test(12, 2) \
-    _BOOST_mingw_test(12, 1) \
-    _BOOST_gcc_test(12, 1) \
-    _BOOST_mingw_test(11, 4) \
-    _BOOST_gcc_test(11, 4) \
-    _BOOST_mingw_test(11, 3) \
-    _BOOST_gcc_test(11, 3) \
     _BOOST_mingw_test(11, 2) \
     _BOOST_gcc_test(11, 2) \
     _BOOST_mingw_test(11, 1) \
     _BOOST_gcc_test(11, 1) \
-    _BOOST_mingw_test(10, 5) \
-    _BOOST_gcc_test(10, 5) \
-    _BOOST_mingw_test(10, 4) \
-    _BOOST_gcc_test(10, 4) \
     _BOOST_mingw_test(10, 3) \
     _BOOST_gcc_test(10, 3) \
     _BOOST_mingw_test(10, 2) \
     _BOOST_gcc_test(10, 2) \
     _BOOST_mingw_test(10, 1) \
     _BOOST_gcc_test(10, 1) \
-    _BOOST_mingw_test(9, 5) \
-    _BOOST_gcc_test(9, 5) \
-    _BOOST_mingw_test(9, 4) \
-    _BOOST_gcc_test(9, 4) \
     _BOOST_mingw_test(9, 3) \
     _BOOST_gcc_test(9, 3) \
     _BOOST_mingw_test(9, 2) \

@@ -25,18 +25,19 @@ RUN apt-get update && \
                protobuf-compiler \
                asciidoctor \
                wget \
-               docker \
+               wmdocker \
                docker-compose \
                net-tools \
                clang \
-               cmake
+               cmake \
+               git
 
 WORKDIR /wforce/
 RUN mkdir /wforce/install
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_BROTLI=OFF -DBUILD_C-ARES=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 COPY m4/ /wforce/m4/

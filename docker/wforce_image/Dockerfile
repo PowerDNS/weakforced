@@ -11,7 +11,7 @@ RUN apt-get update && \
                libhiredis-dev \
                libmaxminddb-dev \
                liblua5.1-0-dev \
-               libluajit2-5.1-dev \
+               libluajit-5.1-dev \
                libprotobuf-dev \
                libssl-dev \
                libsystemd-dev \

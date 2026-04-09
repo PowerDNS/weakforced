@@ -35,7 +35,7 @@ BuildRequires: readline-devel
 BuildRequires: gcc-c++
 BuildRequires: lua-devel
 BuildRequires: libidn-devel
-BuildRequires: boost-devel
+#BuildRequires: boost-devel
 BuildRequires: bzip2
 BuildRequires: pkgconfig
 BuildRequires: getdns-devel
@@ -47,10 +47,7 @@ BuildRequires: curl-devel
 BuildRequires: hiredis
 BuildRequires: hiredis-devel
 BuildRequires: openssl-devel
-BuildRequires: boost-regex
 BuildRequires: wget
-BuildRequires: boost-system
-BuildRequires: boost-filesystem
 BuildRequires: libuuid-devel
 BuildRequires: zlib-devel
 BuildRequires: pkgconfig(luajit)

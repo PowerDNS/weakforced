@@ -26,7 +26,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
-#include <stdint.h>
+#include <cstdint>
 #include <curl/curlver.h>
 #if defined(LIBCURL_VERSION_NUM) && LIBCURL_VERSION_NUM >= 0x073200
 /* we need this so that 'CURL' is not typedef'd to void,
@@ -58,7 +58,7 @@ public:
 #endif
     }
   }
-  virtual void setTimeout(uint64_t timeout_secs);
+  virtual void setTimeout(::uint64_t timeout_secs);
   void setPostData(const std::string& url, const std::string& post_body,
                    const MiniCurlHeaders& headers);
   std::string getPostResult() { return d_data; }
@@ -117,7 +117,7 @@ public:
                const std::string& post_body,
                const MiniCurlHeaders& headers);
   const std::vector<mcmPostReturn> runPost();
-  void setTimeout(uint64_t timeout_secs);
+  void setTimeout(::uint64_t timeout_secs);
   template <class T> void setMCurlOption(int option, T optval) {
     setCurlOption(option, optval);
     for (auto& i : d_ccs) {

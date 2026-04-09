@@ -40,9 +40,17 @@ public:
                            .Name(d_prefix+"_replication_sent_total")
                            .Help("How many replication messages were sent?")
                            .Register(*d_registry));
+      repl_send_queue_err_family = &(BuildCounter()
+                           .Name(d_prefix+"_replication_send_queue_error_total")
+                           .Help("How many errors trying to add replication messages to the send queue?")
+                           .Register(*d_registry));
       repl_rcvd_family = &(BuildCounter()
                            .Name(d_prefix+"_replication_rcvd_total")
                            .Help("How many replication messages were rcvd?")
+                           .Register(*d_registry));
+      repl_rcvd_queue_err_family = &(BuildCounter()
+                           .Name(d_prefix+"_replication_rcvd_queue_error_total")
+                           .Help("How many errors trying to add replication msgs to the receive queue?")
                            .Register(*d_registry));
       repl_connfail_family = &(BuildCounter()
                            .Name(d_prefix+"_replication_tcp_connfailed_total")
@@ -83,6 +91,10 @@ public:
         .Help("How full is the replication recv worker thread queue?")
         .Register(*d_registry);
       repl_recv_queue_size = &(repl_recv_queue_family.Add({}));
+      repl_send_queue_size_family = &(BuildGauge()
+        .Name(d_prefix+"_repl_send_queue_size")
+        .Help("How full is the replication per-sibling send queue?")
+        .Register(*d_registry));
     }
     else {
       throw WforceException("Could not allocate memory for Prometheus Registry");
@@ -93,11 +105,13 @@ public:
   void addAllowStatusMetric(const std::string& name);
   void incAllowStatusMetric(const std::string& name);
 
-  void addReplicationSibling(const std::string& name);
+  void addReplicationSibling(const std::string& name, const std::function<int()>& func);
   void removeReplicationSibling(const std::string& name);
   void removeAllReplicationSiblings();
   void incReplicationSent(const std::string& name, bool success);
+  void incReplicationSendQueueErr(const std::string& name);
   void incReplicationRcvd(const std::string& name, bool success);
+  void incReplicationRcvdQueueErr(const std::string& name);
   void incReplicationConnFail(const std::string& name);
 
   void incRedisBLUpdates();
@@ -120,16 +134,28 @@ public:
     repl_recv_queue_size->Set(value);
   }
 
-  void setReplRecvQueueRetrieveFunc(std::function<int()> func)
+  void setReplicationSendQueueSize(const std::string& name, int size);
+
+  void setReplRecvQueueRetrieveFunc(const std::function<int()>& func)
   {
     repl_queue_func = func;
   }
-  
+
+  void setReplicationSendQueueRetrieveFunc(const std::string& name, const std::function<int()>& func);
+
   std::string serialize() override
   {
     // We want to retrieve the value of the worker thread queue only when metrics
     // are asked for. The promethus-cpp library doesn't allow this itself
     setReplRecvQueueSize(repl_queue_func());
+    for (auto& i : repl_send_queue_func_map) {
+      if (i.second != nullptr) {
+        setReplicationSendQueueSize(i.first, i.second());
+      }
+    }
+    // We need to lock the mutex to prevent any of the dynamic replication-related
+    // prometheus metrics changing while we serialize
+    std::lock_guard<std::mutex> lock(repl_mutx);
     return PrometheusMetrics::serialize();
   }
 protected:
@@ -141,11 +167,15 @@ private:
   // unlike the other metrics
   std::mutex repl_mutx;
   Family<Counter>* repl_sent_family;
+  Family<Counter>* repl_send_queue_err_family;
   std::map<std::string, Counter*> repl_sent_ok_metrics;
   std::map<std::string, Counter*> repl_sent_err_metrics;
+  std::map<std::string, Counter*> repl_send_queue_err_metrics;
   Family<Counter>* repl_rcvd_family;
+  Family<Counter>* repl_rcvd_queue_err_family;
   std::map<std::string, Counter*> repl_rcvd_ok_metrics;
   std::map<std::string, Counter*> repl_rcvd_err_metrics;
+  std::map<std::string, Counter*> repl_rcvd_queue_err_metrics;
   Family<Counter>* repl_connfail_family;
   std::map<std::string, Counter*> repl_connfail_metrics;
   Counter* redis_bl_updates;
@@ -163,18 +193,23 @@ private:
   Gauge* wl_entries_ja3;
   Gauge* wl_entries_ipja3;
   Gauge* repl_recv_queue_size;
+  Family<Gauge>* repl_send_queue_size_family;
+  std::map<std::string, Gauge*> repl_send_queue_size_metrics;
   std::function<int()> repl_queue_func;
+  std::map<std::string, std::function<int()>> repl_send_queue_func_map;
 };
 
 void initWforcePrometheusMetrics(std::shared_ptr<WforcePrometheus> wpmp);
 void addPrometheusAllowStatusMetric(const std::string& name);
 void incPrometheusAllowStatusMetric(const std::string& name);
 
-void addPrometheusReplicationSibling(const std::string& name);
+void addPrometheusReplicationSibling(const std::string& name, const std::function<int()>& func);
 void removePrometheusReplicationSibling(const std::string& name);
 void removeAllPrometheusReplicationSiblings();
 void incPrometheusReplicationSent(const std::string& name, bool success);
+void incPrometheusReplicationSendQueueErr(const std::string& name);
 void incPrometheusReplicationRcvd(const std::string& name, bool success);
+void incPrometheusReplicationRcvdQueueErr(const std::string& name);
 void incPrometheusReplicationConnFail(const std::string& name);
 
 void incPrometheusRedisBLUpdates();
@@ -194,3 +229,6 @@ void setPrometheusWLJA3Entries(int);
 
 void setPrometheusReplRecvQueueSize(int value);
 void setPrometheusReplRecvQueueRetrieveFunc(std::function<int()> func);
+
+void setPrometheusReplSendQueueSize(const std::string& name, int value);
+void setPrometheusReplSendQueueRetrieveFunc(const std::string& name, const std::function<int()>& func);

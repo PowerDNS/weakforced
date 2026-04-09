@@ -21,11 +21,12 @@
  */
 
 #include "minicurl.hh"
-#include <time.h>
+#include <ctime>
+#include <cstdint>
 #include <chrono>
 #include <curl/curl.h>
-#include <stdarg.h>
-#include <string.h>
+#include <cstdarg>
+#include <cstring>
 #include <sstream>
 #include "wforce_exception.hh"
 #include "dolog.hh"
@@ -129,7 +130,7 @@ std::string MiniCurl::getURL(const std::string& url, const MiniCurlHeaders& head
   return std::string();
 }
 
-void MiniCurl::setTimeout(uint64_t timeout_secs)
+void MiniCurl::setTimeout(::uint64_t timeout_secs)
 {
   setCurlOption(CURLOPT_TIMEOUT, static_cast<long>(timeout_secs));
 }
@@ -318,7 +319,7 @@ bool MiniCurlMulti::addPost(unsigned int id, const std::string& url,
   return false;
 }
 
-void MiniCurlMulti::setTimeout(uint64_t timeout_secs)
+void MiniCurlMulti::setTimeout(::uint64_t timeout_secs)
 {
   MiniCurl::setTimeout(timeout_secs);
   for (auto& i : d_ccs) {

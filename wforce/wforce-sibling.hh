@@ -55,6 +55,7 @@ struct Sibling {
 
   Sibling(const Sibling&) = delete;
 
+  std::string d_name;
   ComboAddress rem;
   std::mutex mutx;
   std::unique_ptr<Socket> sockp;
@@ -88,6 +89,12 @@ struct Sibling {
   void checkIgnoreSelf(const ComboAddress& ca);
 
   void connectSibling();
+
+  int getSendQueueSize()
+  {
+    std::lock_guard<std::mutex> lock(queue_mutx);
+    return queue.size();
+  }
 
   static Protocol stringToProtocol(const std::string& s)
   {

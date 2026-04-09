@@ -26,6 +26,9 @@ stop:
 kill:
 	$(DCMP) kill
 
+logs:
+	$(DCMP) logs
+
 clean_docker:
 	$(DCMP) down -v
 

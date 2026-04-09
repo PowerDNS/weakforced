@@ -83,7 +83,7 @@ installed.
 It also requires:
  * A compiler supporting C++ 17
  * Lua 5.1+ development libraries (or LuaJIT if you configure --with-luajit)
- * Boost 1.61+
+ * Boost 1.74+
  * Protobuf compiler and protobuf development libraries
  * Getdns development libraries (if you want to use the DNS lookup functionality)
  * libsodium

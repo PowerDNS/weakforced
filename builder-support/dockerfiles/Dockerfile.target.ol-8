@@ -12,8 +12,6 @@ RUN touch /var/lib/rpm/* && dnf install -y https://dl.fedoraproject.org/pub/epel
     dnf install -y 'dnf-command(config-manager)' yum && \
     dnf config-manager --set-enabled ol8_codeready_builder
 
-RUN dnf -y install dnf-plugins-core clang
-
 # Do the actual rpm build
 @INCLUDE Dockerfile.rpmbuild
 

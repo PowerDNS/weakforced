@@ -5,11 +5,14 @@ RUN yum install -y rpm-build rpmdevtools python3-rpm-macros wget \
 RUN yum install -y openssl-devel libuuid-devel zlib-devel
 RUN rpmdev-setuptree
 
-
-SHELL ["bash", "--login", "-c"]
+RUN dnf -y install dnf-plugins-core clang
 
 ARG CC=clang
 ARG CXX=clang++
+
+RUN clang --version
+
+SHELL ["bash", "--login", "-c"]
 
 RUN mkdir /dist /wforce
 WORKDIR /wforce
@@ -51,9 +54,11 @@ RUN tar xvf /sdist/prometheus-cpp*Source.tar.gz
 RUN mv prometheus-cpp*Source prometheus-cpp
 RUN cd prometheus-cpp/_build && make clean && make install
 
-RUN wget https://github.com/jbeder/yaml-cpp/archive/0.8.0.tar.gz
-RUN tar xvf 0.8.0.tar.gz
-RUN cd yaml-cpp* && mkdir build && cd build && cmake --install-prefix=/usr/local .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
+RUN mkdir yaml-cpp && cd yaml-cpp
+RUN wget https://github.com/jbeder/yaml-cpp/releases/download/yaml-cpp-0.9.0/yaml-cpp-yaml-cpp-0.9.0.tar.gz
+RUN tar xvf yaml-cpp-yaml-cpp-0.9.0.tar.gz
+RUN mkdir build && cd build && cmake --install-prefix=/usr/local .. -DCMAKE_POSITION_INDEPENDENT_CODE=ON && make install
+RUN cd ..
 
 RUN git clone https://github.com/open-source-parsers/jsoncpp
 RUN cd jsoncpp && git checkout tags/1.9.4 -b 1.9.4
@@ -65,6 +70,10 @@ RUN cd drogon && git submodule init && git submodule update && mkdir _build && c
 
 RUN wget https://github.com/maxmind/libmaxminddb/releases/download/1.7.1/libmaxminddb-1.7.1.tar.gz && tar xvf libmaxminddb-1.7.1.tar.gz
 RUN cd libmaxminddb-1.7.1 && ./configure --prefix=/usr/local --enable-shared=no && make && make install
+
+RUN wget https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz && tar xvf boost_1_90_0.tar.gz
+RUN cd boost_1_90_0 && ./bootstrap.sh --prefix=/usr/local && ./b2 link=static install
+
 @ENDIF
 
 ##############################################################################

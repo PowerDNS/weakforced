@@ -1,4 +1,4 @@
-FROM ubuntu:focal as wforce
+FROM ubuntu:jammy as wforce
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get dist-upgrade -y && \

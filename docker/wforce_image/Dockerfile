@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS wforce_build
+FROM debian:trixie-slim AS wforce_build
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
@@ -11,7 +11,7 @@ RUN apt-get update && \
                libhiredis-dev \
                libmaxminddb-dev \
                liblua5.1-0-dev \
-               libluajit2-5.1-dev \
+               libluajit-5.1-dev \
                libprotobuf-dev \
                libssl-dev \
                libsystemd-dev \
@@ -25,18 +25,19 @@ RUN apt-get update && \
                protobuf-compiler \
                asciidoctor \
                wget \
-               docker \
+               wmdocker \
                docker-compose \
                net-tools \
                clang \
-               cmake
+               cmake \
+               git
 
 WORKDIR /wforce/
 RUN mkdir /wforce/install
 
 RUN git clone https://github.com/drogonframework/drogon.git
 RUN cd drogon && git checkout tags/v1.9.1 -b v1.9.1
-RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
+RUN cd drogon && git submodule init && git submodule update && mkdir _build && cd _build && cmake .. -DBUILD_REDIS=OFF -DBUILD_BROTLI=OFF -DBUILD_C-ARES=OFF -DCMAKE_BUILD_TYPE=Release -DBUILD_ORM=OFF && make && make install
 
 ADD CHANGELOG.md configure.ac ext LICENSE Makefile.am README.md NOTICE /wforce/
 COPY m4/ /wforce/m4/
@@ -56,7 +57,7 @@ RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-so
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
-FROM debian:bookworm-slim AS wforce_image
+FROM debian:trixie-slim AS wforce_image
 
 WORKDIR /wforce/
 
@@ -68,21 +69,21 @@ RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get -y -f install \
-               libboost-date-time1.74.0 \
-               libboost-regex1.74.0 \
-               libboost-system1.74.0 \
-               libboost-filesystem1.74.0 \
+               libboost-date-time1.83.0 \
+               libboost-regex1.83.0 \
+               libboost-system1.83.0 \
+               libboost-filesystem1.83.0 \
                libcurl4 \
                libgetdns10 \
-               libhiredis0.14 \
-               libluajit2-5.1-2 \
+               libhiredis1.1.0 \
+               libluajit-5.1-2 \
                libmaxminddb0 \
                libreadline8 \
                libprotobuf32 \
                libprometheus-cpp-core1.0 \
                libssl3 \
-               libyaml-cpp0.7 \
-               libjsoncpp-dev \
+               libyaml-cpp0.8 \
+               libjsoncpp26 \
                libz-dev \
                uuid-dev \
                gnupg \

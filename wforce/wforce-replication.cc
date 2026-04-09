@@ -171,7 +171,7 @@ void WforceReplication::parseReceivedReplicationMsg(const std::string& msg, cons
   {
     std::lock_guard<std::mutex> lock(d_sibling_queue_mutex);
     if (d_sibling_queue.size() >= d_max_sibling_queue_size) {
-      errlog("parseReceivedReplicationMsg: max sibling recv queue size (%d) reached - dropping replication msg", d_max_sibling_queue_size);
+      incPrometheusReplicationSendQueueErr(remote.toString());
       return;
     }
     else {

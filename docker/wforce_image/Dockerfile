@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS wforce_build
+FROM debian:trixie-slim AS wforce_build
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \

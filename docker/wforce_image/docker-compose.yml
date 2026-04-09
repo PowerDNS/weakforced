@@ -1,4 +1,3 @@
-version: '2'
 services:
   wforce_image:
     image: powerdns/wforce:${VERSION}

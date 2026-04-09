@@ -82,7 +82,7 @@ AM_CONDITIONAL([LIBSYSTEMD],[test "$HAVE_LIBSYSTEMD" = "1"])
 # We need readline
 WFORCE_CHECK_READLINE
 # Boost-specific checks
-BOOST_REQUIRE([1.42])
+BOOST_REQUIRE([1.74])
 BOOST_DATE_TIME
 AS_IF([test -z "$BOOST_DATE_TIME_LIBS"], [AC_MSG_ERROR([Boost date_time library is not installed])])
 BOOST_REGEX

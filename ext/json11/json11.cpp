@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#include <stdint.h>
 #include <limits>
 #include <string>
 

@@ -57,7 +57,7 @@ RUN ./configure --prefix /usr --enable-trackalert --disable-systemd --disable-so
 RUN make clean
 RUN make install DESTDIR=/wforce/install
 
-FROM debian:bookworm-slim AS wforce_image
+FROM debian:trixie-slim AS wforce_image
 
 WORKDIR /wforce/
 
@@ -69,21 +69,21 @@ RUN rm /etc/wforce/wforce.conf /etc/wforce/trackalert.conf
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get -y -f install \
-               libboost-date-time1.74.0 \
-               libboost-regex1.74.0 \
-               libboost-system1.74.0 \
-               libboost-filesystem1.74.0 \
+               libboost-date-time1.83.0 \
+               libboost-regex1.83.0 \
+               libboost-system1.83.0 \
+               libboost-filesystem1.83.0 \
                libcurl4 \
                libgetdns10 \
-               libhiredis0.14 \
-               libluajit2-5.1-2 \
+               libhiredis1.1.0 \
+               libluajit-5.1-2 \
                libmaxminddb0 \
                libreadline8 \
                libprotobuf32 \
                libprometheus-cpp-core1.0 \
                libssl3 \
-               libyaml-cpp0.7 \
-               libjsoncpp-dev \
+               libyaml-cpp0.8 \
+               libjsoncpp26 \
                libz-dev \
                uuid-dev \
                gnupg \

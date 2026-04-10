@@ -9,4 +9,4 @@ pytz==2017.2
 urllib3==2.6.3
 bottle==0.12.20
 prometheus_client==0.7.1
-pyOpenSSL==20.0.1
+pyOpenSSL==26.0.0

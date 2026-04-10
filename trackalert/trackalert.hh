@@ -28,6 +28,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <stdint.h>
 #include "sholder.hh"
 #include "sstuff.hh"
 #include "webhook.hh"

@@ -24,11 +24,12 @@
 #include <mutex>
 #include <curl/curl.h>
 #include <condition_variable>
+#include <queue>
+#include <stdint.h>
 #include "json11.hpp"
 #include "dolog.hh"
 #include "minicurl.hh"
 #include "prometheus.hh"
-#include <queue>
 
 using WHConfigMap = std::map<std::string, std::string>;
 using WHEvents = std::vector<std::string>;

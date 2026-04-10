@@ -28,6 +28,7 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <stdint.h>
 #include "iputils.hh"
 
 struct GetDNSContext {

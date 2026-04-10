@@ -29,6 +29,7 @@
 #include <boost/circular_buffer.hpp>
 #include <mutex>
 #include <thread>
+#include <stdint.h>
 #include "sholder.hh"
 #include "sstuff.hh"
 #include "replication.hh"

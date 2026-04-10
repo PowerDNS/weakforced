@@ -38,6 +38,7 @@
 #include <sstream>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#include <stdint.h>
 
 #include "namespaces.hh"
 

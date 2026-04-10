@@ -34,6 +34,7 @@
 #include <boost/optional.hpp>
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 #include "ext/hyperloglog.hpp"
 #include "ext/count_min_sketch.hpp"
 #include "iputils.hh"

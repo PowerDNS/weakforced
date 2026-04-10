@@ -27,6 +27,7 @@
 #include <GeoIP.h>
 #include <GeoIPCity.h>
 #endif
+#include <stdint.h>
 #include "lock.hh"
 #include "iputils.hh"
 

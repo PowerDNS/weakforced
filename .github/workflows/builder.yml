@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: build.sh
-    # on a ubuntu-20.04 VM
+    # on a ubuntu-22.04 VM
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -20,6 +20,7 @@ jobs:
           - amazon-2023
           - debian-bullseye
           - debian-bookworm
+          - debian-trixie
     steps:
       - uses: actions/checkout@v4
         with:

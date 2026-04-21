@@ -4,6 +4,7 @@ import subprocess
 import sys
 import time
 import json
+from mimesis import Internet 
 from test_helper import ApiTestCase
 
 class TestBlacklist(ApiTestCase):
@@ -149,9 +150,11 @@ class TestBlacklist(ApiTestCase):
         proc3 = subprocess.Popen(cmd3, close_fds=True)
         time.sleep(1)
         
-        r = self.addBLEntryIPPersist("99.99.99.99", 10, "test blacklist")
-        j = r.json()
-        self.assertEqual(j['status'], 'ok')
+        for i in range(2000):
+            random_ip = Internet().ip_v4()
+            r = self.addBLEntryIPPersist(random_ip, 10, "test blacklist")
+            j = r.json()
+            self.assertEqual(j['status'], 'ok')
 
         print("Killing process")
         proc3.terminate()
@@ -164,7 +167,7 @@ class TestBlacklist(ApiTestCase):
         
         r = self.getBLFuncPersist()
         j = r.json()
-        self.assertNotEqual(str.find(json.dumps(j),'99.99.99.99'), -1)
+        self.assertEqual(len(j['bl_entries']), 2000)
 
         proc3.terminate()
         proc3.wait()

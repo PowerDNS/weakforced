@@ -1,6 +1,7 @@
 AM_CPPFLAGS = \
 	$(LUA_CFLAGS) \
 	$(EXT_CFLAGS) \
+	$(BOOST_CPPFLAGS) \
 	$(libsodium_CFLAGS) \
 	$(GETDNS_CFLAGS) \
 	$(JSON11_CFLAGS) \

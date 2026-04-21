@@ -27,7 +27,7 @@ esac],[docker_only=false])
 AS_IF([test "x$docker_only" = "xfalse"], [
 
 # Check for C++ 2017 support
-AX_CXX_COMPILE_STDCXX_17(ext,mandatory)
+AX_CXX_COMPILE_STDCXX_17(noext,mandatory)
 
 # Check dependencies with pkgconfig
 PKG_PROG_PKG_CONFIG
@@ -102,9 +102,17 @@ AS_IF([test "x$HAVE_WGET" = "x"], [
 ])
 AX_PROG_PERL_MODULES( Swagger2::Markdown, , AC_MSG_WARN(Need to install Perl Swagger2::Markdown))
 # Look for protobuf
-PDNS_WITH_PROTOBUF
-AS_IF([test "x$PROTOBUF_LIBS" = "x" -o "x$PROTOC" = "x"], [
-  AC_MSG_ERROR([Protobuf not found, protobuf support is required])
+PKG_CHECK_MODULES([PROTOBUF], [protobuf], [ : ], [
+  AC_MSG_ERROR([Protobuf not found via pkg-config, protobuf support is required])
+])
+AC_CHECK_PROG([PROTOC], [protoc], [protoc])
+AS_IF([test "x$PROTOC" = "x"], [
+  AC_MSG_ERROR([protoc not found, protobuf support is required])
+])
+AM_CONDITIONAL([HAVE_PROTOBUF], [test "x$PROTOBUF_LIBS" != "x"])
+AM_CONDITIONAL([HAVE_PROTOC], [test "x$PROTOC" != "x"])
+AS_IF([test "x$PROTOBUF_LIBS" != "x"], [
+  AC_DEFINE([HAVE_PROTOBUF], [1], [Define if using protobuf.])
 ])
 # Setup variables for locally built libraries
 AC_SUBST([YAHTTP_CFLAGS], ['-I$(top_srcdir)/ext/yahttp'])

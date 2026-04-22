@@ -7,7 +7,7 @@ on:
 jobs:
   docker_test:
     name: docker_test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       # Github.refname is wrong for pull requests - have to use head ref for them
       MYREF: ${{ github.event.pull_request && github.head_ref || github.ref_name }}

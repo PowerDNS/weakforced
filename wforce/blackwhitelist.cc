@@ -784,7 +784,7 @@ bool BlackWhiteListDB::loadPersistEntries()
           else if (reply->type == REDIS_REPLY_ARRAY) {
             if (reply->elements == 2) {
               redisReply* rcounter = reply->element[0];
-              count_it = rcounter->integer;
+              count_it = std::stoi(rcounter->str);
               if (count_it == 0) {
                 end_it = true;
               }

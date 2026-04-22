@@ -1,4 +1,5 @@
 AM_CPPFLAGS = $(LUA_CFLAGS) \
+    $(BOOST_CPPFLAGS) \
 	$(EXT_CFLAGS) \
 	$(WFORCE_CFLAGS) \
 	$(libsodium_CFLAGS) \

@@ -9,7 +9,7 @@ info:
   license:
     name: GPL3
     url: http://github.com/PowerDNS/weakforced/blob/master/LICENSE
-  version: "3.0.0"
+  version: "3.0.1"
 
 servers:
   - url: http://doesnotexist.open-xchange.com/

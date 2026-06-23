@@ -1,0 +1,3 @@
+usr/bin/replfwd
+usr/lib/systemd/system/replfwd.service
+etc/wforce/replfwd.conf

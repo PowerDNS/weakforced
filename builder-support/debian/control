@@ -50,3 +50,15 @@ Description: Longterm abuse data reporting and alerter
  designed to look at abuse asynchronously, using long-term report data
  stored in an external DB such as elasticsearch, and to send alerts on
  potential login abuse.
+
+Package: wforce-replfwd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Daemon for forwarding wforce replication events
+ The goal of 'replfwd' is to forward wforce replication
+ messages between clusters of wforce servers. It does this
+ by acting as a cluster member (or Sibling) and forwarding
+ received events to a set of configured Forwarding destinations.
+ It also receives replication events from a set of configured
+ Forwarding sources, and sends those events to the local
+ cluster members.

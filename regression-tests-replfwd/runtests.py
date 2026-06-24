@@ -25,10 +25,10 @@ wait = ('--wait' in sys.argv)
 if wait:
     sys.argv.remove('--wait')
 
-wfcmd1 = ("wforce -s -C ./wforce1.conf").split()
-wfcmd2 = ("wforce -s -C ./wforce2.conf").split()
-rfcmd1 = ("replfwd -C ./replfwd1.conf").split()
-rfcmd2 = ("replfwd -C ./replfwd2.conf").split()
+wfcmd1 = ("../wforce/wforce -s -C ./wforce1.conf -R ../wforce/regexes.yaml").split()
+wfcmd2 = ("../wforce/wforce -s -C ./wforce2.conf -R ../wforce/regexes.yaml").split()
+rfcmd1 = ("../wforce/replfwd -C ./replfwd1.conf").split()
+rfcmd2 = ("../wforce/replfwd -C ./replfwd2.conf").split()
 
 # Now run the tests.
 print("Launching commands...")

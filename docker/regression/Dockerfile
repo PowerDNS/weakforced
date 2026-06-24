@@ -69,6 +69,7 @@ COPY m4/ /wforce/m4/
 COPY ext/ /wforce/ext/
 COPY docs/ /wforce/docs/
 COPY regression-tests/ /wforce/regression-tests/
+COPY regression-tests-replfwd/ /wforce/regression-tests-replfwd/
 COPY wforce/ /wforce/wforce/
 COPY common/ /wforce/common/
 COPY trackalert/ /wforce/trackalert/
@@ -77,5 +78,6 @@ COPY elk/ /wforce/elk/
 COPY grafana/ /wforce/grafana/
 
 RUN rm -rf regression-tests/.venv  
+RUN rm -rf regression-tests-replfwd/.venv
 
 CMD ["sleep", "infinity"]

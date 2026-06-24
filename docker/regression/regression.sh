@@ -40,9 +40,9 @@ make
 make check || (cat common/test-suite.log && false)
 cd regression-tests
 ./runtests "$TESTFILE"
-cd replfwd
+cd ../regression-tests-replfwd
 ./runtests "$REPLFWD_TESTFILE"
-cd ../..
+cd ..
 make dist
 export WF_VERSION=`grep PACKAGE_VERSION Makefile | awk  '{ print $3}'`
 tar xvf wforce-$WF_VERSION.tar.gz

@@ -1,0 +1,403 @@
+swagger: "2.0"
+info:
+  version: "3.0.0"
+  title: "OX Abuse Shield (Replfwd)"
+  description: "An API to the replfwd daemon"
+  contact:
+    name: "Open-Xchange"
+paths:
+  /?command=ping:
+    get:
+      description: "Ping the server to ensure it is operational"
+      operationId: "ping"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "ping response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=addSibling:
+    post:
+      description: This is a request to add a new Sibling for replication purposes.
+      operationId: addSibling
+      produces:
+        - application/json
+      parameters:
+        - name: "addSibling"
+          in: body
+          description: "Details about the Sibling to add"
+          required: true
+          schema:
+            $ref: "#/definitions/addSiblingParams"
+      responses:
+        "200":
+          description: "addSibling response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=removeSibling:
+    post:
+      description: This is a request to remove a Sibling for replication purposes.
+      operationId: removeSibling
+      produces:
+        - application/json
+      parameters:
+        - name: "removeSibling"
+          in: body
+          description: "Details about the Sibling to remove"
+          required: true
+          schema:
+            $ref: "#/definitions/removeSiblingParams"
+      responses:
+        "200":
+          description: "removeSibling response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=setSiblings:
+    post:
+      description: This is a request to set the Siblings for replication purposes.
+      operationId: setSiblings
+      produces:
+        - application/json
+      parameters:
+        - name: "setSiblings"
+          in: body
+          description: "Details about the Sibling to add"
+          required: true
+          schema:
+            $ref: "#/definitions/setSiblingsParams"
+      responses:
+        "200":
+          description: "setSiblings response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=addReplicationForwarderDest:
+    post:
+      description: This is a request to add a new Replication Forwarder Destination.
+      operationId: addReplicationForwarderDest
+      produces:
+        - application/json
+      parameters:
+        - name: "addReplicationForwarderDest"
+          in: body
+          description: "Details about the ReplicationForwarderDest to add"
+          required: true
+          schema:
+            $ref: "#/definitions/addReplicationForwarderDestParams"
+      responses:
+        "200":
+          description: "addReplicationForwarderDest response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=removeReplicationForwarderDest:
+    post:
+      description: This is a request to add remove a Replication Forwarder Destination.
+      operationId: removeReplicationForwarderDest
+      produces:
+        - application/json
+      parameters:
+        - name: "removeReplicationForwarderDest"
+          in: body
+          description: "Details about the ReplicationForwarderDest to remove"
+          required: true
+          schema:
+            $ref: "#/definitions/removeReplicationForwarderDestParams"
+      responses:
+        "200":
+          description: "removeReplicationForwarderDest response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=setReplicationForwarderDests:
+    post:
+      description: This is a request to set the Replication Forwarder Destinations.
+      operationId: setReplicationForwarderDests
+      produces:
+        - application/json
+      parameters:
+        - name: "setReplicationForwarderDests"
+          in: body
+          description: "Details about the ReplicationForwarderDests to add"
+          required: true
+          schema:
+            $ref: "#/definitions/setReplicationForwarderDestsParams"
+      responses:
+        "200":
+          description: "setReplicationForwarderDests response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=addReplicationForwarderSrc:
+    post:
+      description: This is a request to add a new Replication Forwarder Source.
+      operationId: addReplicationForwarderSrc
+      produces:
+        - application/json
+      parameters:
+        - name: "addReplicationForwarderSrc"
+          in: body
+          description: "Details about the ReplicationForwarderSrc to add"
+          required: true
+          schema:
+            $ref: "#/definitions/addReplicationForwarderSrcParams"
+      responses:
+        "200":
+          description: "addReplicationForwarderSrc response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=removeReplicationForwarderSrc:
+    post:
+      description: This is a request to add remove a Replication Forwarder Source.
+      operationId: removeReplicationForwarderSrc
+      produces:
+        - application/json
+      parameters:
+        - name: "removeReplicationForwarderSrc"
+          in: body
+          description: "Details about the ReplicationForwarderSrc to remove"
+          required: true
+          schema:
+            $ref: "#/definitions/removeReplicationForwarderSrcParams"
+      responses:
+        "200":
+          description: "removeReplicationForwarderSrc response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /?command=setReplicationForwarderSrcs:
+    post:
+      description: This is a request to set the Replication Forwarder Sources.
+      operationId: setReplicationForwarderSrcs
+      produces:
+        - application/json
+      parameters:
+        - name: "setReplicationForwarderSrcs"
+          in: body
+          description: "Details about the ReplicationForwarderSrcs to add"
+          required: true
+          schema:
+            $ref: "#/definitions/setReplicationForwarderSrcsParams"
+      responses:
+        "200":
+          description: "setReplicationForwarderSrcs response"
+          schema:
+            type: object
+            required:
+              - status
+            properties:
+              status:
+                type: string
+            example:
+              status: ok
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+  /metrics:
+    get:
+      description: "Retrieve prometheus metrics"
+      operationId: "metrics"
+      produces:
+        - "text/plain"
+      responses:
+        "200":
+          description: "Prometheus metrics in the format described at https://prometheus.io/docs/instrumenting/exposition_formats/"
+        default:
+          description: unexpected error
+          schema:
+            $ref: "#/definitions/Error"
+definitions:
+  Error:
+    required:
+      - status
+      - reason
+    properties:
+      status:
+        type: string
+      reason:
+        type: string
+    example:
+      status: failure
+      reason: Unauthorized
+  addSiblingParams:
+    type: object
+    required:
+      - sibling_host
+      - sibling_port
+    properties:
+      sibling_host:
+        type: string
+      sibling_port:
+        type: integer
+      sibling_protocol:
+        type: string
+        enum: [tcp, udp]
+      encryption_key:
+        type: string
+  removeSiblingParams:
+    type: object
+    required:
+      - sibling_host
+      - sibling_port
+    properties:
+      sibling_host:
+        type: string
+      sibling_port:
+        type: integer
+  setSiblingsObject:
+    type: object
+    required:
+      - sibling_host
+      - sibling_port
+    properties:
+      sibling_host:
+        type: string
+      sibling_port:
+        type: integer
+      sibling_protocol:
+        type: string
+        enum: [ tcp, udp ]
+      encryption_key:
+        type: string
+  setSiblingsParams:
+    type: object
+    properties:
+      siblings:
+        type: array
+        items:
+          $ref: "#/definitions/setSiblingsObject"
+  replForwarderDestExtraParams:
+    type: object
+    properties:
+      send_sdb:
+        type: boolean
+      send_wlbl:
+        type: boolean
+  setReplicationForwarderDestsParams:
+    type: object
+    properties:
+      siblings:
+        type: array
+        items:
+          allOf:
+            - $ref: "#/definitions/setSiblingsObject"
+            - $ref: "#/definitions/replForwarderDestExtraParams"
+  addReplicationForwarderDestParams:
+    allOf:
+      - $ref: "#/definitions/addSiblingParams"
+      - $ref: "#/definitions/replForwarderDestExtraParams"
+  removeReplicationForwarderDestParams:
+    $ref: "#/definitions/removeSiblingParams"
+  setReplicationForwarderSrcsParams:
+    type: object
+    properties:
+      siblings:
+        type: array
+        items:
+          type: object
+          properties:
+            sibling_host:
+              type: string
+  addReplicationForwarderSrcParams:
+    type: object
+    properties:
+      sibling_host:
+        type: string
+  removeReplicationForwarderSrcParams:
+    $ref: "#/definitions/addReplicationForwarderSrcParams"

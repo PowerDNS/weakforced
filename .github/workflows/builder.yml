@@ -22,12 +22,12 @@ jobs:
           - debian-bookworm
           - debian-trixie
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # for correct version numbers
           submodules: recursive
       - run: builder/build.sh -e 1 -v  ${{ matrix.os }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.os }}
           path: builder/tmp/latest/${{ matrix.os }}/dist/*

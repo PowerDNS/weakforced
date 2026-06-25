@@ -33,16 +33,17 @@ AM_LDFLAGS = \
 
 UAP_REGEX_FILE=regexes.yaml
 
-EXTRA_DIST= wforce.conf wforce.service.in wforce.conf.example replication.proto $(UAP_REGEX_FILE)
+EXTRA_DIST= wforce.conf wforce.service.in wforce.conf.example replfwd.conf replfwd.service.in  replication.proto $(UAP_REGEX_FILE)
 
-CLEANFILES = replication.pb.cc replication.pb.h wforce.service $(UAP_REGEX_FILE)
+CLEANFILES = replication.pb.cc replication.pb.h wforce.service replfwd.service $(UAP_REGEX_FILE)
 distclean-local:
 	-rm -rf *.dSYM
 
-sysconf_DATA= wforce.conf wforce.conf.example $(UAP_REGEX_FILE)
+sysconf_DATA= wforce.conf wforce.conf.example replfwd.conf $(UAP_REGEX_FILE)
 
 bin_PROGRAMS =  wforce \
-		wf_dump_entries
+		wf_dump_entries \
+		replfwd
 
 wforce_SOURCES = \
 	wforce.cc wforce.hh \
@@ -94,6 +95,44 @@ wf_dump_entries_LDADD = \
 EXTRA_wf_dump_entries_DEPENDENCIES = \
 	$(WFORCE_LIBS)
 
+replfwd_SOURCES = \
+	replfwd.cc replfwd.hh \
+	replfwd-lua.cc \
+	replfwd-web.cc replfwd-web.hh \
+	replfwd-replication.cc replfwd-replication.hh \
+	replication.cc replication.hh \
+	replication_bl.cc replication_bl.hh \
+	replication_wl.cc replication_wl.hh \
+	replication_sdb.cc replication_sdb.hh \
+	wforce-sibling.cc wforce-sibling.hh \
+	wforce-prometheus.cc wforce-prometheus.hh \
+	wforce-replication.cc wforce-replication.hh \
+	blackwhitelist.cc blackwhitelist.hh \
+	twmap-wrapper.cc twmap-wrapper.hh \
+	twmap.cc
+
+replfwd_LDFLAGS = \
+	$(AM_LDFLAGS) \
+    $(LIBCRYPTO_LDFLAGS) \
+	$(LIBPROMETHEUS_LDFLAGS) \
+	$(LIBDROGON_LDFLAGS) \
+	$(LIBJSONCPP_LDFLAGS) \
+	$(LIBZ_LDFLAGS) \
+	$(LIBUUID_LDFLAGS)
+
+
+replfwd_LDADD = \
+	-lreadline \
+	$(LUA_LIBS) $(EXT_LIBS) $(WFORCE_LIBS) \
+	${libsodium_LIBS} $(PROTOBUF_LIBS) \
+	$(LIBSYSTEMD_LIBS) $(JSON11_LIBS) $(BOOST_DATE_TIME_LIBS) \
+	$(BOOST_REGEX_LIBS) $(LIBHIREDIS_LIBS) $(LIBDROGON_LIBS) \
+    $(LIBJSONCPP_LIBS) $(LIBZ_LIBS) $(LIBUUID_LIBS) $(LIBCURL) $(LIBCRYPTO_LIBS) \
+	$(YAMLCPP_LIBS) $(LIBPROMETHEUS_LIBS) $(LIBSSL_LIBS) $(DLLIBS) $(STDCXXFSLIBS)
+
+EXTRA_replfwd_DEPENDENCIES = \
+	$(EXT_LIBS) $(WFORCE_LIBS)
+
 noinst_HEADERS = \
 	blackwhitelist.hh \
 	wforce.hh \
@@ -104,6 +143,9 @@ noinst_HEADERS = \
 	luastate.hh \
 	wforce-web.hh \
 	wforce-sibling.hh \
+	replfwd.hh \
+    replfwd-replication.hh \
+    replfwd-web.hh \
 	wforce-replication.hh
 
 BUILT_SOURCES = replication.pb.cc replication.pb.h
@@ -115,15 +157,21 @@ nodist_wforce_SOURCES = replication.pb.cc replication.pb.h
 
 wforce.$(OBJEXT): replication.pb.cc
 
+nodist_replfwd_SOURCES = replication.pb.cc replication.pb.h
+
+replfwd.$(OBJEXT): replication.pb.cc
+
 $(UAP_REGEX_FILE):
 	wget -q https://raw.githubusercontent.com/ua-parser/uap-core/master/$(UAP_REGEX_FILE) -O $(UAP_REGEX_FILE)
 
 if HAVE_SYSTEMD
 SYSTEMD_TYPE = notify
 systemdsystemunitdir = $(SYSTEMD_DIR)
-systemdsystemunit_DATA = wforce.service
+systemdsystemunit_DATA = wforce.service replfwd.service
 else
 SYSTEMD_TYPE = simple
 endif
 wforce.service: wforce.service.in
+	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' -e 's![@]type[@]!$(SYSTEMD_TYPE)!' < $< > $@
+replfwd.service: replfwd.service.in
 	$(AM_V_GEN)sed -e 's![@]bindir[@]!$(bindir)!' -e 's![@]type[@]!$(SYSTEMD_TYPE)!' < $< > $@

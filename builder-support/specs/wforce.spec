@@ -15,7 +15,7 @@
 %define vardir /var/lib/%{venv_name}
 %define __prelink_undo_cmd %{nil}
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
-
+%global replfwd_name replfwd
 
 %global wforce_restart_flag /var/run/wforce-restart-after-rpm-install
 %global trackalert_restart_flag /var/run/wforce-trackalert-restart-after-rpm-install
@@ -281,3 +281,96 @@ fi
 %license LICENSE
 %{_unitdir}/trackalert.service
 %{_sysconfdir}/%{name}/trackalert.conf
+
+# Replfwd package
+
+%package replfwd
+Summary: Replfwd daemon for forwarding wforce replication events
+
+%description replfwd
+ The replfwd daemon forwards replication events between
+ wforce clusters and other replication forwarders, and vice-versa.
+
+%pre replfwd
+getent group wforce >/dev/null || groupadd -r wforce
+getent passwd wforce >/dev/null || \
+useradd -r -g wforce -d /var/spool/wforce -s /bin/false -c "wforce" wforce
+
+if [ "$1" = "2" ] || [ "$1" = "1" ]; then
+  rm -f %replfwd_restart_flag
+%if %{with systemd}
+  /bin/systemctl is-active %{replfwd_name}.service >/dev/null 2>&1 && touch %replfwd_restart_flag || :
+   /bin/systemctl is-active %{replfwd_name}.service >/dev/null 2>&1  && \
+       /bin/systemctl stop %{replfwd_name}.service >/dev/null 2>&1 || :
+%else
+  /sbin/service %{replfwd_name} status >/dev/null 2>&1 && touch %replfwd_restart_flag || :
+  /sbin/service %{replfwd_name} stop >/dev/null 2>&1 || :
+%endif
+fi
+
+
+%post replfwd
+# Post-Install
+if [ $1 -eq 1 ]; then
+  REPLFWDCONF=/etc/wforce/%{replfwd_name}.conf
+  echo -n "Modifying %{replfwd_name}.conf to replace password and key..."
+  SETKEY=`replfwd -k`
+  WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
+  sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $REPLFWDCONF
+  echo "done"
+
+%if %{with systemd}
+  systemctl daemon-reload
+  systemctl enable %{replfwd_name}.service
+%else
+  chkconfig --add %{replfwd_name}
+%endif
+fi
+
+%preun replfwd
+if [ $1 = 0 ]; then
+%if %{with systemd}
+    /bin/systemctl disable %{replfwd_name}.service %{replfwd_name}.socket >/dev/null 2>&1 || :
+    /bin/systemctl stop %{replfwd_name}.service %{replfwd_name}.socket >/dev/null 2>&1 || :
+%else
+    /sbin/service %{replfwd_name} stop > /dev/null 2>&1
+    /sbin/chkconfig --del %{replfwd_name}
+%endif
+fi
+
+
+%postun replfwd
+%if %{with systemd}
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+%endif
+
+if [ "$1" -ge "1" -a -e %replfwd_restart_flag ]; then
+%if %{with systemd}
+    /bin/systemctl start %{replfwd_name}.service >/dev/null 2>&1 || :
+%else
+    /sbin/service %{replfwd_name} start >/dev/null 2>&1 || :
+%endif
+rm -f %replfwd_restart_flag
+fi
+
+%posttrans replfwd
+# %{replfwd_name} should be started again in %postun, but it's not executed on reinstall
+# if it was already started, wforce_restart_flag won't be here, so it's ok to test it again
+if [ -e %replfwd_restart_flag ]; then
+%if %{with systemd}
+    /bin/systemctl start %{replfwd_name}.service >/dev/null 2>&1 || :
+%else
+    /sbin/service %{replfwd_name} start >/dev/null 2>&1 || :
+%endif
+rm -f %replfwd_restart_flag
+fi
+
+%files replfwd
+%defattr(-,root,root,-)
+%{_bindir}/%{replfwd_name}
+%attr(0644,root,root) %config(noreplace,missingok) %{_sysconfdir}/wforce/%{replfwd_name}.conf
+%{_unitdir}/%{replfwd_name}.service
+%{_mandir}/man1/%{replfwd_name}.1.gz
+%{_mandir}/man5/%{replfwd_name}.conf.5.gz
+%doc CHANGELOG.md README.md
+

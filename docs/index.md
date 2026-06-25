@@ -32,6 +32,15 @@ The wforce daemon is the main point of integration with authentication systems, 
 * Prometheus Support - Native Support for prometheus metrics on the /metrics endpoint.
 * GeoIP Support - Retrieve location information of IP addresses using the GeoIP2 API.
 
+# Replfwd daemon
+
+The replfwd daemon is a simple daemon that listens for replication events from wforce, and forwards them to another replfwd daemon or wforce instance.
+It is useful for replicating statistics databases and black/whitelists between clusters of wforce instances, by reducing the traffic sent between clusters.
+
+* [Replfwd Daemon](manpages/replfwd.1.md)
+* [Replfwd Config File](manpages/replfwd.conf.5.md)
+* [REST API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/PowerDNS/weakforced/master/docs/swagger/replfwd_api.7.yml)
+
 # Trackalert Daemon
 
 The trackalert daemon provides a mechanism to run arbitrary Lua code based on either a wforce "report" event and/or on a scheduled basis. This is often used to trigger lookups into databases such as Elasticsearch to find anomalous login events.

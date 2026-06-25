@@ -2,6 +2,8 @@
 Open-Xchange 2019
 doctype: manpage
 
+// <!-- {% raw %} -->
+
 ## NAME
 replfwd.conf - configuration file for replfwd daemon
 
@@ -28,7 +30,7 @@ The following functions are for configuration of replfwd:
   to setSiblings() except that it allows an encryption key to be specified for
   each sibling. For example:
 
-      setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="}, {"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
+        setSiblingsWithKey({{"127.0.1.2", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE="},{"127.0.1.3:4004:tcp", "KaiQkCHloe2ysXv2HbxBAFqHI4N8+ahmwYwsbYlDdF0="}})
 
 * addSibling(\<IP[:port[:protocol]]\>) - Add a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated.  If port
@@ -43,7 +45,7 @@ The following functions are for configuration of replfwd:
   to addSibling(), except that an encryption key is specified to enable per-sibling
   encryption.For example:
 
-      addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
+        addSiblingWithKey("192.168.1.23", "Ay9KXgU3g4ygK+qWT0Ut4gH8PPz02gbtPeXWPdjD0HE=")
 
 * removeSibling(\<IP/Host[:port[:protocol]]\>) - Remove a sibling to the list to which all
   stats db and blacklist/whitelist data should be replicated.  Use [] to enclose
@@ -172,3 +174,5 @@ The following functions are for configuration of replfwd:
 
 ## SEE ALSO
 replfwd(1)
+
+// <!-- {% endraw %} -->

@@ -189,6 +189,9 @@ void setupCommonLua(bool client,
   c_lua.registerMember("fail_type", &LoginTuple::fail_type);
 
   c_lua.registerFunction<string(ComboAddress::*)()>("tostring", [](const ComboAddress& ca) { return ca.toString(); });
+  c_lua.registerFunction<bool(ComboAddress::*)()>("isIPv6", [](const ComboAddress& ca) { return ca.isIpv6(); });
+  c_lua.registerFunction<bool(ComboAddress::*)()>("isIPv4", [](const ComboAddress& ca) { return ca.isIpv4(); });
+  c_lua.registerFunction<bool(ComboAddress::*)()>("isMappedIPv4", [](const ComboAddress& ca) { return ca.isMappedIPv4(); });
 
   c_lua.writeFunction("newCA", [](string address) {
       try {
@@ -212,6 +215,10 @@ void setupCommonLua(bool client,
         errlog("newNetmask() error parsing netmask [%s]. Use x.x.x.x/y notation.", address);
         return Netmask();
       }
+    } );
+
+  c_lua.writeFunction("newNetmaskFromCA", [](const ComboAddress& ca, uint8_t bits) {
+    return Netmask(ca, bits);
     } );
 
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );

@@ -320,7 +320,16 @@ cannot be called inside the allow/report/reset functions:
 * StringStatsDB:twSetv6Prefix(\<prefix\>) - Set the prefix to use for
   any IPv6 ComboAddress keys stored in the db. For example:
   
-        statsdb:twSetv4Prefix(64)
+        statsdb:twSetv6Prefix(64)
+
+* StringStatsDB:twGetv4Prefix() - Get the prefix set for any IPv4 ComboAddress keys stored in the db. For example:
+
+        v4Prefix = statsdb:twGetv4Prefix(24)
+
+* StringStatsDB:twGetv6Prefix(\<prefix\>) - Get the prefix set for
+  any IPv6 ComboAddress keys stored in the db. For example:
+
+        v6Prefix = statsdb:twGetv6Prefix(64)
 
 * StringStatsDB:twSetMaxSize(\<size\>) - Set the maximum number of keys
   to be stored in the db. When the db reaches that size, keys will be
@@ -692,10 +701,24 @@ configuration or within the allow/report/reset functions:
   
 		mystr = my_ca:tostring()
 
+* ComboAddress:isIPv6() - Return true if the IP address is IPv6. For example:
+
+  	isv6 = my_ca:isIPv6()
+
+* ComboAddress:isIPv4() - Return true if the IP address is IPv4. For example:
+
+  	isv4 = my_ca:isIPv4()
+
+* ComboAddress:isMappedIPv4() - Return true if the IP address is IPv4 mapped into a v6 address. For example:
+
+  	isMappedv4 = my_ca:isMappedIPv4()
+
 * newNetmask(\<IP[/mask]\>) - Create and return an object representing
 a Netmask. For example:
 
 		my_nm = newNetmask("8.0.0.0/8")
+
+* Netmask:toStringNetwork() - Return a string representing the Netmask.
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
   efficiently match IPs/subnets against a range. For example:

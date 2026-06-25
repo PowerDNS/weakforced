@@ -5,6 +5,6 @@ coverage==4.4.1
 #elasticsearch>=7.0.0
 Jinja2==3.0.3
 MarkupSafe==2.0.1
-urllib3==1.26.18
+urllib3==2.7.0
 bottle==0.12.20
 prometheus_client==0.7.1

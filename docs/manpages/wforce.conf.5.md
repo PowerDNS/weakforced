@@ -718,6 +718,11 @@ a Netmask. For example:
 
 		my_nm = newNetmask("8.0.0.0/8")
 
+* newNetmaskFromCA(\<ComboAddress\>, \<prefix\>) - Create and return an object representing
+  a Netmask from a ComboAddress and prefix. For example:
+
+  	my_nm = newNetmask(lt.remote, 64)
+
 * Netmask:toStringNetwork() - Return a string representing the Netmask.
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to

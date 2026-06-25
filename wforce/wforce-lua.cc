@@ -561,6 +561,8 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
   c_lua.registerFunction("twGetWindows", &TWStringStatsDBWrapper::get_windows);
   c_lua.registerFunction("twSetv4Prefix", &TWStringStatsDBWrapper::setv4Prefix);
   c_lua.registerFunction("twSetv6Prefix", &TWStringStatsDBWrapper::setv6Prefix);
+  c_lua.registerFunction("twGetv4Prefix", &TWStringStatsDBWrapper::getv4Prefix);
+  c_lua.registerFunction("twGetv6Prefix", &TWStringStatsDBWrapper::getv6Prefix);
   c_lua.registerFunction("twGetSize", &TWStringStatsDBWrapper::get_size);
   c_lua.registerFunction("twSetMaxSize", &TWStringStatsDBWrapper::set_size_soft);
   c_lua.registerFunction("twReset", &TWStringStatsDBWrapper::reset);

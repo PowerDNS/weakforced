@@ -221,6 +221,8 @@ void setupCommonLua(bool client,
     return Netmask(ca, bits);
     } );
 
+  c_lua.registerFunction("toStringNetwork", (string (Netmask::*)() const)(&Netmask::toStringNetwork));
+
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 
   c_lua.registerFunction<void(NetmaskGroup::*)(const std::string&)>("addMask", [](NetmaskGroup& nmg, const std::string& mask) {

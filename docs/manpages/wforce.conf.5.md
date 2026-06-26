@@ -324,12 +324,12 @@ cannot be called inside the allow/report/reset functions:
 
 * StringStatsDB:twGetv4Prefix() - Get the prefix set for any IPv4 ComboAddress keys stored in the db. For example:
 
-        v4Prefix = statsdb:twGetv4Prefix(24)
+        v4Prefix = statsdb:twGetv4Prefix()
 
 * StringStatsDB:twGetv6Prefix(\<prefix\>) - Get the prefix set for
   any IPv6 ComboAddress keys stored in the db. For example:
 
-        v6Prefix = statsdb:twGetv6Prefix(64)
+        v6Prefix = statsdb:twGetv6Prefix()
 
 * StringStatsDB:twSetMaxSize(\<size\>) - Set the maximum number of keys
   to be stored in the db. When the db reaches that size, keys will be
@@ -703,15 +703,15 @@ configuration or within the allow/report/reset functions:
 
 * ComboAddress:isIPv6() - Return true if the IP address is IPv6. For example:
 
-  	isv6 = my_ca:isIPv6()
+  	    isv6 = my_ca:isIPv6()
 
 * ComboAddress:isIPv4() - Return true if the IP address is IPv4. For example:
 
-  	isv4 = my_ca:isIPv4()
+  	    isv4 = my_ca:isIPv4()
 
 * ComboAddress:isMappedIPv4() - Return true if the IP address is IPv4 mapped into a v6 address. For example:
 
-  	isMappedv4 = my_ca:isMappedIPv4()
+  	    isMappedv4 = my_ca:isMappedIPv4()
 
 * newNetmask(\<IP[/mask]\>) - Create and return an object representing
 a Netmask. For example:
@@ -721,7 +721,7 @@ a Netmask. For example:
 * newNetmaskFromCA(\<ComboAddress\>, \<prefix\>) - Create and return an object representing
   a Netmask from a ComboAddress and prefix. For example:
 
-  	my_nm = newNetmask(lt.remote, 64)
+  	    my_nm = newNetmaskFromCA(lt.remote, 64)
 
 * Netmask:toStringNetwork() - Return a string representing the Netmask.
 

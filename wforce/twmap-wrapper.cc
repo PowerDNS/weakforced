@@ -111,6 +111,16 @@ void TWStringStatsDBWrapper::setv6Prefix(uint8_t bits)
   }
 }
 
+uint8_t TWStringStatsDBWrapper::getv4Prefix()
+{
+  return sdbvp->at(0)->getv4Prefix();
+}
+
+uint8_t TWStringStatsDBWrapper::getv6Prefix()
+{
+  return sdbvp->at(0)->getv6Prefix();
+}
+
 std::string TWStringStatsDBWrapper::getStringKey(const TWKeyType vkey)
 {
   if (vkey.which() == 0) {

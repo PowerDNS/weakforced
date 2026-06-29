@@ -56,6 +56,8 @@ public:
   const FieldMap& getFields();
   void setv4Prefix(uint8_t bits);
   void setv6Prefix(uint8_t bits);
+  uint8_t getv4Prefix();
+  uint8_t getv6Prefix();
   std::string getStringKey(const TWKeyType vkey);
   void add(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int, ComboAddress>& param1, boost::optional<int> param2);
   void addInternal(const TWKeyType vkey, const std::string& field_name, const boost::variant<std::string, int, ComboAddress>& param1, boost::optional<int> param2, bool replicate=true);

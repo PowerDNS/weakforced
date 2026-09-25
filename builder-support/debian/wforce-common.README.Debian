@@ -1,0 +1,15 @@
+The wforce-common package provides /etc/wforce/regexes.yaml and creates the
+wforce system account shared by wforce, trackalert and replfwd.
+
+Daemon configuration templates are installed in /usr/share/wforce,
+/usr/share/wforce-trackalert and /usr/share/wforce-replfwd. Their active
+configuration files in /etc/wforce are managed by ucf, preserving local
+changes across upgrades. Credentials are generated during configuration,
+and the active files are readable only by their owner and group (wforce).
+Purging a daemon package removes its configuration and ucf registration.
+Purging wforce-common only removes empty shared directories, preserving
+administrator-created files and backups.
+
+The upstream wforce-lua-dist dependency and builder-provided libraries are
+retained. Debian-specific source patches and release metadata are not part
+of this packaging.

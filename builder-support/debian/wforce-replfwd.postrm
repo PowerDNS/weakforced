@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+REPLFWDCONF=/etc/wforce/replfwd.conf
+
+case "$1" in
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+    remove)
+    ;;
+
+    purge)
+        for ext in .new .ucf-new .ucf-old .ucf-dist ""; do
+            rm -f "${REPLFWDCONF}${ext}"
+        done
+        if command -v ucf >/dev/null 2>&1; then
+            ucf --purge "${REPLFWDCONF}"
+        fi
+        if command -v ucfr >/dev/null 2>&1; then
+            ucfr --purge wforce-replfwd "${REPLFWDCONF}"
+        fi
+    ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

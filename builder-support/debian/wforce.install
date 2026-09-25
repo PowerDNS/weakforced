@@ -1,4 +1,5 @@
+etc/wforce/wforce.conf usr/share/wforce/
+etc/wforce/wforce.conf.example usr/share/doc/wforce/config_examples/
+usr/bin/wf_dump_entries
 usr/bin/wforce
 usr/lib/systemd/system/wforce.service
-etc/wforce/regexes.yaml
-etc/wforce/wforce.conf

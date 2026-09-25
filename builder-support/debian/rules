@@ -1,21 +1,26 @@
 #!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 #
 # See debhelper(7) (uncomment to enable)
 # output every command that modifies files on the build system.
-#DH_VERBOSE = 1
+export DH_VERBOSE = 1
 
 # see EXAMPLES in dpkg-buildflags(1) and read /usr/share/dpkg/*
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/default.mk
 
+ifneq (,$(filter $(DEB_HOST_ARCH),loong64 riscv64))
+export DEB_LDFLAGS_MAINT_APPEND += -latomic
+endif
+
 %:
-	dh $@ \
-	  --with autotools-dev \
-	  --parallel \
-	  --with systemd
+	dh $@
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
 	  --sysconfdir=/etc/wforce \
 	  --with-luajit \
 	  --enable-trackalert
+
+override_dh_missing:
+	dh_missing --fail-missing

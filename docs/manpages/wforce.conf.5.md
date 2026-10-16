@@ -761,6 +761,16 @@ configuration or within the allow/report/reset functions:
         local city_lat = citydb:lookupDoubleValue(newCA(ip_address), {"location", "latitude"})
         local city_long = citydb:lookupDoubleValue(newCA(ip_address), {"location", "longitude"})
 
+* GeoIP2DB:lookupNetwork(\<ComboAddress\>) - Returns a Netmask
+  representing the network in the database that contains the IP
+  address. If the IP address is not found, an empty Netmask is
+  returned (see Netmask:empty()). For example:
+
+        local my_nm = citydb:lookupNetwork(lt.remote)
+        if not my_nm:empty() then
+          local my_net = my_nm:toStringNetwork()
+        end
+
 * lookupCountry(\<ComboAddress\>) - (Deprecated - use the new GeoIP2
   function). Returns the two-character country
   code of the country that the IP address is located in. A
@@ -820,6 +830,11 @@ a Netmask. For example:
   	    my_nm = newNetmaskFromCA(lt.remote, 64)
 
 * Netmask:toStringNetwork() - Return a string representing the Netmask.
+
+* Netmask:empty() - Return true if the Netmask is empty, for example
+  because it was returned from a failed lookup. For example:
+
+  	    is_empty = my_nm:empty()
 
 * newNetmaskGroup() - Return a NetmaskGroup object, which is a way to
   efficiently match IPs/subnets against a range. For example:

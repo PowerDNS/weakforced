@@ -43,7 +43,8 @@ public:
   WFGeoIP2DB& operator=(const WFGeoIP2DB&) = delete; // copy assign
   WFGeoIP2DB(WFGeoIP2DB&&) = delete; // move construct
   WFGeoIP2DB& operator=(WFGeoIP2DB&&) = delete; // move assign
-  
+
+  Netmask lookupNetwork(const ComboAddress& address);
   std::string lookupCountry(const ComboAddress& address);
   std::string lookupISP(const ComboAddress& address);
   std::unique_ptr<WFGeoIPRecord> lookupCity(const ComboAddress& address);

@@ -160,6 +160,20 @@ bool WFGeoIP2DB::lookupDataValue(const ComboAddress& address, const std::vector<
   return retval;
 }
 
+Netmask WFGeoIP2DB::lookupNetwork(const ComboAddress& address)
+{
+  MMDB_lookup_result_s res;
+  Netmask ret_nm;
+
+  if (mmdbLookup(address.toString(), res)) {
+    uint8_t bits = res.netmask;
+    if (address.sin4.sin_family == AF_INET && d_db.metadata.ip_version == 6)
+      bits = bits >= 96 ? bits - 96 : 0; // IPv4 lives at ::/96 in an IPv6 tree
+    ret_nm = Netmask(Netmask(address, bits).getMaskedNetwork(), bits);
+  }
+  return ret_nm;
+}
+
 std::string WFGeoIP2DB::lookupStringValue(const ComboAddress& address, const std::vector<std::pair<unsigned int, std::string>>& attrs)
 {
   MMDB_entry_data_s data;

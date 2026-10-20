@@ -1,28 +1,146 @@
 #!/bin/sh
-#
-#
 
 set -e
 
-TRACKALERTCONF=/etc/wforce/trackalert.conf
+_TRACKALERTCONF="trackalert.conf"
+
+TRACKALERTCONF_SOURCE="/usr/share/wforce-trackalert/${_TRACKALERTCONF}"
+TRACKALERTCONF="/etc/wforce/${_TRACKALERTCONF}"
+TRACKALERTCONF_NEW="${TRACKALERTCONF}.new"
+
+extract_web_password()
+{
+    sed -n '
+        /^[[:space:]]*setWebserverPassword[[:space:]]*(/ {
+            s/^[^"]*"//
+            /"/!q
+            s/".*$//
+            p
+            q
+        }
+    ' "$1"
+}
+
+extract_set_key()
+{
+    sed -n '
+        /^[[:space:]]*setKey[[:space:]]*(/ {
+            s/^[[:space:]]*//
+            p
+            q
+        }
+    ' "$1"
+}
+
+escape_sed_replacement()
+{
+    printf '%s' "$1" | sed 's/[\\&|]/\\&/g'
+}
+
+replace_credentials()
+{
+    config=$1
+    webpwd_replacement=--WEBPWD
+    setkey_replacement=--SETKEY
+
+    if [ -n "${WEBPWD}" ]; then
+        webpwd_replacement=$(escape_sed_replacement "${WEBPWD}")
+    fi
+    if [ -n "${SETKEY}" ]; then
+        setkey_replacement=$(escape_sed_replacement "${SETKEY}")
+    fi
+
+    sed -e "s|--WEBPWD|${webpwd_replacement}|g" \
+        -e "s|--SETKEY|${setkey_replacement}|g" \
+        -i "${config}"
+}
+
+generate_missing_credentials()
+{
+    if [ -z "${SETKEY}" ]; then
+        KEY=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
+        if [ "${#KEY}" -ne 44 ]; then
+            echo "Unable to generate a valid key for ${TRACKALERTCONF}" >&2
+            return 1
+        fi
+        SETKEY="setKey(\"${KEY}\")"
+    fi
+    if [ -z "${WEBPWD}" ]; then
+        WEBPWD=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null |
+            base64 | rev | cut -b 2-14 | rev)
+    fi
+
+    if [ -z "${SETKEY}" ] || [ -z "${WEBPWD}" ]; then
+        echo "Unable to generate credentials for ${TRACKALERTCONF}" >&2
+        return 1
+    fi
+}
+
+has_placeholders()
+{
+    grep -q -e '--WEBPWD' -e '--SETKEY' "$1"
+}
+
+ensure_no_placeholders()
+{
+    if has_placeholders "$1"; then
+        echo "Credential placeholders remain in $1" >&2
+        return 1
+    else
+        status=$?
+        [ "${status}" -eq 1 ] || return "${status}"
+    fi
+}
 
 case "$1" in
   configure)
-    if [ -z "`getent group wforce`" ]; then
-      addgroup --quiet --system wforce
+    rm -f "${TRACKALERTCONF_NEW}"
+    trap 'rm -f "${TRACKALERTCONF_NEW}"' 0
+    install -m 0600 "${TRACKALERTCONF_SOURCE}" "${TRACKALERTCONF_NEW}"
+
+    for placeholder in --WEBPWD --SETKEY; do
+        if ! grep -q -- "${placeholder}" "${TRACKALERTCONF_NEW}"; then
+            echo "Missing ${placeholder} in ${TRACKALERTCONF_SOURCE}" >&2
+            exit 1
+        fi
+    done
+
+    SETKEY=
+    WEBPWD=
+    if [ -e "${TRACKALERTCONF}" ]; then
+        SETKEY=$(extract_set_key "${TRACKALERTCONF}")
+        WEBPWD=$(extract_web_password "${TRACKALERTCONF}")
+        case "${SETKEY}" in
+            *--SETKEY*) SETKEY= ;;
+        esac
+        case "${WEBPWD}" in
+            *--WEBPWD*) WEBPWD= ;;
+        esac
+    else
+        printf 'Generating credentials for %s\n' "${TRACKALERTCONF}"
+        generate_missing_credentials
     fi
-    if [ -z "`getent passwd wforce`" ]; then
-      echo -n "Creating user and group wforce..."
-      adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "wforce" wforce
-      echo "done"
+
+    replace_credentials "${TRACKALERTCONF_NEW}"
+
+    UCF_FORCE_CONFFMISS=1 \
+        ucf --three-way --debconf-ok "${TRACKALERTCONF_NEW}" "${TRACKALERTCONF}"
+    ucfr wforce-trackalert "${TRACKALERTCONF}"
+
+    if has_placeholders "${TRACKALERTCONF}"; then
+        generate_missing_credentials
+        replace_credentials "${TRACKALERTCONF}"
+    else
+        status=$?
+        [ "${status}" -eq 1 ] || exit "${status}"
     fi
-    if [ -z "$2" ]; then
-        echo -n "Modifying trackalert.conf to replace password and key..."
-        SETKEY=`echo "makeKey()" | trackalert | grep setKey`
-        WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
-        sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $TRACKALERTCONF
-        echo "done"
-    fi
+    ensure_no_placeholders "${TRACKALERTCONF}"
+
+    chmod 0640 "${TRACKALERTCONF}"
+    chown wforce:wforce "${TRACKALERTCONF}"
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
   ;;
 
   *)

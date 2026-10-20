@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+    remove)
+    ;;
+
+    purge)
+        if [ -d "/var/spool/wforce" ]; then
+            rmdir --ignore-fail-on-non-empty /var/spool/wforce
+        fi
+        if [ -d "/etc/wforce" ]; then
+            rmdir --ignore-fail-on-non-empty /etc/wforce
+        fi
+    ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

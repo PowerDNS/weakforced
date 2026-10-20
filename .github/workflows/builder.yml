@@ -18,7 +18,6 @@ jobs:
           - el-8
           - el-9
           - amazon-2023
-          - debian-bullseye
           - debian-bookworm
           - debian-trixie
           - ubuntu-jammy

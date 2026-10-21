@@ -222,6 +222,7 @@ void setupCommonLua(bool client,
     } );
 
   c_lua.registerFunction("toStringNetwork", (string (Netmask::*)() const)(&Netmask::toStringNetwork));
+  c_lua.registerFunction("empty", (bool (Netmask::*)() const)(&Netmask::empty));
 
   c_lua.writeFunction("newNetmaskGroup", []() { return NetmaskGroup(); } );
 
@@ -504,6 +505,7 @@ void setupCommonLua(bool client,
   c_lua.registerFunction("lookupUIntValue", &WFGeoIP2DB::lookupUIntValue);
   c_lua.registerFunction("lookupBoolValue", &WFGeoIP2DB::lookupBoolValue);
   c_lua.registerFunction("lookupDoubleValue", &WFGeoIP2DB::lookupDoubleValue);
+  c_lua.registerFunction("lookupNetwork", &WFGeoIP2DB::lookupNetwork);
 
   c_lua.registerMember("city", &WFGeoIPRecord::city);
   c_lua.registerMember("country_code", &WFGeoIPRecord::country_code);

@@ -246,7 +246,7 @@ private:
   std::string ipString(const ComboAddress& ca) const;
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   std::string ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const;
-  bool checkSetupContext();
+  bool checkSetupContext(bool* is_new_connection = nullptr);
   redisContext* connectRedis(const std::string& host, unsigned int port, struct redisSSLContext*& ssl_context);
   bool authRedis(redisContext* context, const std::string& username, const std::string& password, const std::string& desc);
   void resetContext();

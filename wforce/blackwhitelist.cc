@@ -36,6 +36,7 @@
 #ifdef HAVE_LIBHIREDIS_SSL
 #include <hiredis/hiredis_ssl.h>
 #endif
+#include <cstring>
 #include <ostream>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -722,6 +723,12 @@ namespace {
     }
 #endif
   }
+
+  // A READONLY error means we are talking to a replica, e.g. the old master after a failover
+  bool isReadOnlyError(const redisReply* reply)
+  {
+    return reply->type == REDIS_REPLY_ERROR && reply->len >= 8 && strncmp(reply->str, "READONLY", 8) == 0;
+  }
 }
 
 void BlackWhiteListDB::incConnFailed()
@@ -886,8 +893,9 @@ void BlackWhiteListDB::resetContext()
   freeSSLContext(redis_ssl_context);
 }
 
-bool BlackWhiteListDB::checkSetupContext()
+bool BlackWhiteListDB::checkSetupContext(bool* is_new_connection)
 {
+  bool new_connection = false;
   if (redis_context == NULL || redis_context->err) {
     // something went wrong previously, try again
     resetContext();
@@ -897,6 +905,7 @@ bool BlackWhiteListDB::checkSetupContext()
       incConnFailed();
       return false;
     }
+    new_connection = true;
   }
 
   // Now we have a working Redis connection, check if we need to authenticate
@@ -906,6 +915,8 @@ bool BlackWhiteListDB::checkSetupContext()
     }
   }
 
+  if (is_new_connection)
+    *is_new_connection = new_connection;
   return true;
 }
 
@@ -920,24 +931,35 @@ bool
 BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, BLWLType blwl_type, const std::string& reason)
 {
   bool retval = false;
-  if (checkSetupContext()) {
-    std::stringstream redis_key_s;
-    std::stringstream redis_value_s;
-    std::string blwl_key = BLWLTypeToName(blwl_type);
-    time_t expiration_time = time(NULL) + seconds;
+  std::stringstream redis_key_s;
+  std::stringstream redis_value_s;
+  std::string blwl_key = BLWLTypeToName(blwl_type);
+  time_t expiration_time = time(NULL) + seconds;
 
-    redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
-    redis_value_s << expiration_time << ":" << reason;
+  redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  redis_value_s << expiration_time << ":" << reason;
+  // If we are talking to a replica, or an existing connection was dropped (both happen during a
+  // failover), reconnect and try once more
+  bool new_connection = false;
+  for (int attempt = 0; attempt < 2 && checkSetupContext(&new_connection); ++attempt) {
+    bool retry = false;
     redisReply* reply = (redisReply*) redisCommand(redis_context, "SET %s %b EX %d", redis_key_s.str().c_str(),
                                                    redis_value_s.str().c_str(), redis_value_s.str().length(), seconds);
     if (reply != NULL) {
       if (reply->type == REDIS_REPLY_ERROR) {
         errlog("addPersistEntry: Error adding %s to persistent redis BlackWhiteListDB (%s)", key, reply->str);
+        retry = isReadOnlyError(reply);
       }
       else
         retval = true;
       freeReplyObject(reply);
     }
+    else {
+      retry = !new_connection;
+    }
+    if (!retry)
+      break;
+    resetContext();
   }
   if (db_type == BLWLDBType::BLACKLIST)
     incPrometheusRedisBLUpdates();
@@ -949,21 +971,31 @@ BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, BLWLTy
 bool BlackWhiteListDB::deletePersistEntry(const std::string& key, BLWLType blwl_type, blackwhitelist_t& blackwhitelist)
 {
   bool retval = false;
-  if (checkSetupContext()) {
-    BlackWhiteListEntry ble;
-    std::stringstream redis_key_s;
-    std::string blwl_key = BLWLTypeToName(blwl_type);
+  std::stringstream redis_key_s;
+  std::string blwl_key = BLWLTypeToName(blwl_type);
 
-    redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  // If we are talking to a replica, or an existing connection was dropped (both happen during a
+  // failover), reconnect and try once more
+  bool new_connection = false;
+  for (int attempt = 0; attempt < 2 && checkSetupContext(&new_connection); ++attempt) {
+    bool retry = false;
     redisReply* reply = (redisReply*) redisCommand(redis_context, "DEL %s", redis_key_s.str().c_str());
     if (reply != NULL) {
       if (reply->type == REDIS_REPLY_ERROR) {
         errlog("deletePersistEntry: Error deleting %s from persistent redis BlackWhiteListDB (%s)", key, reply->str);
+        retry = isReadOnlyError(reply);
       }
       else
         retval = true;
       freeReplyObject(reply);
     }
+    else {
+      retry = !new_connection;
+    }
+    if (!retry)
+      break;
+    resetContext();
   }
   return retval;
 }

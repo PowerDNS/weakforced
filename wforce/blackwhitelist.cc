@@ -36,6 +36,7 @@
 #ifdef HAVE_LIBHIREDIS_SSL
 #include <hiredis/hiredis_ssl.h>
 #endif
+#include <algorithm>
 #include <cstring>
 #include <ostream>
 #include <sys/types.h>
@@ -729,6 +730,52 @@ namespace {
   {
     return reply->type == REDIS_REPLY_ERROR && reply->len >= 8 && strncmp(reply->str, "READONLY", 8) == 0;
   }
+
+  // Parses "host", "host:port", "[ipv6]" or "[ipv6]:port". A bare IPv6 address (more than one colon)
+  // is taken as a host without a port
+  std::pair<std::string, unsigned int> parseRedisAddress(const std::string& address, unsigned int default_port)
+  {
+    std::string host = address;
+    std::string port_str;
+    bool has_port = false;
+
+    if (!address.empty() && address[0] == '[') {
+      auto end = address.find(']');
+      if (end == std::string::npos || (end + 1 < address.size() && address[end + 1] != ':')) {
+        throw WforceException("Error: invalid redis address: " + address);
+      }
+      host = address.substr(1, end - 1);
+      if (end + 1 < address.size()) {
+        has_port = true;
+        port_str = address.substr(end + 2);
+      }
+    }
+    else if (std::count(address.begin(), address.end(), ':') == 1) {
+      auto colon = address.find(':');
+      host = address.substr(0, colon);
+      has_port = true;
+      port_str = address.substr(colon + 1);
+    }
+
+    unsigned int port = default_port;
+    if (has_port) {
+      try {
+        size_t pos = 0;
+        unsigned long p = std::stoul(port_str, &pos);
+        if (pos != port_str.size() || p == 0 || p > 65535) {
+          throw std::invalid_argument("port out of range");
+        }
+        port = static_cast<unsigned int>(p);
+      }
+      catch (const std::exception& e) {
+        throw WforceException("Error: invalid port in redis address: " + address);
+      }
+    }
+    if (host.empty()) {
+      throw WforceException("Error: missing host in redis address: " + address);
+    }
+    return {host, port};
+  }
 }
 
 void BlackWhiteListDB::incConnFailed()
@@ -884,6 +931,95 @@ bool BlackWhiteListDB::authRedis(redisContext* context, const std::string& usern
   return retval;
 }
 
+// Asks the configured sentinels, in order, for the address of the current master, and stores
+// it in redis_server/redis_port
+bool BlackWhiteListDB::discoverSentinelMaster()
+{
+  for (const auto& sentinel : sentinel_servers) {
+    struct redisSSLContext* ssl_context = nullptr;
+    redisContext* context = connectRedis(sentinel.first, sentinel.second, ssl_context);
+    if (context == NULL) {
+      infolog("discoverSentinelMaster: could not connect to redis sentinel (%s:%d), will try other sentinels", sentinel.first, sentinel.second);
+      freeSSLContext(ssl_context);
+      continue;
+    }
+
+    bool found = false;
+    if (sentinel_password.empty() || authRedis(context, sentinel_username, sentinel_password, "redis sentinel")) {
+      redisReply* reply = (redisReply*) redisCommand(context, "SENTINEL get-master-addr-by-name %s", sentinel_master_name.c_str());
+      if (reply != NULL) {
+        if (reply->type == REDIS_REPLY_ARRAY && reply->elements == 2 &&
+            reply->element[0]->type == REDIS_REPLY_STRING && reply->element[1]->type == REDIS_REPLY_STRING) {
+          std::string master_host(reply->element[0]->str, reply->element[0]->len);
+          std::string master_port(reply->element[1]->str, reply->element[1]->len);
+          try {
+            unsigned long port = std::stoul(master_port);
+            if (port == 0 || port > 65535) {
+              throw std::invalid_argument("port out of range");
+            }
+            redis_server = master_host;
+            redis_port = static_cast<unsigned int>(port);
+            found = true;
+            infolog("Redis sentinel (%s:%d) reports master '%s' at (%s:%d)", sentinel.first, sentinel.second,
+                    sentinel_master_name, redis_server, redis_port);
+          }
+          catch (const std::exception& e) {
+            errlog("discoverSentinelMaster: redis sentinel (%s:%d) returned an invalid port for master '%s': %s",
+                   sentinel.first, sentinel.second, sentinel_master_name, master_port);
+          }
+        }
+        else if (reply->type == REDIS_REPLY_ERROR) {
+          errlog("discoverSentinelMaster: Error querying redis sentinel (%s:%d): %s", sentinel.first, sentinel.second, reply->str);
+        }
+        else {
+          errlog("discoverSentinelMaster: redis sentinel (%s:%d) does not know master '%s'", sentinel.first, sentinel.second,
+                 sentinel_master_name);
+        }
+        freeReplyObject(reply);
+      }
+      else {
+        errlog("discoverSentinelMaster: querying redis sentinel (%s:%d) failed: %s", sentinel.first, sentinel.second, context->errstr);
+      }
+    }
+    redisFree(context);
+    freeSSLContext(ssl_context);
+    if (found) {
+      return true;
+    }
+  }
+  errlog("discoverSentinelMaster: no redis sentinel could provide the address of master '%s'", sentinel_master_name);
+  return false;
+}
+
+// Sentinels can be briefly out of date during a failover, so check that we are really connected to a master
+bool BlackWhiteListDB::checkMasterRole()
+{
+  bool retval = false;
+  redisReply* reply = (redisReply*) redisCommand(redis_context, "ROLE");
+  if (reply != NULL) {
+    if (reply->type == REDIS_REPLY_ARRAY && reply->elements > 0 && reply->element[0]->type == REDIS_REPLY_STRING) {
+      std::string role(reply->element[0]->str, reply->element[0]->len);
+      if (role == "master") {
+        retval = true;
+      }
+      else {
+        errlog("checkMasterRole: redis (%s:%d) reported by sentinel as master '%s' has role '%s'", redis_server, redis_port,
+               sentinel_master_name, role);
+      }
+    }
+    else if (reply->type == REDIS_REPLY_ERROR) {
+      // e.g. ROLE is not permitted by the ACLs of the configured user; rely on READONLY errors to detect a replica instead
+      infolog("checkMasterRole: could not check role of redis (%s:%d): %s", redis_server, redis_port, reply->str);
+      retval = true;
+    }
+    freeReplyObject(reply);
+  }
+  else {
+    errlog("checkMasterRole: ROLE command to redis (%s:%d) failed: %s", redis_server, redis_port, redis_context->errstr);
+  }
+  return retval;
+}
+
 void BlackWhiteListDB::resetContext()
 {
   if (redis_context) {
@@ -899,6 +1035,10 @@ bool BlackWhiteListDB::checkSetupContext(bool* is_new_connection)
   if (redis_context == NULL || redis_context->err) {
     // something went wrong previously, try again
     resetContext();
+    if (use_sentinel && !discoverSentinelMaster()) {
+      incConnFailed();
+      return false;
+    }
     redis_context = connectRedis(redis_server, redis_port, redis_ssl_context);
     if (redis_context == NULL) {
       errlog("checkSetupContext: could not connect to any addresses for redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
@@ -915,6 +1055,12 @@ bool BlackWhiteListDB::checkSetupContext(bool* is_new_connection)
     }
   }
 
+  if (use_sentinel && new_connection && !checkMasterRole()) {
+    resetContext();
+    incConnFailed();
+    return false;
+  }
+
   if (is_new_connection)
     *is_new_connection = new_connection;
   return true;
@@ -923,8 +1069,27 @@ bool BlackWhiteListDB::checkSetupContext(bool* is_new_connection)
 void BlackWhiteListDB::makePersistent(const std::string& host, unsigned int port = 6379)
 {
   persist = true;
+  use_sentinel = false;
   redis_server = host;
   redis_port = port;
+}
+
+void BlackWhiteListDB::makePersistentSentinel(const std::string& master_name, const std::vector<std::string>& sentinels)
+{
+  if (master_name.empty()) {
+    throw WforceException("Error: a redis sentinel master name must be specified");
+  }
+  if (sentinels.empty()) {
+    throw WforceException("Error: at least one redis sentinel must be specified");
+  }
+  std::vector<std::pair<std::string, unsigned int>> servers;
+  for (const auto& sentinel : sentinels) {
+    servers.push_back(parseRedisAddress(sentinel, 26379));
+  }
+  persist = true;
+  use_sentinel = true;
+  sentinel_master_name = master_name;
+  sentinel_servers = std::move(servers);
 }
 
 bool
@@ -1110,8 +1275,9 @@ bool BlackWhiteListDB::loadPersistEntries()
     }
     else {
       retval = false;
-      std::string myerr = "Error - could not connect to configured persistent redis DB (" + redis_server + ":" +
-                          std::to_string(redis_port) + ")";
+      std::string myerr = use_sentinel ?
+        "Error - could not connect to configured persistent redis DB (sentinel master '" + sentinel_master_name + "')" :
+        "Error - could not connect to configured persistent redis DB (" + redis_server + ":" + std::to_string(redis_port) + ")";
       errlog(myerr.c_str());
       throw WforceException(myerr);
     }

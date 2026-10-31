@@ -247,7 +247,11 @@ private:
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   std::string ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const;
   bool checkSetupContext();
-  bool setupTLSConnection();
+  redisContext* connectRedis(const std::string& host, unsigned int port, struct redisSSLContext*& ssl_context);
+  bool authRedis(redisContext* context, const std::string& username, const std::string& password, const std::string& desc);
+  void resetContext();
+  void incConnFailed();
+  struct redisSSLContext* createTLSContext(const std::string& host);
   bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);
   bool deletePersistEntry(const std::string& key, BLWLType bl_type, blackwhitelist_t& blackwhitelist);
   BLWLType BLWLNameToType(const std::string& bl_name) const;

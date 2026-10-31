@@ -795,6 +795,19 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {
       g_bl_db.setRedisPassword(password);
     });
+    c_lua.writeFunction("blacklistPersistSentinel", [](const std::string& master_name, const std::vector<std::pair<int, std::string>>& sentinels) {
+      std::vector<std::string> sentinel_list;
+      for (const auto& sentinel : sentinels) {
+        sentinel_list.push_back(sentinel.second);
+      }
+      g_bl_db.makePersistentSentinel(master_name, sentinel_list);
+    });
+    c_lua.writeFunction("blacklistSentinelUsername", [](const std::string& username) {
+      g_bl_db.setSentinelUsername(username);
+    });
+    c_lua.writeFunction("blacklistSentinelPassword", [](const std::string& password) {
+      g_bl_db.setSentinelPassword(password);
+    });
     c_lua.writeFunction("blacklistRedisTLS", [client](bool enable) {
       if (!client)
         g_bl_db.setRedisTLS(enable);
@@ -840,6 +853,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("blacklistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("blacklistRedisUsername", [](const std::string& username) {});
     c_lua.writeFunction("blacklistRedisPassword", [](const std::string& password) {});
+    c_lua.writeFunction("blacklistPersistSentinel", [](const std::string& master_name, const std::vector<std::pair<int, std::string>>& sentinels) {});
+    c_lua.writeFunction("blacklistSentinelUsername", [](const std::string& username) {});
+    c_lua.writeFunction("blacklistSentinelPassword", [](const std::string& password) {});
     c_lua.writeFunction("blacklistRedisTLS", [](bool enable) {});
     c_lua.writeFunction("blacklistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {});
     c_lua.writeFunction("blacklistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {});
@@ -1063,6 +1079,19 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {
       g_wl_db.setRedisPassword(password);
     });
+    c_lua.writeFunction("whitelistPersistSentinel", [](const std::string& master_name, const std::vector<std::pair<int, std::string>>& sentinels) {
+      std::vector<std::string> sentinel_list;
+      for (const auto& sentinel : sentinels) {
+        sentinel_list.push_back(sentinel.second);
+      }
+      g_wl_db.makePersistentSentinel(master_name, sentinel_list);
+    });
+    c_lua.writeFunction("whitelistSentinelUsername", [](const std::string& username) {
+      g_wl_db.setSentinelUsername(username);
+    });
+    c_lua.writeFunction("whitelistSentinelPassword", [](const std::string& password) {
+      g_wl_db.setSentinelPassword(password);
+    });
     c_lua.writeFunction("whitelistRedisTLS", [client](bool enable) {
       if (!client)
         g_wl_db.setRedisTLS(enable);
@@ -1094,6 +1123,9 @@ vector<std::function<void(void)>> setupLua(bool client, bool multi_lua, LuaConte
     c_lua.writeFunction("whitelistPersistDB", [](const std::string& ip, unsigned int port) {});
     c_lua.writeFunction("whitelistRedisUsername", [](const std::string& username) {});
     c_lua.writeFunction("whitelistRedisPassword", [](const std::string& password) {});
+    c_lua.writeFunction("whitelistPersistSentinel", [](const std::string& master_name, const std::vector<std::pair<int, std::string>>& sentinels) {});
+    c_lua.writeFunction("whitelistSentinelUsername", [](const std::string& username) {});
+    c_lua.writeFunction("whitelistSentinelPassword", [](const std::string& password) {});
     c_lua.writeFunction("whitelistRedisTLS", [](bool enable) {});
     c_lua.writeFunction("whitelistRedisTLSCA", [](const std::string& ca_file, boost::optional<std::string> ca_dir) {});
     c_lua.writeFunction("whitelistRedisTLSClientCert", [](const std::string& cert_file, const std::string& key_file) {});

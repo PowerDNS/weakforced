@@ -39,6 +39,7 @@ RUN apt-get update && \
                geoipupdate \
                net-tools \
                redis-server \
+               redis-sentinel \
                clang \
                cmake
 

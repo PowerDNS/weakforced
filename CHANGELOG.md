@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- Support Redis Sentinel for persistent blacklists/whitelists, with the new `blacklistPersistSentinel`, `blacklistSentinelUsername` and `blacklistSentinelPassword` config functions (and the `whitelist` equivalents)
+
+### Changed
+- Refactor the redis connection setup for persistent blacklists/whitelists into reusable helpers (no functional change)
+- Persistent blacklist/whitelist writes are retried once on a new connection if redis returns a `READONLY` error or an existing connection was dropped, e.g. during a failover
+
 ## [3.0.0]
 
 ### Added

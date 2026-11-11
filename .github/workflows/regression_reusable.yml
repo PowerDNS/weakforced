@@ -32,6 +32,12 @@ jobs:
       - run: autoreconf -i
       - run: ./configure --enable-trackalert
       - run: cd docker && make regression-${{ inputs.compiler }}
+      - name: Dump docker compose state on failure
+        if: failure()
+        run: |
+          cd docker
+          docker compose ps -a
+          docker compose logs --no-color --tail=200 zookeeper kafka kafka-rest
       - run: make dist
       - run: make distcheck
       - name: Upload Test Results

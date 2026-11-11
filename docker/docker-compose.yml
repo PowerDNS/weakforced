@@ -67,8 +67,12 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
+  # kafka and kafka-rest give up and exit if their dependencies are not
+  # ready in time (e.g. on a slow CI runner); restart them so they come up
+  # once the dependencies are available.
   kafka:
     image: confluentinc/cp-kafka:7.9.2
+    restart: on-failure
     depends_on:
       - zookeeper
     ports:
@@ -83,6 +87,7 @@ services:
 
   kafka-rest:
     image: confluentinc/cp-kafka-rest:7.9.2
+    restart: on-failure
     ports:
       - 8082:8082
     environment:

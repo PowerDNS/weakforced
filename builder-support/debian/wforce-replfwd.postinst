@@ -1,26 +1,44 @@
 #!/bin/sh
-#
-#
 
 set -e
 
-REPLFWDCONF=/etc/wforce/replfwd.conf
+_REPLFWDCONF=replfwd.conf
+
+REPLFWDCONF_SOURCE="/usr/share/wforce-replfwd/${_REPLFWDCONF}"
+REPLFWDCONF="/etc/wforce/${_REPLFWDCONF}"
 
 case "$1" in
   configure)
-    if [ -z "`getent group wforce`" ]; then
-      addgroup --quiet --system wforce
+    UCF_FORCE_CONFFMISS=1 \
+        ucf --three-way --debconf-ok \
+        "${REPLFWDCONF_SOURCE}" "${REPLFWDCONF}"
+    ucfr wforce-replfwd "${REPLFWDCONF}"
+
+    # Now that the file is recorded, let's change the creds by one-time
+    # generated ones
+    if grep -q -e '--WEBPWD' -e '--SETKEY' "${REPLFWDCONF}"; then
+        SETKEY=$(replfwd -k)
+        WEBPWD=$(dd if=/dev/urandom bs=1 count=32 2>/dev/null |
+            base64 | rev | cut -b 2-14 | rev)
+
+        if [ -z "${SETKEY}" ] || [ -z "${WEBPWD}" ]; then
+            echo "Unable to generate credentials for ${REPLFWDCONF}" >&2
+            exit 1
+        fi
+
+        sed -e "s#--WEBPWD#${WEBPWD}#g" \
+            -e "s#--SETKEY#${SETKEY}#g" \
+            -i "${REPLFWDCONF}"
+    else
+        status=$?
+        [ "${status}" -eq 1 ] || exit "${status}"
     fi
-    if [ -z "`getent passwd wforce`" ]; then
-      echo -n "Creating user and group wforce..."
-      adduser --quiet --system --home /var/spool/wforce --shell /bin/false --ingroup wforce --disabled-password --disabled-login --gecos "wforce" wforce
-      echo "done"
-    fi
-    echo -n "Modifying replfwd.conf to replace password and key..."
-    SETKEY=`replfwd -k`
-    WEBPWD=`dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 | rev | cut -b 2-14 | rev`
-    sed -e "s#--WEBPWD#$WEBPWD#" -e "s#--SETKEY#$SETKEY#" -i $REPLFWDCONF
-    echo "done"
+
+    chmod 0640 "${REPLFWDCONF}"
+    chown wforce:wforce "${REPLFWDCONF}"
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
   ;;
 
   *)

@@ -36,6 +36,8 @@
 #ifdef HAVE_LIBHIREDIS_SSL
 #include <hiredis/hiredis_ssl.h>
 #endif
+#include <algorithm>
+#include <cstring>
 #include <ostream>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -710,17 +712,87 @@ void BlackWhiteListDB::setRedisTLS(bool enable)
 namespace {
   std::once_flag redis_ssl_init_flag;
 }
+#endif
 
-bool BlackWhiteListDB::setupTLSConnection()
+namespace {
+  void freeSSLContext(struct redisSSLContext*& ssl_context)
+  {
+#ifdef HAVE_LIBHIREDIS_SSL
+    if (ssl_context != nullptr) {
+      redisFreeSSLContext(ssl_context);
+      ssl_context = nullptr;
+    }
+#endif
+  }
+
+  // A READONLY error means we are talking to a replica, e.g. the old master after a failover
+  bool isReadOnlyError(const redisReply* reply)
+  {
+    return reply->type == REDIS_REPLY_ERROR && reply->len >= 8 && strncmp(reply->str, "READONLY", 8) == 0;
+  }
+
+  // Parses "host", "host:port", "[ipv6]" or "[ipv6]:port". A bare IPv6 address (more than one colon)
+  // is taken as a host without a port
+  std::pair<std::string, unsigned int> parseRedisAddress(const std::string& address, unsigned int default_port)
+  {
+    std::string host = address;
+    std::string port_str;
+    bool has_port = false;
+
+    if (!address.empty() && address[0] == '[') {
+      auto end = address.find(']');
+      if (end == std::string::npos || (end + 1 < address.size() && address[end + 1] != ':')) {
+        throw WforceException("Error: invalid redis address: " + address);
+      }
+      host = address.substr(1, end - 1);
+      if (end + 1 < address.size()) {
+        has_port = true;
+        port_str = address.substr(end + 2);
+      }
+    }
+    else if (std::count(address.begin(), address.end(), ':') == 1) {
+      auto colon = address.find(':');
+      host = address.substr(0, colon);
+      has_port = true;
+      port_str = address.substr(colon + 1);
+    }
+
+    unsigned int port = default_port;
+    if (has_port) {
+      try {
+        size_t pos = 0;
+        unsigned long p = std::stoul(port_str, &pos);
+        if (pos != port_str.size() || p == 0 || p > 65535) {
+          throw std::invalid_argument("port out of range");
+        }
+        port = static_cast<unsigned int>(p);
+      }
+      catch (const std::exception& e) {
+        throw WforceException("Error: invalid port in redis address: " + address);
+      }
+    }
+    if (host.empty()) {
+      throw WforceException("Error: missing host in redis address: " + address);
+    }
+    return {host, port};
+  }
+}
+
+void BlackWhiteListDB::incConnFailed()
+{
+  if (db_type == BLWLDBType::BLACKLIST)
+    incPrometheusRedisBLConnFailed();
+  else
+    incPrometheusRedisWLConnFailed();
+}
+
+#ifdef HAVE_LIBHIREDIS_SSL
+// The TLS context is recreated for every new connection so that config changes are picked up on reconnect,
+// like the username/password used for AUTH
+struct redisSSLContext* BlackWhiteListDB::createTLSContext(const std::string& host)
 {
   std::call_once(redis_ssl_init_flag, []() { redisInitOpenSSL(); });
 
-  // Recreate the TLS context on every new connection so that config changes
-  // are picked up on reconnect, like the username/password used for AUTH
-  if (redis_ssl_context != nullptr) {
-    redisFreeSSLContext(redis_ssl_context);
-    redis_ssl_context = nullptr;
-  }
   redisSSLContextError ssl_error = REDIS_SSL_CTX_NONE;
   const char* ca_file = redis_tls_ca_file.empty() ? nullptr : redis_tls_ca_file.c_str();
   const char* ca_dir = redis_tls_ca_dir.empty() ? nullptr : redis_tls_ca_dir.c_str();
@@ -733,174 +805,326 @@ bool BlackWhiteListDB::setupTLSConnection()
   std::string sni_name = redis_tls_server_name;
   if (sni_name.empty()) {
     try {
-      ComboAddress ca(redis_server);
+      ComboAddress ca(host);
     }
     catch (const PDNSException& e) {
-      sni_name = redis_server;
+      sni_name = host;
     }
   }
   const char* server_name = sni_name.empty() ? nullptr : sni_name.c_str();
   redisSSLOptions ssl_options = {ca_file, ca_dir, cert_file, key_file, server_name,
                                  redis_tls_verify_peer ? REDIS_SSL_VERIFY_PEER : REDIS_SSL_VERIFY_NONE};
-  redis_ssl_context = redisCreateSSLContextWithOptions(&ssl_options, &ssl_error);
-  if (redis_ssl_context == nullptr || ssl_error != REDIS_SSL_CTX_NONE) {
-    errlog("setupTLSConnection: could not create Redis TLS context: %s", redisSSLContextGetError(ssl_error));
-    if (redis_ssl_context != nullptr) {
-      redisFreeSSLContext(redis_ssl_context);
-      redis_ssl_context = nullptr;
-    }
-    return false;
+  struct redisSSLContext* ssl_context = redisCreateSSLContextWithOptions(&ssl_options, &ssl_error);
+  if (ssl_context == nullptr || ssl_error != REDIS_SSL_CTX_NONE) {
+    errlog("createTLSContext: could not create Redis TLS context: %s", redisSSLContextGetError(ssl_error));
+    freeSSLContext(ssl_context);
+    return nullptr;
   }
-  if (redisInitiateSSLWithContext(redis_context, redis_ssl_context) != REDIS_OK) {
-    errlog("setupTLSConnection: could not initiate TLS to redis BlackWhiteListDB (%s:%d): %s", redis_server, redis_port, redis_context->errstr);
-    return false;
-  }
-  infolog("Established TLS connection to redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
-  return true;
+  return ssl_context;
+}
+#else
+struct redisSSLContext* BlackWhiteListDB::createTLSContext(const std::string& host)
+{
+  return nullptr;
 }
 #endif
 
-bool BlackWhiteListDB::checkSetupContext()
+// Connects to host:port, trying all resolved addresses until one succeeds. If TLS is enabled, the TLS
+// context is returned in ssl_context, and must be freed by the caller after the connection is freed
+redisContext* BlackWhiteListDB::connectRedis(const std::string& host, unsigned int port, struct redisSSLContext*& ssl_context)
 {
-  if (redis_context == NULL || redis_context->err) {
-    if (redis_context)
-      redisFree(redis_context);
-    // something went wrong previously, try again
-    struct timeval tv;
-    tv.tv_sec = redis_timeout;
-    tv.tv_usec = 0;
+  redisContext* context = NULL;
+  struct timeval tv;
+  tv.tv_sec = redis_timeout;
+  tv.tv_usec = 0;
 
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int s;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+  struct addrinfo hints;
+  struct addrinfo *result, *rp;
+  int s;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
 
-    s = getaddrinfo(redis_server.c_str(), std::to_string(redis_port).c_str(), &hints, &result);
-    if (s != 0) {
-      errlog("checkSetupContext: getaddrinfo: %s\n", gai_strerror(s));
-      if (db_type == BLWLDBType::BLACKLIST)
-        incPrometheusRedisBLConnFailed();
-      else
-        incPrometheusRedisWLConnFailed();
-      return false;
-    }
+  s = getaddrinfo(host.c_str(), std::to_string(port).c_str(), &hints, &result);
+  if (s != 0) {
+    errlog("connectRedis: getaddrinfo(%s): %s\n", host, gai_strerror(s));
+    return NULL;
+  }
 
-    // Iterate through the returned IP addresses trying to connect to the all until we succeed
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-      std::string ip_addr = ComboAddress(rp->ai_addr, rp->ai_addrlen).toString();
-      redis_context = redisConnectWithTimeout(ip_addr.c_str(), redis_port, tv);
-      if (redis_context == NULL || redis_context->err) {
-        infolog("checkSetupContext: could not connect to redis BlackWhiteListDB on (%s:%d), will try other addresses", ip_addr, redis_port);
-        if (redis_context) {
-          redisFree(redis_context);
-          redis_context = NULL;
-        }
+  // Iterate through the returned IP addresses trying to connect to the all until we succeed
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    std::string ip_addr = ComboAddress(rp->ai_addr, rp->ai_addrlen).toString();
+    context = redisConnectWithTimeout(ip_addr.c_str(), port, tv);
+    if (context == NULL || context->err) {
+      infolog("connectRedis: could not connect to redis on (%s:%d), will try other addresses", ip_addr, port);
+      if (context) {
+        redisFree(context);
+        context = NULL;
       }
-      else {
-        break;
-      }
-    }
-    freeaddrinfo(result);
-
-    if (redis_context == NULL || redis_context->err) {
-      errlog("checkSetupContext: could not connect to any addresses for redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
-      if (db_type == BLWLDBType::BLACKLIST)
-        incPrometheusRedisBLConnFailed();
-      else
-        incPrometheusRedisWLConnFailed();
-      return false;
     }
     else {
-      struct timeval tv;
-      tv.tv_sec = static_cast<time_t>(redis_rw_timeout_secs);
-      tv.tv_usec = static_cast<suseconds_t>(redis_rw_timeout_usecs);
-      if (redisSetTimeout(redis_context, tv) == REDIS_ERR) {
-        errlog("Could not set Redis Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
-        throw WforceException("Error: could not set Redis Timeout in BlackWhitelist");
+      break;
+    }
+  }
+  freeaddrinfo(result);
+
+  if (context == NULL) {
+    return NULL;
+  }
+
+  tv.tv_sec = static_cast<time_t>(redis_rw_timeout_secs);
+  tv.tv_usec = static_cast<suseconds_t>(redis_rw_timeout_usecs);
+  if (redisSetTimeout(context, tv) == REDIS_ERR) {
+    errlog("Could not set Redis Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
+    redisFree(context);
+    throw WforceException("Error: could not set Redis Timeout in BlackWhitelist");
+  }
+  else {
+    infolog("Set Redis RW Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
+  }
+  if (redisEnableKeepAlive(context) == REDIS_ERR) {
+    errlog("Could not enable Redis KeepAlive");
+    redisFree(context);
+    throw WforceException("Error: Could not enable Redis KeepAlive in BlackWhitelist");
+  }
+#ifdef HAVE_LIBHIREDIS_SSL
+  if (redis_tls) {
+    freeSSLContext(ssl_context);
+    ssl_context = createTLSContext(host);
+    if (ssl_context == nullptr) {
+      redisFree(context);
+      return NULL;
+    }
+    if (redisInitiateSSLWithContext(context, ssl_context) != REDIS_OK) {
+      errlog("connectRedis: could not initiate TLS to redis (%s:%d): %s", host, port, context->errstr);
+      redisFree(context);
+      freeSSLContext(ssl_context);
+      return NULL;
+    }
+    infolog("Established TLS connection to redis (%s:%d)", host, port);
+  }
+#endif
+  return context;
+}
+
+// Returns false if the server rejected the credentials. An I/O error is not reported here, it
+// is detected by the next command on the connection
+bool BlackWhiteListDB::authRedis(redisContext* context, const std::string& username, const std::string& password, const std::string& desc)
+{
+  bool retval = true;
+  redisReply* reply;
+  if (username.length()) {
+    reply = (redisReply*) redisCommand(context, "AUTH %s %s", username.c_str(), password.c_str());
+  }
+  else {
+    reply = (redisReply*) redisCommand(context, "AUTH %s", password.c_str());
+  }
+  if (reply != NULL) {
+    if (reply->type == REDIS_REPLY_ERROR) {
+      if (username.length())
+        errlog("checkSetupContext: Error in AUTH to %s (username: %s): %s", desc, username, reply->str);
+      else
+        errlog("checkSetupContext: Error in AUTH to %s: %s", desc, reply->str);
+      retval = false;
+    }
+    freeReplyObject(reply);
+  }
+  return retval;
+}
+
+// Asks the configured sentinels, in order, for the address of the current master, and stores
+// it in redis_server/redis_port
+bool BlackWhiteListDB::discoverSentinelMaster()
+{
+  for (const auto& sentinel : sentinel_servers) {
+    struct redisSSLContext* ssl_context = nullptr;
+    redisContext* context = connectRedis(sentinel.first, sentinel.second, ssl_context);
+    if (context == NULL) {
+      infolog("discoverSentinelMaster: could not connect to redis sentinel (%s:%d), will try other sentinels", sentinel.first, sentinel.second);
+      freeSSLContext(ssl_context);
+      continue;
+    }
+
+    bool found = false;
+    if (sentinel_password.empty() || authRedis(context, sentinel_username, sentinel_password, "redis sentinel")) {
+      redisReply* reply = (redisReply*) redisCommand(context, "SENTINEL get-master-addr-by-name %s", sentinel_master_name.c_str());
+      if (reply != NULL) {
+        if (reply->type == REDIS_REPLY_ARRAY && reply->elements == 2 &&
+            reply->element[0]->type == REDIS_REPLY_STRING && reply->element[1]->type == REDIS_REPLY_STRING) {
+          std::string master_host(reply->element[0]->str, reply->element[0]->len);
+          std::string master_port(reply->element[1]->str, reply->element[1]->len);
+          try {
+            unsigned long port = std::stoul(master_port);
+            if (port == 0 || port > 65535) {
+              throw std::invalid_argument("port out of range");
+            }
+            redis_server = master_host;
+            redis_port = static_cast<unsigned int>(port);
+            found = true;
+            infolog("Redis sentinel (%s:%d) reports master '%s' at (%s:%d)", sentinel.first, sentinel.second,
+                    sentinel_master_name, redis_server, redis_port);
+          }
+          catch (const std::exception& e) {
+            errlog("discoverSentinelMaster: redis sentinel (%s:%d) returned an invalid port for master '%s': %s",
+                   sentinel.first, sentinel.second, sentinel_master_name, master_port);
+          }
+        }
+        else if (reply->type == REDIS_REPLY_ERROR) {
+          errlog("discoverSentinelMaster: Error querying redis sentinel (%s:%d): %s", sentinel.first, sentinel.second, reply->str);
+        }
+        else {
+          errlog("discoverSentinelMaster: redis sentinel (%s:%d) does not know master '%s'", sentinel.first, sentinel.second,
+                 sentinel_master_name);
+        }
+        freeReplyObject(reply);
       }
       else {
-        infolog("Set Redis RW Timeout to %u seconds, %u microseconds", tv.tv_sec, tv.tv_usec);
+        errlog("discoverSentinelMaster: querying redis sentinel (%s:%d) failed: %s", sentinel.first, sentinel.second, context->errstr);
       }
-      if (redisEnableKeepAlive(redis_context) == REDIS_ERR) {
-        errlog("Could not enable Redis KeepAlive");
-        throw WforceException("Error: Could not enable Redis KeepAlive in BlackWhitelist");
-      }
-#ifdef HAVE_LIBHIREDIS_SSL
-      if (redis_tls) {
-        if (!setupTLSConnection()) {
-          redisFree(redis_context);
-          redis_context = NULL;
-          if (db_type == BLWLDBType::BLACKLIST)
-            incPrometheusRedisBLConnFailed();
-          else
-            incPrometheusRedisWLConnFailed();
-          return false;
-        }
-      }
-#endif
     }
+    redisFree(context);
+    freeSSLContext(ssl_context);
+    if (found) {
+      return true;
+    }
+  }
+  errlog("discoverSentinelMaster: no redis sentinel could provide the address of master '%s'", sentinel_master_name);
+  return false;
+}
+
+// Sentinels can be briefly out of date during a failover, so check that we are really connected to a master
+bool BlackWhiteListDB::checkMasterRole()
+{
+  bool retval = false;
+  redisReply* reply = (redisReply*) redisCommand(redis_context, "ROLE");
+  if (reply != NULL) {
+    if (reply->type == REDIS_REPLY_ARRAY && reply->elements > 0 && reply->element[0]->type == REDIS_REPLY_STRING) {
+      std::string role(reply->element[0]->str, reply->element[0]->len);
+      if (role == "master") {
+        retval = true;
+      }
+      else {
+        errlog("checkMasterRole: redis (%s:%d) reported by sentinel as master '%s' has role '%s'", redis_server, redis_port,
+               sentinel_master_name, role);
+      }
+    }
+    else if (reply->type == REDIS_REPLY_ERROR) {
+      // e.g. ROLE is not permitted by the ACLs of the configured user; rely on READONLY errors to detect a replica instead
+      infolog("checkMasterRole: could not check role of redis (%s:%d): %s", redis_server, redis_port, reply->str);
+      retval = true;
+    }
+    freeReplyObject(reply);
+  }
+  else {
+    errlog("checkMasterRole: ROLE command to redis (%s:%d) failed: %s", redis_server, redis_port, redis_context->errstr);
+  }
+  return retval;
+}
+
+void BlackWhiteListDB::resetContext()
+{
+  if (redis_context) {
+    redisFree(redis_context);
+    redis_context = NULL;
+  }
+  freeSSLContext(redis_ssl_context);
+}
+
+bool BlackWhiteListDB::checkSetupContext(bool* is_new_connection)
+{
+  bool new_connection = false;
+  if (redis_context == NULL || redis_context->err) {
+    // something went wrong previously, try again
+    resetContext();
+    if (use_sentinel && !discoverSentinelMaster()) {
+      incConnFailed();
+      return false;
+    }
+    redis_context = connectRedis(redis_server, redis_port, redis_ssl_context);
+    if (redis_context == NULL) {
+      errlog("checkSetupContext: could not connect to any addresses for redis BlackWhiteListDB (%s:%d)", redis_server, redis_port);
+      incConnFailed();
+      return false;
+    }
+    new_connection = true;
   }
 
   // Now we have a working Redis connection, check if we need to authenticate
   if (redis_password.length()) {
-    if (redis_username.length()) {
-      redisReply* reply = (redisReply*) redisCommand(redis_context, "AUTH %s %s", redis_username.c_str(),
-                                                     redis_password.c_str());
-      if (reply != NULL) {
-        if (reply->type == REDIS_REPLY_ERROR) {
-          errlog("checkSetupContext: Error in AUTH to persistent redis BlackWhiteListDB (username: %s): %s", redis_username, reply->str);
-          freeReplyObject(reply);
-          throw WforceException("Error: Error in AUTH to persistent redis BlackWhiteListDB");
-        }
-        freeReplyObject(reply);
-      }
-    }
-    else {
-      redisReply* reply = (redisReply*) redisCommand(redis_context, "AUTH %s", redis_password.c_str());
-      if (reply != NULL) {
-        if (reply->type == REDIS_REPLY_ERROR) {
-          errlog("checkSetupContext: Error in AUTH to persistent redis BlackWhiteListDB: %s", reply->str);
-          freeReplyObject(reply);
-          throw WforceException("Error: Error in AUTH to persistent redis BlackWhiteListDB");
-        }
-        freeReplyObject(reply);
-      }
+    if (!authRedis(redis_context, redis_username, redis_password, "persistent redis BlackWhiteListDB")) {
+      throw WforceException("Error: Error in AUTH to persistent redis BlackWhiteListDB");
     }
   }
 
+  if (use_sentinel && new_connection && !checkMasterRole()) {
+    resetContext();
+    incConnFailed();
+    return false;
+  }
+
+  if (is_new_connection)
+    *is_new_connection = new_connection;
   return true;
 }
 
 void BlackWhiteListDB::makePersistent(const std::string& host, unsigned int port = 6379)
 {
   persist = true;
+  use_sentinel = false;
   redis_server = host;
   redis_port = port;
+}
+
+void BlackWhiteListDB::makePersistentSentinel(const std::string& master_name, const std::vector<std::string>& sentinels)
+{
+  if (master_name.empty()) {
+    throw WforceException("Error: a redis sentinel master name must be specified");
+  }
+  if (sentinels.empty()) {
+    throw WforceException("Error: at least one redis sentinel must be specified");
+  }
+  std::vector<std::pair<std::string, unsigned int>> servers;
+  for (const auto& sentinel : sentinels) {
+    servers.push_back(parseRedisAddress(sentinel, 26379));
+  }
+  persist = true;
+  use_sentinel = true;
+  sentinel_master_name = master_name;
+  sentinel_servers = std::move(servers);
 }
 
 bool
 BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, BLWLType blwl_type, const std::string& reason)
 {
   bool retval = false;
-  if (checkSetupContext()) {
-    std::stringstream redis_key_s;
-    std::stringstream redis_value_s;
-    std::string blwl_key = BLWLTypeToName(blwl_type);
-    time_t expiration_time = time(NULL) + seconds;
+  std::stringstream redis_key_s;
+  std::stringstream redis_value_s;
+  std::string blwl_key = BLWLTypeToName(blwl_type);
+  time_t expiration_time = time(NULL) + seconds;
 
-    redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
-    redis_value_s << expiration_time << ":" << reason;
+  redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  redis_value_s << expiration_time << ":" << reason;
+  // If we are talking to a replica, or an existing connection was dropped (both happen during a
+  // failover), reconnect and try once more
+  bool new_connection = false;
+  for (int attempt = 0; attempt < 2 && checkSetupContext(&new_connection); ++attempt) {
+    bool retry = false;
     redisReply* reply = (redisReply*) redisCommand(redis_context, "SET %s %b EX %d", redis_key_s.str().c_str(),
                                                    redis_value_s.str().c_str(), redis_value_s.str().length(), seconds);
     if (reply != NULL) {
       if (reply->type == REDIS_REPLY_ERROR) {
         errlog("addPersistEntry: Error adding %s to persistent redis BlackWhiteListDB (%s)", key, reply->str);
+        retry = isReadOnlyError(reply);
       }
       else
         retval = true;
       freeReplyObject(reply);
     }
+    else {
+      retry = !new_connection;
+    }
+    if (!retry)
+      break;
+    resetContext();
   }
   if (db_type == BLWLDBType::BLACKLIST)
     incPrometheusRedisBLUpdates();
@@ -912,21 +1136,31 @@ BlackWhiteListDB::addPersistEntry(const std::string& key, time_t seconds, BLWLTy
 bool BlackWhiteListDB::deletePersistEntry(const std::string& key, BLWLType blwl_type, blackwhitelist_t& blackwhitelist)
 {
   bool retval = false;
-  if (checkSetupContext()) {
-    BlackWhiteListEntry ble;
-    std::stringstream redis_key_s;
-    std::string blwl_key = BLWLTypeToName(blwl_type);
+  std::stringstream redis_key_s;
+  std::string blwl_key = BLWLTypeToName(blwl_type);
 
-    redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  redis_key_s << redis_prefix << ":" << blwl_key << ":" << key;
+  // If we are talking to a replica, or an existing connection was dropped (both happen during a
+  // failover), reconnect and try once more
+  bool new_connection = false;
+  for (int attempt = 0; attempt < 2 && checkSetupContext(&new_connection); ++attempt) {
+    bool retry = false;
     redisReply* reply = (redisReply*) redisCommand(redis_context, "DEL %s", redis_key_s.str().c_str());
     if (reply != NULL) {
       if (reply->type == REDIS_REPLY_ERROR) {
         errlog("deletePersistEntry: Error deleting %s from persistent redis BlackWhiteListDB (%s)", key, reply->str);
+        retry = isReadOnlyError(reply);
       }
       else
         retval = true;
       freeReplyObject(reply);
     }
+    else {
+      retry = !new_connection;
+    }
+    if (!retry)
+      break;
+    resetContext();
   }
   return retval;
 }
@@ -1041,8 +1275,9 @@ bool BlackWhiteListDB::loadPersistEntries()
     }
     else {
       retval = false;
-      std::string myerr = "Error - could not connect to configured persistent redis DB (" + redis_server + ":" +
-                          std::to_string(redis_port) + ")";
+      std::string myerr = use_sentinel ?
+        "Error - could not connect to configured persistent redis DB (sentinel master '" + sentinel_master_name + "')" :
+        "Error - could not connect to configured persistent redis DB (" + redis_server + ":" + std::to_string(redis_port) + ")";
       errlog(myerr.c_str());
       throw WforceException(myerr);
     }

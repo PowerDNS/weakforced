@@ -376,6 +376,40 @@ cannot be called inside the allow/report/reset functions:
 
         blacklistRedisPassword("secret")
 
+* blacklistPersistSentinel(\<master name\>, \<sentinels\>) - Make the
+  blacklist persistent by storing entries in a redis DB managed by
+  Redis Sentinel. The current master is looked up via the sentinels
+  (tried in order) whenever wforce (re)connects, and wforce checks
+  that the returned server really is a master using the `ROLE` command
+  (if the configured redis user is not permitted to run `ROLE`, this
+  check is skipped). If a write fails with a `READONLY` error, or an
+  existing connection is dropped (both happen during a failover),
+  wforce reconnects to the new master and retries the write once.
+  Sentinels are specified as a table of strings of the form "host",
+  "host:port" or "[ipv6]:port"; the port defaults to 26379. This is
+  an alternative to blacklistPersistDB(); the blacklistRedis* and
+  blacklistPersist*Timeout settings apply to the connection to the
+  master. Connections to the sentinels use the same timeouts, and use
+  TLS with the same settings if blacklistRedisTLS() is enabled. If this
+  option is specified, wforce will read all the blacklist entries from
+  the redis DB on startup. For example:
+
+        blacklistPersistSentinel("mymaster", {"sentinel1:26379", "sentinel2:26379", "sentinel3:26379"})
+
+* blacklistSentinelUsername(<username>) - Set the username for
+  authentication to the redis sentinels, when using
+  blacklistPersistSentinel(). For example:
+
+        blacklistSentinelUsername("foobar")
+
+* blacklistSentinelPassword(<password>) - Set the password for
+  authentication to the redis sentinels, when using
+  blacklistPersistSentinel(). This is independent of the password set
+  with blacklistRedisPassword(), which is used for the redis master. For
+  example:
+
+        blacklistSentinelPassword("secret")
+
 * blacklistRedisTLS(<enable>) - Enable TLS for connections to the redis
   DB. Requires wforce to have been built with hiredis TLS support
   (hiredis_ssl - see the --with-redis-tls configure option). For example:
@@ -459,6 +493,40 @@ cannot be called inside the allow/report/reset functions:
   to the redis DB. For example:
 
         whitelistRedisPassword("secret")
+
+* whitelistPersistSentinel(\<master name\>, \<sentinels\>) - Make the
+  whitelist persistent by storing entries in a redis DB managed by
+  Redis Sentinel. The current master is looked up via the sentinels
+  (tried in order) whenever wforce (re)connects, and wforce checks
+  that the returned server really is a master using the `ROLE` command
+  (if the configured redis user is not permitted to run `ROLE`, this
+  check is skipped). If a write fails with a `READONLY` error, or an
+  existing connection is dropped (both happen during a failover),
+  wforce reconnects to the new master and retries the write once.
+  Sentinels are specified as a table of strings of the form "host",
+  "host:port" or "[ipv6]:port"; the port defaults to 26379. This is
+  an alternative to whitelistPersistDB(); the whitelistRedis* and
+  whitelistPersist*Timeout settings apply to the connection to the
+  master. Connections to the sentinels use the same timeouts, and use
+  TLS with the same settings if whitelistRedisTLS() is enabled. If this
+  option is specified, wforce will read all the whitelist entries from
+  the redis DB on startup. For example:
+
+        whitelistPersistSentinel("mymaster", {"sentinel1:26379", "sentinel2:26379", "sentinel3:26379"})
+
+* whitelistSentinelUsername(<username>) - Set the username for
+  authentication to the redis sentinels, when using
+  whitelistPersistSentinel(). For example:
+
+        whitelistSentinelUsername("foobar")
+
+* whitelistSentinelPassword(<password>) - Set the password for
+  authentication to the redis sentinels, when using
+  whitelistPersistSentinel(). This is independent of the password set
+  with whitelistRedisPassword(), which is used for the redis master. For
+  example:
+
+        whitelistSentinelPassword("secret")
 
 * whitelistRedisTLS(<enable>) - Enable TLS for connections to the redis
   DB. Requires wforce to have been built with hiredis TLS support

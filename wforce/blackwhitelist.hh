@@ -134,6 +134,8 @@ public:
   void deleteEntryInternal(const std::string& key, BLWLType bl_type, bool replicate);
 
   void makePersistent(const std::string& host, unsigned int port);
+  // Each sentinel is "host", "host:port" or "[ipv6]:port"; port defaults to 26379
+  void makePersistentSentinel(const std::string& master_name, const std::vector<std::string>& sentinels);
   void persistReplicated() { persist_replicated = true; }
   bool loadPersistEntries();
 
@@ -171,6 +173,8 @@ public:
 
   void setRedisUsername(const std::string& username) { redis_username = username; }
   void setRedisPassword(const std::string& password) { redis_password = password; }
+  void setSentinelUsername(const std::string& username) { sentinel_username = username; }
+  void setSentinelPassword(const std::string& password) { sentinel_password = password; }
 
   void setRedisTLS(bool enable);
   void setRedisTLSCA(const std::string& ca_file, const std::string& ca_dir) { redis_tls_ca_file = ca_file; redis_tls_ca_dir = ca_dir; }
@@ -218,6 +222,11 @@ private:
   std::string redis_tls_key_file;
   std::string redis_tls_server_name;
   struct redisSSLContext* redis_ssl_context = nullptr;
+  bool use_sentinel = false;
+  std::string sentinel_master_name;
+  std::vector<std::pair<std::string, unsigned int>> sentinel_servers;
+  std::string sentinel_username;
+  std::string sentinel_password;
   redisContext* redis_context;
   std::atomic<int> redis_timeout;
   std::atomic<int> redis_rw_timeout_secs;
@@ -246,8 +255,14 @@ private:
   std::string ipString(const ComboAddress& ca) const;
   std::string ipStringStr(const ComboAddress& ca, const std::string& login) const;
   std::string ipStringStr(const ComboAddress& ca, std::uint8_t prefix, const std::string& str) const;
-  bool checkSetupContext();
-  bool setupTLSConnection();
+  bool checkSetupContext(bool* is_new_connection = nullptr);
+  redisContext* connectRedis(const std::string& host, unsigned int port, struct redisSSLContext*& ssl_context);
+  bool authRedis(redisContext* context, const std::string& username, const std::string& password, const std::string& desc);
+  bool discoverSentinelMaster();
+  bool checkMasterRole();
+  void resetContext();
+  void incConnFailed();
+  struct redisSSLContext* createTLSContext(const std::string& host);
   bool addPersistEntry(const std::string& key, time_t seconds, BLWLType bl_type, const std::string& reason);
   bool deletePersistEntry(const std::string& key, BLWLType bl_type, blackwhitelist_t& blackwhitelist);
   BLWLType BLWLNameToType(const std::string& bl_name) const;

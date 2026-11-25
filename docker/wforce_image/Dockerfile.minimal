@@ -114,7 +114,8 @@ RUN apk update && \
                abseil-cpp-flags-marshalling \
                util-linux \
                tzdata \
-               tini
+               tini \
+               mimalloc2
 
 RUN addgroup --gid 1000 wforce && \
     adduser -u 1000 -S -G wforce wforce && \
@@ -142,6 +143,13 @@ LABEL   org.label-schema.license="${license}" \
   org.opencontainers.image.url="https://powerdns.github.io/weakforced" \
   org.opencontainers.image.vendor="PowerDNS" \
   org.opencontainers.image.version="${version}"
+
+# musl's malloc serialises allocations across threads; under load wforce needs 2-3x more CPU per
+# request with it than with glibc. Use mimalloc for every process in the image.
+# Fail the build if the library is missing (e.g. renamed by a future Alpine release), since a
+# missing preload would silently fall back to musl's malloc.
+RUN test -f /usr/lib/libmimalloc.so.2
+ENV LD_PRELOAD=/usr/lib/libmimalloc.so.2
 
 USER wforce:wforce
 

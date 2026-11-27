@@ -233,18 +233,22 @@ class TestBlacklist(ApiTestCase):
         persistent_ja3 = "persist-ja3-blacklist"
         persistent_ipja3_ip = "198.51.120.14"
         persistent_ipja3 = "persist-ipja3-blacklist"
+        # Long enough to outlive adding 2000 entries and restarting, also on a slow machine
+        expire_secs = 300
+        added_ips = set()
         with running_process(cmd3, close_fds=True):
             time.sleep(1)
 
             for i in range(2000):
                 random_ip = Internet().ip_v4()
-                r = self.addBLEntryIPPersist(random_ip, 10, "test blacklist")
+                r = self.addBLEntryIPPersist(random_ip, expire_secs, "test blacklist")
                 j = r.json()
                 self.assertEqual(j['status'], 'ok')
-            r = self.addBLEntryJA3Persist(persistent_ja3, 10, "test persistent ja3 blacklist")
+                added_ips.add(random_ip + "/32")
+            r = self.addBLEntryJA3Persist(persistent_ja3, expire_secs, "test persistent ja3 blacklist")
             j = r.json()
             self.assertEqual(j['status'], 'ok')
-            r = self.addBLEntryIPJA3Persist(persistent_ipja3_ip, persistent_ipja3, 10, "test persistent ipja3 blacklist")
+            r = self.addBLEntryIPJA3Persist(persistent_ipja3_ip, persistent_ipja3, expire_secs, "test persistent ipja3 blacklist")
             j = r.json()
             self.assertEqual(j['status'], 'ok')
 
@@ -253,7 +257,9 @@ class TestBlacklist(ApiTestCase):
 
             r = self.getBLFuncPersist()
             j = r.json()
-            self.assertEqual(len(j['bl_entries']), 2002)
+            # Redis may still hold entries from an earlier run, so check that ours were all loaded back
+            ip_entries = {entry['ip'] for entry in j['bl_entries'] if 'ip' in entry}
+            self.assertEqual(added_ips - ip_entries, set())
             ja3_entries = {entry['ja3'] for entry in j['bl_entries'] if 'ja3' in entry}
             ipja3_entries = {entry['ipja3'] for entry in j['bl_entries'] if 'ipja3' in entry}
             self.assertIn(persistent_ja3, ja3_entries)

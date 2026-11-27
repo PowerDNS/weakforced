@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Refactor the redis connection setup for persistent blacklists/whitelists into reusable helpers (no functional change)
 - Persistent blacklist/whitelist writes are retried once on a new connection if redis returns a `READONLY` error or an existing connection was dropped, e.g. during a failover
 
+### Fixed
+- Each blacklist/whitelist add was logged twice
+
 ## [3.0.0]
 
 ### Added

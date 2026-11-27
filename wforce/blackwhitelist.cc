@@ -77,7 +77,6 @@ void BlackWhiteListDB::addEntry(const Netmask& nm, time_t seconds, const std::st
   std::string key = nm.toStringNetwork();
 
   addEntryInternal(key, seconds, IP_BLWL, reason, true);
-  addEntryLog(IP_BLWL, key, seconds, reason);
 }
 
 void BlackWhiteListDB::addEntry(const ComboAddress& ca, time_t seconds, const std::string& reason)
@@ -85,13 +84,11 @@ void BlackWhiteListDB::addEntry(const ComboAddress& ca, time_t seconds, const st
   std::string key = ipString(ca);
 
   addEntryInternal(key, seconds, IP_BLWL, reason, true);
-  addEntryLog(IP_BLWL, key, seconds, reason);
 }
 
 void BlackWhiteListDB::addEntry(const std::string& login, time_t seconds, const std::string& reason)
 {
   addEntryInternal(login, seconds, LOGIN_BLWL, reason, true);
-  addEntryLog(LOGIN_BLWL, login, seconds, reason);
 }
 
 void
@@ -99,7 +96,6 @@ BlackWhiteListDB::addEntry(const ComboAddress& ca, const std::string& login, tim
 {
   std::string key = ipStringStr(ca, login);
   addEntryInternal(key, seconds, IP_LOGIN_BLWL, reason, true);
-  addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
 }
 
 void
@@ -107,13 +103,11 @@ BlackWhiteListDB::addEntry(const ComboAddress& ca, const std::string& login, std
 {
   std::string key = ipStringStr(ca, prefix, login);
   addEntryInternal(key, seconds, IP_LOGIN_BLWL, reason, true);
-  addEntryLog(IP_LOGIN_BLWL, key, seconds, reason);
 }
 
 void BlackWhiteListDB::addJA3Entry(const std::string& ja3, time_t seconds, const std::string& reason)
 {
   addEntryInternal(ja3, seconds, JA3_BLWL, reason, true);
-  addEntryLog(JA3_BLWL, ja3, seconds, reason);
 }
 
 void
@@ -121,7 +115,6 @@ BlackWhiteListDB::addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, 
 {
   std::string key = ipStringStr(ca, ja3);
   addEntryInternal(key, seconds, IP_JA3_BLWL, reason, true);
-  addEntryLog(IP_JA3_BLWL, key, seconds, reason);
 }
 
 void
@@ -129,7 +122,6 @@ BlackWhiteListDB::addIPJA3Entry(const ComboAddress& ca, const std::string& ja3, 
 {
   std::string key = ipStringStr(ca, prefix, ja3);
   addEntryInternal(key, seconds, IP_JA3_BLWL, reason, true);
-  addEntryLog(IP_JA3_BLWL, key, seconds, reason);
 }
 
 void BlackWhiteListDB::addEntryInternal(const std::string& key, time_t seconds, BLWLType blwl_type,
